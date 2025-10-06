@@ -8,7 +8,7 @@ import { SearchBox } from '@/components/search-box';
 import { search } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUser, useFirestore, useCollection, errorEmitter } from '@/firebase';
-import { addDoc, collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, query, orderBy, where, getDocs } from 'firebase/firestore';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuLink, SidebarProvider } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -76,20 +76,26 @@ function SearchResults() {
       setError(null);
       setResult(null);
 
-      // Save search query to Firestore if user is logged in
+      // Save search query to Firestore if user is logged in and it's a new query
       if (user && firestore) {
         const queriesCollection = collection(firestore, `users/${user.uid}/searchQueries`);
-        const searchData = {
-          queryText: queryText,
-          timestamp: serverTimestamp(),
-        };
-        addDoc(queriesCollection, searchData).catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: queriesCollection.path,
-                operation: 'create',
-                requestResourceData: searchData,
+        const q = query(queriesCollection, where('queryText', '==', queryText));
+        
+        getDocs(q).then(querySnapshot => {
+          if (querySnapshot.empty) {
+            const searchData = {
+              queryText: queryText,
+              timestamp: serverTimestamp(),
+            };
+            addDoc(queriesCollection, searchData).catch(async (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: queriesCollection.path,
+                    operation: 'create',
+                    requestResourceData: searchData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
             });
-            errorEmitter.emit('permission-error', permissionError);
+          }
         });
       }
 
