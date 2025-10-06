@@ -30,9 +30,6 @@ export default function Home() {
           <h1 className="text-5xl font-extrabold tracking-tight text-foreground sm:text-6xl md:text-7xl drop-shadow-md">
             Cambodia Hub
           </h1>
-          <p className="max-w-2xl text-lg text-foreground/80 sm:text-xl md:text-2xl">
-            Discover the heart of Southeast Asia. Your journey begins here.
-          </p>
         </div>
         
         <div className="w-full max-w-xl px-4">

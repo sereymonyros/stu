@@ -1,5 +1,7 @@
 "use server";
 
+import { redirect } from 'next/navigation';
+
 export async function search(formData: FormData) {
   const query = formData.get("query") as string;
 
@@ -8,12 +10,5 @@ export async function search(formData: FormData) {
     return;
   }
 
-  console.log(`Searching for: ${query}`);
-
-  // Simulate network delay to show loading state
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  // In a real application, you would fetch data from an API or database
-  // and return the results. You could then use react-dom's useFormState
-  // to display the results on the page.
+  redirect(`/search?q=${encodeURIComponent(query)}`);
 }
