@@ -2,6 +2,7 @@ import Image from "next/image";
 import { search } from "@/app/actions";
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { SearchBox } from "@/components/search-box";
+import { UserAuthButton } from "@/components/user-auth-button";
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find(p => p.id === 'cambodia-hero');
@@ -19,6 +20,10 @@ export default function Home() {
         />
       )}
       <div className="absolute inset-0 bg-background/70 backdrop-blur-sm z-10" />
+
+      <div className="absolute top-4 right-4 z-30">
+        <UserAuthButton />
+      </div>
 
       <div className="z-20 flex flex-col items-center space-y-8">
         <div className="flex flex-col items-center space-y-4">
