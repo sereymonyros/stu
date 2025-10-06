@@ -63,9 +63,14 @@
         "isFavourite": {
           "type": "boolean",
           "description": "Indicates if the listing is a favourite."
+        },
+        "status": {
+            "type": "string",
+            "description": "The current status of the listing.",
+            "enum": ["available", "pending", "sold"]
         }
       },
-      "required": ["title", "price", "sellerId", "createdAt"]
+      "required": ["title", "price", "sellerId", "createdAt", "status"]
     },
     "Chat": {
       "title": "Chat",
