@@ -46,6 +46,7 @@ export function SearchBox({ searchAction, className }: { searchAction: (formData
         placeholder="Search for places, food, or culture..."
         className="h-12 w-full rounded-full border-2 border-border bg-background/90 pl-11 pr-14 text-base shadow-inner transition-all duration-300 ease-in-out focus:border-primary focus:bg-background focus:shadow-md focus-visible:ring-0"
         required
+        autoFocus
       />
       <SubmitButton />
     </form>
