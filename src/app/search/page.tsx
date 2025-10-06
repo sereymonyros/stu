@@ -31,7 +31,7 @@ function SearchHistory() {
   const [isClearing, setIsClearing] = useState(false);
 
   const queriesQuery = useMemo(() => {
-    if (user) {
+    if (user && firestore) {
       return query(collection(firestore, `users/${user.uid}/searchQueries`), orderBy('timestamp', 'desc'));
     }
     return null;
@@ -123,56 +123,57 @@ function SearchResults() {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [hasSavedQuery, setHasSavedQuery] = useState(false);
 
   const { user } = useUser();
   const firestore = useFirestore();
 
   useEffect(() => {
-    if (queryText) {
+    const performSearchAndSave = async () => {
+      if (!queryText) {
+        setLoading(false);
+        setResult(null);
+        setError(null);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       setResult(null);
-      setHasSavedQuery(false); // Reset save status for new search
 
       // Save search query to Firestore if user is logged in
-      if (user && firestore && !hasSavedQuery) {
-        setHasSavedQuery(true); // Set flag immediately to prevent re-runs
+      if (user && firestore) {
         const queriesCollection = collection(firestore, `users/${user.uid}/searchQueries`);
-        // Check if this query already exists
         const q = query(queriesCollection, where('queryText', '==', queryText));
         
-        getDocs(q).then(querySnapshot => {
-          if (querySnapshot.empty) { // Only add if it's a new, unique query
-            const searchData = {
-              queryText: queryText,
-              timestamp: serverTimestamp(),
-            };
-            addDoc(queriesCollection, searchData).catch(async (serverError) => {
-                const permissionError = new FirestorePermissionError({
-                    path: queriesCollection.path,
-                    operation: 'create',
-                    requestResourceData: searchData,
-                });
-                errorEmitter.emit('permission-error', permissionError);
-            });
-          }
-        });
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) { // Only add if it's a new, unique query
+          const searchData = {
+            queryText: queryText,
+            timestamp: serverTimestamp(),
+          };
+          addDoc(queriesCollection, searchData).catch(async (serverError) => {
+              const permissionError = new FirestorePermissionError({
+                  path: queriesCollection.path,
+                  operation: 'create',
+                  requestResourceData: searchData,
+              });
+              errorEmitter.emit('permission-error', permissionError);
+          });
+        }
       }
 
-      searchCambodia({ query: queryText })
-        .then((response) => {
-          setResult(response.answer);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error(err);
-          setError('Sorry, something went wrong while searching. Please try again.');
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
+      try {
+        const response = await searchCambodia({ query: queryText });
+        setResult(response.answer);
+      } catch (err) {
+        console.error(err);
+        setError('Sorry, something went wrong while searching. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    performSearchAndSave();
   }, [queryText, user, firestore]);
 
   return (
