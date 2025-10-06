@@ -7,11 +7,12 @@ import { UserAuthButton } from '@/components/user-auth-button';
 import { SearchBox } from '@/components/search-box';
 import { search } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useUser, useFirestore, useCollection } from '@/firebase';
+import { useUser, useFirestore, useCollection, errorEmitter } from '@/firebase';
 import { addDoc, collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuLink, SidebarProvider } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 function SearchHistory() {
   const { user } = useUser();
@@ -83,10 +84,18 @@ function SearchResults() {
       // Save search query to Firestore if user is logged in
       if (user && firestore) {
         const queriesCollection = collection(firestore, `users/${user.uid}/searchQueries`);
-        addDoc(queriesCollection, {
+        const searchData = {
           queryText: queryText,
           timestamp: serverTimestamp(),
-        }).catch(console.error); // Log error without blocking
+        };
+        addDoc(queriesCollection, searchData).catch(error => {
+          const permissionError = new FirestorePermissionError({
+            path: queriesCollection.path,
+            operation: 'create',
+            requestResourceData: searchData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
       }
 
       searchCambodia({ query: queryText })
