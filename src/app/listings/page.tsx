@@ -51,29 +51,27 @@ export default function ListingsPage() {
           {!isLoading && listings && (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {listings.map((listing) => (
-                <Link key={listing.id} href={`/listings/${listing.id}`} legacyBehavior>
-                  <a className="block group">
-                    <Card className="overflow-hidden h-full flex flex-col transition-all duration-200 group-hover:shadow-xl group-hover:-translate-y-1">
-                      <CardHeader className="p-0">
-                        <div className="aspect-square relative w-full">
-                          <Image
-                            src={listing.imageUrls?.[0] || 'https://picsum.photos/seed/default/600/600'}
-                            alt={listing.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-4 flex-grow">
-                        <CardTitle className="text-lg font-semibold truncate group-hover:text-primary">
-                          {listing.title}
-                        </CardTitle>
-                      </CardContent>
-                      <CardFooter className="p-4 pt-0">
-                        <p className="text-xl font-bold text-primary">${listing.price}</p>
-                      </CardFooter>
-                    </Card>
-                  </a>
+                <Link key={listing.id} href={`/listings/${listing.id}`} className="block group">
+                  <Card className="overflow-hidden h-full flex flex-col transition-all duration-200 group-hover:shadow-xl group-hover:-translate-y-1">
+                    <CardHeader className="p-0">
+                      <div className="aspect-square relative w-full">
+                        <Image
+                          src={listing.imageUrls?.[0] || 'https://picsum.photos/seed/default/600/600'}
+                          alt={listing.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 flex-grow">
+                      <CardTitle className="text-lg font-semibold truncate group-hover:text-primary">
+                        {listing.title}
+                      </CardTitle>
+                    </CardContent>
+                    <CardFooter className="p-4 pt-0">
+                      <p className="text-xl font-bold text-primary">${listing.price}</p>
+                    </CardFooter>
+                  </Card>
                 </Link>
               ))}
             </div>
