@@ -3,23 +3,11 @@
  * @fileOverview A search flow for Cambodia Hub.
  *
  * - searchCambodia - A function that performs a search.
- * - SearchCambodiaInput - The input type for the searchCambodia function.
- * - SearchCambodiaOutput - The return type for the searchCambodia function.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
 import { marked } from 'marked';
-
-export const SearchCambodiaInputSchema = z.object({
-  query: z.string().describe('The user\'s search query.'),
-});
-export type SearchCambodiaInput = z.infer<typeof SearchCambodiaInputSchema>;
-
-export const SearchCambodiaOutputSchema = z.object({
-  answer: z.string().describe('The AI-generated answer to the query, formatted as HTML.'),
-});
-export type SearchCambodiaOutput = z.infer<typeof SearchCambodiaOutputSchema>;
+import { SearchCambodiaInput, SearchCambodiaInputSchema, SearchCambodiaOutput, SearchCambodiaOutputSchema } from './search-schema';
 
 export async function searchCambodia(input: SearchCambodiaInput): Promise<SearchCambodiaOutput> {
   return searchCambodiaFlow(input);
