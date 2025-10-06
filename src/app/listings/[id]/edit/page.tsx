@@ -23,11 +23,19 @@ import { Header } from '@/components/header';
 import { useEffect, useMemo, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const listingSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters long.' }),
   description: z.string().optional(),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
+  status: z.enum(['available', 'pending', 'sold']),
 });
 
 export default function EditListingPage() {
@@ -53,6 +61,7 @@ export default function EditListingPage() {
       title: '',
       description: '',
       price: 0,
+      status: 'available',
     },
   });
 
@@ -62,6 +71,7 @@ export default function EditListingPage() {
         title: listing.title,
         description: listing.description,
         price: listing.price,
+        status: listing.status,
       });
     }
   }, [listing, form]);
@@ -200,6 +210,28 @@ export default function EditListingPage() {
                         <FormMessage />
                         </FormItem>
                     )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="available">Available</SelectItem>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="sold">Sold</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                     <Button type="submit" disabled={isSubmitting} className="w-full">
                         {isSubmitting ? 'Saving Changes...' : 'Save Changes'}
