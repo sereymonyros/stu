@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { searchCambodia } from '@/ai/flows/search-flow';
 import { UserAuthButton } from '@/components/user-auth-button';
 import { SearchBox } from '@/components/search-box';
@@ -11,25 +11,20 @@ import { useUser, useFirestore, useCollection, errorEmitter } from '@/firebase';
 import { addDoc, collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuLink, SidebarProvider } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 function SearchHistory() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const [queriesPath, setQueriesPath] = useState<string | null>(null);
 
-  useEffect(() => {
+  const queriesQuery = useMemo(() => {
     if (user) {
-      setQueriesPath(`users/${user.uid}/searchQueries`);
-    } else {
-      setQueriesPath(null);
+      return query(collection(firestore, `users/${user.uid}/searchQueries`), orderBy('timestamp', 'desc'));
     }
-  }, [user]);
+    return null;
+  }, [user, firestore]);
 
-  const { data: searchHistory, isLoading } = useCollection(
-    queriesPath ? query(collection(firestore, queriesPath), orderBy('timestamp', 'desc')) : null
-  );
+  const { data: searchHistory, isLoading } = useCollection(queriesQuery);
 
   return (
     <SidebarProvider>
@@ -88,13 +83,13 @@ function SearchResults() {
           queryText: queryText,
           timestamp: serverTimestamp(),
         };
-        addDoc(queriesCollection, searchData).catch(error => {
-          const permissionError = new FirestorePermissionError({
-            path: queriesCollection.path,
-            operation: 'create',
-            requestResourceData: searchData,
-          });
-          errorEmitter.emit('permission-error', permissionError);
+        addDoc(queriesCollection, searchData).catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: queriesCollection.path,
+                operation: 'create',
+                requestResourceData: searchData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
         });
       }
 
