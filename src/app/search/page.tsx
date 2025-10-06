@@ -134,7 +134,7 @@ function SearchResults() {
       setResult(null);
 
       // Save search query to Firestore if user is logged in and it's a new query
-      if (user && firestore) {
+      if (user && firestore && queryText) {
         const queriesCollection = collection(firestore, `users/${user.uid}/searchQueries`);
         const q = query(queriesCollection, where('queryText', '==', queryText));
         
