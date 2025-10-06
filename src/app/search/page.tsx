@@ -8,14 +8,27 @@ import { SearchBox } from '@/components/search-box';
 import { search } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUser, useFirestore, useCollection, errorEmitter } from '@/firebase';
-import { addDoc, collection, serverTimestamp, query, orderBy, where, getDocs } from 'firebase/firestore';
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuLink, SidebarProvider } from '@/components/ui/sidebar';
+import { addDoc, collection, serverTimestamp, query, orderBy, where, getDocs, deleteDoc, writeBatch } from 'firebase/firestore';
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuLink, SidebarProvider, SidebarFooter } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 function SearchHistory() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const [isClearing, setIsClearing] = useState(false);
 
   const queriesQuery = useMemo(() => {
     if (user) {
@@ -25,6 +38,26 @@ function SearchHistory() {
   }, [user, firestore]);
 
   const { data: searchHistory, isLoading } = useCollection(queriesQuery);
+
+  const handleClearHistory = async () => {
+    if (!user || !firestore) return;
+    setIsClearing(true);
+    const queriesCollectionRef = collection(firestore, `users/${user.uid}/searchQueries`);
+    
+    try {
+      const querySnapshot = await getDocs(queriesCollectionRef);
+      const batch = writeBatch(firestore);
+      querySnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+    } catch (error) {
+      console.error("Error clearing history: ", error);
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
 
   return (
     <SidebarProvider>
@@ -37,11 +70,11 @@ function SearchHistory() {
         <SidebarContent>
           <SidebarMenu>
             {isLoading && (
-              <>
+              <div className='p-2 space-y-2'>
                 <Skeleton className="h-8 w-full" />
                 <Skeleton className="h-8 w-full" />
                 <Skeleton className="h-8 w-full" />
-              </>
+              </div>
             )}
             {searchHistory?.map((item) => (
               <SidebarMenuItem key={item.id}>
@@ -52,6 +85,30 @@ function SearchHistory() {
             ))}
           </SidebarMenu>
         </SidebarContent>
+        {searchHistory && searchHistory.length > 0 && (
+          <SidebarFooter>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="w-full" disabled={isClearing}>
+                  {isClearing ? 'Clearing...' : 'Clear history'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete your
+                    search history.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearHistory}>Continue</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </SidebarFooter>
+        )}
       </Sidebar>
       <SidebarInset>
         <SearchResults />
