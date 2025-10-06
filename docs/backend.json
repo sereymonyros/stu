@@ -17,9 +17,14 @@
           "type": "string",
           "format": "uri",
           "description": "URL of the user's profile picture."
+        },
+        "userType": {
+          "type": "string",
+          "description": "The type of user, determines permissions.",
+          "enum": ["standard", "recruiter"]
         }
       },
-      "required": ["uid", "displayName"]
+      "required": ["uid", "displayName", "userType"]
     },
     "Listing": {
       "title": "Listing",
@@ -104,6 +109,48 @@
         }
       },
       "required": ["senderId", "text", "timestamp"]
+    },
+    "Job": {
+      "title": "Job",
+      "description": "Represents a job posting.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the job."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the job."
+        },
+        "companyName": {
+          "type": "string",
+          "description": "The name of the hiring company."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location of the job."
+        },
+        "salary": {
+          "type": "string",
+          "description": "The salary or salary range for the job."
+        },
+        "jobType": {
+          "type": "string",
+          "description": "The type of employment.",
+          "enum": ["Full-time", "Part-time", "Contract", "Internship"]
+        },
+        "recruiterId": {
+          "type": "string",
+          "description": "The UID of the recruiter who posted the job."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the job was posted."
+        }
+      },
+      "required": ["title", "companyName", "location", "jobType", "recruiterId", "createdAt"]
     }
   },
   "auth": {
@@ -124,6 +171,12 @@
         "$ref": "#/entities/Listing"
       },
       "description": "Collection of all listings."
+    },
+    "/jobs/{jobId}": {
+      "schema": {
+        "$ref": "#/entities/Job"
+      },
+      "description": "Collection of all job postings."
     },
     "/chats/{chatId}": {
       "schema": {
