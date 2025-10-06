@@ -106,7 +106,7 @@ export default function EditListingPage() {
         description: "Your item has been successfully updated.",
       });
 
-      router.push(`/listings/${listingId}`);
+      router.push('/listings');
 
     } catch (error: any) {
         toast({
