@@ -7,20 +7,89 @@ import { UserAuthButton } from '@/components/user-auth-button';
 import { SearchBox } from '@/components/search-box';
 import { search } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUser, useFirestore, useCollection } from '@/firebase';
+import { addDoc, collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuLink, SidebarProvider } from '@/components/ui/sidebar';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+function SearchHistory() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const [queriesPath, setQueriesPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setQueriesPath(`users/${user.uid}/searchQueries`);
+    } else {
+      setQueriesPath(null);
+    }
+  }, [user]);
+
+  const { data: searchHistory, isLoading } = useCollection(
+    queriesPath ? query(collection(firestore, queriesPath), orderBy('timestamp', 'desc')) : null
+  );
+
+  return (
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <SidebarGroup>
+            <SidebarGroupLabel>Recent Searches</SidebarGroupLabel>
+          </SidebarGroup>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarMenu>
+            {isLoading && (
+              <>
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </>
+            )}
+            {searchHistory?.map((item) => (
+              <SidebarMenuItem key={item.id}>
+                <SidebarMenuLink href={`/search?q=${encodeURIComponent(item.queryText)}`} className="w-full">
+                  {item.queryText}
+                </SidebarMenuLink>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+      <SidebarInset>
+        <SearchResults />
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}
 
 function SearchResults() {
   const searchParams = useSearchParams();
-  const query = searchParams.get('q');
+  const queryText = searchParams.get('q');
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const { user } = useUser();
+  const firestore = useFirestore();
+
   useEffect(() => {
-    if (query) {
+    if (queryText) {
       setLoading(true);
       setError(null);
       setResult(null);
-      searchCambodia({ query })
+
+      // Save search query to Firestore if user is logged in
+      if (user && firestore) {
+        const queriesCollection = collection(firestore, `users/${user.uid}/searchQueries`);
+        addDoc(queriesCollection, {
+          queryText: queryText,
+          timestamp: serverTimestamp(),
+        }).catch(console.error); // Log error without blocking
+      }
+
+      searchCambodia({ query: queryText })
         .then((response) => {
           setResult(response.answer);
           setLoading(false);
@@ -33,10 +102,17 @@ function SearchResults() {
     } else {
       setLoading(false);
     }
-  }, [query]);
+  }, [queryText, user, firestore]);
 
   return (
     <div className="flex flex-col items-center w-full">
+      <header className="w-full flex items-center justify-between p-4 border-b">
+        <Link href="/" className="text-2xl font-bold">Cambodia Hub</Link>
+        <div className="w-full max-w-xl px-4">
+          <SearchBox searchAction={search} />
+        </div>
+        <UserAuthButton />
+      </header>
       <div className="w-full max-w-3xl mt-4">
         {loading && (
           <div className="space-y-4 p-4">
@@ -53,7 +129,7 @@ function SearchResults() {
             dangerouslySetInnerHTML={{ __html: result }}
           />
         )}
-        {!loading && !result && !error && !query && (
+        {!loading && !result && !error && !queryText && (
           <p className="text-center text-muted-foreground">
             Start a new search to see results.
           </p>
@@ -65,20 +141,21 @@ function SearchResults() {
 
 
 export default function SearchPage() {
+  const { user, isUserLoading } = useUser();
+
   return (
     <Suspense fallback={<div className="min-h-screen w-full flex items-center justify-center"><p>Loading...</p></div>}>
-      <main className="min-h-screen flex flex-col items-center bg-background text-foreground">
-        <header className="w-full flex items-center justify-between p-4 border-b">
-          <Link href="/" className="text-2xl font-bold">Cambodia Hub</Link>
-          <div className="w-full max-w-xl px-4">
-            <SearchBox searchAction={search} />
-          </div>
-          <UserAuthButton />
-        </header>
-        <SearchResults />
+      <main className="min-h-screen bg-background text-foreground">
+        {isUserLoading ? (
+            <div className="flex min-h-screen items-center justify-center">
+                <p>Loading...</p>
+            </div>
+        ) : user ? (
+          <SearchHistory />
+        ) : (
+          <SearchResults />
+        )}
       </main>
     </Suspense>
   );
 }
-
-import Link from 'next/link';
