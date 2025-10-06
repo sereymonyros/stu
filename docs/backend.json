@@ -54,6 +54,10 @@
           "type": "string",
           "format": "date-time",
           "description": "The timestamp when the listing was created."
+        },
+        "isFavourite": {
+          "type": "boolean",
+          "description": "Indicates if the listing is a favourite."
         }
       },
       "required": ["title", "price", "sellerId", "createdAt"]
