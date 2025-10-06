@@ -8,7 +8,7 @@ import { SearchBox } from '@/components/search-box';
 import { search } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, serverTimestamp, query, orderBy, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, writeBatch } from 'firebase/firestore';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuLink, SidebarProvider, SidebarFooter } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 function SearchHistory() {
