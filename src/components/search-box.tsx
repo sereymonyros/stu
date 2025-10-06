@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
+import { useUser } from "@/firebase";
 
 // SubmitButton component needs to be a child of the form to use useFormStatus
 function SubmitButton() {
@@ -32,6 +33,7 @@ function SubmitButton() {
 }
 
 export function SearchBox({ searchAction, className }: { searchAction: (formData: FormData) => Promise<void>, className?: string }) {
+  const { user } = useUser();
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchParams = useSearchParams();
@@ -41,10 +43,18 @@ export function SearchBox({ searchAction, className }: { searchAction: (formData
     inputRef.current?.focus();
   }, []);
 
+  const handleSearch = async (formData: FormData) => {
+    if (user) {
+      formData.append('userId', user.uid);
+    }
+    await searchAction(formData);
+    // Do not reset the form here to keep the input value on the results page
+  };
+  
   return (
     <form
       ref={formRef}
-      action={searchAction}
+      action={handleSearch}
       className={cn("group relative w-full", className)}
     >
       <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />

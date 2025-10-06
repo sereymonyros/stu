@@ -7,11 +7,10 @@ import { UserAuthButton } from '@/components/user-auth-button';
 import { SearchBox } from '@/components/search-box';
 import { search } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useUser, useFirestore, useCollection, errorEmitter } from '@/firebase';
-import { addDoc, collection, serverTimestamp, query, orderBy, where, getDocs, writeBatch } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection } from '@/firebase';
+import { collection, serverTimestamp, query, orderBy, getDocs, writeBatch } from 'firebase/firestore';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuLink, SidebarProvider, SidebarFooter } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { FirestorePermissionError } from '@/firebase/errors';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -22,7 +21,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 function SearchHistory() {
@@ -124,11 +122,8 @@ function SearchResults() {
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { user } = useUser();
-  const firestore = useFirestore();
-
   useEffect(() => {
-    const performSearchAndSave = async () => {
+    const performSearch = async () => {
       if (!queryText) {
         setLoading(false);
         setResult(null);
@@ -139,28 +134,6 @@ function SearchResults() {
       setLoading(true);
       setError(null);
       setResult(null);
-
-      // Save search query to Firestore if user is logged in
-      if (user && firestore) {
-        const queriesCollection = collection(firestore, `users/${user.uid}/searchQueries`);
-        const q = query(queriesCollection, where('queryText', '==', queryText));
-        
-        const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) { // Only add if it's a new, unique query
-          const searchData = {
-            queryText: queryText,
-            timestamp: serverTimestamp(),
-          };
-          addDoc(queriesCollection, searchData).catch(async (serverError) => {
-              const permissionError = new FirestorePermissionError({
-                  path: queriesCollection.path,
-                  operation: 'create',
-                  requestResourceData: searchData,
-              });
-              errorEmitter.emit('permission-error', permissionError);
-          });
-        }
-      }
 
       try {
         const response = await searchCambodia({ query: queryText });
@@ -173,8 +146,8 @@ function SearchResults() {
       }
     };
     
-    performSearchAndSave();
-  }, [queryText, user, firestore]);
+    performSearch();
+  }, [queryText]);
 
   return (
     <div className="flex flex-col items-center w-full">
