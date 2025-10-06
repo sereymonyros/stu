@@ -11,6 +11,7 @@ import { Header } from '@/components/header';
 import { useMemo, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { Pencil } from 'lucide-react';
 
 export default function ListingDetailPage() {
   const { id } = useParams();
@@ -45,7 +46,7 @@ export default function ListingDetailPage() {
       const chatsRef = collection(firestore, 'chats');
       const q = query(
         chatsRef,
-        where('listingId', '==', listing.id),
+        where('listingId', '==', listingId),
         where('buyerId', '==', user.uid)
       );
       
@@ -57,14 +58,16 @@ export default function ListingDetailPage() {
         router.push(`/chat/${chatId}`);
       } else {
         // Create a new chat
-        const newChat = await addDoc(chatsRef, {
-          listingId: listing.id,
+        const newChatRef = await addDoc(chatsRef, {
+          listingId: listingId,
           buyerId: user.uid,
           sellerId: listing.sellerId,
+          // Add participants array for easier querying
+          participants: [user.uid, listing.sellerId],
           lastMessage: `Inquiring about: ${listing.title}`,
           updatedAt: serverTimestamp(),
         });
-        router.push(`/chat/${newChat.id}`);
+        router.push(`/chat/${newChatRef.id}`);
       }
     } catch (error: any) {
         toast({
@@ -111,7 +114,14 @@ export default function ListingDetailPage() {
               <p className="text-3xl font-bold text-primary">${listing.price}</p>
               <p className="text-lg text-muted-foreground">{listing.description}</p>
               
-              {!isOwner && (
+              {isOwner ? (
+                 <Button asChild size="lg" className="mt-4">
+                    <Link href={`/listings/${listingId}/edit`}>
+                        <Pencil className="mr-2 h-5 w-5" />
+                        Edit Listing
+                    </Link>
+                </Button>
+              ) : (
                 <Button onClick={handleContactSeller} disabled={isContacting} size="lg" className="mt-4">
                   {isContacting ? 'Starting Chat...' : 'Contact Seller'}
                 </Button>
