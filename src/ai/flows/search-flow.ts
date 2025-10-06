@@ -20,12 +20,14 @@ const prompt = ai.definePrompt({
   
   A user has a question: "{{query}}".
   
-  Provide a helpful, detailed, and friendly answer. Format your response in Markdown.
-  If the query is about places, suggest a few and why they are interesting.
-  If the query is about food, describe the taste and where to find it.
-  If the query is about culture, explain the context and significance.
+  Unlike a standard search engine that provides links, your job is to provide a comprehensive, expert answer as if you are talking directly to a traveler.
   
-  Keep the tone light and engaging.`,
+  Provide a helpful, detailed, and friendly answer. Format your response in Markdown.
+  - If the query is about places, suggest a few and why they are interesting. Include personal-sounding tips.
+  - If the query is about food, describe the taste, ingredients, and where to find the best examples.
+  - If the query is about culture, explain the context and significance with storytelling.
+  
+  Always maintain a light, engaging, and personal tone. You are their friendly guide, not a robot.`,
 });
 
 const searchCambodiaFlow = ai.defineFlow(
