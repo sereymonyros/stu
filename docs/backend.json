@@ -148,6 +148,10 @@
           "type": "string",
           "format": "date-time",
           "description": "The timestamp when the job was posted."
+        },
+        "isFavourite": {
+          "type": "boolean",
+          "description": "Indicates if the job is a favourite."
         }
       },
       "required": ["title", "companyName", "location", "jobType", "recruiterId", "createdAt"]
