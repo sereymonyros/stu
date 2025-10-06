@@ -8,7 +8,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit/zod';
+import { z } from 'zod';
 import { marked } from 'marked';
 
 export const SearchCambodiaInputSchema = z.object({
