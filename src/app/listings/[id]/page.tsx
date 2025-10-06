@@ -1,16 +1,16 @@
 'use client';
 
 import { useDoc, useFirestore, useUser } from '@/firebase';
-import { doc, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { doc, collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Header } from '@/components/header';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { serverTimestamp } from 'firebase/firestore';
+import Link from 'next/link';
 
 export default function ListingDetailPage() {
   const { id } = useParams();
@@ -19,7 +19,13 @@ export default function ListingDetailPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const listingRef = id ? doc(firestore, 'listings', Array.isArray(id) ? id[0] : id) : null;
+  const listingId = Array.isArray(id) ? id[0] : id;
+
+  const listingRef = useMemo(() => {
+    if (!firestore || !listingId) return null;
+    return doc(firestore, 'listings', listingId);
+  }, [firestore, listingId]);
+
   const { data: listing, isLoading } = useDoc(listingRef);
 
   const [isContacting, setIsContacting] = useState(false);

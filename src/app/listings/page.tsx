@@ -8,10 +8,16 @@ import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
+import { useMemo } from 'react';
 
 export default function ListingsPage() {
   const firestore = useFirestore();
-  const listingsCollection = collection(firestore, 'listings');
+  
+  const listingsCollection = useMemo(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'listings');
+  }, [firestore]);
+
   const { data: listings, isLoading } = useCollection(listingsCollection);
 
   return (
