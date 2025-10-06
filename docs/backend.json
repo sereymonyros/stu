@@ -1,11 +1,137 @@
-
 {
-  "entities": {},
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores public user data.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The user's unique ID from Firebase Authentication."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's public display name."
+        },
+        "photoURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the user's profile picture."
+        }
+      },
+      "required": ["uid", "displayName"]
+    },
+    "Listing": {
+      "title": "Listing",
+      "description": "Represents an item for sale.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the listing."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the item."
+        },
+        "price": {
+          "type": "number",
+          "description": "The price of the item."
+        },
+        "sellerId": {
+          "type": "string",
+          "description": "The UID of the seller."
+        },
+        "imageUrls": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "uri"
+            },
+            "description": "A list of URLs for item images."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the listing was created."
+        }
+      },
+      "required": ["title", "price", "sellerId", "createdAt"]
+    },
+    "Chat": {
+      "title": "Chat",
+      "description": "A conversation between a buyer and a seller about a listing.",
+      "type": "object",
+      "properties": {
+        "listingId": {
+          "type": "string"
+        },
+        "buyerId": {
+          "type": "string"
+        },
+        "sellerId": {
+          "type": "string"
+        },
+        "lastMessage": {
+          "type": "string",
+          "description": "The last message sent in the chat for preview purposes."
+        },
+        "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+        }
+      },
+      "required": ["listingId", "buyerId", "sellerId", "updatedAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A single message within a chat.",
+      "type": "object",
+      "properties": {
+        "senderId": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["senderId", "text", "timestamp"]
+    }
+  },
   "auth": {
     "providers": [
       "password",
       "anonymous"
     ]
   },
-  "firestore": {}
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores user profile information."
+    },
+    "/listings/{listingId}": {
+      "schema": {
+        "$ref": "#/entities/Listing"
+      },
+      "description": "Collection of all listings."
+    },
+    "/chats/{chatId}": {
+      "schema": {
+        "$ref": "#/entities/Chat"
+      },
+      "description": "Collection of all chat sessions."
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": {
+        "$ref": "#/entities/Message"
+      },
+      "description": "Sub-collection for messages within a specific chat."
+    }
+  }
 }
