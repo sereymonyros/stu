@@ -8,7 +8,7 @@ import { SearchBox } from '@/components/search-box';
 import { search } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUser, useFirestore, useCollection, errorEmitter } from '@/firebase';
-import { addDoc, collection, serverTimestamp, query, orderBy, where, getDocs, deleteDoc, writeBatch } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, query, orderBy, where, getDocs, writeBatch } from 'firebase/firestore';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuLink, SidebarProvider, SidebarFooter } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -123,6 +123,7 @@ function SearchResults() {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasSavedQuery, setHasSavedQuery] = useState(false);
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -132,14 +133,17 @@ function SearchResults() {
       setLoading(true);
       setError(null);
       setResult(null);
+      setHasSavedQuery(false); // Reset save status for new search
 
-      // Save search query to Firestore if user is logged in and it's a new query
-      if (user && firestore && queryText) {
+      // Save search query to Firestore if user is logged in
+      if (user && firestore && !hasSavedQuery) {
+        setHasSavedQuery(true); // Set flag immediately to prevent re-runs
         const queriesCollection = collection(firestore, `users/${user.uid}/searchQueries`);
+        // Check if this query already exists
         const q = query(queriesCollection, where('queryText', '==', queryText));
         
         getDocs(q).then(querySnapshot => {
-          if (querySnapshot.empty) {
+          if (querySnapshot.empty) { // Only add if it's a new, unique query
             const searchData = {
               queryText: queryText,
               timestamp: serverTimestamp(),
