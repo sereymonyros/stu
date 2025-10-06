@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth, useDoc, useFirestore } from '@/firebase';
+import { useUser, useDoc, useFirestore } from '@/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -33,7 +33,7 @@ const listingSchema = z.object({
 export default function EditListingPage() {
   const { id } = useParams();
   const firestore = useFirestore();
-  const { user, isUserLoading } = useAuth();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,18 +68,27 @@ export default function EditListingPage() {
 
   // Security check: ensure only the owner can stay on this page
   useEffect(() => {
-    if (!isUserLoading && !isListingLoading) {
-      if (!user) {
-        router.replace('/login');
-      } else if (listing && user.uid !== listing.sellerId) {
-        toast({
-          variant: "destructive",
-          title: "Unauthorized",
-          description: "You are not the owner of this listing.",
-        });
-        router.replace(`/listings/${listingId}`);
-      }
+    // Wait until both user and listing have finished loading
+    if (isUserLoading || isListingLoading) {
+      return; // Do nothing while loading
     }
+
+    // After loading, if there's no user, redirect to login
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+    
+    // After loading, if the user is not the owner, show an error and redirect
+    if (listing && user.uid !== listing.sellerId) {
+      toast({
+        variant: "destructive",
+        title: "Unauthorized",
+        description: "You are not the owner of this listing.",
+      });
+      router.replace(`/listings/${listingId}`);
+    }
+
   }, [user, isUserLoading, listing, isListingLoading, listingId, router, toast]);
 
   const onSubmit = async (values: z.infer<typeof listingSchema>) => {
