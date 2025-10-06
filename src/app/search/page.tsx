@@ -13,7 +13,7 @@ import { useUser } from '@/firebase';
 function SearchResults() {
   const searchParams = useSearchParams();
   const queryText = searchParams.get('q');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!queryText);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
