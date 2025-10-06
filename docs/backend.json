@@ -1,0 +1,121 @@
+{
+  "entities": {
+    "SearchQuery": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SearchQuery",
+      "type": "object",
+      "description": "Represents a user's search query within the Cambodia Hub application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the search query."
+        },
+        "queryText": {
+          "type": "string",
+          "description": "The text entered by the user in the search box."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time when the search query was made.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "queryText",
+        "timestamp"
+      ]
+    },
+    "SearchResult": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SearchResult",
+      "type": "object",
+      "description": "Represents a single search result returned by the Cambodia Hub application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the search result."
+        },
+        "searchQueryId": {
+          "type": "string",
+          "description": "Reference to the SearchQuery that produced this result. (Relationship: SearchQuery 1:N SearchResult)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the search result."
+        },
+        "url": {
+          "type": "string",
+          "description": "The URL associated with the search result.",
+          "format": "uri"
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the search result."
+        }
+      },
+      "required": [
+        "id",
+        "searchQueryId",
+        "title",
+        "url",
+        "description"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/searchQueries/{searchQueryId}",
+        "definition": {
+          "entityName": "SearchQuery",
+          "schema": {
+            "$ref": "#/backend/entities/SearchQuery"
+          },
+          "description": "Stores search queries initiated by a specific user. Path-based ownership is enforced using the 'userId' parameter.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who initiated the search query."
+            },
+            {
+              "name": "searchQueryId",
+              "description": "The unique identifier for the search query."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/searchQueries/{searchQueryId}/searchResults/{searchResultId}",
+        "definition": {
+          "entityName": "SearchResult",
+          "schema": {
+            "$ref": "#/backend/entities/SearchResult"
+          },
+          "description": "Stores search results associated with a specific search query. Path-based ownership is inherited from the parent 'searchQuery'.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the search query and results."
+            },
+            {
+              "name": "searchQueryId",
+              "description": "The unique identifier for the search query that produced these results."
+            },
+            {
+              "name": "searchResultId",
+              "description": "The unique identifier for the search result."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the search functionality of the Cambodia Hub app. It includes collections for storing search queries and their corresponding search results. Since user authentication is supported through both password and anonymous methods, all search queries and results are scoped to the user who initiated the query, thus providing path based ownership. This approach simplifies security rules and enables efficient querying.\n\n**Authorization Independence:** By nesting search results within search queries and then under a user's document, we create a path-based ownership model.  Security rules can then authorize read/write access based solely on the `request.auth.uid` and the path, eliminating the need for `get()` calls to other documents.\n\n**QAPs:** The structure supports secure `list` operations.  Because all documents under `/users/{userId}/searchQueries` are owned by that user, listing search queries and results can be secured by verifying `request.auth.uid == userId` in the rules, preventing unauthorized access to other users' data."
+  }
+}
