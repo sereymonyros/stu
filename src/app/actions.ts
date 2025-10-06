@@ -9,8 +9,7 @@ export async function search(formData: FormData) {
   const userId = formData.get("userId") as string | null;
 
   if (!queryText) {
-    console.log("Search query is empty.");
-    return;
+    return redirect('/search');
   }
 
   if (userId) {
