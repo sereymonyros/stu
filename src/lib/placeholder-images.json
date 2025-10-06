@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "cambodia-hero",
+      "description": "A stunning aerial view of Angkor Wat at sunrise.",
+      "imageUrl": "https://images.unsplash.com/photo-1606231140504-b6ec6cbbbf6b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxBbmdrb3IlMjBXYXR8ZW58MHx8fHwxNzU5NzQxOTU1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "Angkor Wat"
+    }
+  ]
 }
