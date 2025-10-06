@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { ArrowRight, Search } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,11 @@ function SubmitButton() {
 
 export function SearchBox({ searchAction, className }: { searchAction: (formData: FormData) => Promise<void>, className?: string }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   return (
     <form
@@ -41,12 +46,12 @@ export function SearchBox({ searchAction, className }: { searchAction: (formData
     >
       <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
       <Input
+        ref={inputRef}
         type="search"
         name="query"
         placeholder="Search for places, food, or culture..."
         className="h-12 w-full rounded-full border-2 border-border bg-background/90 pl-11 pr-14 text-base shadow-inner transition-all duration-300 ease-in-out focus:border-primary focus:bg-background focus:shadow-md focus-visible:ring-0"
         required
-        autoFocus
       />
       <SubmitButton />
     </form>
