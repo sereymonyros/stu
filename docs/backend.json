@@ -1,87 +1,11 @@
 
 {
-  "entities": {
-    "SearchQuery": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "SearchQuery",
-      "type": "object",
-      "description": "Represents a user's search query within the Cambodia Hub application.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the search query."
-        },
-        "queryText": {
-          "type": "string",
-          "description": "The text entered by the user in the search box."
-        },
-        "timestamp": {
-          "type": "string",
-          "description": "The date and time when the search query was made.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "queryText",
-        "timestamp"
-      ]
-    },
-    "SearchResult": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "SearchResult",
-      "type": "object",
-      "description": "Represents a single search result returned by the Cambodia Hub application.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the search result."
-        },
-        "searchQueryId": {
-          "type": "string",
-          "description": "Reference to the SearchQuery that produced this result. (Relationship: SearchQuery 1:N SearchResult)"
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the search result."
-        },
-        "url": {
-          "type": "string",
-          "description": "The URL associated with the search result.",
-          "format": "uri"
-        },
-        "description": {
-          "type": "string",
-          "description": "A brief description of the search result."
-        }
-      },
-      "required": [
-        "id",
-        "searchQueryId",
-        "title",
-        "url",
-        "description"
-      ]
-    }
-  },
+  "entities": {},
   "auth": {
     "providers": [
       "password",
       "anonymous"
     ]
   },
-  "firestore": {
-    "/users/{userId}/searchQueries/{searchQueryId}": {
-        "schema": {
-            "$ref": "#/entities/SearchQuery"
-        },
-        "description": "Stores search queries made by a specific user. The `userId` in the path ensures that users can only access their own queries."
-    },
-    "/users/{userId}/searchQueries/{searchQueryId}/searchResults/{searchResultId}": {
-        "schema": {
-            "$ref": "#/entities/SearchResult"
-        },
-        "description": "Stores the results for a specific search query. Access is controlled by the parent user and searchQuery documents."
-    }
-  }
+  "firestore": {}
 }
