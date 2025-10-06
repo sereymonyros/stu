@@ -107,7 +107,10 @@ export default function EditListingPage() {
     
     try {
       await updateDoc(listingRef, {
-        ...values,
+        title: values.title,
+        description: values.description,
+        price: values.price,
+        status: values.status,
         updatedAt: serverTimestamp(),
       });
       
