@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 
 // SubmitButton component needs to be a child of the form to use useFormStatus
 function SubmitButton() {
@@ -33,6 +34,8 @@ function SubmitButton() {
 export function SearchBox({ searchAction, className }: { searchAction: (formData: FormData) => Promise<void>, className?: string }) {
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchParams = useSearchParams();
+  const query = searchParams.get('q');
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -49,9 +52,10 @@ export function SearchBox({ searchAction, className }: { searchAction: (formData
         ref={inputRef}
         type="search"
         name="query"
-        placeholder="Search for places, food, or culture..."
+        placeholder="Ask about places, food, or culture in Cambodia..."
         className="h-12 w-full rounded-full border-2 border-border bg-background/90 pl-11 pr-14 text-base shadow-inner transition-all duration-300 ease-in-out focus:border-primary focus:bg-background focus:shadow-md focus-visible:ring-0"
         required
+        defaultValue={query ?? ''}
       />
       <SubmitButton />
     </form>
