@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "SearchQuery": {
@@ -70,52 +71,17 @@
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}/searchQueries/{searchQueryId}",
-        "definition": {
-          "entityName": "SearchQuery",
-          "schema": {
-            "$ref": "#/backend/entities/SearchQuery"
-          },
-          "description": "Stores search queries initiated by a specific user. Path-based ownership is enforced using the 'userId' parameter.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who initiated the search query."
-            },
-            {
-              "name": "searchQueryId",
-              "description": "The unique identifier for the search query."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/searchQueries/{searchQueryId}/searchResults/{searchResultId}",
-        "definition": {
-          "entityName": "SearchResult",
-          "schema": {
-            "$ref": "#/backend/entities/SearchResult"
-          },
-          "description": "Stores search results associated with a specific search query. Path-based ownership is inherited from the parent 'searchQuery'.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who owns the search query and results."
-            },
-            {
-              "name": "searchQueryId",
-              "description": "The unique identifier for the search query that produced these results."
-            },
-            {
-              "name": "searchResultId",
-              "description": "The unique identifier for the search result."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore data structure is designed to support the search functionality of the Cambodia Hub app. It includes collections for storing search queries and their corresponding search results. Since user authentication is supported through both password and anonymous methods, all search queries and results are scoped to the user who initiated the query, thus providing path based ownership. This approach simplifies security rules and enables efficient querying.\n\n**Authorization Independence:** By nesting search results within search queries and then under a user's document, we create a path-based ownership model.  Security rules can then authorize read/write access based solely on the `request.auth.uid` and the path, eliminating the need for `get()` calls to other documents.\n\n**QAPs:** The structure supports secure `list` operations.  Because all documents under `/users/{userId}/searchQueries` are owned by that user, listing search queries and results can be secured by verifying `request.auth.uid == userId` in the rules, preventing unauthorized access to other users' data."
+    "/users/{userId}/searchQueries/{searchQueryId}": {
+        "schema": {
+            "$ref": "#/entities/SearchQuery"
+        },
+        "description": "Stores search queries made by a specific user. The `userId` in the path ensures that users can only access their own queries."
+    },
+    "/users/{userId}/searchQueries/{searchQueryId}/searchResults/{searchResultId}": {
+        "schema": {
+            "$ref": "#/entities/SearchResult"
+        },
+        "description": "Stores the results for a specific search query. Access is controlled by the parent user and searchQuery documents."
+    }
   }
 }

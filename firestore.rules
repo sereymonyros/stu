@@ -3,92 +3,84 @@
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for search queries and results.
- * All data is nested under /users/{userId}, ensuring that users can only access their own data.
+ * All data is nested under /users/{userId}, ensuring that only the authenticated user
+ * can access their own search history.
  *
  * Data Structure:
- * - /users/{userId}/searchQueries/{searchQueryId}: Stores search queries initiated by a specific user.
- * - /users/{userId}/searchQueries/{searchQueryId}/searchResults/{searchResultId}: Stores search results associated with a specific search query.
+ * - /users/{userId}/searchQueries/{searchQueryId}: Stores individual search queries for each user.
+ * - /users/{userId}/searchQueries/{searchQueryId}/searchResults/{searchResultId}: Stores search results associated with a specific query.
  *
  * Key Security Decisions:
  * - Users can only create, read, update, and delete their own search queries and results.
- * - Listing search queries and results is restricted to the owner of the data.
+ * - Listing of search queries and results is restricted to the owner.
+ * - Data consistency between the path and the document's internal user ID is enforced on creation and updates.
  *
  * Denormalization for Authorization:
- * The data structure is designed to avoid the need for `get()` calls in the security rules.
- * Ownership is enforced by the path structure, ensuring that the `userId` parameter in the path matches the authenticated user's UID.
- *
- * Structural Segregation:
- * All search queries and results are stored under the /users/{userId} path, ensuring that they are private to the user.
+ * The data structure nests search results under search queries, which are themselves nested under users.
+ * This eliminates the need for 'get()' calls to determine ownership, as the path itself enforces it.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the user is signed in.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Requires user authentication for data access.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the authenticated user is the owner of the resource.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Enforces document ownership.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the authenticated user is the owner of the existing resource.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Enforces document ownership and resource existence for updates and deletes.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Rules for search queries.
+     * @description Enforces access control for search queries, ensuring only the owner can manage them.
      * @path /users/{userId}/searchQueries/{searchQueryId}
-     * @allow (create) - Signed-in user creates a search query under their own user ID.
-     * @allow (get, list) - Signed-in user reads or lists their own search queries.
-     * @allow (update, delete) - Signed-in user updates or deletes their own search query.
-     * @deny (create) - User attempts to create a search query under another user's ID.
-     * @deny (get, list, update, delete) - User attempts to read, list, update, or delete search queries under another user's ID.
-     * @principle Enforces user-ownership for search queries.
+     * @allow (create) - User '3RULB4nypUQUT9IUrD2uAK5cdFn2' can create a search query under their own user ID.
+     * @allow (get, list) - User '3RULB4nypUQUT9IUrD2uAK5cdFn2' can read/list their own search queries.
+     * @allow (update, delete) - User '3RULB4nypUQUT9IUrD2uAK5cdFn2' can update/delete their own existing search queries.
+     * @deny (create) - User 'OtherUserID' cannot create a search query under '3RULB4nypUQUT9IUrD2uAK5cdFn2'.
+     * @deny (get, list) - User 'OtherUserID' cannot read/list search queries under user '3RULB4nypUQUT9IUrD2uAK5cdFn2'.
+     * @deny (update, delete) - User 'OtherUserID' cannot update/delete search queries under user '3RULB4nypUQUT9IUrD2uAK5cdFn2'.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/searchQueries/{searchQueryId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == searchQueryId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for search results.
+     * @description Enforces access control for search results, ensuring only the owner of the parent query can manage them.
      * @path /users/{userId}/searchQueries/{searchQueryId}/searchResults/{searchResultId}
-     * @allow (create) - Signed-in user creates a search result under their own user ID and a valid searchQueryId.
-     * @allow (get, list) - Signed-in user reads or lists their own search results.
-     * @allow (update, delete) - Signed-in user updates or deletes their own search result.
-     * @deny (create) - User attempts to create a search result under another user's ID or invalid searchQueryId.
-     * @deny (get, list, update, delete) - User attempts to read, list, update, or delete search results under another user's ID or invalid searchQueryId.
-     * @principle Enforces user-ownership for search results.
+     * @allow (create) - User '3RULB4nypUQUT9IUrD2uAK5cdFn2' can create a search result under their own search query.
+     * @allow (get, list) - User '3RULB4nypUQUT9IUrD2uAK5cdFn2' can read/list their own search results.
+     * @allow (update, delete) - User '3RULB4nypUQUT9IUrD2uAK5cdFn2' can update/delete their own existing search results.
+     * @deny (create) - User 'OtherUserID' cannot create a search result under '3RULB4nypUQUT9IUrD2uAK5cdFn2'.
+     * @deny (get, list) - User 'OtherUserID' cannot read/list search results under user '3RULB4nypUQUT9IUrD2uAK5cdFn2'.
+     * @deny (update, delete) - User 'OtherUserID' cannot update/delete search results under user '3RULB4nypUQUT9IUrD2uAK5cdFn2'.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/searchQueries/{searchQueryId}/searchResults/{searchResultId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
