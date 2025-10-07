@@ -106,24 +106,18 @@ export default function ListingsPage() {
 
                 return (
                   <Card key={listing.id} className="overflow-hidden h-full flex flex-col transition-all duration-200 hover:shadow-xl hover:-translate-y-1">
-                     <Link href={`/listings/${listing.id}`} className="block group">
-                      <CardHeader className="p-0">
-                        <div className="aspect-square relative w-full">
-                          <Image
-                            src={listing.imageUrls?.[0] || 'https://picsum.photos/seed/default/600/600'}
-                            alt={listing.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      </CardHeader>
-                    </Link>
+                      <div className="aspect-square relative w-full">
+                        <Image
+                          src={listing.imageUrls?.[0] || 'https://picsum.photos/seed/default/600/600'}
+                          alt={listing.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
                     <CardContent className="p-4 flex-grow">
-                        <Link href={`/listings/${listing.id}`} className="block group">
-                          <CardTitle className="text-lg font-semibold truncate group-hover:text-primary">
-                            {listing.title}
-                          </CardTitle>
-                        </Link>
+                        <CardTitle className="text-lg font-semibold truncate">
+                          {listing.title}
+                        </CardTitle>
                     </CardContent>
                     <CardFooter className="p-4 pt-0 flex justify-between items-end">
                       <div>

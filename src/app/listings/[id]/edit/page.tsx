@@ -92,10 +92,10 @@ export default function EditListingPage() {
         title: "Unauthorized",
         description: "You are not the owner of this listing.",
       });
-      router.replace(`/listings/${listingId}`);
+      router.replace(`/listings`);
     }
 
-  }, [user, isUserLoading, listing, isListingLoading, listingId, router, toast]);
+  }, [user, isUserLoading, listing, isListingLoading, router, toast]);
 
   const onSubmit = async (values: z.infer<typeof listingSchema>) => {
     if (!listingRef || !listing) return;
@@ -119,7 +119,7 @@ export default function EditListingPage() {
         description: "Your item has been successfully updated.",
       });
 
-      router.push(`/listings/${listingId}`);
+      router.push(`/listings`);
 
     } catch (error: any) {
         toast({
