@@ -188,6 +188,7 @@ export default function EditListingPage() {
             title: 'Uh oh! Something went wrong.',
             description: error.message || 'There was a problem updating your listing.',
         });
+    } finally {
         setIsSubmitting(false);
     }
   };
