@@ -103,15 +103,9 @@ export default function EditListingPage() {
     
     let updatedValues: any = { ...values };
 
-    // If new price is lower than current price, set originalPrice
-    if (values.price < listing.price) {
-      // If there's no original price yet, or the new price is even lower, set the current price as original
-      if (!listing.originalPrice || values.price < listing.originalPrice) {
+    // When the price is changed, set the current price to be the original price
+    if (values.price !== listing.price) {
         updatedValues.originalPrice = listing.price;
-      }
-    } else if (values.price >= (listing.originalPrice || listing.price)) {
-      // If price is raised back to or above original, clear the sale
-      updatedValues.originalPrice = null;
     }
 
     try {
@@ -217,7 +211,7 @@ export default function EditListingPage() {
                             </div>
                         </FormControl>
                          <FormDescription>
-                            If you lower the price, the original price will be shown with a strikethrough.
+                            If you change the price, the previous price will be shown with a strikethrough.
                         </FormDescription>
                         <FormMessage />
                         </FormItem>
