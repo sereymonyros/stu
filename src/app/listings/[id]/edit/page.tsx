@@ -115,21 +115,29 @@ export default function EditListingPage() {
   }
 
   const handleRemoveExistingImage = async (imageUrlToRemove: string) => {
+    setIsSubmitting(true);
     try {
+      // Only try to delete from storage if it's a firebase storage URL
+      if (imageUrlToRemove.includes('firebasestorage.googleapis.com')) {
         const storage = getStorage();
+        // Create a reference from the URL
         const imageRef = ref(storage, imageUrlToRemove);
         await deleteObject(imageRef);
-        
-        const updatedImageUrls = existingImageUrls.filter((url) => url !== imageUrlToRemove);
-        setExistingImageUrls(updatedImageUrls);
-        
-        if (listingRef) {
-            await updateDoc(listingRef, { imageUrls: updatedImageUrls });
-        }
+      }
+      
+      const updatedImageUrls = existingImageUrls.filter((url) => url !== imageUrlToRemove);
+      setExistingImageUrls(updatedImageUrls);
+      
+      if (listingRef) {
+          await updateDoc(listingRef, { imageUrls: updatedImageUrls });
+      }
 
-        toast({ title: "Image removed." });
+      toast({ title: "Image removed successfully." });
     } catch (error: any) {
+        console.error("Failed to remove image:", error);
         toast({ variant: 'destructive', title: 'Failed to remove image', description: error.message });
+    } finally {
+        setIsSubmitting(false);
     }
   }
 
@@ -150,10 +158,10 @@ export default function EditListingPage() {
         const newImageUrls = await Promise.all(uploadPromises);
         updatedImageUrls.push(...newImageUrls);
       }
-
+      
       if (updatedImageUrls.length === 0) {
           toast({ variant: 'destructive', title: 'An item must have at least one image.'});
-          setIsSubmitting(false); // Reset button here
+          setIsSubmitting(false);
           return;
       }
 
@@ -239,6 +247,7 @@ export default function EditListingPage() {
                                 size="icon"
                                 className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                                 onClick={() => handleRemoveExistingImage(url)}
+                                disabled={isSubmitting}
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -251,7 +260,7 @@ export default function EditListingPage() {
                     </FormItem>
 
                     <FormField control={form.control} name="images" render={({ field }) => (
-                        <FormItem><FormLabel>Add More Images</FormLabel><FormControl><Input type="file" multiple accept="image/*" onChange={(e) => {field.onChange(e.target.files); handleImageChange(e);}}/></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Add More Images</FormLabel><FormControl><Input type="file" multiple accept="image/*" onChange={(e) => {field.onChange(e.target.files); handleImageChange(e);}} disabled={isSubmitting}/></FormControl><FormMessage /></FormItem>
                     )}/>
 
                     {newImagePreviews.length > 0 && (
