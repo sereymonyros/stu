@@ -36,7 +36,6 @@ const listingSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters long.' }),
   description: z.string().optional(),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
-  originalPrice: z.coerce.number().positive().optional(),
   status: z.enum(['available', 'pending', 'sold']),
 });
 
@@ -63,7 +62,6 @@ export default function EditListingPage() {
       title: '',
       description: '',
       price: 0,
-      originalPrice: undefined,
       status: 'available',
     },
   });
@@ -74,7 +72,6 @@ export default function EditListingPage() {
         title: listing.title,
         description: listing.description,
         price: listing.price,
-        originalPrice: listing.originalPrice,
         status: listing.status,
       });
     }
@@ -82,18 +79,13 @@ export default function EditListingPage() {
 
   // Security check: ensure only the owner can stay on this page
   useEffect(() => {
-    // Wait until both user and listing have finished loading
     if (isUserLoading || isListingLoading) {
-      return; // Do nothing while loading
+      return;
     }
-
-    // After loading, if there's no user, redirect to login
     if (!user) {
       router.replace('/login');
       return;
     }
-    
-    // After loading, if the user is not the owner, show an error and redirect
     if (listing && user.uid !== listing.sellerId) {
       toast({
         variant: "destructive",
@@ -106,13 +98,25 @@ export default function EditListingPage() {
   }, [user, isUserLoading, listing, isListingLoading, listingId, router, toast]);
 
   const onSubmit = async (values: z.infer<typeof listingSchema>) => {
-    if (!listingRef) return;
+    if (!listingRef || !listing) return;
     setIsSubmitting(true);
     
+    let updatedValues: any = { ...values };
+
+    // If new price is lower than current price, set originalPrice
+    if (values.price < listing.price) {
+      // If there's no original price yet, or the new price is even lower, set the current price as original
+      if (!listing.originalPrice || values.price < listing.originalPrice) {
+        updatedValues.originalPrice = listing.price;
+      }
+    } else if (values.price >= (listing.originalPrice || listing.price)) {
+      // If price is raised back to or above original, clear the sale
+      updatedValues.originalPrice = null;
+    }
+
     try {
       await updateDoc(listingRef, {
-        ...values,
-        originalPrice: values.originalPrice || null, // Store null if empty
+        ...updatedValues,
         updatedAt: serverTimestamp(),
       });
       
@@ -121,7 +125,7 @@ export default function EditListingPage() {
         description: "Your item has been successfully updated.",
       });
 
-      router.push('/listings');
+      router.push(`/listings/${listingId}`);
 
     } catch (error: any) {
         toast({
@@ -205,31 +209,15 @@ export default function EditListingPage() {
                     name="price"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Price (Current)</FormLabel>
+                        <FormLabel>Price</FormLabel>
                         <FormControl>
                             <div className="relative">
                                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
                                 <Input type="number" placeholder="0.00" className="pl-7" {...field} />
                             </div>
                         </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="originalPrice"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Original Price</FormLabel>
-                        <FormControl>
-                            <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                                <Input type="number" placeholder="Optional" className="pl-7" {...field} value={field.value ?? ''}/>
-                            </div>
-                        </FormControl>
                          <FormDescription>
-                            If this item is on sale, enter the old price here to display it with a strikethrough.
+                            If you lower the price, the original price will be shown with a strikethrough.
                         </FormDescription>
                         <FormMessage />
                         </FormItem>
