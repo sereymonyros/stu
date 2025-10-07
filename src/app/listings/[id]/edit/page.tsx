@@ -117,14 +117,11 @@ export default function EditListingPage() {
   const handleRemoveExistingImage = async (imageUrlToRemove: string, index: number) => {
     if (!listingRef) return;
     try {
-        // Remove from UI state
         const updatedImageUrls = existingImageUrls.filter((_, i) => i !== index);
         setExistingImageUrls(updatedImageUrls);
 
-        // Update Firestore
         await updateDoc(listingRef, { imageUrls: updatedImageUrls });
 
-        // Delete from Storage
         const storage = getStorage();
         const imageRef = ref(storage, imageUrlToRemove);
         await deleteObject(imageRef);
@@ -132,8 +129,7 @@ export default function EditListingPage() {
         toast({ title: "Image removed." });
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Failed to remove image', description: error.message });
-        // Revert UI state on failure
-        setExistingImageUrls(prev => [...prev, imageUrlToRemove].sort()); 
+        setExistingImageUrls(prev => [...prev, imageUrlToRemove].sort((a, b) => a.localeCompare(b))); 
     }
   }
 
@@ -145,7 +141,6 @@ export default function EditListingPage() {
       const storage = getStorage();
       let updatedImageUrls = [...existingImageUrls];
 
-      // Upload new images
       if (values.images && values.images.length > 0) {
         for (const file of Array.from(values.images)) {
           const storageRef = ref(storage, `listings/${user.uid}/${Date.now()}-${file.name}`);
@@ -157,18 +152,16 @@ export default function EditListingPage() {
 
       if (updatedImageUrls.length === 0) {
           toast({ variant: 'destructive', title: 'An item must have at least one image.'});
-          setIsSubmitting(false);
           return;
       }
 
       let dataToUpdate: any = {
         ...values,
-        images: undefined, // Don't save the FileList object
+        images: undefined,
         imageUrls: updatedImageUrls,
         updatedAt: serverTimestamp(),
       };
 
-      // Handle price change logic
       if (values.price !== listing.price) {
           dataToUpdate.originalPrice = listing.price;
       }
