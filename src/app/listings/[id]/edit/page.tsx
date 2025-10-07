@@ -142,16 +142,18 @@ export default function EditListingPage() {
       let updatedImageUrls = [...existingImageUrls];
 
       if (values.images && values.images.length > 0) {
-        for (const file of Array.from(values.images)) {
-          const storageRef = ref(storage, `listings/${user.uid}/${Date.now()}-${file.name}`);
-          const snapshot = await uploadBytes(storageRef, file);
-          const downloadURL = await getDownloadURL(snapshot.ref);
-          updatedImageUrls.push(downloadURL);
-        }
+        const imageFiles = Array.from(values.images);
+        const uploadPromises = imageFiles.map(file => {
+            const storageRef = ref(storage, `listings/${user.uid}/${Date.now()}-${file.name}`);
+            return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
+        });
+        const newImageUrls = await Promise.all(uploadPromises);
+        updatedImageUrls.push(...newImageUrls);
       }
 
       if (updatedImageUrls.length === 0) {
           toast({ variant: 'destructive', title: 'An item must have at least one image.'});
+          setIsSubmitting(false);
           return;
       }
 

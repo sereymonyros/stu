@@ -83,17 +83,16 @@ export default function NewListingPage() {
     setIsLoading(true);
     
     try {
-      // 1. Upload images to Firebase Storage
       const storage = getStorage();
-      const imageUrls: string[] = [];
-      for (const file of Array.from(values.images)) {
-        const storageRef = ref(storage, `listings/${auth.currentUser.uid}/${Date.now()}-${file.name}`);
-        const snapshot = await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        imageUrls.push(downloadURL);
-      }
+      const imageFiles = Array.from(values.images);
+      
+      const uploadPromises = imageFiles.map(file => {
+          const storageRef = ref(storage, `listings/${auth.currentUser!.uid}/${Date.now()}-${file.name}`);
+          return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
+      });
 
-      // 2. Create listing in Firestore
+      const imageUrls = await Promise.all(uploadPromises);
+
       const listingsCollection = collection(firestore, 'listings');
       await addDoc(listingsCollection, {
         title: values.title,
@@ -118,6 +117,7 @@ export default function NewListingPage() {
             title: 'Uh oh! Something went wrong.',
             description: error.message || 'There was a problem creating your listing.',
         });
+    } finally {
         setIsLoading(false);
     }
   };
