@@ -43,6 +43,10 @@
           "type": "number",
           "description": "The price of the item."
         },
+        "originalPrice": {
+          "type": "number",
+          "description": "The original price of the item, for displaying a sale."
+        },
         "sellerId": {
           "type": "string",
           "description": "The UID of the seller."

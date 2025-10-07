@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -35,6 +36,7 @@ const listingSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters long.' }),
   description: z.string().optional(),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
+  originalPrice: z.coerce.number().positive().optional(),
   status: z.enum(['available', 'pending', 'sold']),
 });
 
@@ -61,6 +63,7 @@ export default function EditListingPage() {
       title: '',
       description: '',
       price: 0,
+      originalPrice: undefined,
       status: 'available',
     },
   });
@@ -71,6 +74,7 @@ export default function EditListingPage() {
         title: listing.title,
         description: listing.description,
         price: listing.price,
+        originalPrice: listing.originalPrice,
         status: listing.status,
       });
     }
@@ -107,10 +111,8 @@ export default function EditListingPage() {
     
     try {
       await updateDoc(listingRef, {
-        title: values.title,
-        description: values.description,
-        price: values.price,
-        status: values.status,
+        ...values,
+        originalPrice: values.originalPrice || null, // Store null if empty
         updatedAt: serverTimestamp(),
       });
       
@@ -203,13 +205,32 @@ export default function EditListingPage() {
                     name="price"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Price</FormLabel>
+                        <FormLabel>Price (Current)</FormLabel>
                         <FormControl>
                             <div className="relative">
                                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
                                 <Input type="number" placeholder="0.00" className="pl-7" {...field} />
                             </div>
                         </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="originalPrice"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Original Price</FormLabel>
+                        <FormControl>
+                            <div className="relative">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
+                                <Input type="number" placeholder="Optional" className="pl-7" {...field} value={field.value ?? ''}/>
+                            </div>
+                        </FormControl>
+                         <FormDescription>
+                            If this item is on sale, enter the old price here to display it with a strikethrough.
+                        </FormDescription>
                         <FormMessage />
                         </FormItem>
                     )}

@@ -111,7 +111,14 @@ export default function ListingDetailPage() {
 
             <div className="flex flex-col space-y-4">
               <h1 className="text-4xl font-extrabold tracking-tight">{listing.title}</h1>
-              <p className="text-3xl font-bold text-primary">${listing.price}</p>
+              <div className="flex items-baseline gap-4">
+                <p className="text-3xl font-bold text-primary">${listing.price}</p>
+                {listing.originalPrice && (
+                  <p className="text-xl font-medium text-muted-foreground line-through">
+                    ${listing.originalPrice}
+                  </p>
+                )}
+              </div>
               <p className="text-lg text-muted-foreground">{listing.description}</p>
               
               {isOwner ? (
