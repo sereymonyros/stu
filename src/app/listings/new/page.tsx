@@ -34,7 +34,7 @@ const listingSchema = z.object({
   description: z.string().optional(),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   images: z.custom<FileList>()
-    .refine((files) => files && files.length > 0, "At least one image is required.")
+    .refine((files) => files?.length > 0, "At least one image is required.")
     .refine((files) => files && Array.from(files).every((file) => file.size <= MAX_FILE_SIZE), `Max file size is 5MB.`)
     .refine(
       (files) => files && Array.from(files).every((file) => ACCEPTED_IMAGE_TYPES.includes(file.type)),
@@ -71,18 +71,18 @@ export default function NewListingPage() {
   
   const onSubmit = async (values: z.infer<typeof listingSchema>) => {
     setIsLoading(true);
-    const user = auth.currentUser;
-
-    if (!user) {
+    
+    // CRITICAL FIX: Ensure user is available before proceeding.
+    if (!auth.currentUser) {
         toast({
             variant: "destructive",
             title: "Not authenticated",
-            description: "You must be logged in to post a listing.",
+            description: "You must be logged in to post a listing. Please refresh and try again.",
         });
-        router.push('/login');
         setIsLoading(false);
         return;
     }
+    const user = auth.currentUser;
     
     try {
       const storage = getStorage();

@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useUser, useDoc, useFirestore } from '@/firebase';
+import { useUser, useDoc, useFirestore, useAuth } from '@/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { useParams, useRouter } from 'next/navigation';
@@ -49,6 +49,7 @@ const listingSchema = z.object({
 export default function EditListingPage() {
   const { id } = useParams();
   const firestore = useFirestore();
+  const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
@@ -117,22 +118,28 @@ export default function EditListingPage() {
   const handleRemoveExistingImage = async (imageUrlToRemove: string) => {
     setIsSubmitting(true);
     try {
-      // Only try to delete from storage if it's a firebase storage URL
-      if (imageUrlToRemove.includes('firebasestorage.googleapis.com')) {
-        const storage = getStorage();
-        // Create a reference from the URL
-        const imageRef = ref(storage, imageUrlToRemove);
-        await deleteObject(imageRef);
-      }
-      
-      const updatedImageUrls = existingImageUrls.filter((url) => url !== imageUrlToRemove);
-      setExistingImageUrls(updatedImageUrls);
-      
-      if (listingRef) {
-          await updateDoc(listingRef, { imageUrls: updatedImageUrls });
-      }
+        const isFirebaseUrl = imageUrlToRemove.includes('firebasestorage.googleapis.com');
+        if (isFirebaseUrl) {
+            const storage = getStorage();
+            const decodedUrl = decodeURIComponent(imageUrlToRemove);
+            const pathStartIndex = decodedUrl.indexOf('/o/') + 3;
+            const pathEndIndex = decodedUrl.indexOf('?');
+            const filePath = decodedUrl.substring(pathStartIndex, pathEndIndex);
 
-      toast({ title: "Image removed successfully." });
+            if (filePath) {
+                const imageRef = ref(storage, filePath);
+                await deleteObject(imageRef);
+            }
+        }
+      
+        const updatedImageUrls = existingImageUrls.filter((url) => url !== imageUrlToRemove);
+        setExistingImageUrls(updatedImageUrls);
+      
+        if (listingRef) {
+          await updateDoc(listingRef, { imageUrls: updatedImageUrls });
+        }
+
+        toast({ title: "Image removed successfully." });
     } catch (error: any) {
         console.error("Failed to remove image:", error);
         toast({ variant: 'destructive', title: 'Failed to remove image', description: error.message });
@@ -142,8 +149,24 @@ export default function EditListingPage() {
   }
 
   const onSubmit = async (values: z.infer<typeof listingSchema>) => {
-    if (!listingRef || !listing || !user) return;
     setIsSubmitting(true);
+
+    if (!listingRef || !listing) {
+        setIsSubmitting(false);
+        return;
+    }
+
+    // CRITICAL FIX: Ensure user is available before proceeding.
+    if (!auth.currentUser) {
+        toast({
+            variant: "destructive",
+            title: "Not authenticated",
+            description: "You must be logged in to edit a listing. Please refresh and try again.",
+        });
+        setIsSubmitting(false);
+        return;
+    }
+    const user = auth.currentUser;
     
     try {
       const storage = getStorage();
