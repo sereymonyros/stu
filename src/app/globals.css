@@ -86,3 +86,9 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+    .header-link {
+        @apply hover:bg-primary hover:text-primary-foreground;
+    }
+}
