@@ -2,12 +2,8 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Rules for listings images
-    match /listings/{allPaths=**} {
-      // Allow anyone to read images
-      allow read;
-      // Allow authenticated users to create, update, and delete images
-      allow create, update, delete: if request.auth != null;
+    match /{allPaths=**} {
+      allow read, write if true;
     }
   }
 }

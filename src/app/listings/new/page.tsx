@@ -89,7 +89,7 @@ export default function NewListingPage() {
       const imageFiles = Array.from(values.images);
       
       const uploadPromises = imageFiles.map(file => {
-          const storageRef = ref(storage, `listings/${user.uid}/${Date.now()}-${file.name}`);
+          const storageRef = ref(storage, `${user.uid}/${Date.now()}-${file.name}`);
           return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
       });
 
