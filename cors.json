@@ -4,7 +4,9 @@
         "http://localhost:6000", 
         "http://127.0.0.1:6000", 
         "https://6000-firebase-studio-1759763908540.cluster-2ee5vomxonazmrcv3tg2ecztku.cloudworkstations.dev/",
-        "https://9000-firebase-studio-1759763908540.cluster-2ee5vomxonazmrcv3tg2ecztku.cloudworkstations.dev/"
+        "https://9000-firebase-studio-1759763908540.cluster-2ee5vomxonazmrcv3tg2ecztku.cloudworkstations.dev/",
+        "firebasestorage.googleapis.com",
+        "https://firebasestorage.googleapis.com"
       ],
       "method": ["GET", "PUT", "POST", "DELETE", "HEAD"],
       "responseHeader": ["Content-Type", "Firebase-Storage-Resumable-Upload"],

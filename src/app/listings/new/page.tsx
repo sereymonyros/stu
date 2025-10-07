@@ -39,10 +39,10 @@ const listingSchema = z.object({
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   images: z.custom<FileList>()
     .refine(isFileList, "Images must be a FileList.")
-    .refine((files) => files.length > 0, "At least one image is required.")
-    .refine((files) => Array.from(files).every((file) => file.size <= MAX_FILE_SIZE), `Max file size is 5MB.`)
+    .refine((files) => files?.length > 0, "At least one image is required.")
+    .refine((files) => Array.from(files ?? []).every((file) => file.size <= MAX_FILE_SIZE), `Max file size is 5MB.`)
     .refine(
-      (files) => Array.from(files).every((file) => ACCEPTED_IMAGE_TYPES.includes(file.type)),
+      (files) => Array.from(files ?? []).every((file) => ACCEPTED_IMAGE_TYPES.includes(file.type)),
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
 });
@@ -86,24 +86,25 @@ export default function NewListingPage() {
   const onSubmit = async (values: z.infer<typeof listingSchema>) => {
     setIsLoading(true);
     
-    const user = auth.currentUser;
-    if (!user) {
+    // CRITICAL FIX: Ensure user is available before proceeding.
+    if (!auth.currentUser) {
         toast({
             variant: "destructive",
             title: "Not authenticated",
-            description: "You must be logged in to post a listing.",
+            description: "You must be logged in to post a listing. Please refresh and try again.",
         });
         setIsLoading(false);
-        router.push('/login');
         return;
     }
+    const user = auth.currentUser;
     
     try {
       const storage = getStorage();
       const imageFiles = Array.from(values.images);
-      
+
+      // Use Promise.all for more robust and parallel uploads
       const uploadPromises = imageFiles.map(file => {
-        const storageRef = ref(storage, `listings/${user.uid}/${Date.now()}-${file.name}`);
+        const storageRef = ref(storage, `listings/${user.uid}/${Date.now()}-${file.name}`);      
         return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
       });
 
