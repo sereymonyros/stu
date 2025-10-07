@@ -23,7 +23,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { useEffect, useState } from 'react';
-import { getAuth as getFirebaseAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth as getFirebaseAuth, onAuthStateChanged, User } from 'firebase/auth';
 import Image from 'next/image';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -70,24 +70,26 @@ export default function NewListingPage() {
   }, [router]);
   
   const onSubmit = async (values: z.infer<typeof listingSchema>) => {
-    if (!auth.currentUser) {
+    setIsLoading(true);
+    const user = auth.currentUser;
+
+    if (!user) {
         toast({
             variant: "destructive",
             title: "Not authenticated",
             description: "You must be logged in to post a listing.",
         });
         router.push('/login');
+        setIsLoading(false);
         return;
     }
-
-    setIsLoading(true);
     
     try {
       const storage = getStorage();
       const imageFiles = Array.from(values.images);
       
       const uploadPromises = imageFiles.map(file => {
-          const storageRef = ref(storage, `listings/${auth.currentUser!.uid}/${Date.now()}-${file.name}`);
+          const storageRef = ref(storage, `listings/${user.uid}/${Date.now()}-${file.name}`);
           return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
       });
 
@@ -98,7 +100,7 @@ export default function NewListingPage() {
         title: values.title,
         description: values.description,
         price: values.price,
-        sellerId: auth.currentUser.uid,
+        sellerId: user.uid,
         createdAt: serverTimestamp(),
         imageUrls: imageUrls,
         status: 'available',
