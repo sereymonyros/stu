@@ -87,10 +87,11 @@ export default function NewListingPage() {
     try {
       const storage = getStorage();
       const imageFiles = Array.from(values.images);
+      debugger;
       
       const uploadPromises = imageFiles.map(file => {
-          const storageRef = ref(storage, `${user.uid}/${Date.now()}-${file.name}`);
-          return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
+        const storageRef = ref(storage, `listings/${user.uid}/${Date.now()}-${file.name}`);
+        return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
       });
 
       const imageUrls = await Promise.all(uploadPromises);
