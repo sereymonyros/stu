@@ -34,10 +34,10 @@ const listingSchema = z.object({
   description: z.string().optional(),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   images: z.custom<FileList>()
-    .refine((files) => files?.length > 0, "At least one image is required.")
-    .refine((files) => Array.from(files).every((file) => file.size <= MAX_FILE_SIZE), `Max file size is 5MB.`)
+    .refine((files) => files && files.length > 0, "At least one image is required.")
+    .refine((files) => files && Array.from(files).every((file) => file.size <= MAX_FILE_SIZE), `Max file size is 5MB.`)
     .refine(
-      (files) => Array.from(files).every((file) => ACCEPTED_IMAGE_TYPES.includes(file.type)),
+      (files) => files && Array.from(files).every((file) => ACCEPTED_IMAGE_TYPES.includes(file.type)),
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
 });
