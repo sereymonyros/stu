@@ -23,7 +23,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth as getFirebaseAuth, onAuthStateChanged } from 'firebase/auth';
 import Image from 'next/image';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -60,7 +60,7 @@ export default function NewListingPage() {
   });
 
   useEffect(() => {
-    const authInstance = getAuth();
+    const authInstance = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(authInstance, (user) => {
       if (!user) {
         router.push('/login');
@@ -112,6 +112,7 @@ export default function NewListingPage() {
       router.push(`/listings`);
 
     } catch (error: any) {
+        console.error("Error creating listing:", error);
         toast({
             variant: 'destructive',
             title: 'Uh oh! Something went wrong.',

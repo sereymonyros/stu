@@ -114,22 +114,22 @@ export default function EditListingPage() {
     }
   }
 
-  const handleRemoveExistingImage = async (imageUrlToRemove: string, index: number) => {
-    if (!listingRef) return;
+  const handleRemoveExistingImage = async (imageUrlToRemove: string) => {
     try {
-        const updatedImageUrls = existingImageUrls.filter((_, i) => i !== index);
-        setExistingImageUrls(updatedImageUrls);
-
-        await updateDoc(listingRef, { imageUrls: updatedImageUrls });
-
         const storage = getStorage();
         const imageRef = ref(storage, imageUrlToRemove);
         await deleteObject(imageRef);
+        
+        const updatedImageUrls = existingImageUrls.filter((url) => url !== imageUrlToRemove);
+        setExistingImageUrls(updatedImageUrls);
+        
+        if (listingRef) {
+            await updateDoc(listingRef, { imageUrls: updatedImageUrls });
+        }
 
         toast({ title: "Image removed." });
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Failed to remove image', description: error.message });
-        setExistingImageUrls(prev => [...prev, imageUrlToRemove].sort((a, b) => a.localeCompare(b))); 
     }
   }
 
@@ -153,7 +153,7 @@ export default function EditListingPage() {
 
       if (updatedImageUrls.length === 0) {
           toast({ variant: 'destructive', title: 'An item must have at least one image.'});
-          setIsSubmitting(false);
+          setIsSubmitting(false); // Reset button here
           return;
       }
 
@@ -178,6 +178,7 @@ export default function EditListingPage() {
       router.push(`/listings`);
 
     } catch (error: any) {
+        console.error("Error updating listing:", error);
         toast({
             variant: 'destructive',
             title: 'Uh oh! Something went wrong.',
@@ -237,7 +238,7 @@ export default function EditListingPage() {
                                 variant="destructive"
                                 size="icon"
                                 className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => handleRemoveExistingImage(url, i)}
+                                onClick={() => handleRemoveExistingImage(url)}
                               >
                                 <X className="h-4 w-4" />
                               </Button>
