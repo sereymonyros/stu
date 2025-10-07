@@ -2,11 +2,12 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow public read on all images inside the listings folder
-    // Allow writes only by authenticated users to any path under listings/
+    // Rules for listings images
     match /listings/{allPaths=**} {
+      // Allow anyone to read images
       allow read;
-      allow write: if request.auth != null;
+      // Allow authenticated users to create, update, and delete images
+      allow create, update, delete: if request.auth != null;
     }
   }
 }
