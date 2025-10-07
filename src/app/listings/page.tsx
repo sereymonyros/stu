@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react';
 import { Pencil, MessageSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 export default function ListingsPage() {
   const firestore = useFirestore();
@@ -106,17 +107,44 @@ export default function ListingsPage() {
 
                 return (
                   <Card key={listing.id} className="overflow-hidden h-full flex flex-col transition-all duration-200 hover:shadow-xl hover:-translate-y-1">
-                      <div className="aspect-square relative w-full">
-                        <Image
-                          src={listing.imageUrls?.[0] || 'https://picsum.photos/seed/default/600/600'}
-                          alt={listing.title}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
+                      <Carousel className="w-full relative">
+                        <CarouselContent>
+                          {listing.imageUrls && listing.imageUrls.length > 0 ? (
+                            listing.imageUrls.map((url: string, index: number) => (
+                              <CarouselItem key={index}>
+                                <div className="aspect-square relative w-full">
+                                  <Image
+                                    src={url}
+                                    alt={`${listing.title} - image ${index + 1}`}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              </CarouselItem>
+                            ))
+                          ) : (
+                             <CarouselItem>
+                                <div className="aspect-square relative w-full">
+                                  <Image
+                                    src={'https://picsum.photos/seed/default/600/600'}
+                                    alt={listing.title}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              </CarouselItem>
+                          )}
+                        </CarouselContent>
+                        {listing.imageUrls?.length > 1 && (
+                          <>
+                            <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
+                            <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
+                          </>
+                        )}
+                      </Carousel>
                     <CardContent className="p-4 flex-grow">
-                        <CardTitle className="text-lg font-semibold truncate">
-                          {listing.title}
+                        <CardTitle className="text-lg font-semibold truncate hover:text-primary">
+                           <Link href={`/listings/${listing.id}/edit`}>{listing.title}</Link>
                         </CardTitle>
                     </CardContent>
                     <CardFooter className="p-4 pt-0 flex justify-between items-end">
@@ -136,13 +164,13 @@ export default function ListingsPage() {
                       {user && (
                         <div className="flex gap-2">
                           {isOwner ? (
-                            <Button asChild variant="ghost" size="icon">
+                            <Button asChild variant="ghost" size="icon" title="Edit listing">
                               <Link href={`/listings/${listing.id}/edit`}>
                                 <Pencil className="h-5 w-5" />
                               </Link>
                             </Button>
                           ) : (
-                            <Button variant="ghost" size="icon" onClick={() => handleContactSeller(listing)} disabled={isContacting}>
+                            <Button variant="ghost" size="icon" onClick={() => handleContactSeller(listing)} disabled={isContacting} title="Contact seller">
                               {isContacting ? (
                                 <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full" role="status" />
                               ) : (

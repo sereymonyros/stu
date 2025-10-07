@@ -18,16 +18,28 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth, useFirestore } from '@/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { useEffect, useState } from 'react';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import Image from 'next/image';
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const listingSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters long.' }),
   description: z.string().optional(),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
+  images: z.custom<FileList>()
+    .refine((files) => files?.length > 0, "At least one image is required.")
+    .refine((files) => Array.from(files).every((file) => file.size <= MAX_FILE_SIZE), `Max file size is 5MB.`)
+    .refine(
+      (files) => Array.from(files).every((file) => ACCEPTED_IMAGE_TYPES.includes(file.type)),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    ),
 });
 
 export default function NewListingPage() {
@@ -36,6 +48,7 @@ export default function NewListingPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   
   const form = useForm<z.infer<typeof listingSchema>>({
     resolver: zodResolver(listingSchema),
@@ -70,12 +83,26 @@ export default function NewListingPage() {
     setIsLoading(true);
     
     try {
+      // 1. Upload images to Firebase Storage
+      const storage = getStorage();
+      const imageUrls: string[] = [];
+      for (const file of Array.from(values.images)) {
+        const storageRef = ref(storage, `listings/${auth.currentUser.uid}/${Date.now()}-${file.name}`);
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        imageUrls.push(downloadURL);
+      }
+
+      // 2. Create listing in Firestore
       const listingsCollection = collection(firestore, 'listings');
-      const newListing = await addDoc(listingsCollection, {
-        ...values,
+      await addDoc(listingsCollection, {
+        title: values.title,
+        description: values.description,
+        price: values.price,
         sellerId: auth.currentUser.uid,
         createdAt: serverTimestamp(),
-        imageUrls: ['https://picsum.photos/seed/new-item/600/600'], // Placeholder image
+        imageUrls: imageUrls,
+        status: 'available',
       });
       
       toast({
@@ -83,7 +110,7 @@ export default function NewListingPage() {
         description: "Your item has been successfully listed.",
       });
 
-      router.push(`/listings/${newListing.id}`);
+      router.push(`/listings`);
 
     } catch (error: any) {
         toast({
@@ -94,6 +121,16 @@ export default function NewListingPage() {
         setIsLoading(false);
     }
   };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
+      setImagePreviews(newPreviews);
+    } else {
+      setImagePreviews([]);
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -145,13 +182,48 @@ export default function NewListingPage() {
                       <FormControl>
                          <div className="relative">
                             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                            <Input type="number" placeholder="0.00" className="pl-7" {...field} />
+                            <Input type="number" placeholder="0.00" className="pl-7" {...field} step="0.01" />
                         </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                 <FormField
+                  control={form.control}
+                  name="images"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Images</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="file" 
+                          multiple 
+                          accept="image/*"
+                          onChange={(e) => {
+                            field.onChange(e.target.files);
+                            handleImageChange(e);
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        You can upload multiple images. The first image will be the cover.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {imagePreviews.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {imagePreviews.map((src, i) => (
+                       <div key={i} className="relative aspect-square w-full">
+                          <Image src={src} alt={`Preview ${i + 1}`} fill className="rounded-md object-cover" />
+                       </div>
+                    ))}
+                  </div>
+                )}
+
                 <Button type="submit" disabled={isLoading} className="w-full">
                     {isLoading ? 'Posting...' : 'Post Listing'}
                 </Button>
