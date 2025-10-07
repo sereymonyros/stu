@@ -69,7 +69,16 @@ export default function ListingsPage() {
                       </CardTitle>
                     </CardContent>
                     <CardFooter className="p-4 pt-0">
-                      <p className="text-xl font-bold text-primary">${listing.price}</p>
+                      {listing.originalPrice ? (
+                        <div className="flex items-baseline gap-2">
+                          <p className="text-lg text-muted-foreground line-through">
+                            ${listing.originalPrice}
+                          </p>
+                          <p className="text-xl font-bold text-primary">${listing.price}</p>
+                        </div>
+                      ) : (
+                        <p className="text-xl font-bold text-primary">${listing.price}</p>
+                      )}
                     </CardFooter>
                   </Card>
                 </Link>
