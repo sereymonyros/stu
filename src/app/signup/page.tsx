@@ -105,7 +105,7 @@ export default function SignupPage() {
             </div>
 
             <div className="grid gap-2">
-              <Label>I am a...</Label>
+              <Label>I want to...</Label>
               <RadioGroup
                 defaultValue={userType}
                 onValueChange={setUserType}
@@ -114,11 +114,11 @@ export default function SignupPage() {
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="standard" id="standard" />
-                  <Label htmlFor="standard">Job Seeker</Label>
+                  <Label htmlFor="standard">Browse &amp; Apply</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="recruiter" id="recruiter" />
-                  <Label htmlFor="recruiter">Recruiter</Label>
+                  <Label htmlFor="recruiter">Post Jobs</Label>
                 </div>
               </RadioGroup>
             </div>
