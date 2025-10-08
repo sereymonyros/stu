@@ -106,7 +106,7 @@ export default function FeedbackPage() {
             const uploadResult = await uploadFile({
                 fileDataUri,
                 fileName: imageFile.name,
-                path: `feedback-images/${user.uid}`
+                path: `feedbacks/${user.uid}`
             });
             imageUrl = uploadResult.downloadUrl;
         } catch(uploadError: any) {

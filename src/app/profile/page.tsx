@@ -143,7 +143,7 @@ export default function ProfilePage() {
         const uploadResult = await uploadFile({
             fileDataUri,
             fileName: imageFile.name,
-            path: `profile-pictures/${auth.currentUser.uid}`
+            path: `profiles/${auth.currentUser.uid}`
         });
         photoURL = uploadResult.downloadUrl;
       }
@@ -166,14 +166,22 @@ export default function ProfilePage() {
         photoURL: photoURL,
       });
 
-      // Update Firestore profile
-      await updateDoc(userProfileRef, {
+      // Prepare data for Firestore, excluding undefined values
+      const dataToUpdate: {[key: string]: any} = {
         displayName: values.displayName,
         address: values.address,
         phone: values.phone,
-        photoURL: photoURL,
-        resumeUrl: resumeUrl,
-      });
+      };
+
+      if (photoURL) {
+        dataToUpdate.photoURL = photoURL;
+      }
+      if (resumeUrl) {
+        dataToUpdate.resumeUrl = resumeUrl;
+      }
+      
+      // Update Firestore profile
+      await updateDoc(userProfileRef, dataToUpdate);
 
       toast({
         title: 'Profile Updated',
