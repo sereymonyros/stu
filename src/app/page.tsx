@@ -38,15 +38,6 @@ export default function Home() {
           <div className="w-full max-w-xl px-4">
             <SearchBox searchAction={search} />
           </div>
-
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button asChild size="lg">
-              <Link href="/listings">Browse Items</Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/jobs">Find Jobs</Link>
-            </Button>
-          </div>
         </div>
       </main>
     </div>
