@@ -147,60 +147,62 @@ export default function JobsPage() {
             </div>
           </div>
           
-          <Card className="mb-8">
-             <CardContent className="p-4 flex flex-col gap-4">
-                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input 
-                      placeholder="Search by title, company, or description..."
-                      className="pl-10 w-full"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      disabled={isLoading}
-                    />
-                 </div>
-                 <div className="flex flex-col sm:flex-row flex-wrap gap-4 items-center">
-                    <ToggleGroup 
+          {!isLoading && jobs && jobs.length > 0 && (
+            <Card className="mb-8">
+              <CardContent className="p-4 flex flex-col gap-4">
+                  <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Input 
+                        placeholder="Search by title, company, or description..."
+                        className="pl-10 w-full"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        disabled={isLoading}
+                      />
+                  </div>
+                  <div className="flex flex-col sm:flex-row flex-wrap gap-4 items-center">
+                      <ToggleGroup 
+                        type="multiple"
+                        variant="outline"
+                        value={locationFilters}
+                        onValueChange={(value) => setLocationFilters(value)}
+                        className="flex-wrap justify-start"
+                        disabled={isLoading || uniqueLocations.length === 0}
+                        aria-label="Filter by location"
+                      >
+                        {uniqueLocations.map(location => (
+                          <ToggleGroupItem key={location} value={location}>{location}</ToggleGroupItem>
+                        ))}
+                      </ToggleGroup>
+                      
+                      {!isRecruiter && user && (
+                        <div className="flex items-center space-x-2 sm:ml-auto">
+                          <Switch
+                            id="favorites-filter"
+                            checked={showFavoritesOnly}
+                            onCheckedChange={setShowFavoritesOnly}
+                            disabled={isLoading}
+                          />
+                          <Label htmlFor="favorites-filter" className="whitespace-nowrap">Favorites Only</Label>
+                        </div>
+                      )}
+                  </div>
+                  <ToggleGroup 
                       type="multiple"
                       variant="outline"
-                      value={locationFilters}
-                      onValueChange={(value) => setLocationFilters(value)}
+                      value={jobTypeFilters}
+                      onValueChange={(value) => setJobTypeFilters(value)}
                       className="flex-wrap justify-start"
-                      disabled={isLoading || uniqueLocations.length === 0}
-                      aria-label="Filter by location"
+                      disabled={isLoading}
+                      aria-label="Filter by job type"
                     >
-                      {uniqueLocations.map(location => (
-                        <ToggleGroupItem key={location} value={location}>{location}</ToggleGroupItem>
+                      {jobTypes.map(type => (
+                        <ToggleGroupItem key={type} value={type}>{type}</ToggleGroupItem>
                       ))}
                     </ToggleGroup>
-                    
-                    {!isRecruiter && user && (
-                      <div className="flex items-center space-x-2 sm:ml-auto">
-                        <Switch
-                          id="favorites-filter"
-                          checked={showFavoritesOnly}
-                          onCheckedChange={setShowFavoritesOnly}
-                          disabled={isLoading}
-                        />
-                        <Label htmlFor="favorites-filter" className="whitespace-nowrap">Favorites Only</Label>
-                      </div>
-                    )}
-                 </div>
-                 <ToggleGroup 
-                    type="multiple"
-                    variant="outline"
-                    value={jobTypeFilters}
-                    onValueChange={(value) => setJobTypeFilters(value)}
-                    className="flex-wrap justify-start"
-                    disabled={isLoading}
-                    aria-label="Filter by job type"
-                  >
-                    {jobTypes.map(type => (
-                      <ToggleGroupItem key={type} value={type}>{type}</ToggleGroupItem>
-                    ))}
-                  </ToggleGroup>
-             </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
 
           {isLoading && (
