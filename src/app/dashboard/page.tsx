@@ -81,18 +81,16 @@ export default function DashboardPage() {
     const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
     // --- Data Queries ---
-
     const isRecruiter = userProfile?.userType === 'recruiter';
     const isStandard = userProfile?.userType === 'standard';
 
     // For Recruiters: Fetch jobs they created
     const postedJobsQuery = useMemo(() => {
-        if (!firestore || !user || isProfileLoading || !isRecruiter) {
-            return null;
-        }
+        if (!firestore || !user || !isRecruiter) return null;
         return query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid));
-    }, [firestore, user, isRecruiter, isProfileLoading]);
+    }, [firestore, user, isRecruiter]);
     const { data: postedJobs, isLoading: isPostedJobsLoading } = useCollection(postedJobsQuery);
+    
 
     // For All Users: Fetch listings they created
     const myListingsQuery = useMemo(() => {
@@ -103,11 +101,9 @@ export default function DashboardPage() {
 
     // For Standard Users: Fetch job applications
     const appliedApplicationsQuery = useMemo(() => {
-        if (!firestore || !user || isProfileLoading || !isStandard) {
-            return null;
-        }
+        if (!firestore || !user || !isStandard) return null;
         return query(collectionGroup(firestore, 'applications'), where('applicantId', '==', user.uid));
-    }, [firestore, user, isStandard, isProfileLoading]);
+    }, [firestore, user, isStandard]);
     const { data: applications, isLoading: areApplicationsLoading } = useCollection(appliedApplicationsQuery);
 
     // For Standard Users: Fetch job details based on applications
@@ -120,7 +116,7 @@ export default function DashboardPage() {
         }
         
         return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
-    }, [firestore, isStandard, appliedJobIds, areApplicationsLoading]);
+    }, [firestore, isStandard, areApplicationsLoading, appliedJobIds]);
     const { data: appliedJobs, isLoading: areAppliedJobsLoading } = useCollection(appliedJobsQuery);
 
 
