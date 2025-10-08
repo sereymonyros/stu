@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -19,13 +18,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useAuth, useFirestore, useUser, useDoc } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { useEffect, useMemo, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { uploadFile } from '@/ai/flows/upload-file-flow';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -38,14 +37,6 @@ const profileSchema = z.object({
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files[0].type),
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
-});
-
-// Helper to convert file to Base64
-const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = error => reject(error);
 });
 
 export default function ProfilePage() {
@@ -111,13 +102,10 @@ export default function ProfilePage() {
       const imageFile = values.photo?.[0];
 
       if (imageFile) {
-        const fileDataUrl = await toBase64(imageFile);
-        const { downloadUrl } = await uploadFile({ 
-            fileDataUrl, 
-            path: `profile-pictures/${auth.currentUser.uid}/${imageFile.name}`,
-            contentType: imageFile.type,
-        });
-        photoURL = downloadUrl;
+        const storage = getStorage();
+        const storageRef = ref(storage, `profile-pictures/${auth.currentUser.uid}/${imageFile.name}`);
+        const uploadTask = await uploadBytes(storageRef, imageFile);
+        photoURL = await getDownloadURL(uploadTask.ref);
       }
 
       // Update Firebase Auth profile
@@ -137,11 +125,10 @@ export default function ProfilePage() {
         description: 'Your profile has been successfully updated.',
       });
 
-      // Manually reset state instead of router.refresh()
+      // Manually reset state
       setImagePreview(null);
       form.resetField('photo');
-      // No need to call router.refresh() which can cause issues.
-      // The useUser and useDoc hooks will see the new data and update the UI.
+      setIsSubmitting(false);
 
     } catch (error: any) {
       console.error(error);
@@ -150,8 +137,7 @@ export default function ProfilePage() {
         title: 'Update Failed',
         description: error.message || 'An error occurred while updating your profile.',
       });
-    } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
