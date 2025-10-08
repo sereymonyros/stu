@@ -295,11 +295,6 @@
           "type": "string",
           "format": "date-time",
           "description": "The timestamp when the feedback was submitted."
-        },
-        "imageUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "An optional image URL submitted with the feedback."
         }
       },
       "required": [
