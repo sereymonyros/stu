@@ -21,31 +21,13 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { useEffect, useState } from 'react';
-import { Star, UploadCloud } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { uploadFile } from '@/ai/flows/upload-file-flow';
-import { ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
 
 const feedbackSchema = z.object({
   rating: z.number().min(1, 'Rating is required.').max(5),
   comment: z.string().min(10, 'Comment must be at least 10 characters long.'),
-  image: z.custom<FileList>().optional()
-    .refine((files) => !files || files.length === 0 || files[0].size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
-    .refine(
-      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files[0].type),
-      ".jpg, .jpeg, .png and .webp files are accepted."
-    ),
 });
-
-const toBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-  });
 
 export default function FeedbackPage() {
   const firestore = useFirestore();
@@ -79,35 +61,11 @@ export default function FeedbackPage() {
     }
 
     try {
-      let imageUrl: string | undefined = undefined;
-      const { image, ...feedbackData } = values;
-      const imageFile = image?.[0];
-
-      if (imageFile) {
-        try {
-          const fileDataUri = await toBase64(imageFile);
-          const uploadResult = await uploadFile({
-            fileDataUri,
-            fileName: imageFile.name,
-            path: `feedback-images/${user.uid}`
-          });
-          imageUrl = uploadResult.downloadUrl;
-        } catch (uploadError: any) {
-            toast({ variant: 'destructive', title: 'Image Upload Failed', description: uploadError.message });
-            setIsSubmitting(false);
-            return;
-        }
-      }
-
-      const dataToSave: any = {
-        ...feedbackData,
+      const dataToSave = {
+        ...values,
         userId: user.uid,
         createdAt: serverTimestamp(),
       };
-
-      if (imageUrl) {
-        dataToSave.imageUrl = imageUrl;
-      }
 
       await addDoc(collection(firestore, 'feedbacks'), dataToSave);
 
@@ -185,39 +143,6 @@ export default function FeedbackPage() {
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="image"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Attach a screenshot (optional)</FormLabel>
-                       <FormControl>
-                          <Label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
-                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                  <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
-                                  <p className="mb-1 text-sm text-muted-foreground">
-                                    <span className="font-semibold">Click to upload</span> or drag and drop
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">PNG, JPG or WEBP (MAX. 5MB)</p>
-                              </div>
-                              <Input 
-                                id="image-upload"
-                                type="file" 
-                                className="hidden"
-                                accept="image/*" 
-                                disabled={isSubmitting}
-                                onChange={(e) => field.onChange(e.target.files)}
-                              />
-                          </Label>
-                        </FormControl>
-                      <FormDescription>
-                        If you're reporting a bug, a screenshot can be very helpful.
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

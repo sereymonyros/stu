@@ -230,6 +230,32 @@
         "createdAt"
       ]
     },
+    "Application": {
+      "title": "Application",
+      "description": "Represents a user's application for a job.",
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string"
+        },
+        "applicantId": {
+          "type": "string"
+        },
+        "recruiterId": {
+          "type": "string"
+        },
+        "appliedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "jobId",
+        "applicantId",
+        "recruiterId",
+        "appliedAt"
+      ]
+    },
     "FavoriteJob": {
         "title": "Favorite Job",
         "description": "A lightweight reference to a job a user has favorited.",
@@ -261,11 +287,6 @@
         "comment": {
           "type": "string",
           "description": "The user's comment."
-        },
-        "imageUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "An optional URL to an image uploaded by the user."
         },
         "createdAt": {
           "type": "string",
@@ -312,6 +333,12 @@
       },
       "description": "Collection of all job postings."
     },
+    "/jobs/{jobId}/applications/{applicationId}": {
+      "schema": {
+        "$ref": "#/entities/Application"
+      },
+      "description": "Sub-collection for applications to a specific job."
+    },
     "/chats/{chatId}": {
       "schema": {
         "$ref": "#/entities/Chat"
@@ -332,4 +359,3 @@
     }
   }
 }
-    
