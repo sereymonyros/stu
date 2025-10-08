@@ -126,8 +126,15 @@ export default function ProfilePage() {
         title: 'Profile Updated',
         description: 'Your profile has been successfully updated.',
       });
-      // Optionally, force a reload of the user data in the app
-       router.refresh();
+
+      // Manually reset state instead of router.refresh()
+      setImagePreview(null);
+      form.resetField('photo');
+      setIsSubmitting(false);
+      
+      // Force a reload of user data in the useUser hook
+      router.refresh();
+
 
     } catch (error: any) {
       console.error(error);
@@ -136,10 +143,7 @@ export default function ProfilePage() {
         title: 'Update Failed',
         description: error.message || 'An error occurred while updating your profile.',
       });
-    } finally {
       setIsSubmitting(false);
-      setImagePreview(null);
-      form.resetField('photo');
     }
   };
 
