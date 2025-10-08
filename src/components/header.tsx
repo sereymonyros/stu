@@ -12,11 +12,11 @@ export function Header() {
           Cambodia Hub
         </Link>
         <nav className="hidden md:flex gap-4">
-          <Button variant="ghost" asChild className="header-link">
-            <Link href="/listings">For Sale</Link>
+          <Button variant="ghost" asChild>
+            <Link href="/listings" className="text-foreground hover:text-primary-foreground">For Sale</Link>
           </Button>
-           <Button variant="ghost" asChild className="header-link">
-            <Link href="/jobs">Jobs</Link>
+           <Button variant="ghost" asChild>
+            <Link href="/jobs" className="text-foreground hover:text-primary-foreground">Jobs</Link>
           </Button>
         </nav>
       </div>
