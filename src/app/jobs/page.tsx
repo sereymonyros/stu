@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Pencil, Trash2, Heart, Briefcase, MapPin, ChevronDown } from 'lucide-react';
+import { Pencil, Trash2, Heart, Briefcase } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -25,14 +25,6 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship'];
 
@@ -145,66 +137,48 @@ export default function JobsPage() {
           </div>
           
           <Card className="mb-8">
-            <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-4 items-center">
-               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full sm:w-auto" disabled={isLoading || uniqueLocations.length === 0}>
-                     <MapPin className="mr-2 h-4 w-4" />
-                     <span>
-                        {locationFilters.length === 0 && "Filter by location"}
-                        {locationFilters.length === 1 && locationFilters[0]}
-                        {locationFilters.length > 1 && `${locationFilters.length} locations selected`}
-                     </span>
-                    <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
-                  <DropdownMenuLabel>Locations</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {uniqueLocations.map(location => (
-                    <DropdownMenuCheckboxItem
-                      key={location}
-                      checked={locationFilters.includes(location)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setLocationFilters(prev => [...prev, location]);
-                        } else {
-                          setLocationFilters(prev => prev.filter(l => l !== location));
-                        }
-                      }}
+             <CardContent className="p-4 flex flex-col gap-4">
+                 <div className="flex flex-col sm:flex-row flex-wrap gap-4 items-center">
+                    <ToggleGroup 
+                      type="multiple"
+                      variant="outline"
+                      value={locationFilters}
+                      onValueChange={(value) => setLocationFilters(value)}
+                      className="flex-wrap justify-start"
+                      disabled={isLoading || uniqueLocations.length === 0}
+                      aria-label="Filter by location"
                     >
-                      {location}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-               {!isRecruiter && user && (
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="favorites-filter"
-                    checked={showFavoritesOnly}
-                    onCheckedChange={setShowFavoritesOnly}
+                      {uniqueLocations.map(location => (
+                        <ToggleGroupItem key={location} value={location}>{location}</ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
+                    
+                    {!isRecruiter && user && (
+                      <div className="flex items-center space-x-2 sm:ml-auto">
+                        <Switch
+                          id="favorites-filter"
+                          checked={showFavoritesOnly}
+                          onCheckedChange={setShowFavoritesOnly}
+                          disabled={isLoading}
+                        />
+                        <Label htmlFor="favorites-filter" className="whitespace-nowrap">Favorites Only</Label>
+                      </div>
+                    )}
+                 </div>
+                 <ToggleGroup 
+                    type="multiple"
+                    variant="outline"
+                    value={jobTypeFilters}
+                    onValueChange={(value) => setJobTypeFilters(value)}
+                    className="flex-wrap justify-start"
                     disabled={isLoading}
-                  />
-                  <Label htmlFor="favorites-filter" className="whitespace-nowrap">Favorites Only</Label>
-                </div>
-              )}
-            </CardContent>
-             <CardFooter className="p-4 pt-0">
-                <ToggleGroup 
-                  type="multiple"
-                  variant="outline"
-                  value={jobTypeFilters}
-                  onValueChange={(value) => setJobTypeFilters(value)}
-                  className="flex-wrap justify-start"
-                  disabled={isLoading}
-                >
-                  {jobTypes.map(type => (
-                    <ToggleGroupItem key={type} value={type}>{type}</ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-            </CardFooter>
+                    aria-label="Filter by job type"
+                  >
+                    {jobTypes.map(type => (
+                      <ToggleGroupItem key={type} value={type}>{type}</ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+             </CardContent>
           </Card>
 
 
@@ -312,5 +286,3 @@ export default function JobsPage() {
     </div>
   );
 }
-
-    
