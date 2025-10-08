@@ -82,13 +82,16 @@ export default function DashboardPage() {
 
     // --- Data Queries ---
 
+    const isRecruiter = userProfile?.userType === 'recruiter';
+    const isStandard = userProfile?.userType === 'standard';
+
     // For Recruiters: Fetch jobs they created
     const postedJobsQuery = useMemo(() => {
-        if (!firestore || !user || isProfileLoading || userProfile?.userType !== 'recruiter') {
+        if (!firestore || !user || isProfileLoading || !isRecruiter) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid));
-    }, [firestore, user, userProfile, isProfileLoading]);
+    }, [firestore, user, isRecruiter, isProfileLoading]);
     const { data: postedJobs, isLoading: isPostedJobsLoading } = useCollection(postedJobsQuery);
 
     // For All Users: Fetch listings they created
@@ -100,27 +103,24 @@ export default function DashboardPage() {
 
     // For Standard Users: Fetch job applications
     const appliedApplicationsQuery = useMemo(() => {
-        if (!firestore || !user || isProfileLoading || userProfile?.userType !== 'standard') {
+        if (!firestore || !user || isProfileLoading || !isStandard) {
             return null;
         }
         return query(collectionGroup(firestore, 'applications'), where('applicantId', '==', user.uid));
-    }, [firestore, user, userProfile, isProfileLoading]);
+    }, [firestore, user, isStandard, isProfileLoading]);
     const { data: applications, isLoading: areApplicationsLoading } = useCollection(appliedApplicationsQuery);
 
     // For Standard Users: Fetch job details based on applications
     const appliedJobIds = useMemo(() => applications?.map(app => app.jobId) || [], [applications]);
     
     const appliedJobsQuery = useMemo(() => {
-        // IMPORTANT: Only run if we have job IDs and all dependent data is loaded.
-        if (!firestore || areApplicationsLoading || !user || userProfile?.userType !== 'standard') {
+        // CRITICAL FIX: Do not run this query until the applications have finished loading and we have job IDs.
+        if (!firestore || !isStandard || areApplicationsLoading || appliedJobIds.length === 0) {
             return null;
         }
-        // Also critically important, do not run if there are no applications to avoid an invalid `in` query
-        if (appliedJobIds.length === 0) {
-            return null;
-        }
+        
         return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
-    }, [firestore, user, userProfile, appliedJobIds, areApplicationsLoading]);
+    }, [firestore, isStandard, appliedJobIds, areApplicationsLoading]);
     const { data: appliedJobs, isLoading: areAppliedJobsLoading } = useCollection(appliedJobsQuery);
 
 
@@ -141,9 +141,6 @@ export default function DashboardPage() {
     if (!user) {
         return null; // Redirect is handled by the useEffect
     }
-
-    const isRecruiter = userProfile?.userType === 'recruiter';
-    const isStandard = userProfile?.userType === 'standard';
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -177,9 +174,10 @@ export default function DashboardPage() {
                 )}
 
                 {isStandard && (
-                     <section>
-                        <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Briefcase /> My Job Applications</h2>
-                        {(areApplicationsLoading || areAppliedJobsLoading) ? (
+                    <section>
+                         <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Briefcase /> My Job Applications</h2>
+                         {
+                           areApplicationsLoading || (applications && applications.length > 0 && areAppliedJobsLoading) ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
                             </div>
@@ -223,5 +221,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-
-    
