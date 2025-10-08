@@ -6,17 +6,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [userType, setUserType] = useState('standard');
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -32,7 +36,18 @@ export default function SignupPage() {
     }
     setIsLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Create a user profile document in Firestore
+      await setDoc(doc(firestore, 'users', user.uid), {
+        uid: user.uid,
+        displayName: user.email, // Or a default name
+        photoURL: '',
+        userType: userType,
+        favoriteJobs: [],
+      });
+
       router.push('/');
     } catch (error: any) {
       toast({
@@ -40,6 +55,7 @@ export default function SignupPage() {
         title: 'Uh oh! Something went wrong.',
         description: error.message,
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -87,6 +103,26 @@ export default function SignupPage() {
                 disabled={isLoading}
               />
             </div>
+
+            <div className="grid gap-2">
+              <Label>I am a...</Label>
+              <RadioGroup
+                defaultValue={userType}
+                onValueChange={setUserType}
+                className="flex gap-4"
+                disabled={isLoading}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="standard" id="standard" />
+                  <Label htmlFor="standard">Job Seeker</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="recruiter" id="recruiter" />
+                  <Label htmlFor="recruiter">Recruiter</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Creating Account...' : 'Create an account'}
             </Button>
