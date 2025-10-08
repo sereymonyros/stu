@@ -31,6 +31,8 @@ import { UploadCloud } from 'lucide-react';
 
 const profileSchema = z.object({
   displayName: z.string().min(2, { message: 'Display name must be at least 2 characters.' }).max(50, { message: 'Display name cannot be longer than 50 characters.' }),
+  address: z.string().optional(),
+  phone: z.string().optional(),
   photo: z.custom<FileList>().optional()
     .refine((files) => !files || files.length === 0 || files[0].size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
     .refine(
@@ -69,6 +71,8 @@ export default function ProfilePage() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       displayName: '',
+      address: '',
+      phone: ''
     },
   });
 
@@ -76,6 +80,8 @@ export default function ProfilePage() {
     if (userProfile) {
       form.reset({
         displayName: userProfile.displayName || '',
+        address: userProfile.address || '',
+        phone: userProfile.phone || '',
       });
     }
   }, [userProfile, form]);
@@ -130,6 +136,8 @@ export default function ProfilePage() {
       // Update Firestore profile
       await updateDoc(userProfileRef, {
         displayName: values.displayName,
+        address: values.address,
+        phone: values.phone,
         photoURL: photoURL,
       });
 
@@ -225,9 +233,29 @@ export default function ProfilePage() {
 
                   <FormField control={form.control} name="displayName" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Display Name</FormLabel>
+                      <FormLabel>Full Name</FormLabel>
                       <FormControl>
                         <Input placeholder="Your public name" {...field} disabled={isSubmitting}/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                   <FormField control={form.control} name="address" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., #123 Street 456, Phnom Penh" {...field} disabled={isSubmitting}/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  <FormField control={form.control} name="phone" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., 012 345 678" {...field} disabled={isSubmitting}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
