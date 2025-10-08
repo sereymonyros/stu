@@ -1,7 +1,8 @@
 'use client';
 
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, query, where, collectionGroup, doc } from 'firebase/firestore';
+import { collection, query, where, collectionGroup } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -83,10 +84,11 @@ export default function DashboardPage() {
   
   // Fetch details for applied jobs
   const appliedJobsQuery = useMemo(() => {
-    if (!jobsCollectionRef || appliedJobIds.length === 0) return null;
+    // Wait until applications have loaded and there are job IDs to query.
+    if (areApplicationsLoading || !jobsCollectionRef || appliedJobIds.length === 0) return null;
     // Firestore 'in' queries are limited to 30 items. If this grows, pagination or a different approach is needed.
     return query(jobsCollectionRef, where('__name__', 'in', appliedJobIds.slice(0, 30)));
-  }, [jobsCollectionRef, appliedJobIds]);
+  }, [jobsCollectionRef, appliedJobIds, areApplicationsLoading]);
   const { data: appliedJobs, isLoading: areAppliedJobsLoading } = useCollection(appliedJobsQuery);
 
 
