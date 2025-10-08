@@ -46,7 +46,6 @@ export function UserAuthButton() {
 
   if (user) {
     const fallbackText = userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : user.email ? user.email.charAt(0).toUpperCase() : 'U';
-    const isRecruiter = userProfile?.userType === 'recruiter';
 
     return (
       <DropdownMenu>
@@ -73,14 +72,12 @@ export function UserAuthButton() {
                 <span>Profile</span>
               </Link>
             </DropdownMenuItem>
-            {isRecruiter && (
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard">
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
-                  <span>Dashboard</span>
-                </Link>
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                <span>Dashboard</span>
+              </Link>
+            </DropdownMenuItem>
              <DropdownMenuItem asChild>
               <Link href="/feedback">
                 <MessageSquareHeart className="mr-2 h-4 w-4" />
@@ -104,5 +101,3 @@ export function UserAuthButton() {
     </Button>
   );
 }
-
-    
