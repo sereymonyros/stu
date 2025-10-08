@@ -202,18 +202,16 @@ export default function EditListingPage() {
           return;
       }
 
-      let dataToUpdate: any = {
-        ...values,
-        images: undefined,
-        imageUrls: updatedImageUrls,
-        updatedAt: serverTimestamp(),
+      const { images, ...dataToUpdate } = values;
+
+      const finalData = {
+          ...dataToUpdate,
+          imageUrls: updatedImageUrls,
+          updatedAt: serverTimestamp(),
+          ...(values.price !== listing.price && { originalPrice: listing.price }),
       };
 
-      if (values.price !== listing.price) {
-          dataToUpdate.originalPrice = listing.price;
-      }
-
-      await updateDoc(listingRef, dataToUpdate);
+      await updateDoc(listingRef, finalData);
       
       toast({
         title: "Listing updated!",
