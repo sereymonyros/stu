@@ -15,7 +15,7 @@ import { z } from 'zod';
 
 // Helper to extract base64 data and mime type from a data URI
 function parseDataUri(dataUri: string) {
-  const match = dataUri.match(/^data:(image\/\w+);base64,(.*)$/);
+  const match = dataUri.match(/^data:([a-zA-Z0-9/.-]+);base64,(.*)$/);
   if (!match) {
     throw new Error('Invalid data URI format');
   }
