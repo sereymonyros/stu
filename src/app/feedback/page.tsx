@@ -80,7 +80,8 @@ export default function FeedbackPage() {
 
     try {
       let imageUrl: string | undefined = undefined;
-      const imageFile = values.image?.[0];
+      const { image, ...feedbackData } = values;
+      const imageFile = image?.[0];
 
       if (imageFile) {
         const fileDataUri = await toBase64(imageFile);
@@ -92,12 +93,17 @@ export default function FeedbackPage() {
         imageUrl = uploadResult.downloadUrl;
       }
 
-      await addDoc(collection(firestore, 'feedbacks'), {
-        ...values,
-        imageUrl,
+      const dataToSave: any = {
+        ...feedbackData,
         userId: user.uid,
         createdAt: serverTimestamp(),
-      });
+      };
+
+      if (imageUrl) {
+        dataToSave.imageUrl = imageUrl;
+      }
+
+      await addDoc(collection(firestore, 'feedbacks'), dataToSave);
 
       toast({ title: 'Thank you for your feedback!' });
       router.push('/');
