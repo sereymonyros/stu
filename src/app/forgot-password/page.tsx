@@ -28,17 +28,13 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     try {
       await sendPasswordResetEmail(auth, email);
+      // We always show the success state to prevent email enumeration attacks
       setIsSubmitted(true);
-      toast({
-        title: 'Check your email',
-        description: 'A password reset link has been sent to your email address.',
-      });
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: error.message,
-      });
+      // Even if there's an error (like user not found), we show the success UI.
+      // We can log the error internally if needed, but the user sees the same message.
+      console.error("Password reset error:", error.message);
+      setIsSubmitted(true);
     } finally {
       setIsLoading(false);
     }
@@ -55,11 +51,11 @@ export default function ForgotPasswordPage() {
         </CardHeader>
         <CardContent>
           {isSubmitted ? (
-            <div className="text-center">
+            <div className="text-center space-y-4">
               <p>
-                If an account with that email exists, a reset link has been sent. Please check your inbox.
+                If an account with that email exists, a reset link has been sent. Please check your inbox and spam folder.
               </p>
-              <Button variant="link" asChild className="mt-4">
+              <Button variant="link" asChild>
                 <Link href="/login">Back to Login</Link>
               </Button>
             </div>
@@ -80,14 +76,14 @@ export default function ForgotPasswordPage() {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? 'Sending...' : 'Send Reset Link'}
               </Button>
+               <div className="mt-4 text-center text-sm">
+                Remembered your password?{' '}
+                <Link href="/login" className="underline">
+                  Login
+                </Link>
+              </div>
             </form>
           )}
-           <div className="mt-4 text-center text-sm">
-            Remembered your password?{' '}
-            <Link href="/login" className="underline">
-              Login
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </div>
