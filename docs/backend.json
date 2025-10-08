@@ -21,10 +21,24 @@
         "userType": {
           "type": "string",
           "description": "The type of user, determines permissions.",
-          "enum": ["standard", "recruiter"]
+          "enum": [
+            "standard",
+            "recruiter"
+          ]
+        },
+        "favoriteJobs": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "A list of job IDs that the user has favourited."
         }
       },
-      "required": ["uid", "displayName", "userType"]
+      "required": [
+        "uid",
+        "displayName",
+        "userType"
+      ]
     },
     "Listing": {
       "title": "Listing",
@@ -52,12 +66,12 @@
           "description": "The UID of the seller."
         },
         "imageUrls": {
-            "type": "array",
-            "items": {
-                "type": "string",
-                "format": "uri"
-            },
-            "description": "A list of URLs for item images."
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          },
+          "description": "A list of URLs for item images."
         },
         "createdAt": {
           "type": "string",
@@ -69,12 +83,22 @@
           "description": "Indicates if the listing is a favourite."
         },
         "status": {
-            "type": "string",
-            "description": "The current status of the listing.",
-            "enum": ["available", "pending", "sold"]
+          "type": "string",
+          "description": "The current status of the listing.",
+          "enum": [
+            "available",
+            "pending",
+            "sold"
+          ]
         }
       },
-      "required": ["title", "price", "sellerId", "createdAt", "status"]
+      "required": [
+        "title",
+        "price",
+        "sellerId",
+        "createdAt",
+        "status"
+      ]
     },
     "Chat": {
       "title": "Chat",
@@ -95,11 +119,16 @@
           "description": "The last message sent in the chat for preview purposes."
         },
         "updatedAt": {
-            "type": "string",
-            "format": "date-time"
+          "type": "string",
+          "format": "date-time"
         }
       },
-      "required": ["listingId", "buyerId", "sellerId", "updatedAt"]
+      "required": [
+        "listingId",
+        "buyerId",
+        "sellerId",
+        "updatedAt"
+      ]
     },
     "Message": {
       "title": "Message",
@@ -117,7 +146,11 @@
           "format": "date-time"
         }
       },
-      "required": ["senderId", "text", "timestamp"]
+      "required": [
+        "senderId",
+        "text",
+        "timestamp"
+      ]
     },
     "Job": {
       "title": "Job",
@@ -147,7 +180,12 @@
         "jobType": {
           "type": "string",
           "description": "The type of employment.",
-          "enum": ["Full-time", "Part-time", "Contract", "Internship"]
+          "enum": [
+            "Full-time",
+            "Part-time",
+            "Contract",
+            "Internship"
+          ]
         },
         "recruiterId": {
           "type": "string",
@@ -157,13 +195,31 @@
           "type": "string",
           "format": "date-time",
           "description": "The timestamp when the job was posted."
-        },
-        "isFavourite": {
-          "type": "boolean",
-          "description": "Indicates if the job is a favourite."
         }
       },
-      "required": ["title", "companyName", "location", "jobType", "recruiterId", "createdAt"]
+      "required": [
+        "title",
+        "companyName",
+        "location",
+        "jobType",
+        "recruiterId",
+        "createdAt"
+      ]
+    },
+    "FavoriteJob": {
+        "title": "Favorite Job",
+        "description": "A lightweight reference to a job a user has favorited.",
+        "type": "object",
+        "properties": {
+            "jobId": {
+                "type": "string"
+            },
+            "favoritedAt": {
+                "type": "string",
+                "format": "date-time"
+            }
+        },
+        "required": ["jobId", "favoritedAt"]
     }
   },
   "auth": {
@@ -178,6 +234,12 @@
         "$ref": "#/entities/UserProfile"
       },
       "description": "Stores user profile information."
+    },
+    "/users/{userId}/favoriteJobs/{jobId}": {
+        "schema": {
+            "$ref": "#/entities/FavoriteJob"
+        },
+        "description": "A user's list of favorite job references."
     },
     "/listings/{listingId}": {
       "schema": {
