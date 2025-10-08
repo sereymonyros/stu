@@ -24,12 +24,20 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function JobsPage() {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [jobTypeFilter, setJobTypeFilter] = useState('All');
 
   const jobsCollection = useMemo(() => {
     if (!firestore) return null;
@@ -55,11 +63,18 @@ export default function JobsPage() {
 
   const filteredJobs = useMemo(() => {
     if (!jobs) return [];
+    let filtered = jobs;
+    
     if (showFavoritesOnly) {
-      return jobs.filter(job => favoriteJobIds.has(job.id));
+      filtered = filtered.filter(job => favoriteJobIds.has(job.id));
     }
-    return jobs;
-  }, [jobs, showFavoritesOnly, favoriteJobIds]);
+
+    if (jobTypeFilter !== 'All') {
+      filtered = filtered.filter(job => job.jobType === jobTypeFilter);
+    }
+    
+    return filtered;
+  }, [jobs, showFavoritesOnly, favoriteJobIds, jobTypeFilter]);
 
   const handleToggleFavorite = async (jobId: string) => {
     if (!user || !firestore) return;
@@ -93,15 +108,30 @@ export default function JobsPage() {
   };
 
   const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areFavoritesLoading;
+  
+  const hasActiveFilters = showFavoritesOnly || jobTypeFilter !== 'All';
 
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1 p-4 md:p-6 lg:p-8">
         <div className="container mx-auto">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <Select value={jobTypeFilter} onValueChange={setJobTypeFilter} disabled={isLoading}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Job Types</SelectItem>
+                  <SelectItem value="Full-time">Full-time</SelectItem>
+                  <SelectItem value="Part-time">Part-time</SelectItem>
+                  <SelectItem value="Contract">Contract</SelectItem>
+                  <SelectItem value="Internship">Internship</SelectItem>
+                </SelectContent>
+              </Select>
+
               {!isRecruiter && user && (
                 <div className="flex items-center space-x-2">
                   <Switch
@@ -203,10 +233,13 @@ export default function JobsPage() {
             <div className="text-center py-20 border-2 border-dashed rounded-lg">
               <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
               <h2 className="mt-4 text-2xl font-semibold">
-                {showFavoritesOnly ? "No favorite jobs found" : "No jobs posted yet"}
+                {hasActiveFilters ? "No matching jobs found" : "No jobs posted yet"}
               </h2>
               <p className="text-muted-foreground mt-2">
-                {isRecruiter ? "Post a job to attract candidates." : "Check back later for new opportunities!"}
+                {hasActiveFilters 
+                  ? "Try adjusting your filters to find more jobs."
+                  : (isRecruiter ? "Post a job to attract candidates." : "Check back later for new opportunities!")
+                }
               </p>
             </div>
           )}
