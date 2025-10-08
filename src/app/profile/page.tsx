@@ -183,7 +183,7 @@ export default function ProfilePage() {
       // Manually reset state after success
       setImagePreview(null);
       if (photoInputRef.current) photoInputRef.current.value = '';
-      if (resumeInputref.current) resumeInputRef.current.value = '';
+      if (resumeInputRef.current) resumeInputRef.current.value = '';
       form.resetField('photo');
       form.resetField('resume');
 
