@@ -26,23 +26,31 @@
  */
 rules_version = '2';
 service cloud.firestore {
-  match /databases/{database}/documents {
 
-    /**
-     * @description Controls access to user profile documents.
-     * @path /users/{userId}
-     * @allow (create) Authenticated user can create their own profile.
-     * @allow (get, update, delete) Authenticated user can access their own profile.
-     * @deny (create, get, update, delete) Unauthorized access is denied.
-     * @principle Enforces document ownership for user profiles.
-     */
+  match /databases/{database}/documents {
+    // New, safe function to retrieve a user's role
+    function getUserRole() {
+      // 1. Check if the user is authenticated at all.
+      if request.auth == null {
+        return null;
+      }
+      
+      // 2. Safely get the user document using 'exists()' and 'get()'.
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+
+      // 3. Return the role if the document exists, otherwise return a default/null value.
+      return userDoc.exists ? userDoc.data.role : null;
+    }
+
     match /users/{userId} {
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
+
       function isSignedIn() {
         return request.auth != null;
       }
+
       allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
       allow create: if isSignedIn() && isOwner(userId);
@@ -50,17 +58,11 @@ service cloud.firestore {
       allow delete: if isSignedIn() && isOwner(userId);
     }
 
-    /**
-     * @description Controls access to a user's favorite job listings.
-     * @path /users/{userId}/favoriteJobs/{jobId}
-     * @allow (create, get, list, update, delete) Authenticated user can manage their own favorite jobs.
-     * @deny (create, get, list, update, delete) Unauthorized access is denied.
-     * @principle Enforces document ownership for favorite jobs.
-     */
     match /users/{userId}/favoriteJobs/{jobId} {
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
+
        function isSignedIn() {
         return request.auth != null;
       }
@@ -70,16 +72,7 @@ service cloud.firestore {
       allow update: if isSignedIn() && isOwner(userId);
       allow delete: if isSignedIn() && isOwner(userId);
     }
-
-    /**
-     * @description Controls access to listing documents.
-     * @path /listings/{listingId}
-     * @allow (get, list) Anyone can view listings.
-     * @allow (create) Authenticated seller can create a listing.
-     * @allow (update, delete) Only the seller can modify or delete a listing.
-     * @deny (create, update, delete) Unauthorized access is denied.
-     * @principle Enforces public read access with owner-only writes for listings.
-     */
+    
     match /listings/{listingId} {
       function isOwner(sellerId) {
         return request.auth.uid == sellerId;
@@ -97,15 +90,6 @@ service cloud.firestore {
       allow delete: if isSignedIn() && isExistingOwner();
     }
 
-    /**
-     * @description Controls access to job documents.
-     * @path /jobs/{jobId}
-     * @allow (get, list) Anyone can view job postings.
-     * @allow (create) Authenticated recruiter can create a job posting.
-     * @allow (update, delete) Only the recruiter can modify or delete a job posting.
-     * @deny (create, update, delete) Unauthorized access is denied.
-     * @principle Enforces public read access with owner-only writes for jobs.
-     */
     match /jobs/{jobId} {
       function isOwner(recruiterId) {
         return request.auth.uid == recruiterId;
@@ -114,24 +98,27 @@ service cloud.firestore {
       function isExistingOwner() {
         return resource.data.recruiterId == request.auth.uid;
       }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get, list: if getUserRole() in ['recruiter', 'standard'];;
+      allow create: if getUserRole() == 'recruiter';
+      allow update, delete: if getUserRole() == 'recruiter' && isExistingOwner();
+    }
+
+    match /feedbacks/{feedbackId} {
       function isSignedIn() {
         return request.auth != null;
       }
       allow get, list: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && isExistingOwner();
-      allow delete: if isSignedIn() && isExistingOwner();
+      allow update: if false;
+      allow delete: if false;
     }
 
-    /**
-     * @description Controls access to application documents for a specific job.
-     * @path /jobs/{jobId}/applications/{applicationId}
-     * @allow (create) Authenticated users can apply for jobs.
-     * @allow (get, list) Only the recruiter who posted the job can view applications.
-     * @allow (update, delete) No one can update or delete applications.
-     * @deny (create, get, list, update, delete) Unauthorized access is denied.
-     * @principle Restricts access to job applications based on job ownership.
-     */
+    
     match /jobs/{jobId}/applications/{applicationId} {
       function isJobOwner(jobId) {
         return get(/databases/$(database)/documents/jobs/$(jobId)).data.recruiterId == request.auth.uid;
@@ -145,15 +132,6 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    /**
-     * @description Controls access to chat documents.
-     * @path /chats/{chatId}
-     * @allow (get, list) Only participants (buyer or seller) can view chats.
-     * @allow (create) Authenticated users can create a chat if they are a participant.
-     * @allow (update) Only participants can update the chat (e.g., last message).
-     * @deny (create, get, list, update, delete) Unauthorized access is denied.
-     * @principle Restricts chat access to participants only.
-     */
     match /chats/{chatId} {
       function isParticipant() {
         return resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid;
@@ -167,14 +145,6 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    /**
-     * @description Controls access to messages within a chat.
-     * @path /chats/{chatId}/messages/{messageId}
-     * @allow (get, list) Only chat participants can view messages.
-     * @allow (create) Only chat participants can send messages.
-     * @deny (create, get, list, update, delete) Unauthorized access is denied.
-     * @principle Restricts message access to chat participants only.
-     */
     match /chats/{chatId}/messages/{messageId} {
       function isParticipant(chatId) {
         let chat = get(/databases/$(database)/documents/chats/$(chatId)).data;
@@ -186,24 +156,6 @@ service cloud.firestore {
       }
       allow get, list: if isSignedIn() && isParticipant(chatId);
       allow create: if isSignedIn() && isParticipant(chatId);
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Controls access to feedback documents.
-     * @path /feedbacks/{feedbackId}
-     * @allow (create) Authenticated users can submit feedback.
-     * @allow (get, list) Anyone can view feedback.
-     * @deny (update, delete) Feedback cannot be updated or deleted.
-     * @principle Allows public read access for feedback.
-     */
-    match /feedbacks/{feedbackId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      allow get, list: if true;
-      allow create: if isSignedIn();
       allow update: if false;
       allow delete: if false;
     }

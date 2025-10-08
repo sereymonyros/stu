@@ -72,8 +72,10 @@ export default function DashboardPage() {
   // Query for standard user's applied jobs
   const appliedApplicationsQuery = useMemo(() => {
     if (!applicationsCollectionGroup || !user || userProfile?.userType !== 'standard') return null;
+    // Ensure both firestore and user are available before creating the query.
+    if (!firestore || !user) return null;
     return query(applicationsCollectionGroup, where('applicantId', '==', user.uid));
-  }, [applicationsCollectionGroup, user, userProfile]);
+  }, [applicationsCollectionGroup, user, userProfile, firestore]);
 
   // --- DATA FETCHING ---
   const { data: recruiterJobs, isLoading: areRecruiterJobsLoading } = useCollection(recruiterJobsQuery);
