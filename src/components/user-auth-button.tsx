@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { LogOut, LayoutDashboard, User as UserIcon } from 'lucide-react';
+import { LogOut, LayoutDashboard, User as UserIcon, MessageSquareHeart } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -81,6 +81,12 @@ export function UserAuthButton() {
                 </Link>
               </DropdownMenuItem>
             )}
+             <DropdownMenuItem asChild>
+              <Link href="/feedback">
+                <MessageSquareHeart className="mr-2 h-4 w-4" />
+                <span>Feedback</span>
+              </Link>
+            </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
@@ -98,3 +104,5 @@ export function UserAuthButton() {
     </Button>
   );
 }
+
+    

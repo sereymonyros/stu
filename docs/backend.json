@@ -237,6 +237,41 @@
             }
         },
         "required": ["jobId", "favoritedAt"]
+    },
+    "Feedback": {
+      "title": "Feedback",
+      "description": "User-submitted feedback for the application.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user submitting the feedback."
+        },
+        "rating": {
+          "type": "number",
+          "description": "A rating from 1 to 5."
+        },
+        "comment": {
+          "type": "string",
+          "description": "The user's comment."
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "An optional URL to an image uploaded by the user."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the feedback was submitted."
+        }
+      },
+      "required": [
+        "userId",
+        "rating",
+        "comment",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -281,6 +316,13 @@
         "$ref": "#/entities/Message"
       },
       "description": "Sub-collection for messages within a specific chat."
+    },
+    "/feedbacks/{feedbackId}": {
+      "schema": {
+        "$ref": "#/entities/Feedback"
+      },
+      "description": "Collection of all user-submitted feedback."
     }
   }
 }
+    
