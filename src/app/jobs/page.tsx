@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Pencil, Trash2, Heart, Briefcase } from 'lucide-react';
+import { Pencil, Trash2, Heart, Briefcase, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Input } from '@/components/ui/input';
 
 const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship'];
 
@@ -32,6 +33,7 @@ export default function JobsPage() {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState('');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [jobTypeFilters, setJobTypeFilters] = useState<string[]>([]);
   const [locationFilters, setLocationFilters] = useState<string[]>([]);
@@ -67,6 +69,15 @@ export default function JobsPage() {
   const filteredJobs = useMemo(() => {
     if (!jobs) return [];
     let filtered = jobs;
+
+    if (searchQuery) {
+        const lowercasedQuery = searchQuery.toLowerCase();
+        filtered = filtered.filter(job => 
+            job.title?.toLowerCase().includes(lowercasedQuery) ||
+            job.companyName?.toLowerCase().includes(lowercasedQuery) ||
+            job.description?.toLowerCase().includes(lowercasedQuery)
+        );
+    }
     
     if (showFavoritesOnly) {
       filtered = filtered.filter(job => favoriteJobIds.has(job.id));
@@ -83,7 +94,7 @@ export default function JobsPage() {
     }
     
     return filtered.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
-  }, [jobs, showFavoritesOnly, favoriteJobIds, jobTypeFilters, locationFilters]);
+  }, [jobs, searchQuery, showFavoritesOnly, favoriteJobIds, jobTypeFilters, locationFilters]);
 
   const handleToggleFavorite = async (jobId: string) => {
     if (!user || !firestore) return;
@@ -118,7 +129,7 @@ export default function JobsPage() {
 
   const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areFavoritesLoading;
   
-  const hasActiveFilters = showFavoritesOnly || jobTypeFilters.length > 0 || locationFilters.length > 0;
+  const hasActiveFilters = showFavoritesOnly || jobTypeFilters.length > 0 || locationFilters.length > 0 || searchQuery.length > 0;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -138,6 +149,16 @@ export default function JobsPage() {
           
           <Card className="mb-8">
              <CardContent className="p-4 flex flex-col gap-4">
+                 <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input 
+                      placeholder="Search by title, company, or description..."
+                      className="pl-10 w-full"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      disabled={isLoading}
+                    />
+                 </div>
                  <div className="flex flex-col sm:flex-row flex-wrap gap-4 items-center">
                     <ToggleGroup 
                       type="multiple"
@@ -274,6 +295,7 @@ export default function JobsPage() {
               </p>
               {hasActiveFilters && (
                 <Button variant="ghost" className="mt-4" onClick={() => {
+                  setSearchQuery('');
                   setLocationFilters([]);
                   setJobTypeFilters([]);
                   setShowFavoritesOnly(false);
