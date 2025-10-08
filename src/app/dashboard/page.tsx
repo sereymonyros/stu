@@ -10,7 +10,7 @@ import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Briefcase, Store, ClipboardList } from 'lucide-react';
+import { Briefcase, Store, ClipboardList, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 function JobCard({ job }: { job: any }) {
@@ -34,6 +34,29 @@ function JobCard({ job }: { job: any }) {
         </Card>
     );
 }
+
+function AppliedJobCard({ job }: { job: any }) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-xl">{job.title}</CardTitle>
+                <p className="text-sm text-muted-foreground">{job.companyName} - {job.location}</p>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center gap-2">
+                    <Badge variant="default">Applied</Badge>
+                    {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'secondary'} className="capitalize">{job.status}</Badge>}
+                </div>
+            </CardContent>
+            <CardFooter>
+                 <Button asChild variant="outline">
+                    <Link href={`/jobs/${job.id}`}>View Job</Link>
+                </Button>
+            </CardFooter>
+        </Card>
+    );
+}
+
 
 function ListingCard({ listing }: { listing: any }) {
     return (
@@ -82,20 +105,39 @@ export default function DashboardPage() {
 
     // --- Data Queries ---
     const isRecruiter = userProfile?.userType === 'recruiter';
-    const isStandard = userProfile?.userType === 'standard';
-
-    // Add a check to ensure the user profile has loaded OR user is null (for safe rendering)
-    const shouldRunRoleQueries = user && !isProfileLoading && userProfile; // Only run if profile data is confirmed present
+    
+    // This state gates all dependent queries, preventing race conditions.
+    const shouldRunRoleQueries = user && !isProfileLoading && userProfile;
 
     // For Recruiters: Fetch jobs they created
     const postedJobsQuery = useMemo(() => {
-        // Check for shouldRunRoleQueries, then check the role
-        if (!firestore || !shouldRunRoleQueries || userProfile?.userType !== 'recruiter') {
+        if (!firestore || !shouldRunRoleQueries || !isRecruiter) return null;
+        return query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid));
+    }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
+    const { data: postedJobs, isLoading: isPostedJobsLoading } = useCollection(postedJobsQuery);
+
+    // For Standard Users: Fetch their applications
+    const applicationsQuery = useMemo(() => {
+        if (!firestore || !shouldRunRoleQueries || isRecruiter) return null;
+        return query(collection(firestore, `users/${user.uid}/applications`));
+    }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
+    const { data: applications, isLoading: areApplicationsLoading } = useCollection(applicationsQuery);
+
+    // For Standard Users: Fetch the details of the jobs they applied for
+    const appliedJobIds = useMemo(() => {
+        if (!applications) return [];
+        return applications.map(app => app.jobId);
+    }, [applications]);
+
+    const appliedJobsQuery = useMemo(() => {
+        // CRITICAL: Only run this query if applications have loaded and there are IDs to fetch.
+        if (!firestore || areApplicationsLoading || !appliedJobIds || appliedJobIds.length === 0) {
             return null;
         }
-        return query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid));
-    }, [firestore, user, userProfile, shouldRunRoleQueries]);
-    const { data: postedJobs, isLoading: isPostedJobsLoading } = useCollection(postedJobsQuery);
+        return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
+    }, [firestore, areApplicationsLoading, appliedJobIds]);
+    const { data: appliedJobs, isLoading: areAppliedJobsLoading } = useCollection(appliedJobsQuery);
+
 
     // For All Users: Fetch listings they created
     const myListingsQuery = useMemo(() => {
@@ -105,7 +147,10 @@ export default function DashboardPage() {
     const { data: myListings, isLoading: isMyListingsLoading } = useCollection(myListingsQuery);
 
     // --- Loading and Rendering Logic ---
-    if (isUserLoading || isProfileLoading) {
+    const isLoading = isUserLoading || isProfileLoading;
+    const isStandardUserDashboardLoading = areApplicationsLoading || areAppliedJobsLoading;
+
+    if (isLoading) {
         return (
             <div className="flex flex-col min-h-screen">
                 <Header />
@@ -119,7 +164,8 @@ export default function DashboardPage() {
     }
     
     if (!user) {
-        return null; // Redirect is handled by the useEffect
+        // The useEffect hook handles redirection, so we can return null here.
+        return null;
     }
 
     return (
@@ -148,6 +194,28 @@ export default function DashboardPage() {
                                 <h3 className="text-xl font-semibold">No jobs posted yet</h3>
                                 <p className="text-muted-foreground">Post a job to attract top talent.</p>
                                 <Button asChild><Link href="/jobs/new">Post a Job</Link></Button>
+                            </div>
+                        )}
+                    </section>
+                )}
+
+                {!isRecruiter && (
+                     <section>
+                        <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><FileText /> My Job Applications</h2>
+                        {isStandardUserDashboardLoading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+                            </div>
+                        ) : appliedJobs && appliedJobs.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {appliedJobs.map(job => <AppliedJobCard key={job.id} job={job} />)}
+                            </div>
+                        ) : (
+                             <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
+                                <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
+                                <h3 className="text-xl font-semibold">You haven't applied for any jobs yet</h3>
+                                <p className="text-muted-foreground">Find your next opportunity on the job board.</p>
+                                <Button asChild><Link href="/jobs">Browse Jobs</Link></Button>
                             </div>
                         )}
                     </section>

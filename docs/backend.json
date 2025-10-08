@@ -230,6 +230,47 @@
         "createdAt"
       ]
     },
+    "Application": {
+      "title": "Application",
+      "description": "Represents a user's application for a job.",
+      "type": "object",
+      "properties": {
+        "applicantId": {
+          "type": "string",
+          "description": "The UID of the user who applied."
+        },
+        "jobId": {
+          "type": "string",
+          "description": "The ID of the job being applied for."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the application.",
+          "enum": [
+            "submitted",
+            "reviewed",
+            "rejected"
+          ]
+        },
+        "appliedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the application was submitted."
+        },
+        "resumeUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "A snapshot of the applicant's resume URL at the time of application."
+        }
+      },
+      "required": [
+        "applicantId",
+        "jobId",
+        "status",
+        "appliedAt",
+        "resumeUrl"
+      ]
+    },
     "FavoriteJob": {
       "title": "Favorite Job",
       "description": "A lightweight reference to a job a user has favorited.",

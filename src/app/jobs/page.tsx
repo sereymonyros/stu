@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, doc, deleteDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, deleteDoc, setDoc, serverTimestamp, query } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -52,10 +52,20 @@ export default function JobsPage() {
     if (!firestore || !user) return null;
     return collection(firestore, `users/${user.uid}/favoriteJobs`);
   }, [firestore, user]);
+  
+  // Fetch all applications for the current user to check which jobs they've applied to
+  const userApplicationsQuery = useMemo(() => {
+    if (!firestore || !user) return null;
+    // We query the root 'applications' collection group to find all applications by this user
+    return query(collection(firestore, `users/${user.uid}/applications`));
+  }, [firestore, user]);
 
   const { data: jobs, isLoading: isJobsLoading } = useCollection(jobsCollection);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
   const { data: favoriteJobDocs, isLoading: areFavoritesLoading } = useCollection(favoriteJobsCollectionRef);
+  const { data: userApplications, isLoading: areApplicationsLoading } = useCollection(userApplicationsQuery);
+
+  const appliedJobIds = useMemo(() => new Set(userApplications?.map(app => app.jobId) || []), [userApplications]);
   
   const isRecruiter = userProfile?.userType === 'recruiter';
   const favoriteJobIds = useMemo(() => new Set(favoriteJobDocs?.map(fav => fav.id) || []), [favoriteJobDocs]);
@@ -127,7 +137,7 @@ export default function JobsPage() {
     }
   };
 
-  const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areFavoritesLoading;
+  const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areFavoritesLoading || areApplicationsLoading;
   
   const hasActiveFilters = showFavoritesOnly || jobTypeFilters.length > 0 || locationFilters.length > 0 || searchQuery.length > 0;
 
@@ -218,6 +228,7 @@ export default function JobsPage() {
               {filteredJobs.map((job) => {
                 const isOwner = user && user.uid === job.recruiterId;
                 const isFavorite = favoriteJobIds.has(job.id);
+                const hasApplied = appliedJobIds.has(job.id);
 
                 return (
                   <Card key={job.id} className="h-full flex flex-col">
@@ -237,7 +248,9 @@ export default function JobsPage() {
                     </CardContent>
                     <CardFooter className="flex justify-between items-center">
                       {!isRecruiter && (
-                         <Button variant="outline">Apply Now</Button>
+                         <Button asChild={!hasApplied} disabled={hasApplied}>
+                           {hasApplied ? <span>Applied</span> : <Link href={`/jobs/${job.id}/apply`}>Apply Now</Link>}
+                         </Button>
                       )}
                       {user && (
                         <div className="flex items-center gap-2">
