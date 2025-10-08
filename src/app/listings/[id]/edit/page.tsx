@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser, useDoc, useFirestore, useAuth } from '@/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { getStorage, ref, deleteObject } from "firebase/storage";
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import Image from 'next/image';
 import { X } from 'lucide-react';
+import { uploadFile } from '@/ai/flows/upload-file-flow';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -43,8 +44,22 @@ const listingSchema = z.object({
   description: z.string().optional(),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   status: z.enum(['available', 'pending', 'sold']),
-  images: z.custom<FileList>().optional(),
+  images: z.custom<FileList>().optional()
+    .refine((files) => !files || Array.from(files).every((file) => file.size <= MAX_FILE_SIZE), `Max file size is 5MB.`)
+    .refine(
+      (files) => !files || Array.from(files).every((file) => ACCEPTED_IMAGE_TYPES.includes(file.type)),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    ),
 });
+
+// Helper function to convert a File to a Base64 data URI
+const toBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
 
 export default function EditListingPage() {
   const { id } = useParams();
@@ -108,6 +123,7 @@ export default function EditListingPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
+      newImagePreviews.forEach(url => URL.revokeObjectURL(url));
       const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
       setNewImagePreviews(newPreviews);
     } else {
@@ -121,15 +137,9 @@ export default function EditListingPage() {
         const isFirebaseUrl = imageUrlToRemove.includes('firebasestorage.googleapis.com');
         if (isFirebaseUrl) {
             const storage = getStorage();
-            const decodedUrl = decodeURIComponent(imageUrlToRemove);
-            const pathStartIndex = decodedUrl.indexOf('/o/') + 3;
-            const pathEndIndex = decodedUrl.indexOf('?');
-            const filePath = decodedUrl.substring(pathStartIndex, pathEndIndex);
-
-            if (filePath) {
-                const imageRef = ref(storage, filePath);
-                await deleteObject(imageRef);
-            }
+            // This is a simplified way to get the path. For production, you might need a more robust URL parser.
+            const imageRef = ref(storage, imageUrlToRemove);
+            await deleteObject(imageRef);
         }
       
         const updatedImageUrls = existingImageUrls.filter((url) => url !== imageUrlToRemove);
@@ -156,7 +166,6 @@ export default function EditListingPage() {
         return;
     }
 
-    // CRITICAL FIX: Ensure user is available before proceeding.
     if (!auth.currentUser) {
         toast({
             variant: "destructive",
@@ -169,14 +178,19 @@ export default function EditListingPage() {
     const user = auth.currentUser;
     
     try {
-      const storage = getStorage();
       let updatedImageUrls = [...existingImageUrls];
 
       if (values.images && values.images.length > 0) {
         const imageFiles = Array.from(values.images);
-        const uploadPromises = imageFiles.map(file => {
-            const storageRef = ref(storage, `${user.uid}/${Date.now()}-${file.name}`);
-            return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
+        
+        const uploadPromises = imageFiles.map(async file => {
+            const fileDataUri = await toBase64(file);
+            const result = await uploadFile({
+                fileDataUri,
+                fileName: file.name,
+                path: `listings/${user.uid}`
+            });
+            return result.downloadUrl;
         });
         const newImageUrls = await Promise.all(uploadPromises);
         updatedImageUrls.push(...newImageUrls);

@@ -16,29 +16,24 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-// Assuming these are your Firebase configuration/hook files
 import { useAuth, useFirestore } from '@/firebase'; 
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { useEffect, useState } from 'react';
 import { getAuth as getFirebaseAuth, onAuthStateChanged } from 'firebase/auth';
 import Image from 'next/image';
+import { uploadFile } from '@/ai/flows/upload-file-flow';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-
-// Helper function for Zod to check if files is a FileList
-const isFileList = (value: unknown): value is FileList => value instanceof FileList;
 
 const listingSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters long.' }),
   description: z.string().optional(),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   images: z.custom<FileList>()
-    .refine(isFileList, "Images must be a FileList.")
     .refine((files) => files?.length > 0, "At least one image is required.")
     .refine((files) => Array.from(files ?? []).every((file) => file.size <= MAX_FILE_SIZE), `Max file size is 5MB.`)
     .refine(
@@ -46,6 +41,15 @@ const listingSchema = z.object({
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
 });
+
+// Helper function to convert a File to a Base64 data URI
+const toBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
 
 export default function NewListingPage() {
   const firestore = useFirestore();
@@ -64,7 +68,6 @@ export default function NewListingPage() {
     },
   });
 
-  // Effect for Authentication Check (and cleanup)
   useEffect(() => {
     const authInstance = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(authInstance, (user) => {
@@ -75,9 +78,7 @@ export default function NewListingPage() {
     return () => unsubscribe();
   }, [router]);
   
-  // Effect for Image Preview Cleanup (CRITICAL: Prevents Memory Leaks)
   useEffect(() => {
-    // This runs when the component unmounts or before the effect runs again
     return () => {
       imagePreviews.forEach(url => URL.revokeObjectURL(url));
     };
@@ -86,7 +87,6 @@ export default function NewListingPage() {
   const onSubmit = async (values: z.infer<typeof listingSchema>) => {
     setIsLoading(true);
     
-    // CRITICAL FIX: Ensure user is available before proceeding.
     if (!auth.currentUser) {
         toast({
             variant: "destructive",
@@ -99,13 +99,16 @@ export default function NewListingPage() {
     const user = auth.currentUser;
     
     try {
-      const storage = getStorage();
       const imageFiles = Array.from(values.images);
 
-      // Use Promise.all for more robust and parallel uploads
-      const uploadPromises = imageFiles.map(file => {
-        const storageRef = ref(storage, `listings/${user.uid}/${Date.now()}-${file.name}`);      
-        return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
+      const uploadPromises = imageFiles.map(async (file) => {
+        const fileDataUri = await toBase64(file);
+        const result = await uploadFile({
+          fileDataUri,
+          fileName: file.name,
+          path: `listings/${user.uid}`
+        });
+        return result.downloadUrl;
       });
 
       const imageUrls = await Promise.all(uploadPromises);
@@ -145,6 +148,8 @@ export default function NewListingPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
+      // Revoke old previews before creating new ones
+      imagePreviews.forEach(url => URL.revokeObjectURL(url));
       const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
       setImagePreviews(newPreviews);
     } else {
