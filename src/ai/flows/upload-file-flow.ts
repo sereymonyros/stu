@@ -48,6 +48,8 @@ const uploadFileFlow = ai.defineFlow(
       const filePath = `${input.path}/${input.fileName}`;
       const file = bucket.file(filePath);
       
+      debugger;
+      
       await file.save(buffer, {
         metadata: {
           contentType: mimeType,
