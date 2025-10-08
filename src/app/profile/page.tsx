@@ -21,11 +21,12 @@ import { updateProfile } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { uploadFile } from '@/ai/flows/upload-file-flow';
 import { ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
+import { UploadCloud } from 'lucide-react';
 
 const profileSchema = z.object({
   displayName: z.string().min(2, { message: 'Display name must be at least 2 characters.' }).max(50, { message: 'Display name cannot be longer than 50 characters.' }),
@@ -54,6 +55,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const userProfileRef = useMemo(() => {
     if (!firestore || !user) return null;
@@ -137,6 +139,9 @@ export default function ProfilePage() {
 
       // Manually reset state after success
       setImagePreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       form.resetField('photo');
 
     } catch (error: any) {
@@ -179,30 +184,43 @@ export default function ProfilePage() {
             ) : user && userProfile ? (
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                    <div className="flex items-center space-x-6">
-                        <Avatar className="h-24 w-24">
-                            <AvatarImage src={currentPhoto ?? ''} />
-                            <AvatarFallback>{userProfile.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <FormField control={form.control} name="photo" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Update Picture</FormLabel>
-                                <FormControl>
+                  <div className="flex flex-col sm:flex-row items-center gap-6">
+                    <Avatar className="h-24 w-24">
+                        <AvatarImage src={currentPhoto ?? ''} />
+                        <AvatarFallback>{userProfile.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <FormField control={form.control} name="photo" render={({ field }) => (
+                        <FormItem className="w-full">
+                            <FormLabel>Update Picture</FormLabel>
+                            <FormControl>
+                              <div className="w-full">
+                                <Label htmlFor="photo-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                                        <p className="mb-1 text-sm text-muted-foreground">
+                                          <span className="font-semibold">Click to upload</span> or drag and drop
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">PNG, JPG or WEBP (MAX. 5MB)</p>
+                                    </div>
                                     <Input 
-                                        type="file" 
-                                        accept="image/*" 
-                                        disabled={isSubmitting}
-                                        onChange={(e) => {
-                                            field.onChange(e.target.files);
-                                            handleImageChange(e);
-                                        }}
+                                      id="photo-upload"
+                                      type="file" 
+                                      className="hidden"
+                                      accept="image/*" 
+                                      disabled={isSubmitting}
+                                      ref={fileInputRef}
+                                      onChange={(e) => {
+                                          field.onChange(e.target.files);
+                                          handleImageChange(e);
+                                      }}
                                     />
-                                </FormControl>
-                                <FormDescription>Max 5MB. JPG, PNG, or WEBP.</FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}/>
-                    </div>
+                                </Label>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}/>
+                  </div>
 
                   <FormField control={form.control} name="displayName" render={({ field }) => (
                     <FormItem>
