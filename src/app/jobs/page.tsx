@@ -1,13 +1,13 @@
 'use client';
 
-import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, doc, deleteDoc, setDoc, serverTimestamp, query, where } from 'firebase/firestore';
+import { useCollection, useFirestore, useUser } from '@/firebase';
+import { collection, doc, deleteDoc, setDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Pencil, Trash2, Heart, Briefcase, Search, ClipboardList } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -34,41 +34,32 @@ export default function JobsPage() {
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [jobTypeFilters, setJobTypeFilters] = useState<string[]>([]);
   const [locationFilters, setLocationFilters] = useState<string[]>([]);
-
-  // Simplified query to fetch only available jobs
+  const [isRecruiter, setIsRecruiter] = useState(false);
+  
+  // --- Simplified Data Fetching ---
   const jobsQuery = useMemo(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'jobs'), where('status', '!=', 'Closed'));
   }, [firestore]);
 
+  const { data: jobs, isLoading: isJobsLoading } = useCollection(jobsQuery);
+
+  // Separate, minimal query for user profile just to check role
   const userProfileRef = useMemo(() => {
     if (!firestore || !user) return null;
     return doc(firestore, 'users', user.uid);
   }, [firestore, user]);
-  
-  const favoriteJobsCollectionRef = useMemo(() => {
-    if (!firestore || !user) return null;
-    return collection(firestore, `users/${user.uid}/favoriteJobs`);
-  }, [firestore, user]);
-  
-  const userApplicationsQuery = useMemo(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, `users/${user.uid}/applications`));
-  }, [firestore, user]);
-
-  const { data: jobs, isLoading: isJobsLoading } = useCollection(jobsQuery);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
-  const { data: favoriteJobDocs, isLoading: areFavoritesLoading } = useCollection(favoriteJobsCollectionRef);
-  const { data: userApplications, isLoading: areApplicationsLoading } = useCollection(userApplicationsQuery);
 
-  const appliedJobIds = useMemo(() => new Set(userApplications?.map(app => app.jobId) || []), [userApplications]);
-  
-  const isRecruiter = userProfile?.userType === 'recruiter';
-  const favoriteJobIds = useMemo(() => new Set(favoriteJobDocs?.map(fav => fav.id) || []), [favoriteJobDocs]);
+  useEffect(() => {
+      if (userProfile) {
+          setIsRecruiter(userProfile.userType === 'recruiter');
+      }
+  }, [userProfile]);
 
+  // --- Filtering ---
   const uniqueLocations = useMemo(() => {
     if (!jobs) return [];
     const locations = jobs.map(job => job.location).filter(Boolean);
@@ -88,10 +79,6 @@ export default function JobsPage() {
         );
     }
     
-    if (showFavoritesOnly) {
-      filtered = filtered.filter(job => favoriteJobIds.has(job.id));
-    }
-
     if (jobTypeFilters.length > 0) {
       filtered = filtered.filter(job => job.jobType && jobTypeFilters.includes(job.jobType));
     }
@@ -103,28 +90,8 @@ export default function JobsPage() {
     }
     
     return filtered.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
-  }, [jobs, searchQuery, showFavoritesOnly, favoriteJobIds, jobTypeFilters, locationFilters]);
+  }, [jobs, searchQuery, jobTypeFilters, locationFilters]);
 
-  const handleToggleFavorite = async (jobId: string) => {
-    if (!user || !firestore) return;
-    const isFavorite = favoriteJobIds.has(jobId);
-    const favJobRef = doc(firestore, `users/${user.uid}/favoriteJobs`, jobId);
-
-    try {
-      if (isFavorite) {
-        await deleteDoc(favJobRef);
-        toast({ title: "Job removed from favorites" });
-      } else {
-        await setDoc(favJobRef, { 
-          jobId: jobId,
-          favoritedAt: serverTimestamp() 
-        });
-        toast({ title: "Job saved to favorites!" });
-      }
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error updating favorites', description: error.message });
-    }
-  };
 
   const handleDeleteJob = async (jobId: string) => {
     if (!firestore) return;
@@ -136,9 +103,8 @@ export default function JobsPage() {
     }
   };
 
-  const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areFavoritesLoading || areApplicationsLoading;
-  
-  const hasActiveFilters = showFavoritesOnly || jobTypeFilters.length > 0 || locationFilters.length > 0 || searchQuery.length > 0;
+  const isLoading = isUserLoading || isJobsLoading || isProfileLoading;
+  const hasActiveFilters = jobTypeFilters.length > 0 || locationFilters.length > 0 || searchQuery.length > 0;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -156,7 +122,7 @@ export default function JobsPage() {
             </div>
           </div>
           
-          {!isLoading && jobs && jobs.length > 0 && (
+          {!isJobsLoading && jobs && jobs.length > 0 && (
             <Card className="mb-8">
               <CardContent className="p-4 flex flex-col gap-4">
                   <div className="relative">
@@ -183,18 +149,6 @@ export default function JobsPage() {
                           <ToggleGroupItem key={location} value={location}>{location}</ToggleGroupItem>
                         ))}
                       </ToggleGroup>
-                      
-                      {!isRecruiter && user && (
-                        <div className="flex items-center space-x-2 sm:ml-auto">
-                          <Switch
-                            id="favorites-filter"
-                            checked={showFavoritesOnly}
-                            onCheckedChange={setShowFavoritesOnly}
-                            disabled={isLoading}
-                          />
-                          <Label htmlFor="favorites-filter" className="whitespace-nowrap">Favorites Only</Label>
-                        </div>
-                      )}
                   </div>
                   <ToggleGroup 
                       type="multiple"
@@ -226,8 +180,6 @@ export default function JobsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredJobs.map((job) => {
                 const isOwner = user && user.uid === job.recruiterId;
-                const isFavorite = favoriteJobIds.has(job.id);
-                const hasApplied = appliedJobIds.has(job.id);
 
                 return (
                   <Card key={job.id} className="h-full flex flex-col">
@@ -247,13 +199,12 @@ export default function JobsPage() {
                     </CardContent>
                     <CardFooter className="flex justify-between items-center">
                       {!isRecruiter && (
-                         <Button asChild={!hasApplied} disabled={hasApplied}>
-                           {hasApplied ? <span>Applied</span> : <Link href={`/jobs/${job.id}/apply`}>Apply Now</Link>}
+                         <Button asChild>
+                           <Link href={`/jobs/${job.id}/apply`}>Apply Now</Link>
                          </Button>
                       )}
-                      {user && (
+                      {user && isOwner && (
                         <div className="flex items-center gap-2">
-                          {isOwner && (
                             <>
                               <Button asChild variant="ghost" size="icon" title="Edit Job">
                                 <Link href={`/jobs/${job.id}/edit`}>
@@ -280,12 +231,6 @@ export default function JobsPage() {
                                 </AlertDialogContent>
                               </AlertDialog>
                             </>
-                          )}
-                          {!isRecruiter && (
-                            <Button variant="ghost" size="icon" onClick={() => handleToggleFavorite(job.id)} title={isFavorite ? 'Unfavorite' : 'Favorite'}>
-                              <Heart className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} />
-                            </Button>
-                          )}
                         </div>
                       )}
                     </CardFooter>
@@ -314,7 +259,6 @@ export default function JobsPage() {
                   setSearchQuery('');
                   setLocationFilters([]);
                   setJobTypeFilters([]);
-                  setShowFavoritesOnly(false);
                 }}>Clear all filters</Button>
               )}
             </div>
