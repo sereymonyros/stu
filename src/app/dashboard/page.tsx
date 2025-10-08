@@ -67,6 +67,12 @@ export default function DashboardPage() {
     const { user, isUserLoading } = useUser();
     const router = useRouter();
 
+    useEffect(() => {
+        if (!isUserLoading && !user) {
+            router.replace('/login');
+        }
+    }, [user, isUserLoading, router]);
+
     // --- User Profile ---
     const userProfileRef = useMemo(() => {
         if (!firestore || !user) return null;
@@ -78,34 +84,35 @@ export default function DashboardPage() {
 
     // For Recruiters: Fetch jobs they created
     const postedJobsQuery = useMemo(() => {
-        if (!firestore || !user || userProfile?.userType !== 'recruiter') return null;
+        if (!firestore || !user || isProfileLoading || userProfile?.userType !== 'recruiter') {
+            return null;
+        }
         return query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid));
-    }, [firestore, user, userProfile]);
+    }, [firestore, user, userProfile, isProfileLoading]);
     const { data: postedJobs, isLoading: isPostedJobsLoading } = useCollection(postedJobsQuery);
 
     // For All Users: Fetch listings they created
     const myListingsQuery = useMemo(() => {
-        if (!firestore || !user) return null;
+        if (!firestore || !user || isProfileLoading) return null;
         return query(collection(firestore, 'listings'), where('sellerId', '==', user.uid));
-    }, [firestore, user]);
+    }, [firestore, user, isProfileLoading]);
     const { data: myListings, isLoading: isMyListingsLoading } = useCollection(myListingsQuery);
 
     // For Standard Users: Fetch job applications
     const appliedApplicationsQuery = useMemo(() => {
-        // IMPORTANT: Only run this query if we have a user and they are a 'standard' user
-        if (!firestore || !user || isUserLoading || isProfileLoading || userProfile?.userType !== 'standard') {
+        if (!firestore || !user || isProfileLoading || userProfile?.userType !== 'standard') {
             return null;
         }
         return query(collectionGroup(firestore, 'applications'), where('applicantId', '==', user.uid));
-    }, [firestore, user, userProfile, isUserLoading, isProfileLoading]);
+    }, [firestore, user, userProfile, isProfileLoading]);
     const { data: applications, isLoading: areApplicationsLoading } = useCollection(appliedApplicationsQuery);
 
     // For Standard Users: Fetch job details based on applications
     const appliedJobIds = useMemo(() => applications?.map(app => app.jobId) || [], [applications]);
     
     const appliedJobsQuery = useMemo(() => {
-        // IMPORTANT: Only run if we have job IDs to query for. An empty 'in' query is invalid.
-        if (!firestore || appliedJobIds.length === 0 || areApplicationsLoading) {
+        // IMPORTANT: Only run if we have job IDs and all dependent data is loaded.
+        if (!firestore || areApplicationsLoading || appliedJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
@@ -114,14 +121,7 @@ export default function DashboardPage() {
 
 
     // --- Loading and Rendering Logic ---
-
-    useEffect(() => {
-        if (!isUserLoading && !user) {
-            router.replace('/login');
-        }
-    }, [user, isUserLoading, router]);
-
-    if (isUserLoading || isProfileLoading || !user) {
+    if (isUserLoading || isProfileLoading) {
         return (
             <div className="flex flex-col min-h-screen">
                 <Header />
@@ -132,6 +132,10 @@ export default function DashboardPage() {
                 </main>
             </div>
         );
+    }
+    
+    if (!user) {
+        return null; // Redirect is handled by the useEffect
     }
 
     const isRecruiter = userProfile?.userType === 'recruiter';
