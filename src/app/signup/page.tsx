@@ -45,7 +45,6 @@ export default function SignupPage() {
         displayName: user.email, // Or a default name
         photoURL: '',
         userType: userType,
-        favoriteJobs: [],
       });
 
       router.push('/');

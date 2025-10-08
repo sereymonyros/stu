@@ -25,13 +25,6 @@
             "standard",
             "recruiter"
           ]
-        },
-        "favoriteJobs": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            },
-            "description": "A list of job IDs that the user has favourited."
         }
       },
       "required": [

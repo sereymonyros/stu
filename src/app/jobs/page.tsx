@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { collection, doc, deleteDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -37,23 +37,36 @@ export default function JobsPage() {
     if (!firestore || !user) return null;
     return doc(firestore, 'users', user.uid);
   }, [firestore, user]);
+  
+  const favoriteJobsCollectionRef = useMemo(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, `users/${user.uid}/favoriteJobs`);
+  }, [firestore, user]);
 
   const { data: jobs, isLoading: isJobsLoading } = useCollection(jobsCollection);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
-
+  const { data: favoriteJobDocs, isLoading: areFavoritesLoading } = useCollection(favoriteJobsCollectionRef);
+  
   const isRecruiter = userProfile?.userType === 'recruiter';
-  const favoriteJobIds = useMemo(() => new Set(userProfile?.favoriteJobs || []), [userProfile]);
+  const favoriteJobIds = useMemo(() => new Set(favoriteJobDocs?.map(fav => fav.id) || []), [favoriteJobDocs]);
+
 
   const handleToggleFavorite = async (jobId: string) => {
-    if (!userProfileRef) return;
+    if (!user || !firestore) return;
     const isFavorite = favoriteJobIds.has(jobId);
+    const favJobRef = doc(firestore, `users/${user.uid}/favoriteJobs`, jobId);
+
     try {
-      await updateDoc(userProfileRef, {
-        favoriteJobs: isFavorite ? arrayRemove(jobId) : arrayUnion(jobId)
-      });
-      toast({
-        title: isFavorite ? "Job removed from favorites" : "Job saved to favorites!",
-      });
+      if (isFavorite) {
+        await deleteDoc(favJobRef);
+        toast({ title: "Job removed from favorites" });
+      } else {
+        await setDoc(favJobRef, { 
+          jobId: jobId,
+          favoritedAt: serverTimestamp() 
+        });
+        toast({ title: "Job saved to favorites!" });
+      }
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error updating favorites', description: error.message });
     }
@@ -69,7 +82,7 @@ export default function JobsPage() {
     }
   };
 
-  const isLoading = isUserLoading || isJobsLoading || isProfileLoading;
+  const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areFavoritesLoading;
 
   return (
     <div className="flex flex-col min-h-screen">
