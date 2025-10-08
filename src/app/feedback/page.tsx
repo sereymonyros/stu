@@ -84,13 +84,19 @@ export default function FeedbackPage() {
       const imageFile = image?.[0];
 
       if (imageFile) {
-        const fileDataUri = await toBase64(imageFile);
-        const uploadResult = await uploadFile({
-          fileDataUri,
-          fileName: imageFile.name,
-          path: `feedback-images/${user.uid}`
-        });
-        imageUrl = uploadResult.downloadUrl;
+        try {
+          const fileDataUri = await toBase64(imageFile);
+          const uploadResult = await uploadFile({
+            fileDataUri,
+            fileName: imageFile.name,
+            path: `feedback-images/${user.uid}`
+          });
+          imageUrl = uploadResult.downloadUrl;
+        } catch (uploadError: any) {
+            toast({ variant: 'destructive', title: 'Image Upload Failed', description: uploadError.message });
+            setIsSubmitting(false);
+            return;
+        }
       }
 
       const dataToSave: any = {
