@@ -26,6 +26,8 @@ import { getAuth as getFirebaseAuth, onAuthStateChanged } from 'firebase/auth';
 import Image from 'next/image';
 import { uploadFile } from '@/ai/flows/upload-file-flow';
 import { ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
+import { Label } from '@/components/ui/label';
+import { UploadCloud } from 'lucide-react';
 
 const listingSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters long.' }),
@@ -218,17 +220,29 @@ export default function NewListingPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Images</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="file" 
-                            multiple 
-                            accept="image/*"
-                            onChange={(e) => {
-                              field.onChange(e.target.files);
-                              handleImageChange(e);
-                            }}
-                          />
-                        </FormControl>
+                          <FormControl>
+                            <Label htmlFor="images-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                                    <p className="mb-1 text-sm text-muted-foreground">
+                                      <span className="font-semibold">Click to upload</span> or drag and drop
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">PNG, JPG or WEBP (MAX. 5MB)</p>
+                                </div>
+                                <Input 
+                                  id="images-upload"
+                                  type="file" 
+                                  multiple
+                                  className="hidden"
+                                  accept="image/*" 
+                                  disabled={isLoading}
+                                  onChange={(e) => {
+                                    field.onChange(e.target.files);
+                                    handleImageChange(e);
+                                  }}
+                                />
+                            </Label>
+                          </FormControl>
                         <FormDescription>
                           You can upload multiple images. The first image will be the cover.
                         </FormDescription>
