@@ -6,25 +6,12 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
-import { getStorage, ref, uploadString, getDownloadURL } from 'firebase-admin/storage';
+import { getStorage, ref, getDownloadURL } from 'firebase-admin/storage';
 import { initializeFirebaseAdmin } from '@/firebase/server-init';
+import { UploadFileInput, UploadFileInputSchema, UploadFileOutput, UploadFileOutputSchema } from './upload-file-schema';
 
 // Initialize Firebase Admin SDK
 const { storage } = initializeFirebaseAdmin();
-
-export const UploadFileInputSchema = z.object({
-  fileDataUrl: z.string().describe("The file encoded as a data URL."),
-  path: z.string().describe("The path where the file should be stored in Firebase Storage."),
-  contentType: z.string().describe("The MIME type of the file."),
-});
-export type UploadFileInput = z.infer<typeof UploadFileInputSchema>;
-
-export const UploadFileOutputSchema = z.object({
-  downloadUrl: z.string().describe("The public URL of the uploaded file."),
-});
-export type UploadFileOutput = z.infer<typeof UploadFileOutputSchema>;
-
 
 export async function uploadFile(input: UploadFileInput): Promise<UploadFileOutput> {
   return uploadFileFlow(input);
