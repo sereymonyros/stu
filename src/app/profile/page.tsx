@@ -18,13 +18,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useAuth, useFirestore, useUser, useDoc } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { useEffect, useMemo, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { uploadFile } from '@/ai/flows/upload-file-flow';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -38,6 +38,15 @@ const profileSchema = z.object({
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
 });
+
+// Helper function to convert a File to a Base64 data URI
+const toBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
 
 export default function ProfilePage() {
   const firestore = useFirestore();
@@ -102,10 +111,13 @@ export default function ProfilePage() {
       const imageFile = values.photo?.[0];
 
       if (imageFile) {
-        const storage = getStorage();
-        const storageRef = ref(storage, `profile-pictures/${auth.currentUser.uid}/${imageFile.name}`);
-        const uploadTask = await uploadBytes(storageRef, imageFile);
-        photoURL = await getDownloadURL(uploadTask.ref);
+        const fileDataUri = await toBase64(imageFile);
+        const uploadResult = await uploadFile({
+            fileDataUri,
+            fileName: imageFile.name,
+            path: `profile-pictures/${auth.currentUser.uid}`
+        });
+        photoURL = uploadResult.downloadUrl;
       }
 
       // Update Firebase Auth profile
@@ -125,10 +137,9 @@ export default function ProfilePage() {
         description: 'Your profile has been successfully updated.',
       });
 
-      // Manually reset state
+      // Manually reset state after success
       setImagePreview(null);
       form.resetField('photo');
-      setIsSubmitting(false);
 
     } catch (error: any) {
       console.error(error);
@@ -137,7 +148,8 @@ export default function ProfilePage() {
         title: 'Update Failed',
         description: error.message || 'An error occurred while updating your profile.',
       });
-      setIsSubmitting(false);
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
