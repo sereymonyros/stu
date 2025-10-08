@@ -84,13 +84,18 @@ export default function DashboardPage() {
     const isRecruiter = userProfile?.userType === 'recruiter';
     const isStandard = userProfile?.userType === 'standard';
 
+    // Add a check to ensure the user profile has loaded OR user is null (for safe rendering)
+    const shouldRunRoleQueries = user && !isProfileLoading && userProfile; // Only run if profile data is confirmed present
+
     // For Recruiters: Fetch jobs they created
     const postedJobsQuery = useMemo(() => {
-        if (!firestore || !user || !isRecruiter) return null;
+        // Check for shouldRunRoleQueries, then check the role
+        if (!firestore || !shouldRunRoleQueries || userProfile?.userType !== 'recruiter') {
+            return null;
+        }
         return query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid));
-    }, [firestore, user, isRecruiter]);
+    }, [firestore, user, userProfile, shouldRunRoleQueries]);
     const { data: postedJobs, isLoading: isPostedJobsLoading } = useCollection(postedJobsQuery);
-    
 
     // For All Users: Fetch listings they created
     const myListingsQuery = useMemo(() => {
@@ -101,9 +106,12 @@ export default function DashboardPage() {
 
     // For Standard Users: Fetch job applications
     const appliedApplicationsQuery = useMemo(() => {
-        if (!firestore || !user || !isStandard) return null;
+        // Check for shouldRunRoleQueries, then check the role
+        if (!firestore || !shouldRunRoleQueries || userProfile?.userType !== 'standard') {
+            return null;
+        }
         return query(collectionGroup(firestore, 'applications'), where('applicantId', '==', user.uid));
-    }, [firestore, user, isStandard]);
+    }, [firestore, user, userProfile, shouldRunRoleQueries]);
     const { data: applications, isLoading: areApplicationsLoading } = useCollection(appliedApplicationsQuery);
 
     // For Standard Users: Fetch job details based on applications
