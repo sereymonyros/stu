@@ -13,10 +13,10 @@ export function Header() {
         </Link>
         <nav className="hidden md:flex gap-4">
           <Button variant="ghost" asChild>
-            <Link href="/listings" className="text-foreground hover:text-primary-foreground">For Sale</Link>
+            <Link href="/listings" className="header-link">For Sale</Link>
           </Button>
            <Button variant="ghost" asChild>
-            <Link href="/jobs" className="text-foreground hover:text-primary-foreground">Jobs</Link>
+            <Link href="/jobs" className="header-link">Jobs</Link>
           </Button>
         </nav>
       </div>
