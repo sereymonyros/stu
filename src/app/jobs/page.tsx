@@ -24,21 +24,17 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+
+const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship'];
 
 export default function JobsPage() {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [jobTypeFilter, setJobTypeFilter] = useState('All');
+  const [jobTypeFilters, setJobTypeFilters] = useState<string[]>([]);
   const [locationFilter, setLocationFilter] = useState('');
 
   const jobsCollection = useMemo(() => {
@@ -71,8 +67,8 @@ export default function JobsPage() {
       filtered = filtered.filter(job => favoriteJobIds.has(job.id));
     }
 
-    if (jobTypeFilter !== 'All') {
-      filtered = filtered.filter(job => job.jobType === jobTypeFilter);
+    if (jobTypeFilters.length > 0) {
+      filtered = filtered.filter(job => job.jobType && jobTypeFilters.includes(job.jobType));
     }
 
     if (locationFilter) {
@@ -81,8 +77,8 @@ export default function JobsPage() {
       );
     }
     
-    return filtered;
-  }, [jobs, showFavoritesOnly, favoriteJobIds, jobTypeFilter, locationFilter]);
+    return filtered.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+  }, [jobs, showFavoritesOnly, favoriteJobIds, jobTypeFilters, locationFilter]);
 
   const handleToggleFavorite = async (jobId: string) => {
     if (!user || !firestore) return;
@@ -117,7 +113,7 @@ export default function JobsPage() {
 
   const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areFavoritesLoading;
   
-  const hasActiveFilters = showFavoritesOnly || jobTypeFilter !== 'All' || !!locationFilter;
+  const hasActiveFilters = showFavoritesOnly || jobTypeFilters.length > 0 || !!locationFilter;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -127,40 +123,6 @@ export default function JobsPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
             <div className="flex flex-wrap items-center gap-4">
-               <div className="relative">
-                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                 <Input 
-                   placeholder="Filter by location..."
-                   className="pl-9 w-full sm:w-[180px]"
-                   value={locationFilter}
-                   onChange={(e) => setLocationFilter(e.target.value)}
-                   disabled={isLoading}
-                 />
-               </div>
-              <Select value={jobTypeFilter} onValueChange={setJobTypeFilter} disabled={isLoading}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All Job Types</SelectItem>
-                  <SelectItem value="Full-time">Full-time</SelectItem>
-                  <SelectItem value="Part-time">Part-time</SelectItem>
-                  <SelectItem value="Contract">Contract</SelectItem>
-                  <SelectItem value="Internship">Internship</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {!isRecruiter && user && (
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="favorites-filter"
-                    checked={showFavoritesOnly}
-                    onCheckedChange={setShowFavoritesOnly}
-                    disabled={isLoading}
-                  />
-                  <Label htmlFor="favorites-filter">Favorites Only</Label>
-                </div>
-              )}
               {isRecruiter && (
                 <Button asChild>
                   <Link href="/jobs/new">Post a New Job</Link>
@@ -168,6 +130,47 @@ export default function JobsPage() {
               )}
             </div>
           </div>
+          
+          <Card className="mb-8">
+            <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-4 items-center">
+              <div className="relative flex-grow w-full sm:w-auto">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Filter by location..."
+                  className="pl-9 w-full"
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+               {!isRecruiter && user && (
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="favorites-filter"
+                    checked={showFavoritesOnly}
+                    onCheckedChange={setShowFavoritesOnly}
+                    disabled={isLoading}
+                  />
+                  <Label htmlFor="favorites-filter" className="whitespace-nowrap">Favorites Only</Label>
+                </div>
+              )}
+            </CardContent>
+             <CardFooter className="p-4 pt-0">
+                <ToggleGroup 
+                  type="multiple"
+                  variant="outline"
+                  value={jobTypeFilters}
+                  onValueChange={(value) => setJobTypeFilters(value)}
+                  className="flex-wrap justify-start"
+                  disabled={isLoading}
+                >
+                  {jobTypes.map(type => (
+                    <ToggleGroupItem key={type} value={type}>{type}</ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+            </CardFooter>
+          </Card>
+
 
           {isLoading && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -189,7 +192,7 @@ export default function JobsPage() {
                       <CardTitle className="text-xl font-semibold flex items-start justify-between">
                         <span>{job.title}</span>
                         <div className="flex flex-col items-end gap-2">
-                           <Badge variant="secondary">{job.jobType}</Badge>
+                           {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
                            {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
                         </div>
                       </CardTitle>
@@ -259,6 +262,13 @@ export default function JobsPage() {
                   : (isRecruiter ? "Post a job to attract candidates." : "Check back later for new opportunities!")
                 }
               </p>
+              {hasActiveFilters && (
+                <Button variant="ghost" className="mt-4" onClick={() => {
+                  setLocationFilter('');
+                  setJobTypeFilters([]);
+                  setShowFavoritesOnly(false);
+                }}>Clear all filters</Button>
+              )}
             </div>
           )}
         </div>
