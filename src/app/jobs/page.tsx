@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Pencil, Trash2, Heart, Briefcase, MapPin } from 'lucide-react';
+import { Pencil, Trash2, Heart, Briefcase, MapPin, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -24,8 +24,15 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship'];
 
@@ -35,7 +42,7 @@ export default function JobsPage() {
   const { toast } = useToast();
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [jobTypeFilters, setJobTypeFilters] = useState<string[]>([]);
-  const [locationFilter, setLocationFilter] = useState('');
+  const [locationFilters, setLocationFilters] = useState<string[]>([]);
 
   const jobsCollection = useMemo(() => {
     if (!firestore) return null;
@@ -59,6 +66,12 @@ export default function JobsPage() {
   const isRecruiter = userProfile?.userType === 'recruiter';
   const favoriteJobIds = useMemo(() => new Set(favoriteJobDocs?.map(fav => fav.id) || []), [favoriteJobDocs]);
 
+  const uniqueLocations = useMemo(() => {
+    if (!jobs) return [];
+    const locations = jobs.map(job => job.location).filter(Boolean);
+    return [...new Set(locations)];
+  }, [jobs]);
+
   const filteredJobs = useMemo(() => {
     if (!jobs) return [];
     let filtered = jobs;
@@ -71,14 +84,14 @@ export default function JobsPage() {
       filtered = filtered.filter(job => job.jobType && jobTypeFilters.includes(job.jobType));
     }
 
-    if (locationFilter) {
+    if (locationFilters.length > 0) {
       filtered = filtered.filter(job => 
-        job.location?.toLowerCase().includes(locationFilter.toLowerCase())
+        job.location && locationFilters.includes(job.location)
       );
     }
     
     return filtered.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
-  }, [jobs, showFavoritesOnly, favoriteJobIds, jobTypeFilters, locationFilter]);
+  }, [jobs, showFavoritesOnly, favoriteJobIds, jobTypeFilters, locationFilters]);
 
   const handleToggleFavorite = async (jobId: string) => {
     if (!user || !firestore) return;
@@ -113,7 +126,7 @@ export default function JobsPage() {
 
   const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areFavoritesLoading;
   
-  const hasActiveFilters = showFavoritesOnly || jobTypeFilters.length > 0 || !!locationFilter;
+  const hasActiveFilters = showFavoritesOnly || jobTypeFilters.length > 0 || locationFilters.length > 0;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -133,16 +146,39 @@ export default function JobsPage() {
           
           <Card className="mb-8">
             <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-4 items-center">
-              <div className="relative flex-grow w-full sm:w-auto">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Filter by location..."
-                  className="pl-9 w-full"
-                  value={locationFilter}
-                  onChange={(e) => setLocationFilter(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
+               <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full sm:w-auto" disabled={isLoading || uniqueLocations.length === 0}>
+                     <MapPin className="mr-2 h-4 w-4" />
+                     <span>
+                        {locationFilters.length === 0 && "Filter by location"}
+                        {locationFilters.length === 1 && locationFilters[0]}
+                        {locationFilters.length > 1 && `${locationFilters.length} locations selected`}
+                     </span>
+                    <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuLabel>Locations</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {uniqueLocations.map(location => (
+                    <DropdownMenuCheckboxItem
+                      key={location}
+                      checked={locationFilters.includes(location)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setLocationFilters(prev => [...prev, location]);
+                        } else {
+                          setLocationFilters(prev => prev.filter(l => l !== location));
+                        }
+                      }}
+                    >
+                      {location}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
                {!isRecruiter && user && (
                 <div className="flex items-center space-x-2">
                   <Switch
@@ -264,7 +300,7 @@ export default function JobsPage() {
               </p>
               {hasActiveFilters && (
                 <Button variant="ghost" className="mt-4" onClick={() => {
-                  setLocationFilter('');
+                  setLocationFilters([]);
                   setJobTypeFilters([]);
                   setShowFavoritesOnly(false);
                 }}>Clear all filters</Button>
@@ -276,3 +312,5 @@ export default function JobsPage() {
     </div>
   );
 }
+
+    
