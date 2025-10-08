@@ -144,7 +144,6 @@ export default function SignupPage() {
             </div>
 
             <div className="grid gap-2">
-              <Label>I want to...</Label>
               <RadioGroup
                 defaultValue={userType}
                 onValueChange={setUserType}
