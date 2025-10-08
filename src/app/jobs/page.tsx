@@ -116,7 +116,9 @@ export default function JobsPage() {
                        {job.salary && <p className="font-semibold text-primary">{job.salary}</p>}
                     </CardContent>
                     <CardFooter className="flex justify-between items-center">
-                      <Button variant="outline">Apply Now</Button>
+                      {!isRecruiter && (
+                         <Button variant="outline">Apply Now</Button>
+                      )}
                       {user && (
                         <div className="flex items-center gap-2">
                           {isOwner && (
