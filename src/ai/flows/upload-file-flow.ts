@@ -62,10 +62,7 @@ const uploadFileFlow = ai.defineFlow(
       return { downloadUrl };
     } catch (e: any) {
       console.error("Flow Error: Failed to upload file.", e);
-      // Check for billing-related or permission errors and show a user-friendly message.
-      if (e.message?.includes('billing') || e.code === 403) {
-        throw new Error('Failed to upload file: A server-side error occurred. Please try again later.');
-      }
+      // Re-throw or handle the error as needed for the flow's output
       throw new Error(`Failed to upload file: ${e.message}`);
     }
   }
