@@ -13,6 +13,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth, useFirestore, useUser } from '@/firebase';
@@ -21,13 +22,33 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { useEffect, useState } from 'react';
-import { Star } from 'lucide-react';
+import { Star, UploadCloud } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { uploadFile } from '@/ai/flows/upload-file-flow';
+import { ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
+import { Label } from '@/components/ui/label';
+import Image from 'next/image';
 
 const feedbackSchema = z.object({
   rating: z.number().min(1, 'Rating is required.').max(5),
   comment: z.string().min(10, 'Comment must be at least 10 characters long.'),
+  image: z.custom<FileList>().optional()
+    .refine((files) => !files || files.length === 0 || files[0].size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine(
+      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files[0].type),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    ),
 });
+
+// Helper function to convert a File to a Base64 data URI
+const toBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+
 
 export default function FeedbackPage() {
   const firestore = useFirestore();
@@ -37,6 +58,7 @@ export default function FeedbackPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof feedbackSchema>>({
     resolver: zodResolver(feedbackSchema),
@@ -51,6 +73,20 @@ export default function FeedbackPage() {
       router.replace('/login');
     }
   }, [user, isUserLoading, router]);
+  
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    } else {
+        setImagePreview(null);
+    }
+  };
+
 
   const onSubmit = async (values: z.infer<typeof feedbackSchema>) => {
     setIsSubmitting(true);
@@ -61,10 +97,32 @@ export default function FeedbackPage() {
     }
 
     try {
+      let imageUrl: string | undefined = undefined;
+      const imageFile = values.image?.[0];
+
+      if (imageFile) {
+        try {
+            const fileDataUri = await toBase64(imageFile);
+            const uploadResult = await uploadFile({
+                fileDataUri,
+                fileName: imageFile.name,
+                path: `feedback-images/${user.uid}`
+            });
+            imageUrl = uploadResult.downloadUrl;
+        } catch(uploadError: any) {
+             toast({ variant: 'destructive', title: 'Image upload failed', description: 'Could not upload the image. Please try again.' });
+             setIsSubmitting(false);
+             return;
+        }
+      }
+
+      const { image, ...feedbackData } = values;
+
       const dataToSave = {
-        ...values,
+        ...feedbackData,
         userId: user.uid,
         createdAt: serverTimestamp(),
+        ...(imageUrl && { imageUrl }),
       };
 
       await addDoc(collection(firestore, 'feedbacks'), dataToSave);
@@ -147,6 +205,48 @@ export default function FeedbackPage() {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                    control={form.control}
+                    name="image"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Attach an image (Optional)</FormLabel>
+                          <FormControl>
+                            <Label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                                    <p className="mb-1 text-sm text-muted-foreground">
+                                      <span className="font-semibold">Click to upload</span> or drag and drop
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">PNG, JPG, or WEBP (MAX. 5MB)</p>
+                                </div>
+                                <Input 
+                                  id="image-upload"
+                                  type="file" 
+                                  className="hidden"
+                                  accept="image/*" 
+                                  disabled={isSubmitting}
+                                  onChange={(e) => {
+                                    field.onChange(e.target.files);
+                                    handleImageChange(e);
+                                  }}
+                                />
+                            </Label>
+                          </FormControl>
+                        <FormDescription>
+                          Optionally, add a screenshot or image to help explain your feedback.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {imagePreview && (
+                      <div className="w-full relative aspect-video">
+                        <Image src={imagePreview} alt="Image preview" fill className="rounded-md object-contain" />
+                      </div>
+                  )}
                 
                 <Button type="submit" disabled={isSubmitting} className="w-full">
                   {isSubmitting ? 'Submitting...' : 'Submit Feedback'}

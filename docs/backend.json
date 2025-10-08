@@ -47,7 +47,7 @@
       },
       "required": [
         "uid",
-        "displayName",        
+        "displayName",
         "address",
         "phone",
         "email",
@@ -257,19 +257,22 @@
       ]
     },
     "FavoriteJob": {
-        "title": "Favorite Job",
-        "description": "A lightweight reference to a job a user has favorited.",
-        "type": "object",
-        "properties": {
-            "jobId": {
-                "type": "string"
-            },
-            "favoritedAt": {
-                "type": "string",
-                "format": "date-time"
-            }
+      "title": "Favorite Job",
+      "description": "A lightweight reference to a job a user has favorited.",
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string"
         },
-        "required": ["jobId", "favoritedAt"]
+        "favoritedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "jobId",
+        "favoritedAt"
+      ]
     },
     "Feedback": {
       "title": "Feedback",
@@ -292,6 +295,11 @@
           "type": "string",
           "format": "date-time",
           "description": "The timestamp when the feedback was submitted."
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "An optional image URL submitted with the feedback."
         }
       },
       "required": [
@@ -316,10 +324,10 @@
       "description": "Stores user profile information."
     },
     "/users/{userId}/favoriteJobs/{jobId}": {
-        "schema": {
-            "$ref": "#/entities/FavoriteJob"
-        },
-        "description": "A user's list of favorite job references."
+      "schema": {
+        "$ref": "#/entities/FavoriteJob"
+      },
+      "description": "A user's list of favorite job references."
     },
     "/listings/{listingId}": {
       "schema": {
