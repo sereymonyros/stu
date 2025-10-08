@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import { useMemo, useState } from 'react';
-import { Pencil, MessageSquare } from 'lucide-react';
+import { Pencil, MessageSquare, Store } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -188,9 +188,12 @@ export default function ListingsPage() {
           )}
 
           {!isLoading && (!listings || listings.length === 0) && (
-             <div className="text-center py-20">
-                <h2 className="text-2xl font-semibold">No listings yet</h2>
-                <p className="text-muted-foreground mt-2">Be the first to post something for sale!</p>
+             <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
+                <Store className="mx-auto h-12 w-12 text-muted-foreground" />
+                <div className="text-center">
+                    <h2 className="text-2xl font-semibold tracking-tight">No listings yet</h2>
+                    <p className="text-muted-foreground mt-2">Be the first to post something for sale!</p>
+                </div>
              </div>
            )}
         </div>
