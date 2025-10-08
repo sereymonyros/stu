@@ -42,9 +42,11 @@
       },
       "required": [
         "uid",
-        "displayName",
-        "userType",
-        "email"
+        "displayName",        
+        "address",
+        "phone",
+        "email",
+        "userType"
       ]
     },
     "Listing": {

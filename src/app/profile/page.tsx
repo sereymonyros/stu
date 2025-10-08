@@ -30,9 +30,9 @@ import { ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
 import { UploadCloud } from 'lucide-react';
 
 const profileSchema = z.object({
-  displayName: z.string().min(2, { message: 'Display name must be at least 2 characters.' }).max(50, { message: 'Display name cannot be longer than 50 characters.' }),
-  address: z.string().optional(),
-  phone: z.string().optional(),
+  displayName: z.string().min(2, { message: 'Full name must be at least 2 characters.' }).max(50, { message: 'Display name cannot be longer than 50 characters.' }),
+  address: z.string().min(1, 'Address is required.'),
+  phone: z.string().min(1, 'Phone number is required.'),
   photo: z.custom<FileList>().optional()
     .refine((files) => !files || files.length === 0 || files[0].size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
     .refine(
