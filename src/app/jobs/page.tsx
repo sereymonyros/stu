@@ -1,6 +1,6 @@
 'use client';
 
-import { useCollection, useFirestore, useUser } from '@/firebase';
+import { useCollection, useFirestore, useUser, useDoc } from '@/firebase';
 import { collection, doc, deleteDoc, setDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
