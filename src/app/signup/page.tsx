@@ -14,10 +14,10 @@ import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function SignupPage() {
-  const [fullName, setFullName] = useState('');
-  const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('Chan Data');
+  const [address, setAddress] = useState('#123 Street 456, Phnom Penh');
+  const [phone, setPhone] = useState('012 345 678');
+  const [email, setEmail] = useState('admin@cambodiahub.com');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [userType, setUserType] = useState('standard');
