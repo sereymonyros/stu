@@ -14,6 +14,9 @@ import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function SignupPage() {
+  const [fullName, setFullName] = useState('');
+  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -42,7 +45,10 @@ export default function SignupPage() {
       // Create a user profile document in Firestore
       await setDoc(doc(firestore, 'users', user.uid), {
         uid: user.uid,
-        displayName: user.email, // Or a default name
+        displayName: fullName,
+        email: user.email,
+        address: address,
+        phone: phone,
         photoURL: '',
         userType: userType,
       });
@@ -68,6 +74,40 @@ export default function SignupPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp} className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="full-name">Full name</Label>
+              <Input
+                id="full-name"
+                placeholder="e.g., Chan Dara"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+             <div className="grid gap-2">
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                placeholder="e.g., #123 Street 456, Phnom Penh"
+                required
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+             <div className="grid gap-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="e.g., 012 345 678"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
