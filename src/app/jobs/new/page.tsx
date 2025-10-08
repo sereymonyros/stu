@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -65,8 +66,17 @@ export default function NewJobPage() {
   });
 
   useEffect(() => {
-    if (isUserLoading || isProfileLoading) return;
-    if (!user || userProfile?.userType !== 'recruiter') {
+    // Wait until both user and profile are done loading
+    if (isUserLoading || isProfileLoading) {
+      return;
+    }
+    // If not logged in, redirect to login
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+    // If logged in but profile is loaded and not a recruiter, then redirect
+    if (userProfile && userProfile.userType !== 'recruiter') {
       toast({ variant: "destructive", title: "Unauthorized", description: "You must be a recruiter to post jobs." });
       router.replace('/jobs');
     }
@@ -95,44 +105,56 @@ export default function NewJobPage() {
     }
   };
 
-  if (isUserLoading || isProfileLoading) {
-    return <div>Loading...</div>; // Or a proper skeleton loader
-  }
+  const isLoading = isUserLoading || isProfileLoading;
+  const isAuthorized = userProfile?.userType === 'recruiter';
 
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader><CardTitle>Post a New Job</CardTitle></CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField control={form.control} name="title" render={({ field }) => (
-                  <FormItem><FormLabel>Job Title</FormLabel><FormControl><Input placeholder="e.g., Software Engineer" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="companyName" render={({ field }) => (
-                  <FormItem><FormLabel>Company Name</FormLabel><FormControl><Input placeholder="e.g., Acme Inc." {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="location" render={({ field }) => (
-                  <FormItem><FormLabel>Location</FormLabel><FormControl><Input placeholder="e.g., Phnom Penh, Cambodia" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="jobType" render={({ field }) => (
-                  <FormItem><FormLabel>Job Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select employment type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Full-time">Full-time</SelectItem><SelectItem value="Part-time">Part-time</SelectItem><SelectItem value="Contract">Contract</SelectItem><SelectItem value="Internship">Internship</SelectItem></SelectContent></Select><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="salary" render={({ field }) => (
-                  <FormItem><FormLabel>Salary (Optional)</FormLabel><FormControl><Input placeholder="e.g., $1000 - $1500 / month" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="description" render={({ field }) => (
-                  <FormItem><FormLabel>Job Description</FormLabel><FormControl><Textarea placeholder="Describe the role, responsibilities, and requirements..." className="min-h-[150px]" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <Button type="submit" disabled={isSubmitting} className="w-full">
-                  {isSubmitting ? 'Posting Job...' : 'Post Job'}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+        {isLoading && (
+            <Card className="max-w-2xl mx-auto">
+                <CardHeader><Skeleton className="h-8 w-1/2" /></CardHeader>
+                <CardContent className="space-y-8">
+                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                </CardContent>
+            </Card>
+        )}
+
+        {!isLoading && isAuthorized && (
+            <Card className="max-w-2xl mx-auto">
+            <CardHeader><CardTitle>Post a New Job</CardTitle></CardHeader>
+            <CardContent>
+                <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField control={form.control} name="title" render={({ field }) => (
+                    <FormItem><FormLabel>Job Title</FormLabel><FormControl><Input placeholder="e.g., Software Engineer" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="companyName" render={({ field }) => (
+                    <FormItem><FormLabel>Company Name</FormLabel><FormControl><Input placeholder="e.g., Acme Inc." {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="location" render={({ field }) => (
+                    <FormItem><FormLabel>Location</FormLabel><FormControl><Input placeholder="e.g., Phnom Penh, Cambodia" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="jobType" render={({ field }) => (
+                    <FormItem><FormLabel>Job Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select employment type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Full-time">Full-time</SelectItem><SelectItem value="Part-time">Part-time</SelectItem><SelectItem value="Contract">Contract</SelectItem><SelectItem value="Internship">Internship</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="salary" render={({ field }) => (
+                    <FormItem><FormLabel>Salary (Optional)</FormLabel><FormControl><Input placeholder="e.g., $1000 - $1500 / month" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="description" render={({ field }) => (
+                    <FormItem><FormLabel>Job Description</FormLabel><FormControl><Textarea placeholder="Describe the role, responsibilities, and requirements..." className="min-h-[150px]" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <Button type="submit" disabled={isSubmitting} className="w-full">
+                    {isSubmitting ? 'Posting Job...' : 'Post Job'}
+                    </Button>
+                </form>
+                </Form>
+            </CardContent>
+            </Card>
+        )}
       </main>
     </div>
   );
