@@ -31,6 +31,11 @@
           "format": "uri",
           "description": "URL of the user's profile picture."
         },
+        "resumeUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the user's uploaded resume."
+        },
         "userType": {
           "type": "string",
           "description": "The type of user, determines permissions.",
