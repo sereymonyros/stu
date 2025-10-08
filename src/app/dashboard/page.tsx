@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { collection, query, where, doc, collectionGroup } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -93,11 +93,11 @@ export default function DashboardPage() {
     // For Standard Users: Fetch job applications
     const appliedApplicationsQuery = useMemo(() => {
         // IMPORTANT: Only run this query if we have a user and they are a 'standard' user
-        if (!firestore || !user || isProfileLoading || userProfile?.userType !== 'standard') {
+        if (!firestore || !user || isUserLoading || isProfileLoading || userProfile?.userType !== 'standard') {
             return null;
         }
         return query(collectionGroup(firestore, 'applications'), where('applicantId', '==', user.uid));
-    }, [firestore, user, userProfile, isProfileLoading]);
+    }, [firestore, user, userProfile, isUserLoading, isProfileLoading]);
     const { data: applications, isLoading: areApplicationsLoading } = useCollection(appliedApplicationsQuery);
 
     // For Standard Users: Fetch job details based on applications
@@ -105,17 +105,23 @@ export default function DashboardPage() {
     
     const appliedJobsQuery = useMemo(() => {
         // IMPORTANT: Only run if we have job IDs to query for. An empty 'in' query is invalid.
-        if (!firestore || appliedJobIds.length === 0) {
+        if (!firestore || appliedJobIds.length === 0 || areApplicationsLoading) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
-    }, [firestore, appliedJobIds]);
+    }, [firestore, appliedJobIds, areApplicationsLoading]);
     const { data: appliedJobs, isLoading: areAppliedJobsLoading } = useCollection(appliedJobsQuery);
 
 
     // --- Loading and Rendering Logic ---
 
-    if (isUserLoading || isProfileLoading) {
+    useEffect(() => {
+        if (!isUserLoading && !user) {
+            router.replace('/login');
+        }
+    }, [user, isUserLoading, router]);
+
+    if (isUserLoading || isProfileLoading || !user) {
         return (
             <div className="flex flex-col min-h-screen">
                 <Header />
@@ -126,11 +132,6 @@ export default function DashboardPage() {
                 </main>
             </div>
         );
-    }
-    
-    if (!user) {
-        router.replace('/login');
-        return null;
     }
 
     const isRecruiter = userProfile?.userType === 'recruiter';
