@@ -84,7 +84,8 @@ export default function DashboardPage() {
   // Fetch details for applied jobs
   const appliedJobsQuery = useMemo(() => {
     if (!jobsCollectionRef || appliedJobIds.length === 0) return null;
-    return query(jobsCollectionRef, where('__name__', 'in', appliedJobIds));
+    // Firestore 'in' queries are limited to 30 items. If this grows, pagination or a different approach is needed.
+    return query(jobsCollectionRef, where('__name__', 'in', appliedJobIds.slice(0, 30)));
   }, [jobsCollectionRef, appliedJobIds]);
   const { data: appliedJobs, isLoading: areAppliedJobsLoading } = useCollection(appliedJobsQuery);
 
@@ -110,13 +111,15 @@ export default function DashboardPage() {
                     Post Job
                   </Link>
                 </Button>
-                <Button asChild variant="secondary">
+              </div>
+            )}
+             {!isRecruiter && (
+                <Button asChild>
                   <Link href="/listings/new">
                     <ShoppingBag className="mr-2 h-4 w-4" />
                     Post Item
                   </Link>
                 </Button>
-              </div>
             )}
           </div>
           
