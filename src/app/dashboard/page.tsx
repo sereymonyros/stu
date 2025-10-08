@@ -104,30 +104,6 @@ export default function DashboardPage() {
     }, [firestore, user]);
     const { data: myListings, isLoading: isMyListingsLoading } = useCollection(myListingsQuery);
 
-    // For Standard Users: Fetch job applications
-    const appliedApplicationsQuery = useMemo(() => {
-        // Check for shouldRunRoleQueries, then check the role
-        if (!firestore || !shouldRunRoleQueries || userProfile?.userType !== 'standard') {
-            return null;
-        }
-        return query(collectionGroup(firestore, 'applications'), where('applicantId', '==', user.uid));
-    }, [firestore, user, userProfile, shouldRunRoleQueries]);
-    const { data: applications, isLoading: areApplicationsLoading } = useCollection(appliedApplicationsQuery);
-
-    // For Standard Users: Fetch job details based on applications
-    const appliedJobIds = useMemo(() => applications?.map(app => app.jobId) || [], [applications]);
-    
-    const appliedJobsQuery = useMemo(() => {
-        // CRITICAL FIX: Do not run this query until the applications have finished loading and we have job IDs.
-        if (!firestore || !isStandard || areApplicationsLoading || appliedJobIds.length === 0) {
-            return null;
-        }
-        
-        return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
-    }, [firestore, isStandard, areApplicationsLoading, appliedJobIds]);
-    const { data: appliedJobs, isLoading: areAppliedJobsLoading } = useCollection(appliedJobsQuery);
-
-
     // --- Loading and Rendering Logic ---
     if (isUserLoading || isProfileLoading) {
         return (
@@ -176,30 +152,6 @@ export default function DashboardPage() {
                         )}
                     </section>
                 )}
-
-                {isStandard && (
-                    <section>
-                         <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Briefcase /> My Job Applications</h2>
-                         {
-                           areApplicationsLoading || (applications && applications.length > 0 && areAppliedJobsLoading) ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
-                            </div>
-                        ) : appliedJobs && appliedJobs.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {appliedJobs.map(job => <JobCard key={job.id} job={job} />)}
-                            </div>
-                        ) : (
-                             <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
-                                <ClipboardList className="mx-auto h-10 w-10 text-muted-foreground" />
-                                <h3 className="text-xl font-semibold">You haven't applied to any jobs yet</h3>
-                                <p className="text-muted-foreground">Browse open positions and find your next opportunity.</p>
-                                <Button asChild><Link href="/jobs">Browse Jobs</Link></Button>
-                            </div>
-                        )}
-                    </section>
-                )}
-
 
                 <section>
                     <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Store /> My Listings</h2>

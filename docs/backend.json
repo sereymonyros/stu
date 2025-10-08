@@ -230,32 +230,6 @@
         "createdAt"
       ]
     },
-    "Application": {
-      "title": "Application",
-      "description": "Represents a user's application for a job.",
-      "type": "object",
-      "properties": {
-        "jobId": {
-          "type": "string"
-        },
-        "applicantId": {
-          "type": "string"
-        },
-        "recruiterId": {
-          "type": "string"
-        },
-        "appliedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "jobId",
-        "applicantId",
-        "recruiterId",
-        "appliedAt"
-      ]
-    },
     "FavoriteJob": {
       "title": "Favorite Job",
       "description": "A lightweight reference to a job a user has favorited.",

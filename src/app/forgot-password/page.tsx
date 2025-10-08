@@ -26,15 +26,25 @@ export default function ForgotPasswordPage() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setIsSubmitted(false);
+    
     try {
       await sendPasswordResetEmail(auth, email);
-      // We always show the success state to prevent email enumeration attacks
-      setIsSubmitted(true);
+      setIsSubmitted(true); // Show success message
     } catch (error: any) {
-      // Even if there's an error (like user not found), we show the success UI.
-      // We can log the error internally if needed, but the user sees the same message.
-      console.error("Password reset error:", error.message);
-      setIsSubmitted(true);
+        if (error.code === 'auth/user-not-found') {
+            toast({
+                variant: "destructive",
+                title: "User not found",
+                description: "No account found with that email address. Please check for typos or sign up.",
+            });
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Error sending reset email",
+                description: error.message || "An unexpected error occurred. Please try again.",
+            });
+        }
     } finally {
       setIsLoading(false);
     }
@@ -46,14 +56,17 @@ export default function ForgotPasswordPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Forgot Password</CardTitle>
           <CardDescription>
-            Enter your email and we&apos;ll send you a link to reset your password.
+            {isSubmitted 
+              ? "A password reset link has been sent to your email."
+              : "Enter your email and we'll send you a link to reset your password."
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isSubmitted ? (
             <div className="text-center space-y-4">
               <p>
-                If an account with that email exists, a reset link has been sent. Please check your inbox and spam folder.
+                Please check your inbox (and spam folder) for the reset link.
               </p>
               <Button variant="link" asChild>
                 <Link href="/login">Back to Login</Link>
