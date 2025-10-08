@@ -104,7 +104,10 @@ export default function JobsPage() {
                     <CardHeader>
                       <CardTitle className="text-xl font-semibold flex items-start justify-between">
                         <span>{job.title}</span>
-                        <Badge variant="secondary">{job.jobType}</Badge>
+                        <div className="flex flex-col items-end gap-2">
+                           <Badge variant="secondary">{job.jobType}</Badge>
+                           {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
+                        </div>
                       </CardTitle>
                       <p className="text-muted-foreground">{job.companyName} - {job.location}</p>
                     </CardHeader>

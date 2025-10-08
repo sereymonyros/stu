@@ -187,6 +187,15 @@
             "Internship"
           ]
         },
+        "status": {
+          "type": "string",
+          "description": "The hiring status of the job.",
+          "enum": [
+            "Available",
+            "Offering",
+            "Closed"
+          ]
+        },
         "recruiterId": {
           "type": "string",
           "description": "The UID of the recruiter who posted the job."
@@ -202,6 +211,7 @@
         "companyName",
         "location",
         "jobType",
+        "status",
         "recruiterId",
         "createdAt"
       ]

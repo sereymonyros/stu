@@ -36,6 +36,7 @@ const jobSchema = z.object({
   companyName: z.string().min(2, 'Company name is required.'),
   location: z.string().min(2, 'Location is required.'),
   jobType: z.enum(['Full-time', 'Part-time', 'Contract', 'Internship']),
+  status: z.enum(['Available', 'Offering', 'Closed']),
   description: z.string().optional(),
   salary: z.string().optional(),
 });
@@ -64,6 +65,7 @@ export default function EditJobPage() {
         companyName: '',
         location: '',
         jobType: 'Full-time',
+        status: 'Available',
         description: '',
         salary: '',
     },
@@ -76,6 +78,7 @@ export default function EditJobPage() {
         companyName: job.companyName,
         location: job.location,
         jobType: job.jobType,
+        status: job.status || 'Available',
         description: job.description,
         salary: job.salary,
       });
@@ -168,6 +171,9 @@ export default function EditJobPage() {
                   <FormField control={form.control} name="jobType" render={({ field }) => (
                     <FormItem><FormLabel>Job Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select employment type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Full-time">Full-time</SelectItem><SelectItem value="Part-time">Part-time</SelectItem><SelectItem value="Contract">Contract</SelectItem><SelectItem value="Internship">Internship</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                   )} />
+                   <FormField control={form.control} name="status" render={({ field }) => (
+                    <FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select job status" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Available">Available</SelectItem><SelectItem value="Offering">Offering</SelectItem><SelectItem value="Closed">Closed</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                  )} />
                   <FormField control={form.control} name="salary" render={({ field }) => (
                     <FormItem><FormLabel>Salary (Optional)</FormLabel><FormControl><Input placeholder="e.g., $1000 - $1500 / month" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
@@ -194,4 +200,3 @@ export default function EditJobPage() {
     </div>
   );
 }
-

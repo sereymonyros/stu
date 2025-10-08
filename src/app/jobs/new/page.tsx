@@ -66,16 +66,13 @@ export default function NewJobPage() {
   });
 
   useEffect(() => {
-    // Wait until both user and profile are done loading
     if (isUserLoading || isProfileLoading) {
       return;
     }
-    // If not logged in, redirect to login
     if (!user) {
       router.replace('/login');
       return;
     }
-    // If logged in but profile is loaded and not a recruiter, then redirect
     if (userProfile && userProfile.userType !== 'recruiter') {
       toast({ variant: "destructive", title: "Unauthorized", description: "You must be a recruiter to post jobs." });
       router.replace('/jobs');
@@ -95,6 +92,7 @@ export default function NewJobPage() {
         ...values,
         recruiterId: user.uid,
         createdAt: serverTimestamp(),
+        status: 'Available',
       });
       toast({ title: 'Job posted successfully!' });
       router.push('/jobs');
@@ -106,7 +104,7 @@ export default function NewJobPage() {
   };
 
   const isLoading = isUserLoading || isProfileLoading;
-  const isAuthorized = userProfile?.userType === 'recruiter';
+  const isAuthorized = !isLoading && userProfile?.userType === 'recruiter';
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -123,7 +121,7 @@ export default function NewJobPage() {
             </Card>
         )}
 
-        {!isLoading && isAuthorized && (
+        {isAuthorized && (
             <Card className="max-w-2xl mx-auto">
             <CardHeader><CardTitle>Post a New Job</CardTitle></CardHeader>
             <CardContent>
