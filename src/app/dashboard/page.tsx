@@ -93,9 +93,9 @@ export default function DashboardPage() {
 
     // For All Users: Fetch listings they created
     const myListingsQuery = useMemo(() => {
-        if (!firestore || !user || isProfileLoading) return null;
+        if (!firestore || !user) return null;
         return query(collection(firestore, 'listings'), where('sellerId', '==', user.uid));
-    }, [firestore, user, isProfileLoading]);
+    }, [firestore, user]);
     const { data: myListings, isLoading: isMyListingsLoading } = useCollection(myListingsQuery);
 
     // For Standard Users: Fetch job applications
@@ -112,11 +112,15 @@ export default function DashboardPage() {
     
     const appliedJobsQuery = useMemo(() => {
         // IMPORTANT: Only run if we have job IDs and all dependent data is loaded.
-        if (!firestore || areApplicationsLoading || appliedJobIds.length === 0) {
+        if (!firestore || areApplicationsLoading || !user || userProfile?.userType !== 'standard') {
+            return null;
+        }
+        // Also critically important, do not run if there are no applications to avoid an invalid `in` query
+        if (appliedJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
-    }, [firestore, appliedJobIds, areApplicationsLoading]);
+    }, [firestore, user, userProfile, appliedJobIds, areApplicationsLoading]);
     const { data: appliedJobs, isLoading: areAppliedJobsLoading } = useCollection(appliedJobsQuery);
 
 
@@ -219,3 +223,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    
