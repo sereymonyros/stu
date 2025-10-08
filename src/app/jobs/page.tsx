@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, doc, deleteDoc, setDoc, serverTimestamp, query } from 'firebase/firestore';
+import { collection, doc, deleteDoc, setDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -38,9 +38,10 @@ export default function JobsPage() {
   const [jobTypeFilters, setJobTypeFilters] = useState<string[]>([]);
   const [locationFilters, setLocationFilters] = useState<string[]>([]);
 
-  const jobsCollection = useMemo(() => {
+  // Simplified query to fetch only available jobs
+  const jobsQuery = useMemo(() => {
     if (!firestore) return null;
-    return collection(firestore, 'jobs');
+    return query(collection(firestore, 'jobs'), where('status', '!=', 'Closed'));
   }, [firestore]);
 
   const userProfileRef = useMemo(() => {
@@ -53,14 +54,12 @@ export default function JobsPage() {
     return collection(firestore, `users/${user.uid}/favoriteJobs`);
   }, [firestore, user]);
   
-  // Fetch all applications for the current user to check which jobs they've applied to
   const userApplicationsQuery = useMemo(() => {
     if (!firestore || !user) return null;
-    // We query the root 'applications' collection group to find all applications by this user
     return query(collection(firestore, `users/${user.uid}/applications`));
   }, [firestore, user]);
 
-  const { data: jobs, isLoading: isJobsLoading } = useCollection(jobsCollection);
+  const { data: jobs, isLoading: isJobsLoading } = useCollection(jobsQuery);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
   const { data: favoriteJobDocs, isLoading: areFavoritesLoading } = useCollection(favoriteJobsCollectionRef);
   const { data: userApplications, isLoading: areApplicationsLoading } = useCollection(userApplicationsQuery);
