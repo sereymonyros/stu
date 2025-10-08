@@ -105,7 +105,7 @@ export default function DashboardPage() {
               <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
               <p className="text-muted-foreground">Manage your jobs and listings.</p>
             </div>
-            {isRecruiter && (
+            {isRecruiter ? (
               <div className="flex gap-2">
                 <Button asChild>
                   <Link href="/jobs/new">
@@ -114,8 +114,7 @@ export default function DashboardPage() {
                   </Link>
                 </Button>
               </div>
-            )}
-             {!isRecruiter && (
+            ) : (
                 <Button asChild>
                   <Link href="/listings/new">
                     <ShoppingBag className="mr-2 h-4 w-4" />
