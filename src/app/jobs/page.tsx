@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Pencil, Trash2, Heart, Briefcase } from 'lucide-react';
+import { Pencil, Trash2, Heart, Briefcase, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 
 export default function JobsPage() {
   const firestore = useFirestore();
@@ -38,6 +39,7 @@ export default function JobsPage() {
   const { toast } = useToast();
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [jobTypeFilter, setJobTypeFilter] = useState('All');
+  const [locationFilter, setLocationFilter] = useState('');
 
   const jobsCollection = useMemo(() => {
     if (!firestore) return null;
@@ -72,9 +74,15 @@ export default function JobsPage() {
     if (jobTypeFilter !== 'All') {
       filtered = filtered.filter(job => job.jobType === jobTypeFilter);
     }
+
+    if (locationFilter) {
+      filtered = filtered.filter(job => 
+        job.location?.toLowerCase().includes(locationFilter.toLowerCase())
+      );
+    }
     
     return filtered;
-  }, [jobs, showFavoritesOnly, favoriteJobIds, jobTypeFilter]);
+  }, [jobs, showFavoritesOnly, favoriteJobIds, jobTypeFilter, locationFilter]);
 
   const handleToggleFavorite = async (jobId: string) => {
     if (!user || !firestore) return;
@@ -109,7 +117,7 @@ export default function JobsPage() {
 
   const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areFavoritesLoading;
   
-  const hasActiveFilters = showFavoritesOnly || jobTypeFilter !== 'All';
+  const hasActiveFilters = showFavoritesOnly || jobTypeFilter !== 'All' || !!locationFilter;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -119,6 +127,16 @@ export default function JobsPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
             <div className="flex flex-wrap items-center gap-4">
+               <div className="relative">
+                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                 <Input 
+                   placeholder="Filter by location..."
+                   className="pl-9 w-full sm:w-[180px]"
+                   value={locationFilter}
+                   onChange={(e) => setLocationFilter(e.target.value)}
+                   disabled={isLoading}
+                 />
+               </div>
               <Select value={jobTypeFilter} onValueChange={setJobTypeFilter} disabled={isLoading}>
                 <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder="Filter by type" />
@@ -140,7 +158,7 @@ export default function JobsPage() {
                     onCheckedChange={setShowFavoritesOnly}
                     disabled={isLoading}
                   />
-                  <Label htmlFor="favorites-filter">Show Favorites</Label>
+                  <Label htmlFor="favorites-filter">Favorites Only</Label>
                 </div>
               )}
               {isRecruiter && (
