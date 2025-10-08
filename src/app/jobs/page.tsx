@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Pencil, Trash2, Heart, Briefcase, Search } from 'lucide-react';
+import { Pencil, Trash2, Heart, Briefcase, Search, ClipboardList } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -284,17 +284,19 @@ export default function JobsPage() {
           )}
 
           {!isLoading && (!filteredJobs || filteredJobs.length === 0) && (
-            <div className="text-center py-20 border-2 border-dashed rounded-lg">
-              <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h2 className="mt-4 text-2xl font-semibold">
-                {hasActiveFilters ? "No matching jobs found" : "No jobs posted yet"}
-              </h2>
-              <p className="text-muted-foreground mt-2">
-                {hasActiveFilters 
-                  ? "Try adjusting your filters to find more jobs."
-                  : (isRecruiter ? "Post a job to attract candidates." : "Check back later for new opportunities!")
-                }
-              </p>
+            <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
+              <ClipboardList className="mx-auto h-12 w-12 text-muted-foreground" />
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold tracking-tight">
+                  {hasActiveFilters ? "No matching jobs found" : "No jobs posted yet"}
+                </h2>
+                <p className="text-muted-foreground mt-2 max-w-sm mx-auto">
+                  {hasActiveFilters 
+                    ? "Try adjusting your filters to find more jobs."
+                    : (isRecruiter ? "Post a job to attract top talent and fill your open positions." : "There are currently no open positions. Check back later for new opportunities!")
+                  }
+                </p>
+              </div>
               {hasActiveFilters && (
                 <Button variant="ghost" className="mt-4" onClick={() => {
                   setSearchQuery('');
