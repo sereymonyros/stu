@@ -58,11 +58,10 @@ export default function ApplyPage() {
 
     setIsSubmitting(true);
     try {
-      // We create the application in a user-specific subcollection for security rule purposes
-      const userApplicationsRef = collection(firestore, `users/${user.uid}/applications`);
+      // The application is stored in a sub-collection of the job itself.
+      const applicationsRef = collection(jobRef, 'applications');
       
-      // The data includes the job ID for later retrieval.
-      await addDoc(userApplicationsRef, {
+      await addDoc(applicationsRef, {
         applicantId: user.uid,
         jobId: job.id,
         status: 'submitted',
