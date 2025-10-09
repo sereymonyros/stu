@@ -187,7 +187,7 @@ export default function EditListingPage() {
     const user = auth.currentUser;
     
     try {
-      let updatedImageUrls = [...existingImageUrls];
+      const updatedImageUrls = [...existingImageUrls];
 
       if (values.images && values.images.length > 0) {
         const imageFiles = Array.from(values.images);
