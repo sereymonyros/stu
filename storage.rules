@@ -2,8 +2,38 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    match /listings/{userId}/{allFiles=**} {
-      allow read, write if request.auth.uid == userId;
+    // Helper function for authentication
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Allow public read access for listing images
+    match /listings/{userId}/{allPaths=**} {
+      allow read;
+      allow write: if isAuth() && request.auth.uid == userId;
+    }
+    
+    // Allow public read access for user profile images
+    match /profiles/{userId}/{allPaths=**} {
+        allow read;
+        allow write: if isAuth() && request.auth.uid == userId;
+    }
+    
+    // Allow public read access for resumes
+    match /resumes/{userId}/{allPaths=**} {
+        allow read;
+        allow write: if isAuth() && request.auth.uid == userId;
+    }
+    
+    // Allow public read for feedback images
+    match /feedbacks/{userId}/{allPaths=**} {
+        allow read;
+        allow write: if isAuth() && request.auth.uid == userId;
+    }
+
+    // Disallow any other access by default
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }
