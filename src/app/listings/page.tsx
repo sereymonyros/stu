@@ -43,17 +43,21 @@ export default function ListingsPage() {
     setContactingSellerId(listing.id);
     try {
       const chatsRef = collection(firestore, 'chats');
+      // Corrected Query: Use 'participants' for the lookup to align with security rules.
       const q = query(
         chatsRef,
         where('listingId', '==', listing.id),
-        where('buyerId', '==', user.uid)
+        where('participants', 'array-contains', user.uid)
       );
 
       const existingChats = await getDocs(q);
 
-      if (!existingChats.empty) {
-        const chatId = existingChats.docs[0].id;
-        router.push(`/chat/${chatId}`);
+      // Since the query now checks for the current user in participants, 
+      // we need to find the specific chat that also includes the seller.
+      const specificChat = existingChats.docs.find(doc => doc.data().participants.includes(listing.sellerId));
+
+      if (specificChat) {
+        router.push(`/chat/${specificChat.id}`);
       } else {
         const newChatData = {
           listingId: listing.id,
