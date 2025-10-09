@@ -19,6 +19,17 @@ import { uploadFile } from '@/ai/flows/upload-file-flow';
 import { ACCEPTED_RESUME_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Helper function to convert a File to a Base64 data URI
 const toBase64 = (file: File): Promise<string> =>
@@ -77,8 +88,7 @@ export default function ApplyPage() {
   }, [user, isUserLoading, userProfile, router, toast]);
 
   // --- Handlers ---
-  const handleApply = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleApply = async () => {
     if (!user || !userProfile || !finalJobId || hasApplied || isSubmitting) return;
     if (!userProfile.resumeUrl) {
       toast({ variant: 'destructive', title: 'Please upload a resume first.' });
@@ -234,7 +244,7 @@ export default function ApplyPage() {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1 container mx-auto p-4 md:p:6 lg:p-8">
-        <form onSubmit={handleApply}>
+        <div>
             <Card className="max-w-2xl mx-auto">
             <CardHeader>
                 <Button variant="ghost" size="sm" className="mb-4 w-fit -ml-2" asChild>
@@ -308,17 +318,34 @@ export default function ApplyPage() {
             </CardContent>
             {!hasApplied && (
                 <CardFooter>
-                    <Button 
-                        type="submit"
-                        className="w-full"
-                        disabled={isSubmitting || !userProfile?.resumeUrl || job.status === 'Closed' || isUploadingResume}
-                    >
-                    {isSubmitting ? 'Submitting...' : 'Confirm and Submit Application'}
-                    </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                          className="w-full"
+                          disabled={isSubmitting || !userProfile?.resumeUrl || job.status === 'Closed' || isUploadingResume}
+                      >
+                      {isSubmitting ? 'Submitting...' : 'Confirm and Submit Application'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure you want to apply?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Your profile and resume will be sent to {job.companyName}. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleApply} disabled={isSubmitting}>
+                          {isSubmitting ? 'Submitting...' : 'Yes, Submit Application'}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </CardFooter>
             )}
             </Card>
-        </form>
+        </div>
       </main>
     </div>
   );
