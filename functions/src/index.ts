@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Cloud Functions for Firebase to handle backend tasks.
  *
@@ -31,7 +32,7 @@ interface UserData {
  * Sends an email to a user confirming their job application and notifies the recruiter using SendGrid.
  * This function uses the V2 Cloud Functions SDK (onDocumentCreated).
  */
-export const sendApplicationConfirmationEmail = onDocumentCreated(
+export const sendApplicationConfirmationEmailV3 = onDocumentCreated( // NEW NAME
     {
         document: 'jobs/{jobId}/applications/{applicationId}',
         // FIX: The secrets array MUST contain PLAIN STRING NAMES of the secrets.
@@ -155,7 +156,7 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
  * This function triggers when a user document in `/users/{userId}` is updated.
  * It is now using the V2 Cloud Functions SDK (onDocumentUpdated).
  */
-export const updateUserData = onDocumentUpdated('users/{userId}', async (event) => {
+export const updateUserDataV3 = onDocumentUpdated('users/{userId}', async (event) => { // NEW NAME
     // V2: The change object is now available as event.data.
     const change = event.data;
 
