@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useEffect } from 'react';
@@ -55,11 +56,11 @@ function JobCard({ job }: { job: any }) {
 function AppliedJobCard({ job, applicationStatus }: { job: any, applicationStatus: string }) {
 
     const statusColors: { [key: string]: string } = {
-        submitted: 'bg-blue-500',
-        reviewed: 'bg-yellow-500',
-        offered: 'bg-purple-500',
-        accepted: 'bg-green-500',
-        rejected: 'bg-red-500',
+        submitted: 'bg-blue-500 hover:bg-blue-600',
+        reviewed: 'bg-yellow-500 hover:bg-yellow-600 text-black',
+        offered: 'bg-purple-500 hover:bg-purple-600',
+        accepted: 'bg-green-500 hover:bg-green-600',
+        rejected: 'bg-red-500 hover:bg-red-600',
     }
 
     return (
@@ -70,7 +71,7 @@ function AppliedJobCard({ job, applicationStatus }: { job: any, applicationStatu
             </CardHeader>
             <CardContent>
                 <div className="flex items-center gap-2 flex-wrap">
-                    <Badge className={cn("capitalize", statusColors[applicationStatus] || 'bg-gray-500')}>{applicationStatus}</Badge>
+                    <Badge className={cn("capitalize text-white", statusColors[applicationStatus] || 'bg-gray-500')}>{applicationStatus}</Badge>
                     {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'secondary'} className="capitalize">{job.status}</Badge>}
                 </div>
             </CardContent>

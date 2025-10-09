@@ -1,6 +1,6 @@
-import { auth } from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
 import * as nodemailer from 'nodemailer';
+const functions = require("firebase-functions");
 
 // Initialize the Firebase Admin SDK.
 admin.initializeApp();
@@ -19,7 +19,8 @@ const transporter = nodemailer.createTransport({
  * The trigger is now defined using `auth.user.onCreate`.
  */
 // CORRECTED: The trigger is now defined via the imported 'auth' object
-export const sendWelcomeEmail = auth.user.onCreate(async (event:any) => {
+
+export const sendWelcomeEmail = functions.https.onRequest(async (event:any) => {
     // In v2, the user record is within event.data
     const user = event.data; 
 
