@@ -1,81 +1,72 @@
 /**
  * @fileOverview Cloud Functions for Firebase to handle backend tasks.
  *
- * This file contains Cloud Functions for sending application confirmation emails
- * and propagating user profile updates (recruiter info) to job postings.
+ * This file contains the Cloud Function that sends a welcome email to new users.
+ * To deploy this function, you will need the Firebase CLI.
+ *
+ * Pre-deployment steps:
+ * 1. Set up your email service credentials as environment variables in your Firebase project:
+ *    - GMAIL_EMAIL: The email address you're sending from (e.g., your.email@gmail.com).
+ *    - GMAIL_APP_PASSWORD: The app-specific password for your email account.
+ *
+ *    You can set these by running the following commands in your terminal:
+ *    firebase functions:config:set gmail.email="your.email@gmail.com"
+ *    firebase functions:config:set gmail.app_password="your-16-digit-app-password"
+ *
+ * 2. Deploy the function using the Firebase CLI:
+ *    firebase deploy --only functions
  */
+import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as nodemailer from 'nodemailer';
-import { defineString } from 'firebase-functions/params';
-import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/firestore';
 
 // Initialize the Firebase Admin SDK.
-// This is the ONLY global synchronous call remaining, which is required.
 admin.initializeApp();
 const db = admin.firestore();
 
-// Define a basic interface for User data for better type safety
-interface UserData {
-    displayName?: string;
-    photoURL?: string;
-    userType?: string;
-    email?: string;
-}
+// Configure the email transporter using nodemailer.
+// The credentials for the email service are fetched from Firebase environment configuration.
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: functions.config().gmail.email,
+        pass: functions.config().gmail.app_password
+    }
+});
 
 /**
- * Sends an email to a user confirming their job application.
- * This function now contains all its dependencies (defineString and nodemailer setup)
- * to prevent global scope crashes.
+ * Sends an email to a user confirming their job application and notifies the recruiter.
+ *
+ * This function is triggered when a new application document is created. It sends
+ * a confirmation to the applicant and a notification to the recruiter.
  */
-export const sendApplicationConfirmationEmailV0 = onDocumentCreated( 
+export const sendApplicationConfirmationEmail = onDocumentCreated( 
     {
         document: 'jobs/{jobId}/applications/{applicationId}',
         // CRUCIAL ADDITION: Explicitly link the secrets for V2 deployment
         secrets: ['GMAIL_EMAIL', 'GMAIL_APP_PASSWORD'],
     },
     async (event) => {
-        
-        // --- ISOLATED DEPENDENCIES ---
-        // These are defined here to guarantee they are isolated from other function's global scope
-        const GMAIL_EMAIL = defineString('GMAIL_EMAIL');
-        const GMAIL_APP_PASSWORD = defineString('GMAIL_APP_PASSWORD');
-
-        const email = GMAIL_EMAIL.value();
-        const appPassword = GMAIL_APP_PASSWORD.value();
-
-        if (!email || !appPassword) {
-            console.error('Nodemailer configuration failed: GMAIL_EMAIL or GMAIL_APP_PASSWORD secret is missing or empty.');
+        debugger;
+        const snapshot = event.data;
+        const applicationData: any = snapshot;
+        if (!applicationData) {
+            console.error("Application data is undefined. Exiting function.");
             return null;
         }
-
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: email,
-                pass: appPassword
-            }
-        });
-        // --- END ISOLATED DEPENDENCIES ---
-
-        const snapshot = event.data;
-
-        if (!snapshot) {
-            console.error("No data found in event.");
-            return;
-        }
-
-        const applicationData = snapshot.data();
         const { jobId, applicantId } = applicationData;
 
-        // Fetch user and job details concurrently
-        const userPromise = db.collection('users').doc(applicantId).get();
-        const jobPromise = db.collection('jobs').doc(jobId).get();
-
         try {
-            const [userDoc, jobDoc] = await Promise.all([userPromise, jobPromise]);
+            // Fetch all required documents concurrently
+            const applicantDocPromise = db.collection('users').doc(applicantId).get();
+            const jobDocPromise = db.collection('jobs').doc(jobId).get();
+            
+            const [applicantDoc, jobDoc] = await Promise.all([applicantDocPromise, jobDocPromise]);
 
-            if (!userDoc.exists) {
-                console.error(`User document not found for applicantId: ${applicantId}`);
+            // --- Validate documents ---
+            if (!applicantDoc.exists) {
+                console.error(`Applicant user document not found for applicantId: ${applicantId}`);
                 return null;
             }
             if (!jobDoc.exists) {
@@ -83,69 +74,97 @@ export const sendApplicationConfirmationEmailV0 = onDocumentCreated(
                 return null;
             }
 
-            // Use the UserData interface here for type clarity
-            const userData = userDoc.data()! as UserData;
+            const applicantData = applicantDoc.data()!;
             const jobData = jobDoc.data()!;
+            const { recruiterId, title: jobTitle, companyName } = jobData;
 
-            const { email: recipientEmail, displayName } = userData;
-            const { title, companyName } = jobData;
+            // --- Fetch Recruiter Data ---
+            const recruiterDoc = await db.collection('users').doc(recruiterId).get();
+            if (!recruiterDoc.exists) {
+                console.error(`Recruiter user document not found for recruiterId: ${recruiterId}`);
+                // We can still proceed to email the applicant even if the recruiter can't be notified.
+            }
+            const recruiterData = recruiterDoc.data();
 
-            if (!recipientEmail) {
-                console.error(`No email address found for user: ${applicantId}`);
-                return null;
+            // --- 1. Send Confirmation Email to Applicant ---
+            const { email: applicantEmail, displayName: applicantName } = applicantData;
+            if (applicantEmail) {
+                const applicantMailOptions = {
+                    from: `"Cambodia Hub" <${functions.config().gmail.email}>`,
+                    to: applicantEmail,
+                    subject: `Your Application for ${jobTitle} has been Received`,
+                    html: `
+                        <h1>Application Confirmation</h1>
+                        <p>Dear ${applicantName || 'Applicant'},</p>
+                        <p>This email confirms that we have successfully received your application for the <b>${jobTitle}</b> position at <b>${companyName}</b>.</p>
+                        <p>You can view the status of all your applications on your dashboard.</p>
+                        <p>We wish you the best of luck in the hiring process!</p>
+                        <br>
+                        <p>Sincerely,</p>
+                        <p><b>The Cambodia Hub Team</b></p>
+                    `
+                };
+                await transporter.sendMail(applicantMailOptions);
+                console.log(`Application confirmation email sent to applicant: ${applicantEmail}`);
+            } else {
+                console.warn(`No email address found for applicant: ${applicantId}. Skipping email.`);
             }
 
-            const mailOptions = {
-                from: '"Cambodia Hub" <noreply@yourfirebaseproject.com>',
-                to: recipientEmail,
-                subject: `Your Application for ${title} has been Received`,
-                html: `
-                    <h1>Application Confirmation</h1>
-                    <p>Dear ${displayName || 'Applicant'},</p>
-                    <p>This email confirms that we have successfully received your application for the <b>${title}</b> position at <b>${companyName}</b>.</p>
-                    <p>You can view the status of all your applications on your dashboard.</p>
-                    <p>We wish you the best of luck in the hiring process!</p>
-                    <br>
-                    <p>Sincerely,</p>
-                    <p><b>The Cambodia Hub Team</b></p>
-                `
-            };
-            
-            await transporter.sendMail(mailOptions);
-            console.log(`Application confirmation email sent to: ${recipientEmail}`);
+            // --- 2. Send Notification Email to Recruiter ---
+            const recruiterEmail = recruiterData?.email;
+            if (recruiterEmail) {
+                const recruiterMailOptions = {
+                    from: `"Cambodia Hub" <${functions.config().gmail.email}>`,
+                    to: recruiterEmail,
+                    subject: `New Application for ${jobTitle}`,
+                    html: `
+                        <h1>New Job Application</h1>
+                        <p>Hello ${recruiterData?.displayName || 'Recruiter'},</p>
+                        <p>You have received a new application for the <b>${jobTitle}</b> position.</p>
+                        <p><b>Applicant:</b> ${applicantName || 'N/A'}</p>
+                        <p><b>Applicant Email:</b> ${applicantEmail || 'N/A'}</p>
+                        <p>Please visit your dashboard to review the application.</p>
+                        <br>
+                        <p>Regards,</p>
+                        <p><b>The Cambodia Hub Team</b></p>
+                    `
+                };
+                await transporter.sendMail(recruiterMailOptions);
+                console.log(`New application notification sent to recruiter: ${recruiterEmail}`);
+            } else {
+                console.warn(`No email address found for recruiter: ${recruiterId}. Skipping notification.`);
+            }
 
         } catch (error) {
-            console.error('Failed to send application confirmation email:', error);
+            console.error('Failed to process application and send emails:', error);
         }
 
         return null;
     });
 
+
 /**
  * Propagates user profile updates to other parts of the database.
+ * 
  * This function triggers when a user document in `/users/{userId}` is updated.
- * It is now using the V2 Cloud Functions SDK (onDocumentUpdated).
+ * It checks if the `displayName` or `photoURL` has changed and, if so,
+ * updates the corresponding `recruiterName` and `recruiterPhotoURL` in all
+ * job postings made by that user.
  */
-export const updateUserDataV0 = onDocumentUpdated('users/{userId}', async (event) => {
-    // V2: The change object is now available as event.data.
-    const change = event.data;
+export const updateUserDataV = onDocumentUpdated('users/{userId}', async (event) => {
+    const snapshot = event.data;
+    const applicationData: any = snapshot;
 
-    // A check for data existence (should always pass for onDocumentUpdated, but necessary for typing)
-    if (!change || !change.before.data() || !change.after.data()) {
-        console.log("Missing data in change event. Exiting.");
+    if (!applicationData) {
+        console.error("Application data is undefined. Exiting function.");
         return null;
     }
-
-    // Access snapshots from the change object and cast to the interface
-    // to provide strong type guarantees for the rest of the function.
-    const newData = change.after.data() as UserData;
-    const oldData = change.before.data() as UserData;
     
-    // V2: Path parameters are on event.params
+    const newData: any = snapshot?.after.data();
+    const oldData: any = snapshot?.before.data();
     const { userId } = event.params; 
 
     // Check if the name or photo has actually changed
-    // Use optional chaining or explicit checks as needed
     if (newData.displayName === oldData.displayName && newData.photoURL === oldData.photoURL) {
         console.log(`No change in displayName or photoURL for user ${userId}. Exiting.`);
         return null;
@@ -172,10 +191,10 @@ export const updateUserDataV0 = onDocumentUpdated('users/{userId}', async (event
             return null;
         }
 
-        // Use a batch write for efficiency and atomicity
+        // Use a batch write for efficiency
         const batch = db.batch();
         jobsSnapshot.forEach(doc => {
-            console.log(`Queueing update for job ${doc.id} with new recruiter info.`);
+            console.log(`Updating job ${doc.id} with new recruiter info.`);
             batch.update(doc.ref, dataToUpdate);
         });
 
