@@ -11,7 +11,7 @@ import {
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { getStoreData, updateStoreData, getDocData, addDocData } from '@/lib/indexed-db';
+import { getDocData, addDocData } from '@/lib/indexed-db';
 
 /** Utility type to add an 'id' field to a given type T. */
 type WithId<T> = T & { id: string };
@@ -26,7 +26,7 @@ export interface UseDocResult<T> {
   error: FirestoreError | Error | null; // Error object, or null.
 }
 
-const CACHEABLE_STORES = ['listings', 'jobs', 'feedbacks'];
+const CACHEABLE_STORES = ['listings', 'jobs', 'feedbacks', 'users'];
 
 // Firestore Timestamps are not clonable for IndexedDB, so we convert them to JS Dates
 function convertTimestampsToDates(obj: any): any {
@@ -70,6 +70,8 @@ export function useDoc<T = any>(
   const [data, setData] = useState<StateDataType>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+
+  const path = memoizedDocRef?.path;
 
   useEffect(() => {
     if (!memoizedDocRef) {
@@ -140,7 +142,7 @@ export function useDoc<T = any>(
       didCancel = true;
       unsubscribe();
     };
-  }, [memoizedDocRef]); // Re-run if the memoizedDocRef changes.
+  }, [path]); // Re-run if the docRef path changes.
 
   return { data, isLoading, error };
 }
