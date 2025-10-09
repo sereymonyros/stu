@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { MessageSquare, Inbox } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 function ChatListItem({ chat }: { chat: any }) {
     const { user } = useUser();
