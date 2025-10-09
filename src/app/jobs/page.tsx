@@ -101,7 +101,11 @@ export default function JobsPage() {
       );
     }
     
-    return filtered.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+    return filtered.sort((a, b) => {
+      const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : a.createdAt?.toDate?.().getTime() || 0;
+      const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : b.createdAt?.toDate?.().getTime() || 0;
+      return dateB - dateA;
+    });
   }, [jobs, searchQuery, jobTypeFilters, locationFilters]);
 
 
