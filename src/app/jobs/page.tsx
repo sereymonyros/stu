@@ -212,11 +212,11 @@ export default function JobsPage() {
                     </CardContent>
                     <CardFooter className="flex justify-between items-center">
                       {!isRecruiter && (
-                         <Button asChild={!hasApplied} disabled={hasApplied}>
+                         <Button asChild={!hasApplied && job.status !== 'Closed'} disabled={hasApplied || job.status === 'Closed'}>
                            {hasApplied ? (
                               <span>Applied</span>
                            ) : (
-                              <Link href={`/jobs/${job.id}/apply`}>Apply Now</Link>
+                              job.status !== 'Closed' ? <Link href={`/jobs/${job.id}/apply`}>Apply Now</Link> : <span>Closed</span>
                            )}
                          </Button>
                       )}
