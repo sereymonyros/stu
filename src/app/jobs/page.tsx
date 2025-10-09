@@ -27,6 +27,8 @@ import { Input } from '@/components/ui/input';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship'];
 
@@ -37,6 +39,7 @@ export default function JobsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [jobTypeFilters, setJobTypeFilters] = useState<string[]>([]);
   const [locationFilters, setLocationFilters] = useState<string[]>([]);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [isRecruiter, setIsRecruiter] = useState(false);
   
   const jobsQuery = useMemo(() => {
@@ -94,6 +97,10 @@ export default function JobsPage() {
     if (!jobs) return [];
     let filtered = jobs;
 
+    if (showOnlyFavorites) {
+        filtered = filtered.filter(job => favouriteJobIds.has(job.id));
+    }
+
     if (searchQuery) {
         const lowercasedQuery = searchQuery.toLowerCase();
         filtered = filtered.filter(job => 
@@ -118,7 +125,7 @@ export default function JobsPage() {
       const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : b.createdAt?.toDate?.().getTime() || 0;
       return dateB - dateA;
     });
-  }, [jobs, searchQuery, jobTypeFilters, locationFilters]);
+  }, [jobs, searchQuery, jobTypeFilters, locationFilters, showOnlyFavorites, favouriteJobIds]);
 
 
   const handleDeleteJob = (jobId: string) => {
@@ -172,7 +179,7 @@ export default function JobsPage() {
   };
 
   const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areApplicationsLoading || areFavouritesLoading;
-  const hasActiveFilters = jobTypeFilters.length > 0 || locationFilters.length > 0 || searchQuery.length > 0;
+  const hasActiveFilters = jobTypeFilters.length > 0 || locationFilters.length > 0 || searchQuery.length > 0 || showOnlyFavorites;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -218,19 +225,33 @@ export default function JobsPage() {
                         ))}
                       </ToggleGroup>
                   </div>
-                  <ToggleGroup 
-                      type="multiple"
-                      variant="outline"
-                      value={jobTypeFilters}
-                      onValueChange={(value) => setJobTypeFilters(value)}
-                      className="flex-wrap justify-start"
-                      disabled={isLoading}
-                      aria-label="Filter by job type"
-                    >
-                      {jobTypes.map(type => (
-                        <ToggleGroupItem key={type} value={type}>{type}</ToggleGroupItem>
-                      ))}
-                    </ToggleGroup>
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <ToggleGroup 
+                        type="multiple"
+                        variant="outline"
+                        value={jobTypeFilters}
+                        onValueChange={(value) => setJobTypeFilters(value)}
+                        className="flex-wrap justify-start"
+                        disabled={isLoading}
+                        aria-label="Filter by job type"
+                      >
+                        {jobTypes.map(type => (
+                          <ToggleGroupItem key={type} value={type}>{type}</ToggleGroupItem>
+                        ))}
+                      </ToggleGroup>
+                    
+                    {!isRecruiter && (
+                        <div className="flex items-center space-x-2">
+                            <Switch 
+                                id="favorites-only" 
+                                checked={showOnlyFavorites}
+                                onCheckedChange={setShowOnlyFavorites}
+                                disabled={isLoading}
+                            />
+                            <Label htmlFor="favorites-only">Show only favorites</Label>
+                        </div>
+                    )}
+                  </div>
               </CardContent>
             </Card>
           )}
@@ -341,6 +362,7 @@ export default function JobsPage() {
                   setSearchQuery('');
                   setLocationFilters([]);
                   setJobTypeFilters([]);
+                  setShowOnlyFavorites(false);
                 }}>Clear all filters</Button>
               )}
             </div>
@@ -350,5 +372,3 @@ export default function JobsPage() {
     </div>
   );
 }
-
-    
