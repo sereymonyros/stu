@@ -226,15 +226,17 @@ export default function ApplyPage() {
                 )}
 
             </CardContent>
-            <CardFooter>
-                <Button 
-                    type="submit"
-                    className="w-full"
-                    disabled={isSubmitting || !userProfile?.resumeUrl || job.status === 'Closed' || hasApplied}
-                >
-                {isSubmitting ? 'Submitting...' : hasApplied ? 'Already Applied' : 'Confirm and Submit Application'}
-                </Button>
-            </CardFooter>
+            {!hasApplied && (
+                <CardFooter>
+                    <Button 
+                        type="submit"
+                        className="w-full"
+                        disabled={isSubmitting || !userProfile?.resumeUrl || job.status === 'Closed'}
+                    >
+                    {isSubmitting ? 'Submitting...' : 'Confirm and Submit Application'}
+                    </Button>
+                </CardFooter>
+            )}
             </Card>
         </form>
       </main>
