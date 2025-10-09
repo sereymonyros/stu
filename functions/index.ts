@@ -23,7 +23,6 @@ import * as nodemailer from 'nodemailer';
 // Initialize the Firebase Admin SDK.
 admin.initializeApp();
 const db = admin.firestore();
-const auth = admin.auth();
 
 // Configure the email transporter using nodemailer.
 // The credentials for the email service are fetched from Firebase environment configuration.
@@ -161,3 +160,42 @@ export const updateUserData = functions.firestore
 
         return null;
     });
+/**
+ * Sends a welcome email to new users and sets up a verification link.
+ * 
+ * This Cloud Function is triggered when a new user account is created in Firebase Authentication.
+ * It generates an email verification link and sends it as part of a welcome email.
+ * This helps ensure that the user's email address is valid and they can receive important communications.
+ */
+export const sendWelcomeEmail = functions.auth.user().onCreate(async (user) => {
+    const { email, uid, displayName } = user;
+
+    if (!email) {
+        console.log(`User ${uid} has no email address. Skipping welcome email.`);
+        return null;
+    }
+
+    try {
+        const mailOptions = {
+            from: '"Cambodia Hub" <noreply@yourfirebaseproject.com>',
+            to: email,
+            subject: 'Welcome to Cambodia Hub! Please Verify Your Email',
+            html: `
+                <h1>Welcome, ${displayName || 'User'}!</h1>
+                <p>Thank you for joining Cambodia Hub, your gateway to the Kingdom of Wonder.</p>
+                <p>To secure your account and get started, please verify your email address by clicking the link below:</p>
+                <p><a href="${await admin.auth().generateEmailVerificationLink(email)}">Verify Your Email</a></p>
+                <br>
+                <p>We're excited to have you with us!</p>
+                <p><b>The Cambodia Hub Team</b></p>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`Welcome and verification email sent to: ${email}`);
+    } catch (error) {
+        console.error('Failed to send welcome email:', error);
+    }
+
+    return null;
+});
