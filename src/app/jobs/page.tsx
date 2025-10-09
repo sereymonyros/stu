@@ -26,6 +26,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Input } from '@/components/ui/input';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship'];
 
@@ -106,14 +108,21 @@ export default function JobsPage() {
   }, [jobs, searchQuery, jobTypeFilters, locationFilters]);
 
 
-  const handleDeleteJob = async (jobId: string) => {
+  const handleDeleteJob = (jobId: string) => {
     if (!firestore) return;
-    try {
-      await deleteDoc(doc(firestore, 'jobs', jobId));
-      toast({ title: "Job deleted successfully." });
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Failed to delete job', description: error.message });
-    }
+    const jobDoc = doc(firestore, 'jobs', jobId);
+    
+    deleteDoc(jobDoc).catch(serverError => {
+      errorEmitter.emit(
+        'permission-error',
+        new FirestorePermissionError({
+          path: jobDoc.path,
+          operation: 'delete',
+        })
+      );
+    });
+
+    toast({ title: "Job deleted successfully." });
   };
 
   const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areApplicationsLoading;

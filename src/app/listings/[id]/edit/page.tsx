@@ -36,6 +36,8 @@ import Image from 'next/image';
 import { X } from 'lucide-react';
 import { uploadFile } from '@/ai/flows/upload-file-flow';
 import { ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const listingSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters long.' }),
@@ -144,7 +146,16 @@ export default function EditListingPage() {
         setExistingImageUrls(updatedImageUrls);
       
         if (listingRef) {
-          await updateDoc(listingRef, { imageUrls: updatedImageUrls });
+          updateDoc(listingRef, { imageUrls: updatedImageUrls }).catch(serverError => {
+            errorEmitter.emit(
+              'permission-error',
+              new FirestorePermissionError({
+                path: listingRef.path,
+                operation: 'update',
+                requestResourceData: { imageUrls: updatedImageUrls },
+              })
+            );
+          });
         }
 
         toast({ title: "Image removed successfully." });
@@ -209,7 +220,16 @@ export default function EditListingPage() {
           ...(values.price !== listing.price && { originalPrice: listing.price }),
       };
 
-      await updateDoc(listingRef, finalData);
+      updateDoc(listingRef, finalData).catch(serverError => {
+        errorEmitter.emit(
+          'permission-error',
+          new FirestorePermissionError({
+            path: listingRef.path,
+            operation: 'update',
+            requestResourceData: finalData,
+          })
+        );
+      });
       
       toast({
         title: "Listing updated!",
@@ -225,7 +245,6 @@ export default function EditListingPage() {
             title: 'Uh oh! Something went wrong.',
             description: error.message || 'There was a problem updating your listing.',
         });
-    } finally {
         setIsSubmitting(false);
     }
   };

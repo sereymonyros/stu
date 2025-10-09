@@ -28,6 +28,8 @@ import { uploadFile } from '@/ai/flows/upload-file-flow';
 import { ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
 import { Label } from '@/components/ui/label';
 import { UploadCloud } from 'lucide-react';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const listingSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters long.' }),
@@ -114,7 +116,7 @@ export default function NewListingPage() {
       const imageUrls = await Promise.all(uploadPromises);
 
       const listingsCollection = collection(firestore, 'listings');
-      await addDoc(listingsCollection, {
+      const listingData = {
         title: values.title,
         description: values.description,
         price: values.price,
@@ -122,6 +124,17 @@ export default function NewListingPage() {
         createdAt: serverTimestamp(),
         imageUrls: imageUrls,
         status: 'available',
+      };
+      
+      addDoc(listingsCollection, listingData).catch(serverError => {
+        errorEmitter.emit(
+          'permission-error',
+          new FirestorePermissionError({
+            path: listingsCollection.path,
+            operation: 'create',
+            requestResourceData: listingData,
+          })
+        );
       });
       
       toast({
@@ -140,7 +153,6 @@ export default function NewListingPage() {
             title: 'Uh oh! Something went wrong.',
             description: error.message || 'There was a problem creating your listing.',
         });
-    } finally {
         setIsLoading(false);
     }
   };

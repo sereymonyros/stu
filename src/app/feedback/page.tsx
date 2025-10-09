@@ -28,6 +28,8 @@ import { uploadFile } from '@/ai/flows/upload-file-flow';
 import { ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
 import { Label } from '@/components/ui/label';
 import Image from 'next/image';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const feedbackSchema = z.object({
   rating: z.number().min(1, 'Rating is required.').max(5),
@@ -125,13 +127,23 @@ export default function FeedbackPage() {
         ...(imageUrl && { imageUrl }),
       };
 
-      await addDoc(collection(firestore, 'feedbacks'), dataToSave);
+      const feedbacksCol = collection(firestore, 'feedbacks');
+      addDoc(feedbacksCol, dataToSave).catch(serverError => {
+        errorEmitter.emit(
+          'permission-error',
+          new FirestorePermissionError({
+            path: feedbacksCol.path,
+            operation: 'create',
+            requestResourceData: dataToSave,
+          })
+        );
+      });
 
       toast({ title: 'Thank you for your feedback!' });
       router.push('/');
     } catch (error: any) {
+      // This will now primarily catch errors from file upload or other non-firestore async operations
       toast({ variant: 'destructive', title: 'Failed to submit feedback', description: error.message });
-    } finally {
       setIsSubmitting(false);
     }
   };

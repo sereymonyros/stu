@@ -13,6 +13,8 @@ import { Pencil, MessageSquare, Store } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function ListingsPage() {
   const firestore = useFirestore();
@@ -50,7 +52,7 @@ export default function ListingsPage() {
         const chatId = existingChats.docs[0].id;
         router.push(`/chat/${chatId}`);
       } else {
-        const newChatRef = await addDoc(chatsRef, {
+        const newChatData = {
           listingId: listing.id,
           listingTitle: listing.title,
           buyerId: user.uid,
@@ -58,6 +60,18 @@ export default function ListingsPage() {
           participants: [user.uid, listing.sellerId],
           lastMessage: `Inquiring about: ${listing.title}`,
           updatedAt: serverTimestamp(),
+        };
+
+        const newChatRef = await addDoc(chatsRef, newChatData).catch(serverError => {
+            errorEmitter.emit(
+              'permission-error',
+              new FirestorePermissionError({
+                path: chatsRef.path,
+                operation: 'create',
+                requestResourceData: newChatData,
+              })
+            );
+            throw serverError; // rethrow to be caught by outer try/catch
         });
         router.push(`/chat/${newChatRef.id}`);
       }

@@ -29,6 +29,8 @@ import { uploadFile } from '@/ai/flows/upload-file-flow';
 import { ACCEPTED_IMAGE_TYPES, ACCEPTED_RESUME_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
 import { FileText, UploadCloud } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const profileSchema = z.object({
   displayName: z.string().min(2, { message: 'Full name must be at least 2 characters.' }).max(50, { message: 'Display name cannot be longer than 50 characters.' }),
@@ -160,8 +162,8 @@ export default function ProfilePage() {
          resumeUrl = uploadResult.downloadUrl;
       }
 
-      // Update Firebase Auth profile
-      await updateProfile(auth.currentUser, {
+      // This is non-blocking
+      updateProfile(auth.currentUser, {
         displayName: values.displayName,
         photoURL: photoURL,
       });
@@ -180,8 +182,17 @@ export default function ProfilePage() {
         dataToUpdate.resumeUrl = resumeUrl;
       }
       
-      // Update Firestore profile
-      await updateDoc(userProfileRef, dataToUpdate);
+      // Update Firestore profile (non-blocking)
+      updateDoc(userProfileRef, dataToUpdate).catch(serverError => {
+        errorEmitter.emit(
+          'permission-error',
+          new FirestorePermissionError({
+            path: userProfileRef.path,
+            operation: 'update',
+            requestResourceData: dataToUpdate,
+          })
+        );
+      });
 
       toast({
         title: 'Profile Updated',

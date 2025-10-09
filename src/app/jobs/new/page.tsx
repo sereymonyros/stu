@@ -29,6 +29,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -79,7 +81,7 @@ export default function NewJobPage() {
     }
   }, [user, userProfile, isUserLoading, isProfileLoading, router, toast]);
 
-  const onSubmit = async (values: z.infer<typeof jobSchema>) => {
+  const onSubmit = (values: z.infer<typeof jobSchema>) => {
     setIsSubmitting(true);
     if (!user) {
       toast({ variant: 'destructive', title: 'Not authenticated' });
@@ -87,20 +89,27 @@ export default function NewJobPage() {
       return;
     }
 
-    try {
-      await addDoc(collection(firestore, 'jobs'), {
-        ...values,
-        recruiterId: user.uid,
-        createdAt: serverTimestamp(),
-        status: 'Available',
-      });
-      toast({ title: 'Job posted successfully!' });
-      router.push('/jobs');
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Failed to post job', description: error.message });
-    } finally {
-      setIsSubmitting(false);
-    }
+    const jobData = {
+      ...values,
+      recruiterId: user.uid,
+      createdAt: serverTimestamp(),
+      status: 'Available',
+    };
+
+    const jobsCol = collection(firestore, 'jobs');
+    addDoc(jobsCol, jobData).catch(serverError => {
+      errorEmitter.emit(
+        'permission-error',
+        new FirestorePermissionError({
+          path: jobsCol.path,
+          operation: 'create',
+          requestResourceData: jobData,
+        })
+      );
+    });
+
+    toast({ title: 'Job posted successfully!' });
+    router.push('/jobs');
   };
 
   const isLoading = isUserLoading || isProfileLoading;

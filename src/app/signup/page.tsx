@@ -14,6 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { User, Briefcase } from 'lucide-react';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState('Chan Data');
@@ -45,7 +47,8 @@ export default function SignupPage() {
       const user = userCredential.user;
 
       // Create a user profile document in Firestore
-      await setDoc(doc(firestore, 'users', user.uid), {
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const profileData = {
         uid: user.uid,
         displayName: fullName,
         email: user.email,
@@ -53,6 +56,17 @@ export default function SignupPage() {
         phone: phone,
         photoURL: '',
         userType: userType,
+      };
+
+      setDoc(userDocRef, profileData).catch(serverError => {
+        errorEmitter.emit(
+          'permission-error',
+          new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'create',
+            requestResourceData: profileData,
+          })
+        );
       });
 
       router.push('/');
@@ -172,7 +186,7 @@ export default function SignupPage() {
           </form>
           <div className="mt-6 text-center text-sm">
             Already have an account?{' '}
-            <Link href="/login" className="underline font-medium text-primary">
+            <Link href="/login" className="font-medium text-primary">
               Login
             </Link>
           </div>

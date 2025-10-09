@@ -30,6 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -102,37 +104,36 @@ export default function EditJobPage() {
   }, [user, isUserLoading, job, isJobLoading, router, toast]);
 
 
-  const onSubmit = async (values: z.infer<typeof jobSchema>) => {
+  const onSubmit = (values: z.infer<typeof jobSchema>) => {
     setIsSubmitting(true);
     if (!jobRef) {
         setIsSubmitting(false);
         return;
     }
     
-    try {
-      const dataToUpdate = {
-        ...values,
-        updatedAt: serverTimestamp(),
-      };
+    const dataToUpdate = {
+      ...values,
+      updatedAt: serverTimestamp(),
+    };
 
-      await updateDoc(jobRef, dataToUpdate);
-      
-      toast({
-        title: "Job updated!",
-        description: "Your job posting has been successfully updated.",
+    updateDoc(jobRef, dataToUpdate)
+      .catch(serverError => {
+        errorEmitter.emit(
+          'permission-error',
+          new FirestorePermissionError({
+            path: jobRef.path,
+            operation: 'update',
+            requestResourceData: dataToUpdate,
+          })
+        );
       });
+      
+    toast({
+      title: "Job updated!",
+      description: "Your job posting has been successfully updated.",
+    });
 
-      router.push(`/jobs`);
-
-    } catch (error: any) {
-        toast({
-            variant: 'destructive',
-            title: 'Uh oh! Something went wrong.',
-            description: error.message || 'There was a problem updating your job posting.',
-        });
-    } finally {
-        setIsSubmitting(false);
-    }
+    router.push(`/jobs`);
   };
 
   const isLoading = isUserLoading || isJobLoading;
