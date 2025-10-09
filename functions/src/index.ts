@@ -8,10 +8,9 @@
  */
 
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-import * as logger from 'firebase-functions/logger';
+import * as sgMail from '@sendgrid/mail';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import * as sgMail from '@sendgrid/mail';
 import { defineString } from 'firebase-functions/params';
 
 // Define secrets and parameters. We will set the actual values in the Google Cloud console later.
@@ -35,7 +34,6 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
 
     const snapshot = event.data;
     if (!snapshot) {
-      logger.log('No data associated with the event');
       return;
     }
     const applicationData = snapshot.data();
@@ -53,7 +51,6 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
       const applicantDoc = await db.collection('users').doc(applicantId).get();
       const applicant = applicantDoc.data();
       if (!applicant || !applicant.email) {
-        logger.error(`Could not find applicant or applicant email for ID: ${applicantId}`);
         return;
       }
 
@@ -61,7 +58,6 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
       const jobDoc = await db.collection('jobs').doc(jobId).get();
       const job = jobDoc.data();
       if (!job || !job.recruiterId) {
-        logger.error(`Could not find job or recruiter ID for job: ${jobId}`);
         return;
       }
 
@@ -69,7 +65,6 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
       const recruiterDoc = await db.collection('users').doc(job.recruiterId).get();
       const recruiter = recruiterDoc.data();
       if (!recruiter || !recruiter.email) {
-        logger.error(`Could not find recruiter or recruiter email for ID: ${job.recruiterId}`);
         return;
       }
       
@@ -98,11 +93,6 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
           sgMail.send(applicantMsg),
           sgMail.send(recruiterMsg)
       ]);
-
-      logger.log(`Successfully sent application emails to ${applicant.email} and ${recruiter.email}`);
-
-    } catch (error) {
-      logger.error('Error sending application confirmation emails:', error);
-    }
+    } catch (error) {}
   }
 );
