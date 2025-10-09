@@ -10,10 +10,18 @@ import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Briefcase, Store, ClipboardList, FileText } from 'lucide-react';
+import { Briefcase, Store, ClipboardList, FileText, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 function JobCard({ job }: { job: any }) {
+    const firestore = useFirestore();
+    const applicantsQuery = useMemo(() => {
+        if (!firestore || !job.id) return null;
+        return collection(firestore, `jobs/${job.id}/applications`);
+    }, [firestore, job.id]);
+
+    const { data: applicants, isLoading } = useCollection(applicantsQuery);
+
     return (
         <Card>
             <CardHeader>
@@ -24,11 +32,19 @@ function JobCard({ job }: { job: any }) {
                 <div className="flex items-center gap-2">
                     {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
                     {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
+                     {isLoading ? (
+                        <Skeleton className="h-6 w-16 rounded-full" />
+                    ) : (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                           <Users className="h-3 w-3" />
+                           {applicants?.length || 0} {applicants?.length === 1 ? 'Applicant' : 'Applicants'}
+                        </Badge>
+                    )}
                 </div>
             </CardContent>
             <CardFooter>
                  <Button asChild variant="outline">
-                    <Link href={`/jobs/${job.id}/edit`}>View Details</Link>
+                    <Link href={`/jobs/${job.id}/applicants`}>View Applicants</Link>
                 </Button>
             </CardFooter>
         </Card>
