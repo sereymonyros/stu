@@ -17,7 +17,8 @@ import { format } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useToast } from '@/hooks/use-toast';
-import { getPublicProfile, type GetPublicProfileOutput } from '@/ai/flows/get-public-profile-flow';
+import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
+import type { GetPublicProfileOutput } from '@/ai/flows/get-public-profile-schema';
 
 function Message({ message, isOwnMessage, otherUser }: { message: any; isOwnMessage: boolean; otherUser: GetPublicProfileOutput | null }) {
     const fallback = otherUser?.displayName?.[0] || 'U';

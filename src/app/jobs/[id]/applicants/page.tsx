@@ -18,7 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { getPublicProfile, type GetPublicProfileOutput } from '@/ai/flows/get-public-profile-flow';
+import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
+import type { GetPublicProfileOutput } from '@/ai/flows/get-public-profile-schema';
 
 function ApplicantRow({ application, jobId }: { application: any, jobId: string }) {
     const firestore = useFirestore();
