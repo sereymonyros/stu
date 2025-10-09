@@ -50,7 +50,8 @@ export default function ApplyPage() {
 
   // --- Handlers ---
   const handleApply = async () => {
-    if (!user || !userProfile || !jobRef || !job) return;
+    const finalJobId = Array.isArray(jobId) ? jobId[0] : jobId;
+    if (!user || !userProfile || !jobRef || !job || !finalJobId) return;
     if (!userProfile.resumeUrl) {
       toast({ variant: 'destructive', title: 'Please upload a resume first.' });
       return;
@@ -58,12 +59,10 @@ export default function ApplyPage() {
 
     setIsSubmitting(true);
     try {
-      // The application is stored in a sub-collection of the job itself.
-      const applicationsRef = collection(jobRef, 'applications');
-      
-      await addDoc(applicationsRef, {
+      // Correct: Create the application in the sub-collection of the job.
+      await addDoc(collection(firestore, 'jobs', finalJobId, 'applications'), {
         applicantId: user.uid,
-        jobId: job.id,
+        jobId: finalJobId,
         status: 'submitted',
         appliedAt: serverTimestamp(),
         resumeUrl: userProfile.resumeUrl,
@@ -72,6 +71,7 @@ export default function ApplyPage() {
       toast({ title: 'Application submitted!', description: `You have successfully applied for ${job.title}.` });
       router.push('/jobs');
     } catch (error: any) {
+      console.error(error);
       toast({ variant: 'destructive', title: 'Submission Failed', description: error.message });
       setIsSubmitting(false);
     }
