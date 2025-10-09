@@ -2,8 +2,8 @@
 
 import { useMemo, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useDoc, useFirestore, useUser } from '@/firebase';
-import { doc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
+import { doc, setDoc, serverTimestamp, query, collection, where, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/header';
@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { FileText, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { FileText, AlertTriangle, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ApplyPage() {
@@ -21,6 +21,7 @@ export default function ApplyPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasApplied, setHasApplied] = useState<boolean | null>(null);
 
   const finalJobId = Array.isArray(jobId) ? jobId[0] : jobId;
 
@@ -38,6 +39,27 @@ export default function ApplyPage() {
   const { data: job, isLoading: isJobLoading } = useDoc(jobRef);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
+  // --- Check if user has already applied ---
+  useEffect(() => {
+    const checkApplication = async () => {
+        if (!firestore || !user || !finalJobId) {
+            setHasApplied(null);
+            return;
+        }
+        setHasApplied(null); // Set to loading state
+        const appRef = doc(firestore, `users/${user.uid}/applications`, finalJobId);
+        try {
+            const docSnap = await (await getDocs(query(collection(firestore, `users/${user.uid}/applications`), where('jobId', '==', finalJobId)))).docs[0];
+            setHasApplied(docSnap?.exists() ?? false);
+        } catch (error) {
+            console.error("Error checking application status:", error);
+            setHasApplied(false); // Assume not applied on error
+        }
+    };
+    checkApplication();
+  }, [firestore, user, finalJobId]);
+
+
   // --- Effects ---
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -53,7 +75,7 @@ export default function ApplyPage() {
   // --- Handlers ---
   const handleApply = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!user || !userProfile || !finalJobId) return;
+    if (!user || !userProfile || !finalJobId || hasApplied) return;
     if (!userProfile.resumeUrl) {
       toast({ variant: 'destructive', title: 'Please upload a resume first.' });
       return;
@@ -61,25 +83,29 @@ export default function ApplyPage() {
 
     setIsSubmitting(true);
     try {
-      // Correct: Create the application in the sub-collection of the job.
-      await addDoc(collection(firestore, 'jobs', finalJobId, 'applications'), {
+      // Use user's UID as the document ID in the job's applications sub-collection to prevent duplicates
+      const applicationRef = doc(firestore, 'jobs', finalJobId, 'applications', user.uid);
+      await setDoc(applicationRef, {
         applicantId: user.uid,
-        jobId: finalJobId, // Storing jobId is good for collectionGroup queries later
+        jobId: finalJobId,
         status: 'submitted',
         appliedAt: serverTimestamp(),
         resumeUrl: userProfile.resumeUrl,
       });
       
-      // Also add a reference to the application in a user's sub-collection for easy lookup
-      await addDoc(collection(firestore, 'users', user.uid, 'applications'), {
+      // Use job ID as the document ID in the user's applications sub-collection for easy lookup
+      const userApplicationRef = doc(firestore, 'users', user.uid, 'applications', finalJobId);
+      await setDoc(userApplicationRef, {
         jobId: finalJobId,
         appliedAt: serverTimestamp(),
       });
 
 
       toast({ title: 'Application submitted!', description: `You have successfully applied for ${job?.title}.` });
+      setHasApplied(true); // Update UI state immediately
       router.push('/jobs');
-    } catch (error: any) {
+    } catch (error: any)
+    {
       console.error(error);
       toast({ variant: 'destructive', title: 'Submission Failed', description: error.message });
     } finally {
@@ -100,7 +126,7 @@ export default function ApplyPage() {
   };
 
   // --- Loading & Render States ---
-  const isLoading = isUserLoading || isProfileLoading || isJobLoading;
+  const isLoading = isUserLoading || isProfileLoading || isJobLoading || hasApplied === null;
 
   if (isLoading) {
     return (
@@ -155,6 +181,16 @@ export default function ApplyPage() {
                 </div>
                 </div>
 
+                {hasApplied && (
+                    <Alert variant="default" className="bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-300">
+                         <CheckCircle className="h-4 w-4 text-green-500" />
+                        <AlertTitle>Already Applied</AlertTitle>
+                        <AlertDescription>
+                            You have already submitted an application for this job.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
                 {userProfile && userProfile.resumeUrl ? (
                 <div>
                     <h3 className="font-semibold mb-2">Your Resume</h3>
@@ -184,9 +220,9 @@ export default function ApplyPage() {
                 <Button 
                     type="submit"
                     className="w-full"
-                    disabled={isSubmitting || !userProfile?.resumeUrl || job.status === 'Closed'}
+                    disabled={isSubmitting || !userProfile?.resumeUrl || job.status === 'Closed' || hasApplied === true}
                 >
-                {isSubmitting ? 'Submitting...' : 'Confirm and Submit Application'}
+                {isSubmitting ? 'Submitting...' : hasApplied ? 'Already Applied' : 'Confirm and Submit Application'}
                 </Button>
             </CardFooter>
             </Card>
