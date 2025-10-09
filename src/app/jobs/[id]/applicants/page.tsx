@@ -18,21 +18,33 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { getPublicProfile, type GetPublicProfileOutput } from '@/ai/flows/get-public-profile-flow';
 
 function ApplicantRow({ application, jobId }: { application: any, jobId: string }) {
     const firestore = useFirestore();
     const { toast } = useToast();
     const [isUpdating, setIsUpdating] = useState(false);
+    const [applicant, setApplicant] = useState<GetPublicProfileOutput | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
     
-    const applicantRef = useMemo(() => {
-        if (!firestore || !application.applicantId) return null;
-        return doc(firestore, 'users', application.applicantId);
-    }, [firestore, application.applicantId]);
+    useEffect(() => {
+        if (!application.applicantId) {
+            setIsLoading(false);
+            return;
+        }
+        setIsLoading(true);
+        getPublicProfile({ userId: application.applicantId })
+            .then(profile => setApplicant(profile))
+            .catch(err => {
+                console.error("Failed to fetch applicant profile:", err);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not load applicant profile.' });
+            })
+            .finally(() => setIsLoading(false));
+    }, [application.applicantId, toast]);
 
-    const { data: applicant, isLoading } = useDoc(applicantRef);
 
     const handleStatusChange = async (newStatus: string) => {
-        if (!firestore) return;
+        if (!firestore || !applicant) return;
         setIsUpdating(true);
         
         const mainApplicationRef = doc(firestore, `jobs/${jobId}/applications`, application.id);

@@ -17,8 +17,9 @@ import { format } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useToast } from '@/hooks/use-toast';
+import { getPublicProfile, type GetPublicProfileOutput } from '@/ai/flows/get-public-profile-flow';
 
-function Message({ message, isOwnMessage, otherUser }: { message: any; isOwnMessage: boolean; otherUser: any }) {
+function Message({ message, isOwnMessage, otherUser }: { message: any; isOwnMessage: boolean; otherUser: GetPublicProfileOutput | null }) {
     const fallback = otherUser?.displayName?.[0] || 'U';
 
     return (
@@ -56,6 +57,8 @@ export default function ChatPage() {
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [otherUser, setOtherUser] = useState<GetPublicProfileOutput | null>(null);
+    const [isOtherUserLoading, setIsOtherUserLoading] = useState(true);
 
     const finalChatId = Array.isArray(chatId) ? chatId[0] : chatId;
 
@@ -77,12 +80,22 @@ export default function ChatPage() {
         return chat.participants.find((p: string) => p !== user.uid);
     }, [chat, user]);
 
-    const otherUserRef = useMemo(() => {
-        if (!firestore || !otherUserId) return null;
-        return doc(firestore, 'users', otherUserId);
-    }, [firestore, otherUserId]);
+    useEffect(() => {
+        if (!otherUserId) {
+            setIsOtherUserLoading(false);
+            return;
+        };
+        
+        setIsOtherUserLoading(true);
+        getPublicProfile({ userId: otherUserId })
+            .then(profile => setOtherUser(profile))
+            .catch(err => {
+                console.error("Failed to fetch other user profile:", err);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not load user information.' });
+            })
+            .finally(() => setIsOtherUserLoading(false));
 
-    const { data: otherUser, isLoading: isOtherUserLoading } = useDoc(otherUserRef);
+    }, [otherUserId, toast]);
 
     useEffect(() => {
         if (!isUserLoading && !user) {
