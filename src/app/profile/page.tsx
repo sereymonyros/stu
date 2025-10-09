@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -75,7 +76,7 @@ export default function ProfilePage() {
     return doc(firestore, 'users', user.uid);
   }, [firestore, user]);
 
-  const { data: userProfile, isLoading: isProfileLoading, error } = useDoc(userProfileRef);
+  const { data: userProfile, isLoading: isProfileLoading, error, refetch: refetchUserProfile } = useDoc(userProfileRef);
 
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -205,6 +206,9 @@ export default function ProfilePage() {
       if (resumeInputRef.current) resumeInputRef.current.value = '';
       form.resetField('photo');
       form.resetField('resume');
+      
+      // Refetch profile to show updated resume URL if changed
+      refetchUserProfile();
 
     } catch (error: any) {
       console.error(error);

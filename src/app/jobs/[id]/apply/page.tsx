@@ -1,22 +1,33 @@
 
 'use client';
 
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useUser } from '@/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { FileText, AlertTriangle, ArrowLeft, CheckCircle, UploadCloud } from 'lucide-react';
+import { FileText, ArrowLeft, CheckCircle, UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { uploadFile } from '@/ai/flows/upload-file-flow';
+import { ACCEPTED_RESUME_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
+// Helper function to convert a File to a Base64 data URI
+const toBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
 
 export default function ApplyPage() {
   const { id: jobId } = useParams();
@@ -25,6 +36,8 @@ export default function ApplyPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
   
   const finalJobId = Array.isArray(jobId) ? jobId[0] : jobId;
 
@@ -46,7 +59,7 @@ export default function ApplyPage() {
   }, [firestore, user, finalJobId]);
 
   const { data: job, isLoading: isJobLoading } = useDoc(jobRef);
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+  const { data: userProfile, isLoading: isProfileLoading, refetch: refetchUserProfile } = useDoc(userProfileRef);
   const { data: application, isLoading: isApplicationLoading } = useDoc(userApplicationRef);
   
   const hasApplied = !!application;
@@ -127,6 +140,50 @@ export default function ApplyPage() {
     });
   };
 
+  const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user || !userProfileRef) return;
+    
+    // Validate file
+    if (file.size > MAX_FILE_SIZE) {
+        toast({ variant: 'destructive', title: 'File too large', description: 'Max resume size is 5MB.'});
+        return;
+    }
+     if (!ACCEPTED_RESUME_TYPES.includes(file.type)) {
+        toast({ variant: 'destructive', title: 'Invalid file type', description: 'Please upload a PDF, DOC, or DOCX file.'});
+        return;
+    }
+
+    setIsUploadingResume(true);
+    
+    try {
+        const fileDataUri = await toBase64(file);
+        const uploadResult = await uploadFile({
+            fileDataUri,
+            fileName: file.name,
+            path: `resumes/${user.uid}`
+        });
+
+        // Update the user's profile with the new resume URL
+        await updateDoc(userProfileRef, { resumeUrl: uploadResult.downloadUrl });
+
+        toast({ title: 'Resume uploaded!', description: 'Your resume has been successfully saved.'});
+        
+        // Manually trigger a re-fetch of the user profile data
+        refetchUserProfile();
+
+    } catch (e: any) {
+        console.error('Resume upload failed:', e);
+        toast({ variant: 'destructive', title: 'Upload Failed', description: e.message || 'Could not upload your resume.'});
+    } finally {
+        setIsUploadingResume(false);
+        // Reset the input so the same file can be selected again if needed
+        if(resumeInputRef.current) {
+            resumeInputRef.current.value = '';
+        }
+    }
+  };
+
   const getFileName = (url: string) => {
     try {
       const decodedUrl = decodeURIComponent(url);
@@ -196,10 +253,10 @@ export default function ApplyPage() {
                 </div>
 
                 {hasApplied && (
-                    <Alert variant="default" className="bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-300">
-                         <CheckCircle className="h-4 w-4 text-green-500" />
-                        <AlertTitle>Already Applied</AlertTitle>
-                    </Alert>
+                    <div className="bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-300 p-4 rounded-md flex items-center gap-2">
+                         <CheckCircle className="h-5 w-5 text-green-500" />
+                        <span className="font-medium">You have already applied for this job.</span>
+                    </div>
                 )}
 
                 {userProfile && userProfile.resumeUrl ? (
@@ -218,15 +275,33 @@ export default function ApplyPage() {
                 ) : (
                 <div className="space-y-2">
                   <h3 className="font-semibold">Upload Resume to Apply</h3>
-                  <Link href="/profile" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
+                   <Label htmlFor="resume-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
-                          <p className="mb-1 text-sm text-primary underline">
-                            Go to profile to upload a resume
-                          </p>
-                          <p className="text-xs text-muted-foreground">You must have a resume to apply for jobs.</p>
+                          {isUploadingResume ? (
+                            <>
+                               <div className="animate-spin h-8 w-8 border-2 border-current border-t-transparent rounded-full" role="status" />
+                               <p className="mt-2 text-sm text-muted-foreground">Uploading...</p>
+                            </>
+                          ) : (
+                            <>
+                                <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                                <p className="mb-1 text-sm text-primary underline">
+                                  Click to upload a resume
+                                </p>
+                                <p className="text-xs text-muted-foreground">You must have a resume to apply for jobs.</p>
+                             </>
+                          )}
                       </div>
-                  </Link>
+                      <Input
+                          id="resume-upload"
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.doc,.docx"
+                          disabled={isUploadingResume}
+                          ref={resumeInputRef}
+                          onChange={handleResumeUpload}
+                      />
+                  </Label>
                 </div>
                 )}
 
@@ -236,7 +311,7 @@ export default function ApplyPage() {
                     <Button 
                         type="submit"
                         className="w-full"
-                        disabled={isSubmitting || !userProfile?.resumeUrl || job.status === 'Closed'}
+                        disabled={isSubmitting || !userProfile?.resumeUrl || job.status === 'Closed' || isUploadingResume}
                     >
                     {isSubmitting ? 'Submitting...' : 'Confirm and Submit Application'}
                     </Button>

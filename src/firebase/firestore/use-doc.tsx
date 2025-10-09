@@ -1,6 +1,7 @@
+
 'use client';
     
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   DocumentReference,
   onSnapshot,
@@ -24,6 +25,7 @@ export interface UseDocResult<T> {
   data: WithId<T> | null; // Document data with ID, or null.
   isLoading: boolean;       // True if loading.
   error: FirestoreError | Error | null; // Error object, or null.
+  refetch: () => void; // Function to manually refetch data.
 }
 
 const CACHEABLE_STORES = ['listings', 'jobs', 'feedbacks', 'users'];
@@ -70,6 +72,11 @@ export function useDoc<T = any>(
   const [data, setData] = useState<StateDataType>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+  const [_, setRefetchTrigger] = useState(0); // State to trigger refetch
+
+  const refetch = useCallback(() => {
+    setRefetchTrigger(c => c + 1);
+  }, []);
 
   useEffect(() => {
     if (!memoizedDocRef) {
@@ -140,7 +147,7 @@ export function useDoc<T = any>(
       didCancel = true;
       unsubscribe();
     };
-  }, [memoizedDocRef]); // Re-run if the docRef object changes.
+  }, [memoizedDocRef, refetch]); // Re-run if the docRef object changes or refetch is called
 
-  return { data, isLoading, error };
+  return { data, isLoading, error, refetch };
 }
