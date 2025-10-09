@@ -71,8 +71,6 @@ export function useDoc<T = any>(
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
-  const path = memoizedDocRef?.path;
-
   useEffect(() => {
     if (!memoizedDocRef) {
       setData(null);
@@ -142,7 +140,7 @@ export function useDoc<T = any>(
       didCancel = true;
       unsubscribe();
     };
-  }, [path]); // Re-run if the docRef path changes.
+  }, [memoizedDocRef]); // Re-run if the docRef object changes.
 
   return { data, isLoading, error };
 }

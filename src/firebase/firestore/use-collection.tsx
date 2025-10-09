@@ -94,8 +94,6 @@ export function useCollection<T = any>(
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
-  const path = targetRefOrQuery ? getCollectionPath(targetRefOrQuery) : null;
-
   useEffect(() => {
     if (!targetRefOrQuery) {
       setData(null);
@@ -104,7 +102,8 @@ export function useCollection<T = any>(
       return;
     }
 
-    const storeName = path!.split('/')[0];
+    const path = getCollectionPath(targetRefOrQuery);
+    const storeName = path.split('/')[0];
     const isCacheable = CACHEABLE_STORES.includes(storeName);
 
     // --- Phase 1: Load from IndexedDB if available ---
@@ -148,7 +147,7 @@ export function useCollection<T = any>(
 
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path: path!,
+          path: path,
         })
 
         setError(contextualError)
@@ -164,7 +163,7 @@ export function useCollection<T = any>(
         didCancel = true;
         unsubscribe();
     };
-  }, [path]); // Re-run if the target query/reference path changes.
+  }, [targetRefOrQuery]); // Re-run if the target query/reference object changes.
 
   return { data, isLoading, error };
 }

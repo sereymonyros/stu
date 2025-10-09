@@ -41,7 +41,11 @@ export default function JobsPage() {
   const [isRecruiter, setIsRecruiter] = useState(false);
   
   // --- Simplified Data Fetching ---
-  const jobsQuery = firestore ? query(collection(firestore, 'jobs')) : null;
+  const jobsQuery = useMemo(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'jobs'));
+  }, [firestore]);
+
 
   const { data: jobs, isLoading: isJobsLoading } = useCollection(jobsQuery);
 
