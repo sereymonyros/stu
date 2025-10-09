@@ -46,12 +46,24 @@ export default function JobsPage() {
 
   const { data: jobs, isLoading: isJobsLoading } = useCollection(jobsQuery);
 
-  // Separate, minimal query for user profile just to check role
   const userProfileRef = useMemo(() => {
     if (!firestore || !user) return null;
     return doc(firestore, 'users', user.uid);
   }, [firestore, user]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+
+  // Fetch applications for the current user to check which jobs are already applied
+  const userApplicationsQuery = useMemo(() => {
+      if (!firestore || !user || isRecruiter) return null;
+      return collection(firestore, `users/${user.uid}/applications`);
+  }, [firestore, user, isRecruiter]);
+  const { data: userApplications, isLoading: areApplicationsLoading } = useCollection(userApplicationsQuery);
+
+  const appliedJobIds = useMemo(() => {
+      if (!userApplications) return new Set();
+      return new Set(userApplications.map(app => app.jobId));
+  }, [userApplications]);
+
 
   useEffect(() => {
       if (userProfile) {
@@ -103,7 +115,7 @@ export default function JobsPage() {
     }
   };
 
-  const isLoading = isUserLoading || isJobsLoading || isProfileLoading;
+  const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areApplicationsLoading;
   const hasActiveFilters = jobTypeFilters.length > 0 || locationFilters.length > 0 || searchQuery.length > 0;
 
   return (
@@ -180,6 +192,7 @@ export default function JobsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredJobs.map((job) => {
                 const isOwner = user && user.uid === job.recruiterId;
+                const hasApplied = appliedJobIds.has(job.id);
 
                 return (
                   <Card key={job.id} className="h-full flex flex-col">
@@ -199,8 +212,12 @@ export default function JobsPage() {
                     </CardContent>
                     <CardFooter className="flex justify-between items-center">
                       {!isRecruiter && (
-                         <Button asChild>
-                           <Link href={`/jobs/${job.id}/apply`}>Apply Now</Link>
+                         <Button asChild={!hasApplied} disabled={hasApplied}>
+                           {hasApplied ? (
+                              <span>Applied</span>
+                           ) : (
+                              <Link href={`/jobs/${job.id}/apply`}>Apply Now</Link>
+                           )}
                          </Button>
                       )}
                       {user && isOwner && (
