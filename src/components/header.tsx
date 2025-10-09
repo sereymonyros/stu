@@ -29,7 +29,9 @@ export function Header() {
         </div>
         <UserAuthButton />
       </header>
-      <EmailVerificationBanner />
+
+      {/* TODO: For development, I comment it out now. Will reactive when ready */}
+      {/* <EmailVerificationBanner /> */}
     </>
   );
 }

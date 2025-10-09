@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { doc, collection, query, updateDoc } from 'firebase/firestore';
 import { Header } from '@/components/header';
@@ -175,8 +175,8 @@ function ApplicantRow({ application, jobId }: { application: any, jobId: string 
 }
 
 
-export default function ApplicantsPage() {
-    const { id: jobId } = useParams();
+export default function ApplicantsPage({ params }: { params: { id: string } }) {
+    const { id: jobId } = params;
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const router = useRouter();

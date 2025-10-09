@@ -17,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser, useDoc, useFirestore } from '@/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { useEffect, useMemo, useState } from 'react';
@@ -43,8 +43,8 @@ const jobSchema = z.object({
   salary: z.string().optional(),
 });
 
-export default function EditJobPage() {
-  const { id } = useParams();
+export default function EditJobPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();

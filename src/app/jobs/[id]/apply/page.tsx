@@ -2,7 +2,7 @@
 'use client';
 
 import { useMemo, useEffect, useState, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useUser } from '@/firebase';
 import { doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -40,8 +40,8 @@ const toBase64 = (file: File): Promise<string> =>
     reader.onerror = (error) => reject(error);
   });
 
-export default function ApplyPage() {
-  const { id: jobId } = useParams();
+export default function ApplyPage({ params }: { params: { id: string } }) {
+  const { id: jobId } = params;
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();

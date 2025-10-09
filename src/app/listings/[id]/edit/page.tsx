@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser, useDoc, useFirestore, useAuth } from '@/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref, deleteObject } from "firebase/storage";
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { useEffect, useMemo, useState } from 'react';
@@ -61,8 +61,8 @@ const toBase64 = (file: File): Promise<string> =>
     reader.onerror = (error) => reject(error);
   });
 
-export default function EditListingPage() {
-  const { id } = useParams();
+export default function EditListingPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const firestore = useFirestore();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
