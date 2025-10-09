@@ -66,7 +66,7 @@ function ApplicantRow({ application }: { application: any }) {
                 <Badge variant={application.status === 'reviewed' ? 'secondary' : 'default'} className="capitalize">{application.status}</Badge>
             </TableCell>
             <TableCell>
-                {application.appliedAt ? formatDistanceToNow(application.appliedAt.toDate(), { addSuffix: true }) : 'N/A'}
+                {application.appliedAt ? formatDistanceToNow(application.appliedAt, { addSuffix: true }) : 'N/A'}
             </TableCell>
             <TableCell>
                 {application.resumeUrl ? (
