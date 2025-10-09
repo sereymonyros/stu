@@ -39,58 +39,48 @@ function ApplicantRow({ application, jobId }: { application: any, jobId: string 
         const userApplicationRef = doc(firestore, `users/${application.applicantId}/applications`, jobId);
         const jobRef = doc(firestore, 'jobs', jobId);
 
-        const statusUpdate = { status: newStatus };
-        const updates: Promise<any>[] = [];
-
-        // Add application status updates to the queue
-        updates.push(
-            updateDoc(mainApplicationRef, statusUpdate).catch(serverError => {
-                 errorEmitter.emit('permission-error', new FirestorePermissionError({
-                    path: mainApplicationRef.path,
-                    operation: 'update',
-                    requestResourceData: statusUpdate
-                }));
-                throw serverError;
-            }),
-            updateDoc(userApplicationRef, statusUpdate).catch(serverError => {
-                errorEmitter.emit('permission-error', new FirestorePermissionError({
-                    path: userApplicationRef.path,
-                    operation: 'update',
-                    requestResourceData: statusUpdate
-                }));
-               throw serverError;
-            })
-        );
-        
-        // If an applicant is accepted, also close the job posting
-        if (newStatus === 'accepted') {
-            const jobStatusUpdate = { status: 'Closed' };
-            updates.push(
-                updateDoc(jobRef, jobStatusUpdate).catch(serverError => {
-                    errorEmitter.emit('permission-error', new FirestorePermissionError({
-                        path: jobRef.path,
-                        operation: 'update',
-                        requestResourceData: jobStatusUpdate
-                    }));
-                    throw serverError;
-                })
-            );
-        }
-
         try {
-            // Execute all updates simultaneously
-            await Promise.all(updates);
+            const statusUpdate = { status: newStatus };
+            
+            // First, update the application statuses
+            const applicationUpdates = [
+                updateDoc(mainApplicationRef, statusUpdate),
+                updateDoc(userApplicationRef, statusUpdate)
+            ];
+            await Promise.all(applicationUpdates);
             
             let toastDescription = `${applicant.displayName}'s application is now '${newStatus}'.`;
+
+            // If accepted, also close the job posting
             if (newStatus === 'accepted') {
+                const jobStatusUpdate = { status: 'Closed' };
+                await updateDoc(jobRef, jobStatusUpdate);
                 toastDescription += " The job posting has been automatically closed.";
             }
 
             toast({ title: "Status Updated", description: toastDescription });
 
-        } catch (error) {
-            console.error("Failed to update status:", error);
-            toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update application status.'});
+        } catch (error: any) {
+            // Determine which update failed for a more specific error
+            // This is a simplification; a more complex logic could check which promise failed.
+            // For now, we assume the most likely failure is the job update if status is 'accepted'.
+            const isJobUpdate = newStatus === 'accepted' && error.message.includes('permission-denied');
+            
+            if (isJobUpdate) {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: jobRef.path,
+                    operation: 'update',
+                    requestResourceData: { status: 'Closed' }
+                }));
+            } else {
+                 errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: mainApplicationRef.path, // or userApplicationRef.path
+                    operation: 'update',
+                    requestResourceData: { status: newStatus }
+                }));
+            }
+
+            toast({ variant: 'destructive', title: 'Update Failed', description: 'You do not have permission to perform this action.' });
         } finally {
             setIsUpdating(false);
         }
