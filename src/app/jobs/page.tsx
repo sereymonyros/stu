@@ -86,6 +86,16 @@ export default function JobsPage() {
       }
   }, [userProfile]);
 
+  // Reset filters when the page is loaded or jobs data changes
+  useEffect(() => {
+    if (jobs && !isJobsLoading) {
+        setSearchQuery('');
+        setJobTypeFilters([]);
+        setLocationFilters([]);
+        setShowOnlyFavorites(false);
+    }
+  }, [jobs, isJobsLoading]);
+
   // --- Filtering ---
   const uniqueLocations = useMemo(() => {
     if (!jobs) return [];
