@@ -8,9 +8,11 @@ import {
   FirestoreError,
   QuerySnapshot,
   CollectionReference,
+  Timestamp,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { getStoreData, updateStoreData } from '@/lib/indexed-db';
 
 /** Utility type to add an 'id' field to a given type T. */
 export type WithId<T> = T & { id: string };
@@ -37,6 +39,36 @@ export interface InternalQuery extends Query<DocumentData> {
   }
 }
 
+function getCollectionPath(target: CollectionReference | Query): string {
+    if (target.type === 'collection') {
+        return (target as CollectionReference).path;
+    }
+    return (target as unknown as InternalQuery)._query.path.canonicalString();
+}
+
+const CACHEABLE_STORES = ['listings', 'jobs', 'feedbacks'];
+
+// Firestore Timestamps are not clonable for IndexedDB, so we convert them to JS Dates
+function convertTimestampsToDates(obj: any): any {
+    if (obj instanceof Timestamp) {
+        return obj.toDate();
+    }
+    if (Array.isArray(obj)) {
+        return obj.map(convertTimestampsToDates);
+    }
+    if (obj && typeof obj === 'object') {
+        const newObj: { [key: string]: any } = {};
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                newObj[key] = convertTimestampsToDates(obj[key]);
+            }
+        }
+        return newObj;
+    }
+    return obj;
+}
+
+
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
  * Handles nullable references/queries.
@@ -58,7 +90,7 @@ export function useCollection<T = any>(
   type StateDataType = ResultItemType[] | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
@@ -69,27 +101,48 @@ export function useCollection<T = any>(
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
+    const path = getCollectionPath(targetRefOrQuery);
+    const storeName = path.split('/')[0];
+    const isCacheable = CACHEABLE_STORES.includes(storeName);
 
-    // Directly use targetRefOrQuery as it's assumed to be the final query
+    // --- Phase 1: Load from IndexedDB if available ---
+    let didCancel = false;
+    if (isCacheable) {
+        getStoreData(storeName).then(cachedData => {
+            if (!didCancel && cachedData && cachedData.length > 0) {
+                 setData(cachedData.map(item => ({ ...item, createdAt: item.createdAt ? new Date(item.createdAt) : undefined })) as StateDataType);
+                 setIsLoading(false); // We have data, so loading is "done" for the UI
+            }
+        }).catch(console.error);
+    } else {
+        // If not cacheable, we are definitely loading until Firestore responds.
+        setIsLoading(true);
+    }
+    
+    // --- Phase 2: Subscribe to Firestore ---
     const unsubscribe = onSnapshot(
       targetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
+        if (didCancel) return;
+
         const results: ResultItemType[] = [];
         for (const doc of snapshot.docs) {
           results.push({ ...(doc.data() as T), id: doc.id });
         }
-        setData(results);
+        
+        const resultsWithDates = results.map(item => convertTimestampsToDates(item));
+
+        setData(resultsWithDates as StateDataType);
         setError(null);
         setIsLoading(false);
+
+        // --- Phase 3: Update IndexedDB cache ---
+        if (isCacheable) {
+            updateStoreData(storeName, resultsWithDates).catch(console.error);
+        }
       },
       (error: FirestoreError) => {
-        // This logic extracts the path from either a ref or a query
-        const path: string =
-          targetRefOrQuery.type === 'collection'
-            ? (targetRefOrQuery as CollectionReference).path
-            : (targetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
+        if (didCancel) return;
 
         const contextualError = new FirestorePermissionError({
           operation: 'list',
@@ -105,7 +158,10 @@ export function useCollection<T = any>(
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+        didCancel = true;
+        unsubscribe();
+    };
   }, [targetRefOrQuery]); // Re-run if the target query/reference changes.
 
   return { data, isLoading, error };
