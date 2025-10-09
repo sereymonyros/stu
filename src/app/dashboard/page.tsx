@@ -70,9 +70,9 @@ function AppliedJobCard({ job, applicationStatus }: { job: any, applicationStatu
                 <p className="text-sm text-muted-foreground">{job.companyName} - {job.location}</p>
             </CardHeader>
             <CardContent>
-                <div className="flex items-center gap-2 flex-wrap">
+                 <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-muted-foreground">Status:</span>
                     <Badge className={cn("capitalize text-white", statusColors[applicationStatus] || 'bg-gray-500')}>{applicationStatus}</Badge>
-                    {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'secondary'} className="capitalize">{job.status}</Badge>}
                 </div>
             </CardContent>
             <CardFooter>
@@ -344,5 +344,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-
-    
