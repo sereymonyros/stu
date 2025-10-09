@@ -4,7 +4,7 @@ import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
 const DB_NAME = 'CambodiaHubCache';
 const DB_VERSION = 1;
-const STORES = ['listings', 'jobs', 'feedbacks'];
+const STORES = ['listings', 'jobs', 'feedbacks', 'users'];
 
 interface CacheDB extends DBSchema {
   listings: {
@@ -19,6 +19,10 @@ interface CacheDB extends DBSchema {
     key: string;
     value: any;
   };
+  users: {
+    key: string;
+    value: any;
+  }
 }
 
 let dbPromise: Promise<IDBPDatabase<CacheDB>> | null = null;
@@ -31,7 +35,7 @@ function initDB() {
     upgrade(db) {
       for (const storeName of STORES) {
         if (!db.objectStoreNames.contains(storeName)) {
-          db.createObjectStore(storeName, { keyPath: 'id' });
+          db.createObjectStore(storeName as keyof CacheDB, { keyPath: 'id' });
         }
       }
     },
