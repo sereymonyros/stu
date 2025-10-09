@@ -116,17 +116,28 @@
     },
     "Chat": {
       "title": "Chat",
-      "description": "A conversation between a buyer and a seller about a listing.",
+      "description": "A conversation between two users about a listing.",
       "type": "object",
       "properties": {
         "listingId": {
           "type": "string"
+        },
+        "listingTitle": {
+          "type": "string",
+          "description": "The title of the listing being discussed, denormalized for easy display."
         },
         "buyerId": {
           "type": "string"
         },
         "sellerId": {
           "type": "string"
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "An array containing the UIDs of both the buyer and the seller for easy querying."
         },
         "lastMessage": {
           "type": "string",
@@ -139,8 +150,10 @@
       },
       "required": [
         "listingId",
+        "listingTitle",
         "buyerId",
         "sellerId",
+        "participants",
         "updatedAt"
       ]
     },
@@ -405,5 +418,3 @@
     }
   }
 }
-
-    

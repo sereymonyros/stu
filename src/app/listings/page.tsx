@@ -35,7 +35,10 @@ export default function ListingsPage() {
       router.push('/login');
       return;
     }
-    if (user.uid === listing.sellerId) return;
+    if (user.uid === listing.sellerId) {
+        toast({ title: "This is your own listing." });
+        return;
+    }
 
     setContactingSellerId(listing.id);
     try {
