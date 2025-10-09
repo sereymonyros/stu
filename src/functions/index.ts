@@ -84,6 +84,72 @@ export const sendWelcomeEmail = functions.auth.user().onCreate(async (user) => {
         .catch((error) => console.error('Error sending verification email:', error));
 });
 
+/**
+ * Sends an email to a user confirming their job application.
+ *
+ * This function is triggered when a new application document is created under
+ * any job posting. It fetches details about the applicant and the job
+ * to send a personalized confirmation email.
+ */
+export const sendApplicationConfirmationEmail = functions.firestore
+    .document('jobs/{jobId}/applications/{applicationId}')
+    .onCreate(async (snapshot, context) => {
+        const applicationData = snapshot.data();
+        const { jobId, applicantId } = applicationData;
+
+        // Fetch user and job details concurrently
+        const userPromise = db.collection('users').doc(applicantId).get();
+        const jobPromise = db.collection('jobs').doc(jobId).get();
+
+        try {
+            const [userDoc, jobDoc] = await Promise.all([userPromise, jobPromise]);
+
+            if (!userDoc.exists) {
+                console.error(`User document not found for applicantId: ${applicantId}`);
+                return null;
+            }
+            if (!jobDoc.exists) {
+                console.error(`Job document not found for jobId: ${jobId}`);
+                return null;
+            }
+
+            const userData = userDoc.data()!;
+            const jobData = jobDoc.data()!;
+
+            const { email, displayName } = userData;
+            const { title, companyName } = jobData;
+
+            if (!email) {
+                console.error(`No email address found for user: ${applicantId}`);
+                return null;
+            }
+
+            const mailOptions = {
+                from: '"Cambodia Hub" <noreply@yourfirebaseproject.com>',
+                to: email,
+                subject: `Your Application for ${title} has been Received`,
+                html: `
+                    <h1>Application Confirmation</h1>
+                    <p>Dear ${displayName || 'Applicant'},</p>
+                    <p>This email confirms that we have successfully received your application for the <b>${title}</b> position at <b>${companyName}</b>.</p>
+                    <p>You can view the status of all your applications on your dashboard.</p>
+                    <p>We wish you the best of luck in the hiring process!</p>
+                    <br>
+                    <p>Sincerely,</p>
+                    <p><b>The Cambodia Hub Team</b></p>
+                `
+            };
+            
+            await transporter.sendMail(mailOptions);
+            console.log(`Application confirmation email sent to: ${email}`);
+
+        } catch (error) {
+            console.error('Failed to send application confirmation email:', error);
+        }
+
+        return null;
+    });
+
 
 /**
  * Propagates user profile updates to other parts of the database.
