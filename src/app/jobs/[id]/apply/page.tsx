@@ -22,11 +22,13 @@ export default function ApplyPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const finalJobId = Array.isArray(jobId) ? jobId[0] : jobId;
+
   // --- Data Fetching ---
   const jobRef = useMemo(() => {
-    if (!firestore || !jobId) return null;
-    return doc(firestore, 'jobs', Array.isArray(jobId) ? jobId[0] : jobId);
-  }, [firestore, jobId]);
+    if (!firestore || !finalJobId) return null;
+    return doc(firestore, 'jobs', finalJobId);
+  }, [firestore, finalJobId]);
 
   const userProfileRef = useMemo(() => {
     if (!firestore || !user) return null;
@@ -49,9 +51,9 @@ export default function ApplyPage() {
   }, [user, isUserLoading, userProfile, router, toast]);
 
   // --- Handlers ---
-  const handleApply = async () => {
-    const finalJobId = Array.isArray(jobId) ? jobId[0] : jobId;
-    if (!user || !userProfile || !jobRef || !job || !finalJobId) return;
+  const handleApply = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!user || !userProfile || !finalJobId) return;
     if (!userProfile.resumeUrl) {
       toast({ variant: 'destructive', title: 'Please upload a resume first.' });
       return;
@@ -62,18 +64,26 @@ export default function ApplyPage() {
       // Correct: Create the application in the sub-collection of the job.
       await addDoc(collection(firestore, 'jobs', finalJobId, 'applications'), {
         applicantId: user.uid,
-        jobId: finalJobId,
+        jobId: finalJobId, // Storing jobId is good for collectionGroup queries later
         status: 'submitted',
         appliedAt: serverTimestamp(),
         resumeUrl: userProfile.resumeUrl,
       });
+      
+      // Also add a reference to the application in a user's sub-collection for easy lookup
+      await addDoc(collection(firestore, 'users', user.uid, 'applications'), {
+        jobId: finalJobId,
+        appliedAt: serverTimestamp(),
+      });
 
-      toast({ title: 'Application submitted!', description: `You have successfully applied for ${job.title}.` });
+
+      toast({ title: 'Application submitted!', description: `You have successfully applied for ${job?.title}.` });
       router.push('/jobs');
     } catch (error: any) {
       console.error(error);
       toast({ variant: 'destructive', title: 'Submission Failed', description: error.message });
-      setIsSubmitting(false);
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -127,58 +137,60 @@ export default function ApplyPage() {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <Button variant="ghost" size="sm" className="mb-4 w-fit -ml-2" asChild>
-                <Link href="/jobs"><ArrowLeft className="mr-2 h-4 w-4" />Back to Jobs</Link>
-            </Button>
-            <CardTitle className="text-2xl">Apply for {job.title}</CardTitle>
-            <CardDescription>Review your information before submitting your application to <span className="font-semibold">{job.companyName}</span>.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <h3 className="font-semibold mb-2">Job Details</h3>
-              <div className="flex items-center gap-2">
-                {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
-                <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
-              </div>
-            </div>
-
-            {userProfile && userProfile.resumeUrl ? (
-              <div>
-                <h3 className="font-semibold mb-2">Your Resume</h3>
-                <div className="flex items-center gap-3 p-3 rounded-md border bg-muted/50">
-                  <FileText className="h-6 w-6 text-muted-foreground" />
-                  <a href={userProfile.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline flex-1 truncate">
-                    {getFileName(userProfile.resumeUrl)}
-                  </a>
+        <form onSubmit={handleApply}>
+            <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+                <Button variant="ghost" size="sm" className="mb-4 w-fit -ml-2" asChild>
+                    <Link href="/jobs"><ArrowLeft className="mr-2 h-4 w-4" />Back to Jobs</Link>
+                </Button>
+                <CardTitle className="text-2xl">Apply for {job.title}</CardTitle>
+                <CardDescription>Review your information before submitting your application to <span className="font-semibold">{job.companyName}</span>.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div>
+                <h3 className="font-semibold mb-2">Job Details</h3>
+                <div className="flex items-center gap-2">
+                    {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
+                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                    This is the resume that will be sent with your application. You can update it on your <Link href="/profile" className="underline">profile page</Link>.
-                </p>
-              </div>
-            ) : (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>No Resume Found</AlertTitle>
-                <AlertDescription>
-                  You must have a resume uploaded to your profile before you can apply for jobs.
-                  <Button variant="link" asChild className="p-0 h-auto ml-1"><Link href="/profile">Upload Resume</Link></Button>
-                </AlertDescription>
-              </Alert>
-            )}
+                </div>
 
-          </CardContent>
-          <CardFooter>
-            <Button 
-                className="w-full" 
-                onClick={handleApply} 
-                disabled={isSubmitting || !userProfile?.resumeUrl || job.status === 'Closed'}
-            >
-              {isSubmitting ? 'Submitting...' : 'Confirm and Submit Application'}
-            </Button>
-          </CardFooter>
-        </Card>
+                {userProfile && userProfile.resumeUrl ? (
+                <div>
+                    <h3 className="font-semibold mb-2">Your Resume</h3>
+                    <div className="flex items-center gap-3 p-3 rounded-md border bg-muted/50">
+                    <FileText className="h-6 w-6 text-muted-foreground" />
+                    <a href={userProfile.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline flex-1 truncate">
+                        {getFileName(userProfile.resumeUrl)}
+                    </a>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                        This is the resume that will be sent with your application. You can update it on your <Link href="/profile" className="underline">profile page</Link>.
+                    </p>
+                </div>
+                ) : (
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>No Resume Found</AlertTitle>
+                    <AlertDescription>
+                    You must have a resume uploaded to your profile before you can apply for jobs.
+                    <Button variant="link" asChild className="p-0 h-auto ml-1"><Link href="/profile">Upload Resume</Link></Button>
+                    </AlertDescription>
+                </Alert>
+                )}
+
+            </CardContent>
+            <CardFooter>
+                <Button 
+                    type="submit"
+                    className="w-full"
+                    disabled={isSubmitting || !userProfile?.resumeUrl || job.status === 'Closed'}
+                >
+                {isSubmitting ? 'Submitting...' : 'Confirm and Submit Application'}
+                </Button>
+            </CardFooter>
+            </Card>
+        </form>
       </main>
     </div>
   );

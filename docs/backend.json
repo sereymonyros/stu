@@ -271,22 +271,22 @@
         "resumeUrl"
       ]
     },
-    "FavoriteJob": {
-      "title": "Favorite Job",
-      "description": "A lightweight reference to a job a user has favorited.",
+    "UserApplication": {
+      "title": "User Application",
+      "description": "A lightweight reference to a job a user has applied for, stored under the user's document.",
       "type": "object",
       "properties": {
         "jobId": {
           "type": "string"
         },
-        "favoritedAt": {
+        "appliedAt": {
           "type": "string",
           "format": "date-time"
         }
       },
       "required": [
         "jobId",
-        "favoritedAt"
+        "appliedAt"
       ]
     },
     "Feedback": {
@@ -333,11 +333,11 @@
       },
       "description": "Stores user profile information."
     },
-    "/users/{userId}/favoriteJobs/{jobId}": {
+    "/users/{userId}/applications/{applicationId}": {
       "schema": {
-        "$ref": "#/entities/FavoriteJob"
+        "$ref": "#/entities/UserApplication"
       },
-      "description": "A user's list of favorite job references."
+      "description": "A user's list of job applications references."
     },
     "/listings/{listingId}": {
       "schema": {
