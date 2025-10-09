@@ -13,33 +13,33 @@ import { doc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { User, Briefcase, ShoppingCart, Building } from 'lucide-react';
+import { User, Briefcase } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 const personas = {
-  seller: {
-    fullName: 'Seller One',
-    address: '1 Seller St, Phnom Penh',
-    phone: '011000001',
-    email: 'seller1@cambodiahub.com',
+  user1: {
+    fullName: 'Test User One',
+    address: '123 Main St, Phnom Penh',
+    phone: '012345678',
+    email: 'testuser1@example.com',
     userType: 'standard',
   },
-  buyer: {
-    fullName: 'Buyer One',
-    address: '2 Buyer Ave, Phnom Penh',
-    phone: '012000002',
-    email: 'buyer1@cambodiahub.com',
+  user2: {
+    fullName: 'Test User Two',
+    address: '456 Market St, Phnom Penh',
+    phone: '098765432',
+    email: 'testuser2@example.com',
     userType: 'standard',
   }
 };
 
 
 export default function SignupPage() {
-  const [fullName, setFullName] = useState(personas.seller.fullName);
-  const [address, setAddress] = useState(personas.seller.address);
-  const [phone, setPhone] = useState(personas.seller.phone);
-  const [email, setEmail] = useState(personas.seller.email);
+  const [fullName, setFullName] = useState(personas.user1.fullName);
+  const [address, setAddress] = useState(personas.user1.address);
+  const [phone, setPhone] = useState(personas.user1.phone);
+  const [email, setEmail] = useState(personas.user1.email);
   const [password, setPassword] = useState('password');
   const [confirmPassword, setConfirmPassword] = useState('password');
   const [userType, setUserType] = useState('standard');
@@ -49,7 +49,7 @@ export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const setPersona = (persona: 'seller' | 'buyer') => {
+  const setPersona = (persona: 'user1' | 'user2') => {
     const data = personas[persona];
     setFullName(data.fullName);
     setAddress(data.address);
@@ -113,12 +113,12 @@ export default function SignupPage() {
       <Card className="mx-auto w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-3xl">Sign Up</CardTitle>
-          <CardDescription>Enter your information to create an account</CardDescription>
+          <CardDescription>Enter your information to create an account. Use the buttons below to pre-fill test user data.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4 mb-6">
-            <Button variant="outline" onClick={() => setPersona('seller')} className="flex gap-2"><Building className="h-4 w-4"/> Pre-fill as Seller</Button>
-            <Button variant="outline" onClick={() => setPersona('buyer')} className="flex gap-2"><ShoppingCart className="h-4 w-4"/> Pre-fill as Buyer</Button>
+            <Button variant="outline" onClick={() => setPersona('user1')}>Pre-fill Test User 1</Button>
+            <Button variant="outline" onClick={() => setPersona('user2')}>Pre-fill Test User 2</Button>
           </div>
           <form onSubmit={handleSignUp} className="grid gap-6">
             <div className="grid grid-cols-1 gap-4">
