@@ -24,8 +24,7 @@ export default function ApplyPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasApplied, setHasApplied] = useState<boolean | null>(null);
-
+  
   const finalJobId = Array.isArray(jobId) ? jobId[0] : jobId;
 
   // --- Data Fetching ---
@@ -43,24 +42,16 @@ export default function ApplyPage() {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
   // --- Check if user has already applied ---
-  useEffect(() => {
-    const checkApplication = async () => {
-        if (!firestore || !user || !finalJobId) {
-            setHasApplied(null);
-            return;
-        }
-        setHasApplied(null); // Set to loading state
-        const appRef = doc(firestore, `users/${user.uid}/applications`, finalJobId);
-        try {
-            const docSnap = await (await getDocs(query(collection(firestore, `users/${user.uid}/applications`), where('jobId', '==', finalJobId)))).docs[0];
-            setHasApplied(docSnap?.exists() ?? false);
-        } catch (error) {
-            console.error("Error checking application status:", error);
-            setHasApplied(false); // Assume not applied on error
-        }
-    };
-    checkApplication();
+   const applicationsQuery = useMemo(() => {
+    if (!firestore || !user || !finalJobId) return null;
+    return query(
+      collection(firestore, `users/${user.uid}/applications`),
+      where('jobId', '==', finalJobId)
+    );
   }, [firestore, user, finalJobId]);
+
+  const { data: applications, isLoading: areApplicationsLoading } = useCollection(applicationsQuery);
+  const hasApplied = applications ? applications.length > 0 : false;
 
 
   // --- Effects ---
@@ -124,7 +115,6 @@ export default function ApplyPage() {
       })
     ]).then(() => {
       toast({ title: 'Application submitted!', description: `You have successfully applied for ${job?.title}.` });
-      setHasApplied(true);
       router.push('/jobs');
     }).catch((error) => {
       // Errors are already emitted, but we can handle UI feedback here if needed.
@@ -148,13 +138,13 @@ export default function ApplyPage() {
   };
 
   // --- Loading & Render States ---
-  const isLoading = isUserLoading || isProfileLoading || isJobLoading || hasApplied === null;
+  const isLoading = isUserLoading || isProfileLoading || isJobLoading || areApplicationsLoading;
 
   if (isLoading) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
-        <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
+        <main className="flex-1 container mx-auto p-4 md:p:6 lg:p-8">
           <Card className="max-w-2xl mx-auto">
             <CardHeader><Skeleton className="h-8 w-3/4" /></CardHeader>
             <CardContent className="space-y-4">
@@ -172,7 +162,7 @@ export default function ApplyPage() {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
-        <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 text-center">
+        <main className="flex-1 container mx-auto p-4 md:p:6 lg:p-8 text-center">
             <h2 className="text-2xl font-semibold">Job not found</h2>
             <p className="text-muted-foreground mt-2">This job may no longer be available.</p>
             <Button asChild className="mt-4"><Link href="/jobs">Back to Jobs</Link></Button>
@@ -184,12 +174,12 @@ export default function ApplyPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
+      <main className="flex-1 container mx-auto p-4 md:p:6 lg:p-8">
         <form onSubmit={handleApply}>
             <Card className="max-w-2xl mx-auto">
             <CardHeader>
                 <Button variant="ghost" size="sm" className="mb-4 w-fit -ml-2" asChild>
-                    <Link href="/jobs"><ArrowLeft className="mr-2 h-4 w-4" />Back to Jobs</Link>
+                    <Link href="/jobs"><ArrowLeft className="mr-2 h-4 w-4" /></Link>
                 </Button>
                 <CardTitle className="text-2xl">Apply for {job.title}</CardTitle>
                 <CardDescription>Review your information before submitting your application to <span className="font-semibold">{job.companyName}</span>.</CardDescription>
@@ -242,7 +232,7 @@ export default function ApplyPage() {
                 <Button 
                     type="submit"
                     className="w-full"
-                    disabled={isSubmitting || !userProfile?.resumeUrl || job.status === 'Closed' || hasApplied === true}
+                    disabled={isSubmitting || !userProfile?.resumeUrl || job.status === 'Closed' || hasApplied}
                 >
                 {isSubmitting ? 'Submitting...' : hasApplied ? 'Already Applied' : 'Confirm and Submit Application'}
                 </Button>
@@ -253,3 +243,5 @@ export default function ApplyPage() {
     </div>
   );
 }
+
+    
