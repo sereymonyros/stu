@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -11,25 +12,51 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { User, Briefcase } from 'lucide-react';
+import { User, Briefcase, ShoppingCart, Building } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
+const personas = {
+  seller: {
+    fullName: 'Seller One',
+    address: '1 Seller St, Phnom Penh',
+    phone: '011000001',
+    email: 'seller1@cambodiahub.com',
+    userType: 'standard',
+  },
+  buyer: {
+    fullName: 'Buyer One',
+    address: '2 Buyer Ave, Phnom Penh',
+    phone: '012000002',
+    email: 'buyer1@cambodiahub.com',
+    userType: 'standard',
+  }
+};
+
+
 export default function SignupPage() {
-  const [fullName, setFullName] = useState('Chan Data');
-  const [address, setAddress] = useState('#123 Street 456, Phnom Penh');
-  const [phone, setPhone] = useState('012 345 678');
-  const [email, setEmail] = useState('admin@cambodiahub.com');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState(personas.seller.fullName);
+  const [address, setAddress] = useState(personas.seller.address);
+  const [phone, setPhone] = useState(personas.seller.phone);
+  const [email, setEmail] = useState(personas.seller.email);
+  const [password, setPassword] = useState('password');
+  const [confirmPassword, setConfirmPassword] = useState('password');
   const [userType, setUserType] = useState('standard');
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+
+  const setPersona = (persona: 'seller' | 'buyer') => {
+    const data = personas[persona];
+    setFullName(data.fullName);
+    setAddress(data.address);
+    setPhone(data.phone);
+    setEmail(data.email);
+    setUserType(data.userType);
+  }
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,6 +116,10 @@ export default function SignupPage() {
           <CardDescription>Enter your information to create an account</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <Button variant="outline" onClick={() => setPersona('seller')} className="flex gap-2"><Building className="h-4 w-4"/> Pre-fill as Seller</Button>
+            <Button variant="outline" onClick={() => setPersona('buyer')} className="flex gap-2"><ShoppingCart className="h-4 w-4"/> Pre-fill as Buyer</Button>
+          </div>
           <form onSubmit={handleSignUp} className="grid gap-6">
             <div className="grid grid-cols-1 gap-4">
                <div className="grid gap-2">
@@ -165,7 +196,7 @@ export default function SignupPage() {
 
             <ToggleGroup
                 type="single"
-                defaultValue={userType}
+                value={userType}
                 onValueChange={(value) => { if (value) setUserType(value)}}
                 className="grid grid-cols-2 gap-4"
                 disabled={isLoading}
