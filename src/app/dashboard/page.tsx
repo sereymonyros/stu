@@ -66,7 +66,7 @@ function AppliedJobCard({ job }: { job: any }) {
             </CardContent>
             <CardFooter>
                  <Button asChild variant="outline">
-                    <Link href={`/jobs/${job.id}`}>View Job</Link>
+                    <Link href={`/jobs/${job.id}/apply`}>View Job</Link>
                 </Button>
             </CardFooter>
         </Card>
