@@ -40,8 +40,7 @@ const toBase64 = (file: File): Promise<string> =>
     reader.onerror = (error) => reject(error);
   });
 
-export default function ApplyPage({ params }: { params: { id: string } }) {
-  const { id: jobId } = params;
+export default function ApplyPage({ params: { id: jobId } }: { params: { id: string } }) {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
