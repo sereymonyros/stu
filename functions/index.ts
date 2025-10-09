@@ -23,6 +23,7 @@ import * as nodemailer from 'nodemailer';
 // Initialize the Firebase Admin SDK.
 admin.initializeApp();
 const db = admin.firestore();
+const auth = admin.auth();
 
 // Configure the email transporter using nodemailer.
 // The credentials for the email service are fetched from Firebase environment configuration.
@@ -35,27 +36,31 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
- * Sends an email to a user confirming their job application.
+ * Sends an email to a user confirming their job application and notifies the recruiter.
  *
- * This function is triggered when a new application document is created under
- * any job posting. It fetches details about the applicant and the job
- * to send a personalized confirmation email.
+ * This function is triggered when a new application document is created. It sends
+ * a confirmation to the applicant and a notification to the recruiter.
  */
 export const sendApplicationConfirmationEmail = functions.firestore
     .document('jobs/{jobId}/applications/{applicationId}')
     .onCreate(async (snapshot, context) => {
         const applicationData = snapshot.data();
+        if (!applicationData) {
+            console.error("Application data is undefined. Exiting function.");
+            return null;
+        }
         const { jobId, applicantId } = applicationData;
 
-        // Fetch user and job details concurrently
-        const userPromise = db.collection('users').doc(applicantId).get();
-        const jobPromise = db.collection('jobs').doc(jobId).get();
-
         try {
-            const [userDoc, jobDoc] = await Promise.all([userPromise, jobPromise]);
+            // Fetch all required documents concurrently
+            const applicantDocPromise = db.collection('users').doc(applicantId).get();
+            const jobDocPromise = db.collection('jobs').doc(jobId).get();
+            
+            const [applicantDoc, jobDoc] = await Promise.all([applicantDocPromise, jobDocPromise]);
 
-            if (!userDoc.exists) {
-                console.error(`User document not found for applicantId: ${applicantId}`);
+            // --- Validate documents ---
+            if (!applicantDoc.exists) {
+                console.error(`Applicant user document not found for applicantId: ${applicantId}`);
                 return null;
             }
             if (!jobDoc.exists) {
@@ -63,38 +68,69 @@ export const sendApplicationConfirmationEmail = functions.firestore
                 return null;
             }
 
-            const userData = userDoc.data()!;
+            const applicantData = applicantDoc.data()!;
             const jobData = jobDoc.data()!;
+            const { recruiterId, title: jobTitle, companyName } = jobData;
 
-            const { email, displayName } = userData;
-            const { title, companyName } = jobData;
+            // --- Fetch Recruiter Data ---
+            const recruiterDoc = await db.collection('users').doc(recruiterId).get();
+            if (!recruiterDoc.exists) {
+                console.error(`Recruiter user document not found for recruiterId: ${recruiterId}`);
+                // We can still proceed to email the applicant even if the recruiter can't be notified.
+            }
+            const recruiterData = recruiterDoc.data();
 
-            if (!email) {
-                console.error(`No email address found for user: ${applicantId}`);
-                return null;
+            // --- 1. Send Confirmation Email to Applicant ---
+            const { email: applicantEmail, displayName: applicantName } = applicantData;
+            if (applicantEmail) {
+                const applicantMailOptions = {
+                    from: `"Cambodia Hub" <${functions.config().gmail.email}>`,
+                    to: applicantEmail,
+                    subject: `Your Application for ${jobTitle} has been Received`,
+                    html: `
+                        <h1>Application Confirmation</h1>
+                        <p>Dear ${applicantName || 'Applicant'},</p>
+                        <p>This email confirms that we have successfully received your application for the <b>${jobTitle}</b> position at <b>${companyName}</b>.</p>
+                        <p>You can view the status of all your applications on your dashboard.</p>
+                        <p>We wish you the best of luck in the hiring process!</p>
+                        <br>
+                        <p>Sincerely,</p>
+                        <p><b>The Cambodia Hub Team</b></p>
+                    `
+                };
+                await transporter.sendMail(applicantMailOptions);
+                console.log(`Application confirmation email sent to applicant: ${applicantEmail}`);
+            } else {
+                console.warn(`No email address found for applicant: ${applicantId}. Skipping email.`);
             }
 
-            const mailOptions = {
-                from: '"Cambodia Hub" <noreply@yourfirebaseproject.com>',
-                to: email,
-                subject: `Your Application for ${title} has been Received`,
-                html: `
-                    <h1>Application Confirmation</h1>
-                    <p>Dear ${displayName || 'Applicant'},</p>
-                    <p>This email confirms that we have successfully received your application for the <b>${title}</b> position at <b>${companyName}</b>.</p>
-                    <p>You can view the status of all your applications on your dashboard.</p>
-                    <p>We wish you the best of luck in the hiring process!</p>
-                    <br>
-                    <p>Sincerely,</p>
-                    <p><b>The Cambodia Hub Team</b></p>
-                `
-            };
-            
-            await transporter.sendMail(mailOptions);
-            console.log(`Application confirmation email sent to: ${email}`);
+            // --- 2. Send Notification Email to Recruiter ---
+            const recruiterEmail = recruiterData?.email;
+            if (recruiterEmail) {
+                const recruiterMailOptions = {
+                    from: `"Cambodia Hub" <${functions.config().gmail.email}>`,
+                    to: recruiterEmail,
+                    subject: `New Application for ${jobTitle}`,
+                    html: `
+                        <h1>New Job Application</h1>
+                        <p>Hello ${recruiterData?.displayName || 'Recruiter'},</p>
+                        <p>You have received a new application for the <b>${jobTitle}</b> position.</p>
+                        <p><b>Applicant:</b> ${applicantName || 'N/A'}</p>
+                        <p><b>Applicant Email:</b> ${applicantEmail || 'N/A'}</p>
+                        <p>Please visit your dashboard to review the application.</p>
+                        <br>
+                        <p>Regards,</p>
+                        <p><b>The Cambodia Hub Team</b></p>
+                    `
+                };
+                await transporter.sendMail(recruiterMailOptions);
+                console.log(`New application notification sent to recruiter: ${recruiterEmail}`);
+            } else {
+                console.warn(`No email address found for recruiter: ${recruiterId}. Skipping notification.`);
+            }
 
         } catch (error) {
-            console.error('Failed to send application confirmation email:', error);
+            console.error('Failed to process application and send emails:', error);
         }
 
         return null;
@@ -160,42 +196,3 @@ export const updateUserData = functions.firestore
 
         return null;
     });
-/**
- * Sends a welcome email to new users and sets up a verification link.
- * 
- * This Cloud Function is triggered when a new user account is created in Firebase Authentication.
- * It generates an email verification link and sends it as part of a welcome email.
- * This helps ensure that the user's email address is valid and they can receive important communications.
- */
-export const sendWelcomeEmail = functions.auth.user().onCreate(async (user) => {
-    const { email, uid, displayName } = user;
-
-    if (!email) {
-        console.log(`User ${uid} has no email address. Skipping welcome email.`);
-        return null;
-    }
-
-    try {
-        const mailOptions = {
-            from: '"Cambodia Hub" <noreply@yourfirebaseproject.com>',
-            to: email,
-            subject: 'Welcome to Cambodia Hub! Please Verify Your Email',
-            html: `
-                <h1>Welcome, ${displayName || 'User'}!</h1>
-                <p>Thank you for joining Cambodia Hub, your gateway to the Kingdom of Wonder.</p>
-                <p>To secure your account and get started, please verify your email address by clicking the link below:</p>
-                <p><a href="${await admin.auth().generateEmailVerificationLink(email)}">Verify Your Email</a></p>
-                <br>
-                <p>We're excited to have you with us!</p>
-                <p><b>The Cambodia Hub Team</b></p>
-            `
-        };
-
-        await transporter.sendMail(mailOptions);
-        console.log(`Welcome and verification email sent to: ${email}`);
-    } catch (error) {
-        console.error('Failed to send welcome email:', error);
-    }
-
-    return null;
-});
