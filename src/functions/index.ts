@@ -23,6 +23,7 @@ import * as nodemailer from 'nodemailer';
 // Initialize the Firebase Admin SDK.
 admin.initializeApp();
 const db = admin.firestore();
+const auth = admin.auth();
 
 // Configure the email transporter using nodemailer.
 // The credentials for the email service are fetched from Firebase environment configuration.
@@ -34,27 +35,43 @@ const transporter = nodemailer.createTransport({
     }
 });
 /**
- * Sends a welcome email to a new user.
+ * Sends a welcome email with a verification link to a new user.
  *
  * This function is triggered by the `onCreate` event in Firebase Authentication,
  * which occurs whenever a new user account is created.
  */
-export const sendWelcomeEmail = functions.auth.user().onCreate((user) => {
-    const {email, displayName} = user; 
+export const sendWelcomeEmail = functions.auth.user().onCreate(async (user) => {
+    const {email, displayName, uid} = user; 
 
     if (!email) {
-        console.error('No email found for new user:', user.uid);
+        console.error('No email found for new user:', uid);
         return null;
     }
+    
+    // Generate email verification link
+    const actionCodeSettings = {
+        url: `${process.env.NEXT_PUBLIC_BASE_URL}/`, // URL to redirect to after verification
+        handleCodeInApp: true,
+    };
+
+    let verificationLink;
+    try {
+        verificationLink = await auth.generateEmailVerificationLink(email, actionCodeSettings);
+    } catch (error) {
+        console.error('Error generating email verification link:', error);
+        return null;
+    }
+
 
     const mailOptions = {
         from: '"Cambodia Hub" <noreply@yourfirebaseproject.com>',
         to: email,
-        subject: 'Welcome to Cambodia Hub!',
+        subject: 'Welcome to Cambodia Hub! Please Verify Your Email',
         html: `
             <h1>Welcome, ${displayName || 'New Friend'}!</h1>
-            <p>Thank you for joining Cambodia Hub, your personal AI guide to the Kingdom of Wonder.</p>
-            <p>You can now explore listings, find jobs, and connect with others.</p>
+            <p>Thank you for joining Cambodia Hub. Please click the link below to verify your email address and secure your account.</p>
+            <p><a href="${verificationLink}" style="background-color: #4A90E2; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px;">Verify Your Email</a></p>
+            <p>If you did not create an account, you can safely ignore this email.</p>
             <br>
             <p>Happy exploring!</p>
             <p><b>The Cambodia Hub Team</b></p>
@@ -63,8 +80,8 @@ export const sendWelcomeEmail = functions.auth.user().onCreate((user) => {
 
     // Send the email.
     return transporter.sendMail(mailOptions)
-        .then(() => console.log('Welcome email sent to:', email))
-        .catch((error) => console.error('Error sending welcome email:', error));
+        .then(() => console.log('Verification email sent to:', email))
+        .catch((error) => console.error('Error sending verification email:', error));
 });
 
 
