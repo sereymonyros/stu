@@ -41,7 +41,7 @@ export default function JobsPage() {
   // --- Simplified Data Fetching ---
   const jobsQuery = useMemo(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'jobs'), where('status', '!=', 'Closed'));
+    return query(collection(firestore, 'jobs'));
   }, [firestore]);
 
   const { data: jobs, isLoading: isJobsLoading } = useCollection(jobsQuery);
