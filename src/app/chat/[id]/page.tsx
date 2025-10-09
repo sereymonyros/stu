@@ -48,8 +48,7 @@ function Message({ message, isOwnMessage, otherUser }: { message: any; isOwnMess
     );
 }
 
-export default function ChatPage({ params }: { params: { id: string } }) {
-    const { id: chatId } = params;
+export default function ChatPage({ params: { id: chatId } }: { params: { id: string } }) {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const router = useRouter();

@@ -43,20 +43,19 @@ const jobSchema = z.object({
   salary: z.string().optional(),
 });
 
-export default function EditJobPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function EditJobPage({ params: { id: jobId } }: { params: { id: string } }) {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const jobId = Array.isArray(id) ? id[0] : id;
+  const finalJobId = Array.isArray(jobId) ? jobId[0] : jobId;
 
   const jobRef = useMemo(() => {
-    if (!firestore || !jobId) return null;
-    return doc(firestore, 'jobs', jobId);
-  }, [firestore, jobId]);
+    if (!firestore || !finalJobId) return null;
+    return doc(firestore, 'jobs', finalJobId);
+  }, [firestore, finalJobId]);
 
   const { data: job, isLoading: isJobLoading } = useDoc(jobRef);
   

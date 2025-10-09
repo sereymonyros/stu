@@ -61,8 +61,7 @@ const toBase64 = (file: File): Promise<string> =>
     reader.onerror = (error) => reject(error);
   });
 
-export default function EditListingPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function EditListingPage({ params: { id: listingId } }: { params: { id: string } }) {
   const firestore = useFirestore();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -70,12 +69,12 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const listingId = Array.isArray(id) ? id[0] : id;
+  const finalListingId = Array.isArray(listingId) ? listingId[0] : listingId;
 
   const listingRef = useMemo(() => {
-    if (!firestore || !listingId) return null;
-    return doc(firestore, 'listings', listingId);
-  }, [firestore, listingId]);
+    if (!firestore || !finalListingId) return null;
+    return doc(firestore, 'listings', finalListingId);
+  }, [firestore, finalListingId]);
 
   const { data: listing, isLoading: isListingLoading } = useDoc(listingRef);
 
