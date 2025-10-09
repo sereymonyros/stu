@@ -2,8 +2,8 @@
 
 import { useMemo, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { doc, setDoc, serverTimestamp, query, collection, where, getDocs } from 'firebase/firestore';
+import { useDoc, useFirestore, useUser } from '@/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/header';
@@ -38,21 +38,17 @@ export default function ApplyPage() {
     return doc(firestore, 'users', user.uid);
   }, [firestore, user]);
 
-  const { data: job, isLoading: isJobLoading } = useDoc(jobRef);
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
-
   // --- Check if user has already applied ---
-   const applicationsQuery = useMemo(() => {
+  const userApplicationRef = useMemo(() => {
     if (!firestore || !user || !finalJobId) return null;
-    return query(
-      collection(firestore, `users/${user.uid}/applications`),
-      where('jobId', '==', finalJobId)
-    );
+    return doc(firestore, `users/${user.uid}/applications`, finalJobId);
   }, [firestore, user, finalJobId]);
 
-  const { data: applications, isLoading: areApplicationsLoading } = useCollection(applicationsQuery);
-  const hasApplied = applications ? applications.length > 0 : false;
-
+  const { data: job, isLoading: isJobLoading } = useDoc(jobRef);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+  const { data: application, isLoading: isApplicationLoading } = useDoc(userApplicationRef);
+  
+  const hasApplied = !!application;
 
   // --- Effects ---
   useEffect(() => {
@@ -90,7 +86,12 @@ export default function ApplyPage() {
       jobId: finalJobId,
       appliedAt: serverTimestamp(),
     };
-    const userApplicationRef = doc(firestore, 'users', user.uid, 'applications', finalJobId);
+    // Re-using userApplicationRef from the useMemo above
+    if (!userApplicationRef) {
+      toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not create application reference.' });
+      setIsSubmitting(false);
+      return;
+    }
 
     // Chain the promises
     Promise.all([
@@ -138,7 +139,7 @@ export default function ApplyPage() {
   };
 
   // --- Loading & Render States ---
-  const isLoading = isUserLoading || isProfileLoading || isJobLoading || areApplicationsLoading;
+  const isLoading = isUserLoading || isProfileLoading || isJobLoading || isApplicationLoading;
 
   if (isLoading) {
     return (
@@ -179,7 +180,7 @@ export default function ApplyPage() {
             <Card className="max-w-2xl mx-auto">
             <CardHeader>
                 <Button variant="ghost" size="sm" className="mb-4 w-fit -ml-2" asChild>
-                    <Link href="/jobs"><ArrowLeft className="mr-2 h-4 w-4" /></Link>
+                    <Link href="/jobs"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Jobs</Link>
                 </Button>
                 <CardTitle className="text-2xl">Apply for {job.title}</CardTitle>
                 <CardDescription>Review your information before submitting your application to <span className="font-semibold">{job.companyName}</span>.</CardDescription>
@@ -243,5 +244,3 @@ export default function ApplyPage() {
     </div>
   );
 }
-
-    
