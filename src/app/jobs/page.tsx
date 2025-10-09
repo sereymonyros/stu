@@ -1,14 +1,14 @@
 'use client';
 
 import { useCollection, useFirestore, useUser, useDoc } from '@/firebase';
-import { collection, doc, deleteDoc, setDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, doc, deleteDoc, setDoc, serverTimestamp, query } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import Link from 'next/link';
 import { useMemo, useState, useEffect } from 'react';
-import { Pencil, Trash2, Heart, Briefcase, Search, ClipboardList } from 'lucide-react';
+import { Pencil, Trash2, Heart, Search, ClipboardList } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -22,12 +22,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Input } from '@/components/ui/input';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { cn } from '@/lib/utils';
 
 const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship'];
 
@@ -40,12 +39,10 @@ export default function JobsPage() {
   const [locationFilters, setLocationFilters] = useState<string[]>([]);
   const [isRecruiter, setIsRecruiter] = useState(false);
   
-  // --- Simplified Data Fetching ---
   const jobsQuery = useMemo(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'jobs'));
   }, [firestore]);
-
 
   const { data: jobs, isLoading: isJobsLoading } = useCollection(jobsQuery);
 
@@ -61,11 +58,23 @@ export default function JobsPage() {
       return collection(firestore, `users/${user.uid}/applications`);
   }, [firestore, user, isRecruiter]);
   const { data: userApplications, isLoading: areApplicationsLoading } = useCollection(userApplicationsQuery);
+  
+  // Fetch favourite jobs for the current user
+  const favouriteJobsQuery = useMemo(() => {
+      if (!firestore || !user || isRecruiter) return null;
+      return collection(firestore, `users/${user.uid}/favouriteJobs`);
+  }, [firestore, user, isRecruiter]);
+  const { data: favouriteJobs, isLoading: areFavouritesLoading } = useCollection(favouriteJobsQuery);
 
   const appliedJobIds = useMemo(() => {
       if (!userApplications) return new Set();
       return new Set(userApplications.map(app => app.jobId));
   }, [userApplications]);
+
+  const favouriteJobIds = useMemo(() => {
+      if (!favouriteJobs) return new Set();
+      return new Set(favouriteJobs.map(fav => fav.jobId));
+  }, [favouriteJobs]);
 
 
   useEffect(() => {
@@ -124,12 +133,45 @@ export default function JobsPage() {
           operation: 'delete',
         })
       );
+      toast({ variant: "destructive", title: "Deletion Failed", description: "You don't have permission to delete this job." });
     });
 
     toast({ title: "Job deleted successfully." });
   };
+  
+  const handleToggleFavourite = (jobId: string, isFavourite: boolean) => {
+      if (!firestore || !user) {
+          toast({ variant: 'destructive', title: 'You must be logged in to favourite jobs.' });
+          return;
+      }
+      
+      const favouriteDocRef = doc(firestore, `users/${user.uid}/favouriteJobs`, jobId);
 
-  const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areApplicationsLoading;
+      if (isFavourite) {
+          deleteDoc(favouriteDocRef).catch(serverError => {
+              errorEmitter.emit('permission-error', new FirestorePermissionError({
+                  path: favouriteDocRef.path,
+                  operation: 'delete',
+              }));
+              toast({ variant: 'destructive', title: 'Action Failed', description: "Could not remove job from favourites." });
+          });
+      } else {
+          const favouriteData = {
+              jobId: jobId,
+              favouritedAt: serverTimestamp(),
+          };
+          setDoc(favouriteDocRef, favouriteData).catch(serverError => {
+              errorEmitter.emit('permission-error', new FirestorePermissionError({
+                  path: favouriteDocRef.path,
+                  operation: 'create',
+                  requestResourceData: favouriteData,
+              }));
+              toast({ variant: 'destructive', title: 'Action Failed', description: "Could not add job to favourites." });
+          });
+      }
+  };
+
+  const isLoading = isUserLoading || isJobsLoading || isProfileLoading || areApplicationsLoading || areFavouritesLoading;
   const hasActiveFilters = jobTypeFilters.length > 0 || locationFilters.length > 0 || searchQuery.length > 0;
 
   return (
@@ -207,6 +249,7 @@ export default function JobsPage() {
               {filteredJobs.map((job) => {
                 const isOwner = user && user.uid === job.recruiterId;
                 const hasApplied = appliedJobIds.has(job.id);
+                const isFavourite = favouriteJobIds.has(job.id);
 
                 return (
                   <Card key={job.id} className="h-full flex flex-col">
@@ -225,15 +268,23 @@ export default function JobsPage() {
                        {job.salary && <p className="font-semibold text-primary">{job.salary}</p>}
                     </CardContent>
                     <CardFooter className="flex justify-between items-center">
-                      {!isRecruiter && (
-                         <Button asChild={!hasApplied && job.status !== 'Closed'} disabled={hasApplied || job.status === 'Closed'}>
-                           {hasApplied ? (
-                              <span>Applied</span>
-                           ) : (
-                              job.status !== 'Closed' ? <Link href={`/jobs/${job.id}/apply`}>Apply Now</Link> : <span>Closed</span>
-                           )}
-                         </Button>
-                      )}
+                        <div className="flex items-center gap-2">
+                            {!isRecruiter && (
+                                <Button asChild={!hasApplied && job.status !== 'Closed'} disabled={hasApplied || job.status === 'Closed'}>
+                                {hasApplied ? (
+                                    <span>Applied</span>
+                                ) : (
+                                    job.status !== 'Closed' ? <Link href={`/jobs/${job.id}/apply`}>Apply Now</Link> : <span>Closed</span>
+                                )}
+                                </Button>
+                            )}
+                            {user && !isRecruiter && (
+                                <Button variant="ghost" size="icon" title={isFavourite ? "Remove from favourites" : "Add to favourites"} onClick={() => handleToggleFavourite(job.id, isFavourite)}>
+                                    <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
+                                </Button>
+                            )}
+                        </div>
+                      
                       {user && isOwner && (
                         <div className="flex items-center gap-2">
                             <>
@@ -299,3 +350,5 @@ export default function JobsPage() {
     </div>
   );
 }
+
+    

@@ -218,6 +218,10 @@
           "type": "string",
           "format": "date-time",
           "description": "The timestamp when the job was posted."
+        },
+        "isFavourite": {
+          "type": "boolean",
+          "description": "Client-side flag to indicate if a job is a favorite."
         }
       },
       "required": [
@@ -289,6 +293,24 @@
         "appliedAt"
       ]
     },
+    "UserFavouriteJob": {
+      "title": "User Favourite Job",
+      "description": "A lightweight reference to a job a user has favorited, stored under the user's document.",
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string"
+        },
+        "favouritedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "jobId",
+        "favouritedAt"
+      ]
+    },
     "Feedback": {
       "title": "Feedback",
       "description": "User-submitted feedback for the application.",
@@ -339,6 +361,12 @@
       },
       "description": "A user's list of job applications references."
     },
+    "/users/{userId}/favouriteJobs/{jobId}": {
+      "schema": {
+        "$ref": "#/entities/UserFavouriteJob"
+      },
+      "description": "A user's list of favorite job references."
+    },
     "/listings/{listingId}": {
       "schema": {
         "$ref": "#/entities/Listing"
@@ -377,3 +405,5 @@
     }
   }
 }
+
+    

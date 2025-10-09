@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, query, where, doc, collectionGroup } from 'firebase/firestore';
+import { collection, query, where, doc } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Briefcase, Store, ClipboardList, FileText, Users } from 'lucide-react';
+import { Briefcase, Store, ClipboardList, FileText, Users, Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 function JobCard({ job }: { job: any }) {
@@ -62,6 +62,28 @@ function AppliedJobCard({ job }: { job: any }) {
                 <div className="flex items-center gap-2">
                     <Badge variant="default">Applied</Badge>
                     {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'secondary'} className="capitalize">{job.status}</Badge>}
+                </div>
+            </CardContent>
+            <CardFooter>
+                 <Button asChild variant="outline">
+                    <Link href={`/jobs/${job.id}/apply`}>View Job</Link>
+                </Button>
+            </CardFooter>
+        </Card>
+    );
+}
+
+function FavouriteJobCard({ job }: { job: any }) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-xl">{job.title}</CardTitle>
+                <p className="text-sm text-muted-foreground">{job.companyName} - {job.location}</p>
+            </CardHeader>
+            <CardContent>
+                 <div className="flex items-center gap-2">
+                    {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
+                    {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
                 </div>
             </CardContent>
             <CardFooter>
@@ -146,13 +168,33 @@ export default function DashboardPage() {
     }, [applications]);
 
     const appliedJobsQuery = useMemo(() => {
-        // CRITICAL: Only run this query if applications have loaded and there are IDs to fetch.
         if (!firestore || areApplicationsLoading || !appliedJobIds || appliedJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
     }, [firestore, areApplicationsLoading, appliedJobIds]);
     const { data: appliedJobs, isLoading: areAppliedJobsLoading } = useCollection(appliedJobsQuery);
+    
+    // For Standard Users: Fetch their favorite jobs
+    const favouriteJobsQuery = useMemo(() => {
+        if (!firestore || !shouldRunRoleQueries || isRecruiter) return null;
+        return query(collection(firestore, `users/${user.uid}/favouriteJobs`));
+    }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
+    const { data: favouriteJobsRefs, isLoading: areFavouritesLoading } = useCollection(favouriteJobsQuery);
+
+    const favouriteJobIds = useMemo(() => {
+        if (!favouriteJobsRefs) return [];
+        return favouriteJobsRefs.map(fav => fav.jobId);
+    }, [favouriteJobsRefs]);
+
+    const favouriteJobsDetailsQuery = useMemo(() => {
+        if (!firestore || areFavouritesLoading || !favouriteJobIds || favouriteJobIds.length === 0) {
+            return null;
+        }
+        return query(collection(firestore, 'jobs'), where('__name__', 'in', favouriteJobIds));
+    }, [firestore, areFavouritesLoading, favouriteJobIds]);
+    const { data: favouriteJobs, isLoading: areFavouriteJobsDetailsLoading } = useCollection(favouriteJobsDetailsQuery);
+
 
 
     // For All Users: Fetch listings they created
@@ -164,7 +206,7 @@ export default function DashboardPage() {
 
     // --- Loading and Rendering Logic ---
     const isLoading = isUserLoading || isProfileLoading;
-    const isStandardUserDashboardLoading = areApplicationsLoading || areAppliedJobsLoading;
+    const isStandardUserDashboardLoading = areApplicationsLoading || areAppliedJobsLoading || areFavouritesLoading || areFavouriteJobsDetailsLoading;
 
     if (isLoading) {
         return (
@@ -216,6 +258,7 @@ export default function DashboardPage() {
                 )}
 
                 {!isRecruiter && (
+                    <>
                      <section>
                         <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><FileText /> My Job Applications</h2>
                         {isStandardUserDashboardLoading ? (
@@ -235,6 +278,26 @@ export default function DashboardPage() {
                             </div>
                         )}
                     </section>
+                    <section>
+                        <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Heart /> My Favorite Jobs</h2>
+                         {isStandardUserDashboardLoading ? (
+                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+                            </div>
+                         ) : favouriteJobs && favouriteJobs.length > 0 ? (
+                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {favouriteJobs.map(job => <FavouriteJobCard key={job.id} job={job} />)}
+                            </div>
+                         ) : (
+                              <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
+                                <Heart className="mx-auto h-10 w-10 text-muted-foreground" />
+                                <h3 className="text-xl font-semibold">No favorite jobs yet</h3>
+                                <p className="text-muted-foreground">Browse jobs and save your favorites to find them here later.</p>
+                                <Button asChild><Link href="/jobs">Browse Jobs</Link></Button>
+                            </div>
+                         )}
+                    </section>
+                    </>
                 )}
 
                 <section>
@@ -261,3 +324,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    
