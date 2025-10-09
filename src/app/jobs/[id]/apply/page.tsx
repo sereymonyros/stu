@@ -97,6 +97,7 @@ export default function ApplyPage() {
 
     setIsSubmitting(true);
 
+    // This is the main application document stored under the job
     const applicationData = {
       applicantId: user.uid,
       jobId: finalJobId,
@@ -106,9 +107,11 @@ export default function ApplyPage() {
     };
     const applicationRef = doc(firestore, 'jobs', finalJobId, 'applications', user.uid);
 
+    // This is the user's copy of the application, for their dashboard
     const userApplicationData = {
       jobId: finalJobId,
       appliedAt: serverTimestamp(),
+      status: 'submitted', // Add status here as well
     };
     // Re-using userApplicationRef from the useMemo above
     if (!userApplicationRef) {
@@ -265,7 +268,10 @@ export default function ApplyPage() {
                 {hasApplied && (
                     <div className="bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-300 p-4 rounded-md flex items-center gap-2">
                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        <span className="font-medium">You have already applied for this job.</span>
+                         <div>
+                            <span className="font-medium">You have already applied for this job.</span>
+                            <p className="text-sm">Your application status is: <span className="font-semibold capitalize">{application.status}</span></p>
+                         </div>
                     </div>
                 )}
 

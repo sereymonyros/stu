@@ -299,11 +299,21 @@
         "appliedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the application.",
+          "enum": [
+            "submitted",
+            "reviewed",
+            "rejected"
+          ]
         }
       },
       "required": [
         "jobId",
-        "appliedAt"
+        "appliedAt",
+        "status"
       ]
     },
     "UserFavouriteJob": {

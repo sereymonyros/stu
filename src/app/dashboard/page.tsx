@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Briefcase, Store, ClipboardList, FileText, Users, Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 function JobCard({ job }: { job: any }) {
     const firestore = useFirestore();
@@ -51,7 +52,14 @@ function JobCard({ job }: { job: any }) {
     );
 }
 
-function AppliedJobCard({ job }: { job: any }) {
+function AppliedJobCard({ job, applicationStatus }: { job: any, applicationStatus: string }) {
+
+    const statusColors: { [key: string]: string } = {
+        submitted: 'bg-blue-500',
+        reviewed: 'bg-yellow-500',
+        rejected: 'bg-red-500',
+    }
+
     return (
         <Card>
             <CardHeader>
@@ -59,8 +67,8 @@ function AppliedJobCard({ job }: { job: any }) {
                 <p className="text-sm text-muted-foreground">{job.companyName} - {job.location}</p>
             </CardHeader>
             <CardContent>
-                <div className="flex items-center gap-2">
-                    <Badge variant="default">Applied</Badge>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <Badge className={cn("capitalize", statusColors[applicationStatus] || 'bg-gray-500')}>{applicationStatus}</Badge>
                     {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'secondary'} className="capitalize">{job.status}</Badge>}
                 </div>
             </CardContent>
@@ -154,19 +162,22 @@ export default function DashboardPage() {
     }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
     const { data: postedJobs, isLoading: isPostedJobsLoading } = useCollection(postedJobsQuery);
 
-    // For Standard Users: Fetch their applications
+    // For Standard Users: Fetch their applications (which now include status)
     const applicationsQuery = useMemo(() => {
         if (!firestore || !shouldRunRoleQueries || isRecruiter) return null;
         return query(collection(firestore, `users/${user.uid}/applications`));
     }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
     const { data: applications, isLoading: areApplicationsLoading } = useCollection(applicationsQuery);
-
-    // For Standard Users: Fetch the details of the jobs they applied for
-    const appliedJobIds = useMemo(() => {
-        if (!applications) return [];
-        return applications.map(app => app.jobId);
+    
+    // Create a map of jobId to application status
+    const applicationStatusMap = useMemo(() => {
+        if (!applications) return new Map();
+        return new Map(applications.map(app => [app.jobId, app.status]));
     }, [applications]);
 
+    const appliedJobIds = useMemo(() => Array.from(applicationStatusMap.keys()), [applicationStatusMap]);
+
+    // For Standard Users: Fetch the details of the jobs they applied for
     const appliedJobsQuery = useMemo(() => {
         if (!firestore || areApplicationsLoading || !appliedJobIds || appliedJobIds.length === 0) {
             return null;
@@ -267,7 +278,13 @@ export default function DashboardPage() {
                             </div>
                         ) : appliedJobs && appliedJobs.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {appliedJobs.map(job => <AppliedJobCard key={job.id} job={job} />)}
+                                {appliedJobs.map(job => (
+                                    <AppliedJobCard 
+                                        key={job.id} 
+                                        job={job} 
+                                        applicationStatus={applicationStatusMap.get(job.id) || 'submitted'} 
+                                    />
+                                ))}
                             </div>
                         ) : (
                              <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
@@ -324,5 +341,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-
-    

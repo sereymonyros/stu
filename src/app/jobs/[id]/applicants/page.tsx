@@ -3,7 +3,7 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { doc, collection, query } from 'firebase/firestore';
+import { doc, collection, query, updateDoc } from 'firebase/firestore';
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,9 +15,14 @@ import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
-function ApplicantRow({ application }: { application: any }) {
+function ApplicantRow({ application, jobId }: { application: any, jobId: string }) {
     const firestore = useFirestore();
+    const { toast } = useToast();
+    const [isUpdating, setIsUpdating] = useState(false);
     
     const applicantRef = useMemo(() => {
         if (!firestore || !application.applicantId) return null;
@@ -26,12 +31,53 @@ function ApplicantRow({ application }: { application: any }) {
 
     const { data: applicant, isLoading } = useDoc(applicantRef);
 
+    const handleStatusChange = async (newStatus: string) => {
+        if (!firestore) return;
+        setIsUpdating(true);
+        
+        const mainApplicationRef = doc(firestore, `jobs/${jobId}/applications`, application.applicantId);
+        const userApplicationRef = doc(firestore, `users/${application.applicantId}/applications`, jobId);
+
+        const statusUpdate = { status: newStatus };
+
+        try {
+            // Use Promise.all to update both documents
+            await Promise.all([
+                updateDoc(mainApplicationRef, statusUpdate).catch(serverError => {
+                     errorEmitter.emit('permission-error', new FirestorePermissionError({
+                        path: mainApplicationRef.path,
+                        operation: 'update',
+                        requestResourceData: statusUpdate
+                    }));
+                    throw serverError;
+                }),
+                updateDoc(userApplicationRef, statusUpdate).catch(serverError => {
+                    errorEmitter.emit('permission-error', new FirestorePermissionError({
+                        path: userApplicationRef.path,
+                        operation: 'update',
+                        requestResourceData: statusUpdate
+                    }));
+                   throw serverError;
+                })
+            ]);
+
+            toast({ title: "Status Updated", description: `${applicant.displayName}'s application is now '${newStatus}'.` });
+
+        } catch (error) {
+            console.error("Failed to update status:", error);
+            toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update application status.'});
+        } finally {
+            setIsUpdating(false);
+        }
+    }
+
+
     if (isLoading) {
         return (
             <TableRow>
                 <TableCell><Skeleton className="h-10 w-10 rounded-full" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                <TableCell><Skeleton className="h-10 w-32" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                 <TableCell><Skeleton className="h-8 w-20" /></TableCell>
             </TableRow>
@@ -63,10 +109,19 @@ function ApplicantRow({ application }: { application: any }) {
                 <div className="text-sm text-muted-foreground">{applicant.email}</div>
             </TableCell>
             <TableCell>
-                <Badge variant={application.status === 'reviewed' ? 'secondary' : 'default'} className="capitalize">{application.status}</Badge>
+                <Select defaultValue={application.status} onValueChange={handleStatusChange} disabled={isUpdating}>
+                    <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Set status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="submitted">Submitted</SelectItem>
+                        <SelectItem value="reviewed">Reviewed</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                </Select>
             </TableCell>
             <TableCell>
-                {application.appliedAt ? formatDistanceToNow(application.appliedAt, { addSuffix: true }) : 'N/A'}
+                {application.appliedAt?.toDate ? formatDistanceToNow(application.appliedAt.toDate(), { addSuffix: true }) : 'N/A'}
             </TableCell>
             <TableCell>
                 {application.resumeUrl ? (
@@ -165,14 +220,14 @@ export default function ApplicantsPage() {
                                         <TableRow key={i}>
                                             <TableCell><Skeleton className="h-10 w-10 rounded-full" /></TableCell>
                                             <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                            <TableCell><Skeleton className="h-10 w-32" /></TableCell>
                                             <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                                             <TableCell><Skeleton className="h-8 w-20" /></TableCell>
                                         </TableRow>
                                     ))
                                 )}
                                 {!isLoading && applicants && applicants.length > 0 ? (
-                                    applicants.map(app => <ApplicantRow key={app.id} application={app} />)
+                                    applicants.map(app => <ApplicantRow key={app.id} application={app} jobId={finalJobId} />)
                                 ) : !isLoading && (
                                     <TableRow>
                                         <TableCell colSpan={5} className="h-24 text-center">
