@@ -35,33 +35,58 @@ function ApplicantRow({ application, jobId }: { application: any, jobId: string 
         if (!firestore) return;
         setIsUpdating(true);
         
-        const mainApplicationRef = doc(firestore, `jobs/${jobId}/applications`, application.applicantId);
+        const mainApplicationRef = doc(firestore, `jobs/${jobId}/applications`, application.id);
         const userApplicationRef = doc(firestore, `users/${application.applicantId}/applications`, jobId);
+        const jobRef = doc(firestore, 'jobs', jobId);
 
         const statusUpdate = { status: newStatus };
+        const updates: Promise<any>[] = [];
 
-        try {
-            // Use Promise.all to update both documents
-            await Promise.all([
-                updateDoc(mainApplicationRef, statusUpdate).catch(serverError => {
-                     errorEmitter.emit('permission-error', new FirestorePermissionError({
-                        path: mainApplicationRef.path,
+        // Add application status updates to the queue
+        updates.push(
+            updateDoc(mainApplicationRef, statusUpdate).catch(serverError => {
+                 errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: mainApplicationRef.path,
+                    operation: 'update',
+                    requestResourceData: statusUpdate
+                }));
+                throw serverError;
+            }),
+            updateDoc(userApplicationRef, statusUpdate).catch(serverError => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: userApplicationRef.path,
+                    operation: 'update',
+                    requestResourceData: statusUpdate
+                }));
+               throw serverError;
+            })
+        );
+        
+        // If an applicant is accepted, also close the job posting
+        if (newStatus === 'accepted') {
+            const jobStatusUpdate = { status: 'Closed' };
+            updates.push(
+                updateDoc(jobRef, jobStatusUpdate).catch(serverError => {
+                    errorEmitter.emit('permission-error', new FirestorePermissionError({
+                        path: jobRef.path,
                         operation: 'update',
-                        requestResourceData: statusUpdate
+                        requestResourceData: jobStatusUpdate
                     }));
                     throw serverError;
-                }),
-                updateDoc(userApplicationRef, statusUpdate).catch(serverError => {
-                    errorEmitter.emit('permission-error', new FirestorePermissionError({
-                        path: userApplicationRef.path,
-                        operation: 'update',
-                        requestResourceData: statusUpdate
-                    }));
-                   throw serverError;
                 })
-            ]);
+            );
+        }
 
-            toast({ title: "Status Updated", description: `${applicant.displayName}'s application is now '${newStatus}'.` });
+        try {
+            // Execute all updates simultaneously
+            await Promise.all(updates);
+            
+            let toastDescription = `${applicant.displayName}'s application is now '${newStatus}'.`;
+            if (newStatus === 'accepted') {
+                toastDescription += " The job posting has been automatically closed.";
+            }
+
+            toast({ title: "Status Updated", description: toastDescription });
 
         } catch (error) {
             console.error("Failed to update status:", error);
@@ -155,11 +180,11 @@ export default function ApplicantsPage() {
         if (!firestore || !finalJobId) return null;
         return doc(firestore, 'jobs', finalJobId);
     }, [firestore, finalJobId]);
-    const { data: job, isLoading: isJobLoading } = useDoc(jobRef);
+    const { data: job, isLoading: isJobLoading, refetch: refetchJob } = useDoc(jobRef);
     
     const applicantsQuery = useMemo(() => {
         if (!firestore || !finalJobId) return null;
-        return collection(firestore, `jobs/${finalJobId}/applications`);
+        return query(collection(firestore, `jobs/${finalJobId}/applications`));
     }, [firestore, finalJobId]);
     const { data: applicants, isLoading: areApplicantsLoading } = useCollection(applicantsQuery);
 
@@ -174,6 +199,11 @@ export default function ApplicantsPage() {
             router.replace('/jobs');
         }
     }, [user, isUserLoading, job, isJobLoading, router, toast]);
+    
+    // Refetch job data when applicants list changes, to update job status if closed
+    useEffect(() => {
+        refetchJob();
+    }, [applicants, refetchJob]);
 
     const isLoading = isJobLoading || areApplicantsLoading || isUserLoading;
     
@@ -192,7 +222,10 @@ export default function ApplicantsPage() {
                         </div>
                     ) : job ? (
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2"><Briefcase className="h-7 w-7" /> {job.title}</h1>
+                            <div className="flex items-center gap-4">
+                                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2"><Briefcase className="h-7 w-7" /> {job.title}</h1>
+                                {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-base">{job.status}</Badge>}
+                            </div>
                             <p className="text-muted-foreground">{job.companyName} - {job.location}</p>
                         </div>
                     ) : (
@@ -245,5 +278,3 @@ export default function ApplicantsPage() {
         </div>
     );
 }
-
-    

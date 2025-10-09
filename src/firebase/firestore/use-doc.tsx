@@ -72,7 +72,7 @@ export function useDoc<T = any>(
   const [data, setData] = useState<StateDataType>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
-  const [_, setRefetchTrigger] = useState(0); // State to trigger refetch
+  const [refetchTrigger, setRefetchTrigger] = useState(0); // State to trigger refetch
 
   const refetch = useCallback(() => {
     setRefetchTrigger(c => c + 1);
@@ -147,7 +147,7 @@ export function useDoc<T = any>(
       didCancel = true;
       unsubscribe();
     };
-  }, [memoizedDocRef, refetch]); // Re-run if the docRef object changes or refetch is called
+  }, [memoizedDocRef, refetchTrigger]); // Re-run if the docRef object changes or refetch is called
 
   return { data, isLoading, error, refetch };
 }
