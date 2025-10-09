@@ -198,9 +198,6 @@ export default function ApplyPage() {
                     <Alert variant="default" className="bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-300">
                          <CheckCircle className="h-4 w-4 text-green-500" />
                         <AlertTitle>Already Applied</AlertTitle>
-                        <AlertDescription>
-                            You have already submitted an application for this job.
-                        </AlertDescription>
                     </Alert>
                 )}
 
