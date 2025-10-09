@@ -35,7 +35,9 @@ export interface InternalQuery extends Query<DocumentData> {
     path: {
       canonicalString(): string;
       toString(): string;
-    }
+    },
+    explicitOrderBy: any[],
+    filters: any[],
   }
 }
 
@@ -104,7 +106,8 @@ export function useCollection<T = any>(
 
     const path = getCollectionPath(targetRefOrQuery);
     const storeName = path.split('/')[0];
-    const isCacheable = CACHEABLE_STORES.includes(storeName);
+    const isFilteredQuery = (targetRefOrQuery as unknown as InternalQuery)._query.filters.length > 0;
+    const isCacheable = CACHEABLE_STORES.includes(storeName) && !isFilteredQuery;
 
     // --- Phase 1: Load from IndexedDB if available ---
     let didCancel = false;
