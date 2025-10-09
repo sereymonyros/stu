@@ -6,14 +6,15 @@
  * and propagating user profile updates (recruiter info) to job postings.
  */
 import * as admin from 'firebase-admin';
-import * as nodemailer from 'nodemailer';
+import * as sgMail from '@sendgrid/mail';
 import { defineString } from 'firebase-functions/params';
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 
 // --- Environment Variable Definitions ---
-// Define secrets using the modern 'params' module.
-const GMAIL_EMAIL = defineString('GMAIL_EMAIL');
-const GMAIL_APP_PASSWORD = defineString('GMAIL_APP_PASSWORD');
+// Define secrets using the modern 'params' module for SendGrid.
+const SENDGRID_API_KEY = defineString('SENDGRID_API_KEY');
+const SENDGRID_FROM_EMAIL = defineString('SENDGRID_FROM_EMAIL');
+
 
 // Initialize the Firebase Admin SDK.
 // NOTE: Admin initialization is safe in the global scope.
@@ -21,35 +22,23 @@ admin.initializeApp();
 const db = admin.firestore();
 
 
-// --- Transporter Configuration (Moved into function body) ---
-// To prevent issues with environment variables not being ready during cold starts,
-// the nodemailer transporter is now initialized inside the functions that use it.
-
 /**
- * Sends an email to a user confirming their job application and notifies the recruiter.
+ * Sends an email to a user confirming their job application and notifies the recruiter using SendGrid.
  * This function uses the V2 Cloud Functions SDK (onDocumentCreated).
  */
 export const sendApplicationConfirmationEmail = onDocumentCreated(
     {
         document: 'jobs/{jobId}/applications/{applicationId}',
-        secrets: [GMAIL_EMAIL, GMAIL_APP_PASSWORD], // Link secrets for V2
+        secrets: [SENDGRID_API_KEY, SENDGRID_FROM_EMAIL], // Link SendGrid secrets for V2
     },
     async (event) => {
-        // --- FIX FOR CONTAINER HEALTH CHECK & DEPLOYMENT ---
-        // We now initialize the transporter inside the function body.
-        // Accessing .value() here ensures the environment is ready.
-        if (!GMAIL_EMAIL.value() || !GMAIL_APP_PASSWORD.value()) {
-            console.error('Gmail credentials are not set in environment config. Skipping email.');
+        // --- Set SendGrid API Key ---
+        // This must be done within the function body to ensure env vars are ready.
+        if (!SENDGRID_API_KEY.value()) {
+            console.error('SendGrid API Key is not set in environment config. Skipping email.');
             return;
         }
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: GMAIL_EMAIL.value(),
-                pass: GMAIL_APP_PASSWORD.value(),
-            },
-        });
-        // --- END FIX ---
+        sgMail.setApiKey(SENDGRID_API_KEY.value());
         
         const snapshot = event.data;
         if (!snapshot) {
@@ -86,10 +75,14 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
 
             // --- 1. Send Confirmation Email to Applicant ---
             const { email: applicantEmail, displayName: applicantName } = applicantData;
-            if (applicantEmail) {
-                const applicantMailOptions = {
-                    from: `"Cambodia Hub" <${GMAIL_EMAIL.value()}>`,
+            const fromEmail = SENDGRID_FROM_EMAIL.value();
+            if (applicantEmail && fromEmail) {
+                const applicantMsg = {
                     to: applicantEmail,
+                    from: {
+                        email: fromEmail,
+                        name: 'Cambodia Hub'
+                    },
                     subject: `Your Application for ${jobTitle} has been Received`,
                     html: `
                         <h1>Application Confirmation</h1>
@@ -102,18 +95,21 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
                         <p><b>The Cambodia Hub Team</b></p>
                     `
                 };
-                await transporter.sendMail(applicantMailOptions);
+                await sgMail.send(applicantMsg);
                 console.log(`Application confirmation email sent to applicant: ${applicantEmail}`);
             } else {
-                console.warn(`No email address found for applicant: ${applicantId}. Skipping email.`);
+                console.warn(`Applicant email or FROM email not found. Skipping applicant email.`);
             }
 
             // --- 2. Send Notification Email to Recruiter ---
             const recruiterEmail = recruiterData?.email;
-            if (recruiterEmail) {
-                const recruiterMailOptions = {
-                    from: `"Cambodia Hub" <${GMAIL_EMAIL.value()}>`,
+            if (recruiterEmail && fromEmail) {
+                const recruiterMsg = {
                     to: recruiterEmail,
+                    from: {
+                        email: fromEmail,
+                        name: 'Cambodia Hub'
+                    },
                     subject: `New Application for ${jobTitle}`,
                     html: `
                         <h1>New Job Application</h1>
@@ -127,16 +123,19 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
                         <p><b>The Cambodia Hub Team</b></p>
                     `
                 };
-                await transporter.sendMail(recruiterMailOptions);
+                await sgMail.send(recruiterMsg);
                 console.log(`New application notification sent to recruiter: ${recruiterEmail}`);
             } else {
                  if (recruiterId) {
-                    console.warn(`Recruiter user document or email not found for recruiterId: ${recruiterId}. Skipping notification.`);
+                    console.warn(`Recruiter email or FROM email not found. Skipping notification.`);
                 }
             }
 
-        } catch (error) {
-            console.error('Failed to process application and send emails:', error);
+        } catch (error: any) {
+            console.error('Failed to process application and send emails via SendGrid:', error);
+            if (error.response) {
+                console.error(error.response.body);
+            }
         }
 
         return null;
@@ -149,21 +148,16 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
  * It is now using the V2 Cloud Functions SDK (onDocumentUpdated).
  */
 export const updateUserData = onDocumentUpdated('users/{userId}', async (event) => {
-    // V2: The change object is now available as event.data.
     const change = event.data;
-    // A check for data existence (should always pass for onDocumentUpdated, but good practice)
     if (!change) {
         console.log("No data change object found in the event. Exiting.");
         return null;
     }
     
-    // Access snapshots from the change object
     const newData = change.after.data();
     const oldData = change.before.data();
-    // V2: Path parameters are on event.params
     const { userId } = event.params;
 
-    // Check if the name or photo has actually changed
     if (newData.displayName === oldData.displayName && newData.photoURL === oldData.photoURL) {
         console.log(`No change in displayName or photoURL for user ${userId}. Exiting.`);
         return null;
@@ -171,7 +165,6 @@ export const updateUserData = onDocumentUpdated('users/{userId}', async (event) 
 
     console.log(`User ${userId} updated. Propagating changes...`);
 
-    // Prepare the data to update
     const dataToUpdate: { recruiterName?: string; recruiterPhotoURL?: string } = {};
     if (newData.displayName !== oldData.displayName) {
         dataToUpdate.recruiterName = newData.displayName;
@@ -180,7 +173,6 @@ export const updateUserData = onDocumentUpdated('users/{userId}', async (event) 
         dataToUpdate.recruiterPhotoURL = newData.photoURL;
     }
 
-    // If user is a recruiter, update their job postings
     if (newData.userType === 'recruiter') {
         const jobsQuery = db.collection('jobs').where('recruiterId', '==', userId);
         const jobsSnapshot = await jobsQuery.get();
@@ -190,7 +182,6 @@ export const updateUserData = onDocumentUpdated('users/{userId}', async (event) 
             return null;
         }
 
-        // Use a batch write for efficiency and atomicity
         const batch = db.batch();
         jobsSnapshot.forEach(doc => {
             console.log(`Queueing update for job ${doc.id} with new recruiter info.`);
