@@ -53,7 +53,7 @@ function JobCard({ job }: { job: any }) {
     );
 }
 
-function AppliedJobCard({ job, applicationStatus }: { job: any, applicationStatus: string }) {
+function AppliedJobCard({ job, applicationStatus, isFavourite }: { job: any, applicationStatus: string, isFavourite: boolean }) {
 
     const statusColors: { [key: string]: string } = {
         submitted: 'bg-blue-500 hover:bg-blue-600',
@@ -66,8 +66,15 @@ function AppliedJobCard({ job, applicationStatus }: { job: any, applicationStatu
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="text-xl">{job.title}</CardTitle>
-                <p className="text-sm text-muted-foreground">{job.companyName} - {job.location}</p>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="text-xl">{job.title}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{job.companyName} - {job.location}</p>
+                    </div>
+                    {isFavourite && (
+                        <Heart className="h-5 w-5 fill-red-500 text-red-500" title="Favorite Job" />
+                    )}
+                </div>
             </CardHeader>
             <CardContent>
                  <div className="flex items-center gap-2">
@@ -200,13 +207,21 @@ export default function DashboardPage() {
         if (!favouriteJobsRefs) return [];
         return favouriteJobsRefs.map(fav => fav.jobId);
     }, [favouriteJobsRefs]);
+    
+    const favouriteJobIdsSet = useMemo(() => new Set(favouriteJobIds), [favouriteJobIds]);
+
+    // Filter out favorite jobs that the user has already applied for
+    const filteredFavouriteJobIds = useMemo(() => {
+        return favouriteJobIds.filter(id => !appliedJobIds.includes(id));
+    }, [favouriteJobIds, appliedJobIds]);
+
 
     const favouriteJobsDetailsQuery = useMemo(() => {
-        if (!firestore || areFavouritesLoading || !favouriteJobIds || favouriteJobIds.length === 0) {
+        if (!firestore || areFavouritesLoading || !filteredFavouriteJobIds || filteredFavouriteJobIds.length === 0) {
             return null;
         }
-        return query(collection(firestore, 'jobs'), where('__name__', 'in', favouriteJobIds));
-    }, [firestore, areFavouritesLoading, favouriteJobIds]);
+        return query(collection(firestore, 'jobs'), where('__name__', 'in', filteredFavouriteJobIds));
+    }, [firestore, areFavouritesLoading, filteredFavouriteJobIds]);
     const { data: favouriteJobs, isLoading: areFavouriteJobsDetailsLoading } = useCollection(favouriteJobsDetailsQuery);
 
 
@@ -285,7 +300,8 @@ export default function DashboardPage() {
                                     <AppliedJobCard 
                                         key={job.id} 
                                         job={job} 
-                                        applicationStatus={applicationStatusMap.get(job.id) || 'submitted'} 
+                                        applicationStatus={applicationStatusMap.get(job.id) || 'submitted'}
+                                        isFavourite={favouriteJobIdsSet.has(job.id)}
                                     />
                                 ))}
                             </div>
@@ -344,3 +360,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    
