@@ -43,21 +43,19 @@ export default function ListingsPage() {
     setContactingSellerId(listing.id);
     try {
       const chatsRef = collection(firestore, 'chats');
-      // Corrected Query: Use 'participants' for the lookup to align with security rules.
-      const q = query(
-        chatsRef,
-        where('listingId', '==', listing.id),
-        where('participants', 'array-contains', user.uid)
+      // Secure and Corrected Query:
+      // 1. Filter chats where the current user is a participant. This satisfies security rules.
+      const userChatsQuery = query(chatsRef, where('participants', 'array-contains', user.uid));
+      const userChatsSnapshot = await getDocs(userChatsQuery);
+      
+      // 2. From this smaller, secure result set, find the one for the specific listing.
+      const existingChat = userChatsSnapshot.docs.find(doc => 
+        doc.data().listingId === listing.id && 
+        doc.data().participants.includes(listing.sellerId)
       );
 
-      const existingChats = await getDocs(q);
-
-      // Since the query now checks for the current user in participants, 
-      // we need to find the specific chat that also includes the seller.
-      const specificChat = existingChats.docs.find(doc => doc.data().participants.includes(listing.sellerId));
-
-      if (specificChat) {
-        router.push(`/chat/${specificChat.id}`);
+      if (existingChat) {
+        router.push(`/chat/${existingChat.id}`);
       } else {
         const newChatData = {
           listingId: listing.id,
@@ -88,7 +86,8 @@ export default function ListingsPage() {
         title: 'Failed to start chat',
         description: error.message || 'There was a problem starting the chat.',
       });
-      setContactingSellerId(null);
+    } finally {
+        setContactingSellerId(null);
     }
   };
 
