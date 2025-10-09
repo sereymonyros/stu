@@ -266,7 +266,9 @@
           "enum": [
             "submitted",
             "reviewed",
-            "rejected"
+            "rejected",
+            "offered",
+            "accepted"
           ]
         },
         "appliedAt": {
@@ -306,7 +308,9 @@
           "enum": [
             "submitted",
             "reviewed",
-            "rejected"
+            "rejected",
+            "offered",
+            "accepted"
           ]
         }
       },
@@ -428,3 +432,5 @@
     }
   }
 }
+
+    

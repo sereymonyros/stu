@@ -57,6 +57,8 @@ function AppliedJobCard({ job, applicationStatus }: { job: any, applicationStatu
     const statusColors: { [key: string]: string } = {
         submitted: 'bg-blue-500',
         reviewed: 'bg-yellow-500',
+        offered: 'bg-purple-500',
+        accepted: 'bg-green-500',
         rejected: 'bg-red-500',
     }
 
@@ -341,3 +343,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    

@@ -116,6 +116,8 @@ function ApplicantRow({ application, jobId }: { application: any, jobId: string 
                     <SelectContent>
                         <SelectItem value="submitted">Submitted</SelectItem>
                         <SelectItem value="reviewed">Reviewed</SelectItem>
+                        <SelectItem value="offered">Offered</SelectItem>
+                        <SelectItem value="accepted">Accepted</SelectItem>
                         <SelectItem value="rejected">Rejected</SelectItem>
                     </SelectContent>
                 </Select>
@@ -243,3 +245,5 @@ export default function ApplicantsPage() {
         </div>
     );
 }
+
+    
