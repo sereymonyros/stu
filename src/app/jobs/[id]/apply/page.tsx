@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
@@ -11,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { FileText, AlertTriangle, ArrowLeft, CheckCircle } from 'lucide-react';
+import { FileText, AlertTriangle, ArrowLeft, CheckCircle, UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -215,14 +216,18 @@ export default function ApplyPage() {
                     </p>
                 </div>
                 ) : (
-                <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>No Resume Found</AlertTitle>
-                    <AlertDescription>
-                    You must have a resume uploaded to your profile before you can apply for jobs.
-                    <Button variant="link" asChild className="p-0 h-auto ml-1"><Link href="/profile">Upload Resume</Link></Button>
-                    </AlertDescription>
-                </Alert>
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Upload Resume to Apply</h3>
+                  <Link href="/profile" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                          <p className="mb-1 text-sm text-primary underline">
+                            Go to profile to upload a resume
+                          </p>
+                          <p className="text-xs text-muted-foreground">You must have a resume to apply for jobs.</p>
+                      </div>
+                  </Link>
+                </div>
                 )}
 
             </CardContent>
