@@ -175,7 +175,8 @@ function ApplicantRow({ application, jobId }: { application: any, jobId: string 
 }
 
 
-export default function ApplicantsPage({ params: { id: jobId } }: { params: { id: string } }) {
+export default function ApplicantsPage({ params }: { params: { id: string } }) {
+    const jobId = params.id;
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const router = useRouter();

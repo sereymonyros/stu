@@ -43,7 +43,8 @@ const jobSchema = z.object({
   salary: z.string().optional(),
 });
 
-export default function EditJobPage({ params: { id: jobId } }: { params: { id: string } }) {
+export default function EditJobPage({ params }: { params: { id: string } }) {
+  const jobId = params.id;
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();

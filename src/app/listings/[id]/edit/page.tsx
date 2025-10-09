@@ -61,7 +61,8 @@ const toBase64 = (file: File): Promise<string> =>
     reader.onerror = (error) => reject(error);
   });
 
-export default function EditListingPage({ params: { id: listingId } }: { params: { id: string } }) {
+export default function EditListingPage({ params }: { params: { id: string } }) {
+  const listingId = params.id;
   const firestore = useFirestore();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
