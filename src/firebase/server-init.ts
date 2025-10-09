@@ -8,10 +8,8 @@ let app: App;
 export function initializeFirebaseAdmin() {
   if (!getApps().length) {
     // When running in a Google environment (like App Hosting), the SDK can auto-discover credentials
-    // by not providing a `credential` property to initializeApp.
-    app = initializeApp({
-        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    });
+    // by calling initializeApp() with no arguments.
+    app = initializeApp();
   } else {
     app = getApp();
   }
