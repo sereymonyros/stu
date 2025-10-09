@@ -13,6 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { FileText, AlertTriangle, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
 
 export default function ApplyPage() {
   const { id: jobId } = useParams();
@@ -75,42 +78,61 @@ export default function ApplyPage() {
   // --- Handlers ---
   const handleApply = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!user || !userProfile || !finalJobId || hasApplied) return;
+    if (!user || !userProfile || !finalJobId || hasApplied || isSubmitting) return;
     if (!userProfile.resumeUrl) {
       toast({ variant: 'destructive', title: 'Please upload a resume first.' });
       return;
     }
 
     setIsSubmitting(true);
-    try {
-      // Use user's UID as the document ID in the job's applications sub-collection to prevent duplicates
-      const applicationRef = doc(firestore, 'jobs', finalJobId, 'applications', user.uid);
-      await setDoc(applicationRef, {
-        applicantId: user.uid,
-        jobId: finalJobId,
-        status: 'submitted',
-        appliedAt: serverTimestamp(),
-        resumeUrl: userProfile.resumeUrl,
-      });
-      
-      // Use job ID as the document ID in the user's applications sub-collection for easy lookup
-      const userApplicationRef = doc(firestore, 'users', user.uid, 'applications', finalJobId);
-      await setDoc(userApplicationRef, {
-        jobId: finalJobId,
-        appliedAt: serverTimestamp(),
-      });
 
+    const applicationData = {
+      applicantId: user.uid,
+      jobId: finalJobId,
+      status: 'submitted',
+      appliedAt: serverTimestamp(),
+      resumeUrl: userProfile.resumeUrl,
+    };
+    const applicationRef = doc(firestore, 'jobs', finalJobId, 'applications', user.uid);
 
+    const userApplicationData = {
+      jobId: finalJobId,
+      appliedAt: serverTimestamp(),
+    };
+    const userApplicationRef = doc(firestore, 'users', user.uid, 'applications', finalJobId);
+
+    // Chain the promises
+    Promise.all([
+      setDoc(applicationRef, applicationData).catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: applicationRef.path,
+          operation: 'create',
+          requestResourceData: applicationData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        // Throw to prevent the .then() block from executing
+        throw permissionError;
+      }),
+      setDoc(userApplicationRef, userApplicationData).catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: userApplicationRef.path,
+          operation: 'create',
+          requestResourceData: userApplicationData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw permissionError;
+      })
+    ]).then(() => {
       toast({ title: 'Application submitted!', description: `You have successfully applied for ${job?.title}.` });
-      setHasApplied(true); // Update UI state immediately
+      setHasApplied(true);
       router.push('/jobs');
-    } catch (error: any)
-    {
-      console.error(error);
-      toast({ variant: 'destructive', title: 'Submission Failed', description: error.message });
-    } finally {
-        setIsSubmitting(false);
-    }
+    }).catch((error) => {
+      // Errors are already emitted, but we can handle UI feedback here if needed.
+      // For instance, if the first setDoc fails, the second won't run.
+      toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not submit your application. Please check permissions.' });
+    }).finally(() => {
+      setIsSubmitting(false);
+    });
   };
 
   const getFileName = (url: string) => {
