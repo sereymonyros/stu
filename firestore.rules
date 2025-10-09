@@ -1,192 +1,188 @@
 /**
  * @fileoverview Firestore Security Rules for CambodiaHub.
  *
- * Core Philosophy: This ruleset enforces a strict user-ownership model
- * for personal data and a public-read, owner-write model for shared content.
+ * Core Philosophy:
+ * This ruleset enforces a user-ownership model for user profiles and a public-read, owner-write model for listings and jobs.
+ * Applications are restricted to authenticated users. Data validation is relaxed for prototyping.
  *
  * Data Structure:
- * - /users/{userId}: User profiles, owned by the respective user.
- * - /users/{userId}/applications/{applicationId}: Job application references for a specific user.
- * - /listings/{listingId}: Public listings, owned by the seller (sellerId field).
- * - /jobs/{jobId}: Public job postings, owned by the recruiter (recruiterId field).
- * - /jobs/{jobId}/applications/{applicationId}: Applications for a specific job, stored under the job document.
- * - /chats/{chatId}: Chat sessions between buyers and sellers.
- * - /chats/{chatId}/messages/{messageId}: Messages within a specific chat.
- * - /feedbacks/{feedbackId}: User feedback.
+ * - /users/{userId}: Stores user profile data, accessible only to the owning user.
+ * - /listings/{listingId}: Stores listing data, publicly readable, writable only by the seller.
+ * - /jobs/{jobId}: Stores job data, publicly readable, writable only by the recruiter.
+ * - /chats/{chatId}: Stores chat data, restricted to the participants.
+ * - /feedbacks/{feedbackId}: Stores user feedback, only create requests are allowed.
  *
  * Key Security Decisions:
- * - Users can only read and write their own profile data.
- * - Listings and Jobs are publicly readable but writable only by the owner.
- * - Listing and Jobs documents must have a sellerId and recruiterId to denote the owner.
- * - Chat messages are only accessible to the participants.
- * - User listing is disallowed.
+ * - User listing is disallowed for privacy.
+ * - Public read access is granted to listings and jobs to maximize visibility.
+ * - The default security posture for ambiguous relationships is strict owner-only access.
  *
  * Denormalization for Authorization:
- * - Listings MUST contain a `sellerId` field.
- * - Jobs MUST contain a `recruiterId` field.
+ * - Listings and Jobs require 'sellerId' and 'recruiterId' fields, respectively, for ownership checks.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Manages user profile data.
+     * @description Rules for user profiles.
      * @path /users/{userId}
-     * @allow (create) User with ID 'user123' can create their profile.
-     *    - Request: auth.uid = 'user123', resource.data.uid = 'user123'
-     * @allow (get, update, delete) User with ID 'user123' can read, update, and delete their profile.
-     *    - Request: auth.uid = 'user123'
-     * @deny (create) User with ID 'user123' cannot create a profile with a mismatched ID.
-     *    - Request: auth.uid = 'user123', resource.data.uid = 'differentId'
-     * @deny (get, update, delete) User with ID 'user456' cannot access user 'user123's profile.
-     *    - Request: auth.uid = 'user456'
-     * @principle Enforces document ownership for writes, restricts access to a user's own data.
+     * @allow (create, update, delete) if the user is the owner of the profile.
+     * @allow (get) if the user is the owner of the profile.
+     * @deny (list) User listing is disallowed.
+     * @principle Enforces document ownership for writes and reads.
      */
     match /users/{userId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow create: if isOwner(userId) && request.resource.data.uid == userId;
       allow get: if isOwner(userId);
+      allow update: if isExistingOwner(userId) && request.resource.data.uid == resource.data.uid;
+      allow delete: if isExistingOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.uid == request.auth.uid;
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
     }
 
     /**
-     * @description Manages job application references for a user.
+     * @description Rules for user applications (references).
      * @path /users/{userId}/applications/{applicationId}
-     * @allow (create, get, list, update, delete) User with ID 'user123' can manage their job application references.
-     *    - Request: auth.uid = 'user123'
-     * @deny (create, get, list, update, delete) User with ID 'user456' cannot access user 'user123's job application references.
-     *    - Request: auth.uid = 'user456'
-     * @principle Enforces document ownership, restricts access to a user's own data tree.
+     * @allow (create, update, delete) if the user is the owner.
+     * @allow (get, list) if the user is the owner.
+     * @principle Restricts access to a user's own data tree.
      */
     match /users/{userId}/applications/{applicationId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
-      allow get, list: if isOwner(userId);
       allow create: if isOwner(userId);
+      allow get: if isOwner(userId);
       allow update: if isOwner(userId);
       allow delete: if isOwner(userId);
+      allow list: if isOwner(userId);
     }
 
     /**
-     * @description Manages public listings with owner-only writes.
+     * @description Rules for listings.
      * @path /listings/{listingId}
-     * @allow (get, list) Anyone can read all listings.
-     *    - Request: No auth needed.
-     * @allow (create) User with ID 'user123' can create a listing if they are the seller.
-     *    - Request: auth.uid = 'user123', resource.data.sellerId = 'user123'
-     * @allow (update, delete) User with ID 'user123' can update/delete their listing.
-     *    - Request: auth.uid = 'user123', resource.data.sellerId = 'user123'
-     * @deny (create) User with ID 'user123' cannot create a listing for another user.
-     *    - Request: auth.uid = 'user123', resource.data.sellerId = 'differentId'
-     * @deny (update, delete) User with ID 'user456' cannot update/delete listing owned by user 'user123'.
-     *    - Request: auth.uid = 'user456', resource.data.sellerId = 'user123'
-     * @principle Allows public reads, enforces document ownership for writes.
+     * @allow (get, list) to anyone.
+     * @allow (create, update, delete) only to the seller.
+     * @principle Public read with owner-only writes.
      */
     match /listings/{listingId} {
+      function isOwner(sellerId) {
+        return request.auth != null && request.auth.uid == sellerId;
+      }
+
+      function isExistingOwner(sellerId) {
+        return isOwner(sellerId) && resource != null;
+      }
+      
       allow get, list: if true;
       allow create: if request.auth != null && request.resource.data.sellerId == request.auth.uid;
-      allow update: if request.auth != null && request.resource.data.sellerId == request.auth.uid;
-      allow delete: if request.auth != null && request.resource.data.sellerId == request.auth.uid;
+      allow update: if isExistingOwner(resource.data.sellerId);
+      allow delete: if isExistingOwner(resource.data.sellerId);
     }
 
     /**
-     * @description Manages job postings with owner-only writes.
+     * @description Rules for jobs.
      * @path /jobs/{jobId}
-     * @allow (get, list) Anyone can read all job postings.
-     *    - Request: No auth needed.
-     * @allow (create) Recruiter with ID 'recruiter123' can create a job posting.
-     *    - Request: auth.uid = 'recruiter123', resource.data.recruiterId = 'recruiter123'
-     * @allow (update, delete) Recruiter with ID 'recruiter123' can update/delete their job posting.
-     *    - Request: auth.uid = 'recruiter123', resource.data.recruiterId = 'recruiter123'
-     * @deny (create) Recruiter with ID 'recruiter123' cannot create a job posting for another recruiter.
-     *    - Request: auth.uid = 'recruiter123', resource.data.recruiterId = 'differentId'
-     * @deny (update, delete) Recruiter with ID 'recruiter456' cannot update/delete job posting owned by recruiter 'recruiter123'.
-     *    - Request: auth.uid = 'recruiter456', resource.data.recruiterId = 'recruiter123'
-     * @principle Allows public reads, enforces document ownership for writes.
+     * @allow (get, list) to anyone.
+     * @allow (create, update, delete) only to the recruiter.
+     * @principle Public read with owner-only writes.
      */
     match /jobs/{jobId} {
+      function isOwner(recruiterId) {
+        return request.auth != null && request.auth.uid == recruiterId;
+      }
+
+      function isExistingOwner(recruiterId) {
+        return isOwner(recruiterId) && resource != null;
+      }
+      
       allow get, list: if true;
       allow create: if request.auth != null && request.resource.data.recruiterId == request.auth.uid;
-      allow update: if request.auth != null && request.resource.data.recruiterId == request.auth.uid;
-      allow delete: if request.auth != null && request.resource.data.recruiterId == request.auth.uid;
+      allow update: if isExistingOwner(resource.data.recruiterId);
+      allow delete: if isExistingOwner(resource.data.recruiterId);
     }
 
     /**
-     * @description Manages applications for a specific job.
+     * @description Rules for job applications.
      * @path /jobs/{jobId}/applications/{applicationId}
-     * @allow (create) Applicant can create their job applications.
-     *    - Request: auth.uid == request.resource.data.applicantId
-     * @allow (get, list) Anyone can read all job applications.
-     *    - Request: No auth needed.
-     * @allow (update, delete) Only the job poster can change or delete the application.
-     *    - Request: auth.uid == parent.data.recruiterId
-     * @principle Allows owner-only creation, public reads, enforces parent ownership for modification.
+     * @allow (create) to authenticated users if the applicantId matches the user's UID and the jobId matches the parent job.
+     * @allow (get, list, update, delete) to no one.
+     * @principle Restricts creation to authenticated users applying for a specific job.
      */
     match /jobs/{jobId}/applications/{applicationId} {
-      allow get, list: if true;
-      allow create: if request.auth != null && request.resource.data.applicantId == request.auth.uid;
-      allow update: if get(/databases/$(database)/documents/jobs/$(jobId)).data.recruiterId == request.auth.uid;
-      allow delete: if get(/databases/$(database)/documents/jobs/$(jobId)).data.recruiterId == request.auth.uid;
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.applicantId == request.auth.uid && request.resource.data.jobId == jobId;
+      allow get: if false;
+      allow list: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Manages chat sessions between users.
+     * @description Rules for chats.
      * @path /chats/{chatId}
-     * @allow (get, list) Participants of the chat can access the chat session.
-     *    - Request: auth.uid is either chat.buyerId or chat.sellerId
-     * @allow (create) Only the either the buyer or the seller can create the chat.
-     *    - Request: auth.uid == request.resource.data.buyerId or auth.uid == request.resource.data.sellerId
-     * @allow (update, delete) Only the buyer or seller can update or delete.
-     *    - Request: auth.uid == resource.data.buyerId or auth.uid == resource.data.sellerId
-     * @principle Enforces shared access for participants of the chat.
+     * @allow (get, list, create, update, delete) if the user is a participant in the chat.
+     * @principle Shared Access (Closed Collaborators).
      */
     match /chats/{chatId} {
-      allow get, list: if request.auth.uid == resource.data.buyerId || request.auth.uid == resource.data.sellerId;
-      allow create: if request.auth != null && (request.auth.uid == request.resource.data.buyerId || request.auth.uid == request.resource.data.sellerId);
-      allow update: if request.auth.uid == resource.data.buyerId || request.auth.uid == resource.data.sellerId;
-      allow delete: if request.auth.uid == resource.data.buyerId || request.auth.uid == resource.data.sellerId;
+        function isParticipant() {
+          return request.auth.uid == resource.data.buyerId || request.auth.uid == resource.data.sellerId;
+        }
+
+        allow get: if isParticipant();
+        allow list: if false; // Listing chats is likely a private operation.
+        allow create: if request.auth.uid == request.resource.data.buyerId || request.auth.uid == request.resource.data.sellerId;
+        allow update: if isParticipant();
+        allow delete: if false; // Deleting chats is probably not allowed.
     }
 
     /**
-     * @description Manages messages within a specific chat.
+     * @description Rules for messages within a chat.
      * @path /chats/{chatId}/messages/{messageId}
-     *  @allow (get, list) Participants of the chat can access the messages.
-     *    - Request: auth.uid is either chat.buyerId or chat.sellerId
-     * @allow (create) Only participants can create new messages.
-     *    - Request: auth.uid == resource.data.senderId and auth.uid is either chat.buyerId or chat.sellerId
-     * @allow (update, delete) Deny updates/deletes to messages.
-     *    - Request: No auth available.
-     * @principle Enforces shared access for chat participants, sender can create.
+     * @allow (create) if the user is a participant in the chat.
+     * @allow (get, list) if the user is a participant in the chat.
+     * @allow (update, delete) never.
+     * @principle Shared Access (Closed Collaborators) - requires `get()` to validate parent chat.
      */
     match /chats/{chatId}/messages/{messageId} {
-      allow get, list: if get(/databases/$(database)/documents/chats/$(chatId)).data.buyerId == request.auth.uid || get(/databases/$(database)/documents/chats/$(chatId)).data.sellerId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.senderId == request.auth.uid && (get(/databases/$(database)/documents/chats/$(chatId)).data.buyerId == request.auth.uid || get(/databases/$(database)/documents/chats/$(chatId)).data.sellerId == request.auth.uid);
-      allow update, delete: if false;
+        function isParticipant() {
+            return get(/databases/$(database)/documents/chats/$(chatId)).data.buyerId == request.auth.uid
+                   || get(/databases/$(database)/documents/chats/$(chatId)).data.sellerId == request.auth.uid;
+        }
+        allow create: if isParticipant();
+        allow get: if isParticipant();
+        allow list: if isParticipant();
+        allow update: if false;
+        allow delete: if false;
     }
 
     /**
-     * @description Manages user-submitted feedback.
+     * @description Rules for user feedback.
      * @path /feedbacks/{feedbackId}
-     * @allow (create) Any authenticated user can submit feedback.
-     *    - Request: auth.uid != null, resource.data.userId == auth.uid
-     * @allow (get) Any authenticated user can read a feedback.
-     *    - Request: auth.uid != null
-     * @allow (list) Deny listing of feedback documents.
-     *    - Request: No auth available.
-     * @allow (update, delete) Deny modification and deletion of feedback.
-     *    - Request: No auth available.
-     * @principle Allows authenticated users to submit feedback, restricts listing, and prohibits modification.
+     * @allow (create) to any authenticated user.
+     * @deny (get, list, update, delete) to everyone.
+     * @principle Open creates, no reads or other modifications.
      */
     match /feedbacks/{feedbackId} {
-      allow get: if request.auth != null;
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow get: if false;
       allow list: if false;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }
