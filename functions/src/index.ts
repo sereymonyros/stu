@@ -1,12 +1,8 @@
+
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import * as sgMail from '@sendgrid/mail';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { defineString } from 'firebase-functions/params';
-
-// Define secrets and parameters. We will set the actual values in the Google Cloud console later.
-const SENDGRID_API_KEY = defineString('SENDGRID_API_KEY');
-const SENDGRID_FROM_EMAIL = defineString('SENDGRID_FROM_EMAIL');
 
 initializeApp();
 
@@ -20,8 +16,19 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
     secrets: ['SENDGRID_API_KEY', 'SENDGRID_FROM_EMAIL'],
   },
   async (event) => {
+    // Get the secrets from the environment variables
+    const sendGridApiKey = process.env.SENDGRID_API_KEY;
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+
+    if (!sendGridApiKey || !fromEmail) {
+      console.error(
+        'Missing SendGrid API Key or From Email. Make sure secrets are set correctly.'
+      );
+      return;
+    }
+    
     // Set the API key for SendGrid
-    sgMail.setApiKey(SENDGRID_API_KEY.value());
+    sgMail.setApiKey(sendGridApiKey);
 
     const snapshot = event.data;
     if (!snapshot) {
@@ -64,7 +71,7 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
       // Email to the applicant
       const applicantMsg = {
         to: applicant.email,
-        from: SENDGRID_FROM_EMAIL.value(),
+        from: fromEmail,
         subject: `Your application for "${job.title}" has been received!`,
         text: `Hi ${applicant.displayName},\n\nThank you for applying for the position of "${job.title}" at ${job.companyName}. We have received your application and will be in touch soon.\n\nBest regards,\nThe Cambodia Hub Team`,
         html: `<p>Hi ${applicant.displayName},</p><p>Thank you for applying for the position of "<strong>${job.title}</strong>" at ${job.companyName}. We have received your application and will be in touch soon.</p><p>Best regards,<br>The Cambodia Hub Team</p>`,
@@ -73,7 +80,7 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
       // Email to the recruiter
       const recruiterMsg = {
         to: recruiter.email,
-        from: SENDGRID_FROM_EMAIL.value(),
+        from: fromEmail,
         subject: `New application for "${job.title}"`,
         text: `Hi ${recruiter.displayName},\n\nA new candidate, ${applicant.displayName}, has applied for the position of "${job.title}".\n\nYou can view their application in your dashboard.\n\nBest regards,\nThe Cambodia Hub Team`,
         html: `<p>Hi ${recruiter.displayName},</p><p>A new candidate, <strong>${applicant.displayName}</strong>, has applied for the position of "<strong>${job.title}</strong>".</p><p>You can view their application in your dashboard.</p><p>Best regards,<br>The Cambodia Hub Team</p>`,
@@ -84,6 +91,8 @@ export const sendApplicationConfirmationEmail = onDocumentCreated(
           sgMail.send(applicantMsg),
           sgMail.send(recruiterMsg)
       ]);
-    } catch (error) {}
+    } catch (error) {
+        console.error("Error sending application confirmation email:", error);
+    }
   }
 );
