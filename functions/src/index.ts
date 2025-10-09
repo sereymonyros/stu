@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Cloud Functions for Firebase to handle backend tasks.
  *
