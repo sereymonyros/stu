@@ -1,6 +1,7 @@
 
 import { initializeApp, getApps, getApp, App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
 let app: App;
 
@@ -16,5 +17,6 @@ export function initializeFirebaseAdmin() {
   return { 
     app,
     firestore: getFirestore(app),
+    auth: getAuth(app),
   };
 }

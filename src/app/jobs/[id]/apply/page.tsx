@@ -31,7 +31,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { sendEmail } from '@/ai/flows/send-email-flow';
-import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
+import { sendRecruiterEmail } from '@/ai/flows/send-recruiter-email-flow';
 
 
 // Helper function to convert a File to a Base64 data URI
@@ -118,33 +118,16 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
       }
     }
 
-    // --- 2. Send email to recruiter ---
-    if (job.recruiterId) {
+    // --- 2. Send email to recruiter using the dedicated flow ---
+    if (job.recruiterId && userProfile.displayName && user.email) {
       try {
-        const recruiterProfile = await getPublicProfile({ userId: job.recruiterId });
-        
-        if (recruiterProfile && recruiterProfile.email) {
-          await sendEmail({
-            to: recruiterProfile.email,
-            subject: `New Application for ${job.title}`,
-            htmlBody: `
-              <h1>New Applicant</h1>
-              <p>Hi ${recruiterProfile.displayName || 'Recruiter'},</p>
-              <p><strong>${userProfile.displayName}</strong> has applied for the position of <strong>${job.title}</strong>.</p>
-              <p>You can review their application and resume in your dashboard.</p>
-              <p><em>The Cambodia Hub Team</em></p>
-            `,
-            replyTo: user.email || undefined,
-          });
-        } else {
-          console.error(`Could not find email for recruiter with ID: ${job.recruiterId}. Profile received:`, recruiterProfile);
-          toast({
-            variant: 'destructive',
-            title: 'Could not notify recruiter',
-            description: 'Recruiter email is missing or their profile could not be found. Application submitted without notification.',
-          });
-        }
-      } catch (e: any) {
+        await sendRecruiterEmail({
+          recruiterId: job.recruiterId,
+          jobTitle: job.title,
+          applicantName: userProfile.displayName,
+          applicantEmail: user.email,
+        });
+      } catch (e) {
         console.error('Failed to send recruiter notification email', e);
         toast({
           variant: 'destructive',
