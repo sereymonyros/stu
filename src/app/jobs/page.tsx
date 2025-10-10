@@ -238,9 +238,9 @@ export default function JobsPage() {
             
             if (aHasApplied === bHasApplied) {
                 // If statuses are same, sort by creation date (newest first)
-                const dateA = a.createdAt?.toDate() || 0;
-                const dateB = b.createdAt?.toDate() || 0;
-                return (dateB as number) - (dateA as number);
+                const dateA = a.createdAt?.getTime() || 0;
+                const dateB = b.createdAt?.getTime() || 0;
+                return dateB - dateA;
             }
             return aHasApplied ? 1 : -1;
         });
