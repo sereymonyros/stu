@@ -24,7 +24,7 @@ function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any
     return (
         <Card className={cn(
             "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
-            hasApplied && "bg-muted/50 opacity-70 hover:shadow-none"
+            hasApplied && "bg-muted/30 opacity-60 hover:shadow-none"
         )}>
             <CardHeader>
                 <div className="flex justify-between items-start gap-2">
@@ -149,6 +149,22 @@ export default function JobsPage() {
             toast({ variant: "destructive", title: "An error occurred", description: error.message });
         }
     };
+    
+    const sortedJobs = useMemo(() => {
+        if (!jobs) return [];
+        if (!user) return jobs; // For unauthenticated users, return default order
+
+        return [...jobs].sort((a, b) => {
+            const aHasApplied = appliedJobIds.has(a.id);
+            const bHasApplied = appliedJobIds.has(b.id);
+            
+            if (aHasApplied === bHasApplied) {
+                return 0; // Keep original order if both are applied or not applied
+            }
+            return aHasApplied ? 1 : -1; // If a is applied, it comes after b. If b is applied, it comes after a.
+        });
+    }, [jobs, user, appliedJobIds]);
+
 
     const isLoading = isUserLoading || areJobsLoading || isProfileLoading || areFavouritesLoading || areApplicationsLoading;
     const isRecruiter = userProfile?.userType === 'recruiter';
@@ -179,9 +195,9 @@ export default function JobsPage() {
                         </div>
                     )}
 
-                    {!isLoading && jobs && jobs.length > 0 && (
+                    {!isLoading && sortedJobs && sortedJobs.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {jobs.map((job) => (
+                            {sortedJobs.map((job) => (
                                 <JobCard 
                                     key={job.id} 
                                     job={job}
