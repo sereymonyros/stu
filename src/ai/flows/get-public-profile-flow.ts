@@ -1,7 +1,8 @@
 
 'use server';
 /**
- * @fileOverview A flow for securely fetching public user profile data from Firestore.
+ * @fileOverview A flow for securely fetching public user profile data.
+ * It uses the Firebase Admin SDK to bypass client-side security rules for public data.
  */
 
 import { ai } from '@/ai/genkit';
@@ -28,34 +29,43 @@ const getPublicProfileFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      // This flow uses the Admin SDK to access Firestore, which typically has broader read access
-      // than client-side SDKs, bypassing complex security rules for public, non-sensitive data.
-      const { firestore } = initializeFirebaseAdmin();
+      // Use the Admin SDK to access Firebase services. This is more reliable on the server.
+      const { firestore, auth } = initializeFirebaseAdmin();
 
+      // 1. Fetch the user's primary auth record first. This is the source of truth for email/photo.
+      const userAuthRecord = await auth.getUser(input.userId);
+
+      // 2. Fetch the corresponding Firestore document for additional custom data.
       const userDocRef = firestore.collection('users').doc(input.userId);
       const userDoc = await userDocRef.get();
 
-      if (userDoc.exists) {
-        const userData = userDoc.data();
-        // Return rich data from Firestore. Zod will strip extra fields.
-        return {
-          uid: userDoc.id,
-          displayName: userData?.displayName,
-          photoURL: userData?.photoURL,
-          email: userData?.email,
-          address: userData?.address,
-          phone: userData?.phone,
-          userType: userData?.userType,
-        };
-      } else {
-        // If the profile doesn't exist in Firestore, return null.
-        // The calling component will handle this gracefully.
-        console.warn(`Firestore profile not found for user ${input.userId}.`);
+      if (!userDoc.exists() && !userAuthRecord) {
+        console.warn(`No auth record or Firestore profile found for user ${input.userId}.`);
         return null;
       }
+      
+      const firestoreData = userDoc.data();
+
+      // 3. Combine data from both sources, prioritizing the Auth record for core info.
+      //    Zod will strip any extra fields that aren't in the output schema.
+      return {
+        uid: userAuthRecord.uid,
+        displayName: userAuthRecord.displayName || firestoreData?.displayName,
+        photoURL: userAuthRecord.photoURL || firestoreData?.photoURL,
+        email: userAuthRecord.email,
+        address: firestoreData?.address,
+        phone: firestoreData?.phone,
+        userType: firestoreData?.userType,
+      };
+
     } catch (e: any) {
+      // Handle cases where user is not found in Auth or other errors
+      if (e.code === 'auth/user-not-found') {
+          console.warn(`Auth record not found for user ${input.userId}.`);
+          return null; // A missing user is not a system failure.
+      }
       console.error(`Flow Error: Failed to fetch profile data for user ${input.userId}.`, e);
-      // In case of a system error (not just a missing doc), re-throw to signal a problem.
+      // For other errors (like network issues), re-throw to signal a problem.
       throw new Error(`Failed to fetch profile for user ${input.userId}: ${e.message}`);
     }
   }
