@@ -25,11 +25,11 @@ const analyzeDocumentFlow = ai.defineFlow(
         name: 'analyzeDocumentFlow',
         inputSchema: AnalyzeDocumentInputSchema,
         outputSchema: AnalyzeDocumentOutputSchema,
-        // Using a more powerful model capable of document analysis
-        model: 'googleai/gemini-2.5-pro-preview',
     },
     async (input) => {
+        // Use a model powerful enough for multimodal document analysis
         const { text } = await ai.generate({
+            model: 'googleai/gemini-2.5-pro-preview',
             prompt: [
                 { media: { url: input.fileDataUri } },
                 { text: 'Extract all text from the document.' }
