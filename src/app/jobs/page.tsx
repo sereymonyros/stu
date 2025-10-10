@@ -10,13 +10,15 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Briefcase, Building, MapPin, DollarSign, Pencil, Search } from 'lucide-react';
+import { Heart, Briefcase, Building, MapPin, DollarSign, Pencil, Search, FilterX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Input } from '@/components/ui/input';
+import { Toggle } from '@/components/ui/toggle';
+import { Separator } from '@/components/ui/separator';
 
 function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; }) {
     const { user } = useUser();
@@ -74,28 +76,55 @@ function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any
     );
 }
 
+const FilterGroup = ({ title, options, selected, onToggle }: { title: string; options: string[]; selected: string[]; onToggle: (option: string) => void; }) => {
+    if (!options || options.length === 0) return null;
+    return (
+        <div>
+            <h3 className="text-sm font-semibold mb-2">{title}</h3>
+            <div className="flex flex-wrap gap-2">
+                {options.map(option => (
+                    <Toggle
+                        key={option}
+                        size="sm"
+                        variant="outline"
+                        pressed={selected.includes(option)}
+                        onPressedChange={() => onToggle(option)}
+                        className="rounded-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                    >
+                        {option}
+                    </Toggle>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 export default function JobsPage() {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const router = useRouter();
     const { toast } = useToast();
-    const [searchQuery, setSearchQuery] = useState('');
 
-    // Fetch all jobs
+    // --- Search & Filter State ---
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
+    const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+    const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
+    const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+
+    // --- Data Fetching ---
     const jobsQuery = useMemo(() => {
         if (!firestore) return null;
         return query(collection(firestore, 'jobs'));
     }, [firestore]);
     const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
 
-    // Fetch user profile to check if they are a recruiter
     const userProfileRef = useMemo(() => {
         if (!firestore || !user) return null;
         return doc(firestore, 'users', user.uid);
     }, [firestore, user]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
-    // Fetch user's favourite jobs
     const favouriteJobsQuery = useMemo(() => {
         if (!firestore || !user || userProfile?.userType === 'recruiter') return null;
         return collection(firestore, `users/${user.uid}/favouriteJobs`);
@@ -104,7 +133,6 @@ export default function JobsPage() {
 
     const favouriteJobIds = useMemo(() => new Set(favouriteJobs?.map(fav => fav.jobId)), [favouriteJobs]);
     
-    // Fetch user's applications
     const applicationsQuery = useMemo(() => {
         if (!firestore || !user || userProfile?.userType === 'recruiter') return null;
         return query(collection(firestore, `users/${user.uid}/applications`));
@@ -113,7 +141,40 @@ export default function JobsPage() {
     
     const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
 
+    // --- Dynamic Filter Options ---
+    const { companyNames, locations, jobTypes } = useMemo(() => {
+        if (!jobs) return { companyNames: [], locations: [], jobTypes: [] };
+        const companies = new Set<string>();
+        const locs = new Set<string>();
+        const types = new Set<string>();
+        jobs.forEach(job => {
+            if (job.companyName) companies.add(job.companyName);
+            if (job.location) locs.add(job.location);
+            if (job.jobType) types.add(job.jobType);
+        });
+        return {
+            companyNames: Array.from(companies).sort(),
+            locations: Array.from(locs).sort(),
+            jobTypes: Array.from(types).sort(),
+        };
+    }, [jobs]);
 
+    // --- Toggle Handlers ---
+    const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
+        setter(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
+    };
+    
+    const clearAllFilters = () => {
+        setSearchQuery('');
+        setSelectedCompanies([]);
+        setSelectedLocations([]);
+        setSelectedJobTypes([]);
+        setShowFavoritesOnly(false);
+    };
+
+    const hasActiveFilters = [searchQuery, ...selectedCompanies, ...selectedLocations, ...selectedJobTypes, showFavoritesOnly].some(Boolean);
+
+    // --- Toggle Favourite ---
     const handleToggleFavourite = async (jobId: string, isCurrentlyFavourite: boolean) => {
         if (!user || !firestore) {
             router.push('/login');
@@ -124,58 +185,66 @@ export default function JobsPage() {
 
         try {
             if (isCurrentlyFavourite) {
-                // Non-blocking delete
-                deleteDoc(favDocRef).catch(serverError => {
-                    errorEmitter.emit('permission-error', new FirestorePermissionError({
-                        path: favDocRef.path,
-                        operation: 'delete'
-                    }));
-                });
+                await deleteDoc(favDocRef);
                 toast({ title: "Removed from Favourites" });
             } else {
-                const favouriteData = {
-                    jobId: jobId,
-                    favouritedAt: serverTimestamp()
-                };
-                // Non-blocking set
-                setDoc(favDocRef, favouriteData).catch(serverError => {
-                     errorEmitter.emit('permission-error', new FirestorePermissionError({
-                        path: favDocRef.path,
-                        operation: 'create',
-                        requestResourceData: favouriteData
-                    }));
-                });
+                const favouriteData = { jobId, favouritedAt: serverTimestamp() };
+                await setDoc(favDocRef, favouriteData);
                 toast({ title: "Added to Favourites" });
             }
         } catch (error: any) {
-            toast({ variant: "destructive", title: "An error occurred", description: error.message });
+             errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: favDocRef.path,
+                operation: isCurrentlyFavourite ? 'delete' : 'create'
+            }));
+            toast({ variant: "destructive", title: "An error occurred", description: "You may not have permission to perform this action." });
         }
     };
     
     const filteredAndSortedJobs = useMemo(() => {
         if (!jobs) return [];
         
-        // 1. Filter based on search query
-        const filtered = jobs.filter(job => {
+        let filtered = [...jobs];
+
+        // 1. Search filter
+        if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            const title = job.title?.toLowerCase() || '';
-            const description = job.description?.toLowerCase() || '';
-            return title.includes(query) || description.includes(query);
-        });
+            filtered = filtered.filter(job => 
+                (job.title?.toLowerCase() || '').includes(query) || 
+                (job.description?.toLowerCase() || '').includes(query)
+            );
+        }
 
-        // 2. Sort for authenticated users
-        if (!user) return filtered; // For unauthenticated users, return filtered list
+        // 2. Toggle filters
+        if (selectedCompanies.length > 0) {
+            filtered = filtered.filter(job => selectedCompanies.includes(job.companyName));
+        }
+        if (selectedLocations.length > 0) {
+            filtered = filtered.filter(job => selectedLocations.includes(job.location));
+        }
+        if (selectedJobTypes.length > 0) {
+            filtered = filtered.filter(job => selectedJobTypes.includes(job.jobType));
+        }
+        if (showFavoritesOnly) {
+            filtered = filtered.filter(job => favouriteJobIds.has(job.id));
+        }
 
-        return [...filtered].sort((a, b) => {
+        // 3. Sort for authenticated users
+        if (!user) return filtered;
+
+        return filtered.sort((a, b) => {
             const aHasApplied = appliedJobIds.has(a.id);
             const bHasApplied = appliedJobIds.has(b.id);
             
             if (aHasApplied === bHasApplied) {
-                return 0; // Keep original order if both are applied or not applied
+                // If statuses are same, sort by creation date (newest first)
+                const dateA = a.createdAt?.toDate() || 0;
+                const dateB = b.createdAt?.toDate() || 0;
+                return (dateB as number) - (dateA as number);
             }
-            return aHasApplied ? 1 : -1; // If a is applied, it comes after b. If b is applied, it comes after a.
+            return aHasApplied ? 1 : -1;
         });
-    }, [jobs, user, appliedJobIds, searchQuery]);
+    }, [jobs, user, appliedJobIds, searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, favouriteJobIds]);
 
 
     const isLoading = isUserLoading || areJobsLoading || isProfileLoading || areFavouritesLoading || areApplicationsLoading;
@@ -198,16 +267,48 @@ export default function JobsPage() {
                         )}
                     </div>
                     
-                    <div className="mb-6 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input 
-                            type="search"
-                            placeholder="Search by title or description..."
-                            className="pl-10"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
+                    <Card className="p-4 mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                             <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input 
+                                    type="search"
+                                    placeholder="Search by title or description..."
+                                    className="pl-10 h-10"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {user && !isRecruiter && (
+                                     <Toggle
+                                        size="sm"
+                                        variant="outline"
+                                        pressed={showFavoritesOnly}
+                                        onPressedChange={setShowFavoritesOnly}
+                                        className="rounded-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                    >
+                                        <Heart className="mr-2 h-4 w-4" />
+                                        My Favourites
+                                    </Toggle>
+                                )}
+                                {hasActiveFilters && (
+                                    <Button variant="ghost" onClick={clearAllFilters}>
+                                        <FilterX className="mr-2 h-4 w-4" />
+                                        Clear Filters
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+
+                        <Separator className="mb-4" />
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <FilterGroup title="Company" options={companyNames} selected={selectedCompanies} onToggle={(val) => toggleFilter(setSelectedCompanies, val)} />
+                            <FilterGroup title="Location" options={locations} selected={selectedLocations} onToggle={(val) => toggleFilter(setSelectedLocations, val)} />
+                            <FilterGroup title="Job Type" options={jobTypes} selected={selectedJobTypes} onToggle={(val) => toggleFilter(setSelectedJobTypes, val)} />
+                        </div>
+                    </Card>
 
 
                     {isLoading && (
@@ -240,9 +341,9 @@ export default function JobsPage() {
                         <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
                             <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
                             <div className="text-center">
-                                <h2 className="text-2xl font-semibold tracking-tight">{searchQuery ? 'No Matching Jobs' : 'No jobs posted yet'}</h2>
+                                <h2 className="text-2xl font-semibold tracking-tight">{hasActiveFilters ? 'No Matching Jobs' : 'No jobs posted yet'}</h2>
                                 <p className="text-muted-foreground mt-2">
-                                    {searchQuery ? 'Try a different search term.' : 'Check back soon for new opportunities!'}
+                                    {hasActiveFilters ? 'Try adjusting your filters.' : 'Check back soon for new opportunities!'}
                                 </p>
                             </div>
                         </div>
