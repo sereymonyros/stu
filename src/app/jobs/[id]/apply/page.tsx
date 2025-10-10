@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useEffect, useState, useRef } from 'react';
@@ -33,6 +34,7 @@ import {
 import { sendEmail } from '@/ai/flows/send-email-flow';
 import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
 import { applicantConfirmationTemplate } from '@/components/emails/applicant-confirmation-template';
+import { recruiterNotificationTemplate } from '@/components/emails/recruiter-notification-template';
 
 
 // Helper function to convert a File to a Base64 data URI
@@ -125,16 +127,16 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
         const recruiterProfile = await getPublicProfile({ userId: job.recruiterId });
 
         if (recruiterProfile && recruiterProfile.email) {
+            const htmlBody = recruiterNotificationTemplate({
+              recruiterName: recruiterProfile.displayName || 'Recruiter',
+              applicantName: userProfile.displayName,
+              jobTitle: job.title
+            });
+
             await sendEmail({
                 to: recruiterProfile.email,
                 subject: `New Application for ${job.title}`,
-                htmlBody: `
-                    <h1>New Applicant</h1>
-                    <p>Hi ${recruiterProfile.displayName || 'Recruiter'},</p>
-                    <p><strong>${userProfile.displayName}</strong> has applied for the position of <strong>${job.title}</strong>.</p>
-                    <p>You can review their application and resume in your dashboard.</p>
-                    <p><em>The Cambodia Hub Team</em></p>
-                `,
+                htmlBody: htmlBody,
                 replyTo: user.email,
             });
         } else {
