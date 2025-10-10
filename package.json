@@ -9,9 +9,7 @@
     "build": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "build:functions": "cd functions && npm install && npm run build",
-    "deploy:functions": "npm run build:functions && firebase deploy --only functions"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.20.0",
