@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { sendEmail } from '@/ai/flows/send-email-flow';
 import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
+import { applicantConfirmationTemplate } from '@/components/emails/applicant-confirmation-template';
 
 
 // Helper function to convert a File to a Base64 data URI
@@ -95,17 +96,16 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
     // --- 1. Send email to applicant ---
     if (user.email && userProfile.displayName) {
       try {
+        const htmlBody = applicantConfirmationTemplate({
+          applicantName: userProfile.displayName,
+          jobTitle: job.title,
+          companyName: job.companyName,
+        });
+
         await sendEmail({
           to: user.email,
           subject: `Your Application for ${job.title}`,
-          htmlBody: `
-            <h1>Application Confirmation</h1>
-            <p>Hi ${userProfile.displayName},</p>
-            <p>This is to confirm that we have received your application for the position of <strong>${job.title}</strong> at <strong>${job.companyName}</strong>.</p>
-            <p>You can check the status of your application in your dashboard.</p>
-            <p>Thank you for your interest!</p>
-            <p><em>The Cambodia Hub Team</em></p>
-          `,
+          htmlBody,
         });
       } catch (e) {
         console.error('Failed to send applicant confirmation email', e);
