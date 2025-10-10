@@ -30,6 +30,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
+import { sendEmail } from '@/ai/flows/send-email-flow';
 
 // Helper function to convert a File to a Base64 data URI
 const toBase64 = (file: File): Promise<string> =>
@@ -89,7 +91,7 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
 
   // --- Handlers ---
   const handleApply = async () => {
-    if (!user || !userProfile || !finalJobId || hasApplied || isSubmitting) return;
+    if (!user || !userProfile || !job || !finalJobId || hasApplied || isSubmitting) return;
     if (!userProfile.resumeUrl) {
       toast({ variant: 'destructive', title: 'Please upload a resume first.' });
       return;
@@ -97,60 +99,102 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
 
     setIsSubmitting(true);
 
-    // This is the main application document stored under the job
-    const applicationData = {
-      applicantId: user.uid,
-      jobId: finalJobId,
-      status: 'submitted',
-      appliedAt: serverTimestamp(),
-      resumeUrl: userProfile.resumeUrl,
-    };
-    const applicationRef = doc(firestore, 'jobs', finalJobId, 'applications', user.uid);
+    try {
+      // This is the main application document stored under the job
+      const applicationData = {
+        applicantId: user.uid,
+        jobId: finalJobId,
+        status: 'submitted',
+        appliedAt: serverTimestamp(),
+        resumeUrl: userProfile.resumeUrl,
+      };
+      const applicationRef = doc(firestore, 'jobs', finalJobId, 'applications', user.uid);
 
-    // This is the user's copy of the application, for their dashboard
-    const userApplicationData = {
-      jobId: finalJobId,
-      appliedAt: serverTimestamp(),
-      status: 'submitted', // Add status here as well
-    };
-    // Re-using userApplicationRef from the useMemo above
-    if (!userApplicationRef) {
-      toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not create application reference.' });
-      setIsSubmitting(false);
-      return;
-    }
+      // This is the user's copy of the application, for their dashboard
+      const userApplicationData = {
+        jobId: finalJobId,
+        appliedAt: serverTimestamp(),
+        status: 'submitted', // Add status here as well
+      };
+      // Re-using userApplicationRef from the useMemo above
+      if (!userApplicationRef) {
+        throw new Error('Could not create application reference.');
+      }
 
-    // Chain the promises
-    Promise.all([
-      setDoc(applicationRef, applicationData).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-          path: applicationRef.path,
-          operation: 'create',
-          requestResourceData: applicationData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        // Throw to prevent the .then() block from executing
-        throw permissionError;
-      }),
-      setDoc(userApplicationRef, userApplicationData).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-          path: userApplicationRef.path,
-          operation: 'create',
-          requestResourceData: userApplicationData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw permissionError;
-      })
-    ]).then(() => {
+      // Chain the promises
+      await Promise.all([
+        setDoc(applicationRef, applicationData).catch(serverError => {
+          const permissionError = new FirestorePermissionError({
+            path: applicationRef.path,
+            operation: 'create',
+            requestResourceData: applicationData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+          // Throw to prevent the .then() block from executing
+          throw permissionError;
+        }),
+        setDoc(userApplicationRef, userApplicationData).catch(serverError => {
+          const permissionError = new FirestorePermissionError({
+            path: userApplicationRef.path,
+            operation: 'create',
+            requestResourceData: userApplicationData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+          throw permissionError;
+        })
+      ]);
+
       toast({ title: 'Application submitted!', description: `You have successfully applied for ${job?.title}.` });
+      
+      // --- Send Emails ---
+      try {
+        // 1. Get recruiter profile for email
+        const recruiterProfile = await getPublicProfile({ userId: job.recruiterId });
+
+        // 2. Email to applicant
+        if (user.email && userProfile.displayName) {
+          await sendEmail({
+            to: user.email,
+            subject: `Your Application for ${job.title}`,
+            htmlBody: `
+              <h1>Application Confirmation</h1>
+              <p>Hi ${userProfile.displayName},</p>
+              <p>This is to confirm that we have received your application for the position of <strong>${job.title}</strong> at <strong>${job.companyName}</strong>.</p>
+              <p>You can check the status of your application in your dashboard.</p>
+              <p>Thank you for your interest!</p>
+              <p><em>The Cambodia Hub Team</em></p>
+            `
+          });
+        }
+
+        // 3. Email to recruiter
+        if (recruiterProfile.email) {
+            await sendEmail({
+                to: recruiterProfile.email,
+                subject: `New Application for ${job.title}`,
+                htmlBody: `
+                  <h1>New Application Received</h1>
+                  <p>Hi ${recruiterProfile.displayName || 'Recruiter'},</p>
+                  <p>A new candidate, <strong>${userProfile.displayName}</strong>, has applied for the position of <strong>${job.title}</strong>.</p>
+                  <p>You can review their application and resume in your dashboard.</p>
+                  <p><em>The Cambodia Hub Team</em></p>
+                `
+            });
+        }
+      } catch (emailError: any) {
+        console.error("Failed to send one or more emails:", emailError);
+        // Don't block the user, just show a silent error in the console.
+        // A more robust system might add this to a retry queue.
+      }
+
+
       router.push('/jobs');
-    }).catch((error) => {
+    } catch (error) {
       // Errors are already emitted, but we can handle UI feedback here if needed.
-      // For instance, if the first setDoc fails, the second won't run.
       toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not submit your application. Please check permissions.' });
-    }).finally(() => {
+    } finally {
       setIsSubmitting(false);
-    });
+    }
   };
 
   const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

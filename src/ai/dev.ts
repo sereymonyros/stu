@@ -3,3 +3,4 @@
 import './flows/search-flow';
 import './flows/upload-file-flow';
 import './flows/get-public-profile-flow';
+import './flows/send-email-flow';
