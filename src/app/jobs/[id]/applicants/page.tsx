@@ -27,6 +27,22 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
+// Helper function to convert a file URL to a Base64 data URI
+const urlToDataUri = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.statusText}`);
+    }
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+};
+
+
 function AIAnalysisDisplay({ analysis, error }: { analysis: AnalyzeApplicantOutput | null, error: string | null }) {
     if (error) {
         return (
@@ -63,23 +79,28 @@ function AIAnalysisDisplay({ analysis, error }: { analysis: AnalyzeApplicantOutp
         <Card className="bg-muted/50 p-4">
             <CardHeader className="p-2">
                 <CardTitle className="text-xl flex items-center justify-between">
-                    <span>AI Analysis Guide</span>
+                    <span>AI Analysis</span>
+                     <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">Match Score:</span>
+                        <Progress value={analysis.matchScore} className="w-24 h-2" />
+                        <span className="text-sm font-bold">{analysis.matchScore}%</span>
+                    </div>
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-2 space-y-4">
                 <div>
-                    <h4 className="font-semibold text-base mb-2">Recruiter Guidance</h4>
+                    <h4 className="font-semibold text-base mb-2">Summary</h4>
                     <p className="text-sm text-muted-foreground">{analysis.summary}</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2"><ThumbsUp className="h-4 w-4 text-green-500" /> Key Strengths to Look For</h4>
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2"><ThumbsUp className="h-4 w-4 text-green-500" /> Key Strengths</h4>
                         <ul className="list-disc pl-5 text-sm space-y-1 text-muted-foreground">
                             {analysis.strengths.map((s, i) => <li key={i}>{s}</li>)}
                         </ul>
                     </div>
                     <div>
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2"><ThumbsDown className="h-4 w-4 text-red-500" /> Points to Consider</h4>
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2"><ThumbsDown className="h-4 w-4 text-red-500" /> Potential Gaps</h4>
                         <ul className="list-disc pl-5 text-sm space-y-1 text-muted-foreground">
                              {analysis.gaps.map((g, i) => <li key={i}>{g}</li>)}
                         </ul>
@@ -121,8 +142,8 @@ function ApplicantRow({ application, jobId, jobDetails }: { application: any, jo
     
 
     const handleGetAIAnalysis = async () => {
-        if (!jobDetails) {
-            toast({ variant: 'destructive', title: 'Missing Job Description', description: 'Cannot perform analysis without a job description.'});
+        if (!jobDetails || !application.resumeUrl) {
+            toast({ variant: 'destructive', title: 'Missing Information', description: 'Cannot perform analysis without a job description and a resume.'});
             return;
         }
         
@@ -132,9 +153,13 @@ function ApplicantRow({ application, jobId, jobDetails }: { application: any, jo
         setAnalysisError(null);
 
         try {
+            // Fetch the resume and convert it to a data URI
+            const resumeDataUri = await urlToDataUri(application.resumeUrl);
+
             const result = await analyzeApplicant({
                 jobTitle: jobDetails.title,
                 jobDescription: jobDetails.description || '',
+                resumeDataUri: resumeDataUri,
             });
             setAnalysis(result);
         } catch (error: any) {

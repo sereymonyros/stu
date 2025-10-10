@@ -5,3 +5,4 @@ import './flows/upload-file-flow';
 import './flows/get-public-profile-flow';
 import './flows/send-email-flow';
 import './flows/analyze-applicant-flow';
+import './flows/analyze-document-flow';
