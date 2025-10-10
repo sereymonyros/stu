@@ -28,7 +28,6 @@ const getPublicProfileFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      // This only initializes what we need: Firestore.
       const { firestore } = initializeFirebaseAdmin();
 
       const userDocRef = firestore.collection('users').doc(input.userId);

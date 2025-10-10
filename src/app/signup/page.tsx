@@ -78,7 +78,7 @@ export default function SignupPage() {
       const profileData = {
         uid: user.uid,
         displayName: fullName,
-        email: user.email,
+        email: user.email, // Storing the email in the public profile
         address: address,
         phone: phone,
         photoURL: '',

@@ -13,7 +13,7 @@ export const GetPublicProfileOutputSchema = z.object({
   uid: z.string(),
   displayName: z.string().optional(),
   photoURL: z.string().optional(),
-  email: z.string().optional(),
+  email: z.string().email().optional(), // Ensure email is part of the schema
   address: z.string().optional(),
   phone: z.string().optional(),
   userType: z.string().optional(),
