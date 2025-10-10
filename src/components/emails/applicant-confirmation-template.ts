@@ -88,8 +88,7 @@ export const applicantConfirmationTemplate = ({
                 <p>This is to confirm that we have received your application for the position of <strong>${jobTitle}</strong> at <strong>${companyName}</strong>.</p>
                 <p>We appreciate you taking the time to apply. You can track the status of all your applications from your dashboard.</p>
                 <p>Good luck!</p>
-            </div>
-            <a href="https://cambodiahub.com/dashboard" class="button">Go to My Dashboard</a>
+            </div>            
         </div>
         <div class="footer">
             <p>&copy; ${new Date().getFullYear()} Cambodia Hub. All rights reserved.</p>

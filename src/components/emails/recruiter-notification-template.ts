@@ -87,8 +87,7 @@ export const recruiterNotificationTemplate = ({
                 <p>Hi ${recruiterName},</p>
                 <p>You have a new applicant for the position of <strong>${jobTitle}</strong>. The applicant's name is <strong>${applicantName}</strong>.</p>
                 <p>You can review their complete application, including their resume, from your dashboard on the platform.</p>
-            </div>
-            <a href="https://cambodiahub.com/dashboard" class="button">View Applicants</a>
+            </div>            
         </div>
         <div class="footer">
             <p>&copy; ${new Date().getFullYear()} Cambodia Hub. All rights reserved.</p>

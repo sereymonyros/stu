@@ -10,12 +10,13 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Briefcase, Building, MapPin, DollarSign, Pencil } from 'lucide-react';
+import { Heart, Briefcase, Building, MapPin, DollarSign, Pencil, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Input } from '@/components/ui/input';
 
 function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; }) {
     const { user } = useUser();
@@ -78,6 +79,7 @@ export default function JobsPage() {
     const { user, isUserLoading } = useUser();
     const router = useRouter();
     const { toast } = useToast();
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Fetch all jobs
     const jobsQuery = useMemo(() => {
@@ -150,11 +152,21 @@ export default function JobsPage() {
         }
     };
     
-    const sortedJobs = useMemo(() => {
+    const filteredAndSortedJobs = useMemo(() => {
         if (!jobs) return [];
-        if (!user) return jobs; // For unauthenticated users, return default order
+        
+        // 1. Filter based on search query
+        const filtered = jobs.filter(job => {
+            const query = searchQuery.toLowerCase();
+            const title = job.title?.toLowerCase() || '';
+            const description = job.description?.toLowerCase() || '';
+            return title.includes(query) || description.includes(query);
+        });
 
-        return [...jobs].sort((a, b) => {
+        // 2. Sort for authenticated users
+        if (!user) return filtered; // For unauthenticated users, return filtered list
+
+        return [...filtered].sort((a, b) => {
             const aHasApplied = appliedJobIds.has(a.id);
             const bHasApplied = appliedJobIds.has(b.id);
             
@@ -163,7 +175,7 @@ export default function JobsPage() {
             }
             return aHasApplied ? 1 : -1; // If a is applied, it comes after b. If b is applied, it comes after a.
         });
-    }, [jobs, user, appliedJobIds]);
+    }, [jobs, user, appliedJobIds, searchQuery]);
 
 
     const isLoading = isUserLoading || areJobsLoading || isProfileLoading || areFavouritesLoading || areApplicationsLoading;
@@ -175,13 +187,28 @@ export default function JobsPage() {
             <main className="flex-1 p-4 md:p-6 lg:p-8">
                 <div className="container mx-auto">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                        <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
+                        <div className="flex-1">
+                            <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
+                            <p className="text-muted-foreground mt-1">Find your next role in Cambodia.</p>
+                        </div>
                         {isRecruiter && (
                             <Button asChild>
                                 <Link href="/jobs/new">Post a New Job</Link>
                             </Button>
                         )}
                     </div>
+                    
+                    <div className="mb-6 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input 
+                            type="search"
+                            placeholder="Search by title or description..."
+                            className="pl-10"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
 
                     {isLoading && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -195,9 +222,9 @@ export default function JobsPage() {
                         </div>
                     )}
 
-                    {!isLoading && sortedJobs && sortedJobs.length > 0 && (
+                    {!isLoading && filteredAndSortedJobs && filteredAndSortedJobs.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {sortedJobs.map((job) => (
+                            {filteredAndSortedJobs.map((job) => (
                                 <JobCard 
                                     key={job.id} 
                                     job={job}
@@ -209,12 +236,14 @@ export default function JobsPage() {
                         </div>
                     )}
 
-                    {!isLoading && (!jobs || jobs.length === 0) && (
+                    {!isLoading && (!jobs || filteredAndSortedJobs.length === 0) && (
                         <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
                             <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
                             <div className="text-center">
-                                <h2 className="text-2xl font-semibold tracking-tight">No jobs posted yet</h2>
-                                <p className="text-muted-foreground mt-2">Check back soon for new opportunities!</p>
+                                <h2 className="text-2xl font-semibold tracking-tight">{searchQuery ? 'No Matching Jobs' : 'No jobs posted yet'}</h2>
+                                <p className="text-muted-foreground mt-2">
+                                    {searchQuery ? 'Try a different search term.' : 'Check back soon for new opportunities!'}
+                                </p>
                             </div>
                         </div>
                     )}
