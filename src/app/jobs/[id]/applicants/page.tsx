@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { doc, collection, query, updateDoc } from 'firebase/firestore';
@@ -322,7 +322,7 @@ function ApplicantRow({ application, jobId, jobDetails }: { application: any, jo
 
 
 export default function ApplicantsPage({ params }: { params: { id: string } }) {
-    const jobId = params.id;
+    const { id: jobId } = params;
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const router = useRouter();

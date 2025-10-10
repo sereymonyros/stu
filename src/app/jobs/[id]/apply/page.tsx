@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useMemo, useEffect, useState, useRef } from 'react';
+import { useMemo, useEffect, useState, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useUser } from '@/firebase';
 import { doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
@@ -47,7 +47,7 @@ const toBase64 = (file: File): Promise<string> =>
   });
 
 export default function ApplyPage({ params }: { params: { id: string } }) {
-  const jobId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const { id: jobId } = params;
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();

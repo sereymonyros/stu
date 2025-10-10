@@ -23,7 +23,7 @@ import { getStorage, ref, deleteObject } from "firebase/storage";
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, use } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import {
@@ -63,7 +63,7 @@ const toBase64 = (file: File): Promise<string> =>
   });
 
 export default function EditListingPage({ params }: { params: { id: string } }) {
-  const listingId = params.id;
+  const { id: listingId } = params;
   const firestore = useFirestore();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();

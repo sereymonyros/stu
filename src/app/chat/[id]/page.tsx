@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useMemo, useEffect, useState, useRef } from 'react';
+import { useMemo, useEffect, useState, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { doc, collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
@@ -49,7 +50,7 @@ function Message({ message, isOwnMessage, otherUser }: { message: any; isOwnMess
 }
 
 export default function ChatPage({ params }: { params: { id: string } }) {
-    const chatId = params.id;
+    const { id: chatId } = params;
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const router = useRouter();
