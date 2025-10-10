@@ -124,17 +124,24 @@ function ApplicantRow({ application, jobId, jobDetails }: { application: any, jo
     }, [application.applicantId, toast]);
     
     // Helper to convert resume URL to data URI
-    const urlToDataUri = async (url: string) => {
-        // Use a CORS proxy if needed, but Firebase Storage URLs should be configured for public access
+    const urlToDataUri = async (url: string): Promise<string> => {
+        // Use a CORS proxy if running locally and facing CORS issues
+        // const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
         const response = await fetch(url);
         if (!response.ok) {
-            throw new Error(`Failed to fetch resume: ${response.statusText}`);
+            throw new Error(`Failed to fetch resume: ${response.statusText} (status: ${response.status})`);
         }
         const blob = await response.blob();
-        return new Promise<string>((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
+            reader.onloadend = () => {
+                if (typeof reader.result === 'string') {
+                    resolve(reader.result);
+                } else {
+                    reject(new Error('Failed to read file as data URI.'));
+                }
+            };
+            reader.onerror = (error) => reject(error);
             reader.readAsDataURL(blob);
         });
     };
