@@ -22,7 +22,10 @@ function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any
     const isOwner = user && user.uid === job.recruiterId;
 
     return (
-        <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200">
+        <Card className={cn(
+            "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
+            hasApplied && "bg-muted/50 opacity-70 hover:shadow-none"
+        )}>
             <CardHeader>
                 <div className="flex justify-between items-start gap-2">
                     <CardTitle className="text-xl font-bold">{job.title}</CardTitle>
@@ -32,12 +35,13 @@ function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any
                             size="icon"
                             onClick={() => onToggleFavourite(job.id, isFavourite)}
                             className="text-muted-foreground hover:text-red-500"
+                            disabled={hasApplied}
                         >
                             <Heart className={cn("h-6 w-6", isFavourite && "fill-red-500 text-red-500")} />
                         </Button>
                     )}
                      {isOwner && (
-                        <Button asChild variant="ghost" size="icon">
+                        <Button asChild variant="ghost" size="icon" disabled={hasApplied}>
                             <Link href={`/jobs/${job.id}/edit`}>
                                 <Pencil className="h-5 w-5" />
                             </Link>
