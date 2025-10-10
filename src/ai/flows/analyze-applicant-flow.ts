@@ -23,7 +23,7 @@ const analyzeApplicantPrompt = ai.definePrompt({
   input: { schema: z.object({
       jobTitle: z.string(),
       jobDescription: z.string(),
-      resumeText: z.string(),
+      resumeDataUri: z.string(),
   })},
   output: { schema: AnalyzeApplicantOutputSchema },
   prompt: `You are an expert HR recruiter with 20 years of experience, specializing in technical roles.
@@ -33,9 +33,9 @@ const analyzeApplicantPrompt = ai.definePrompt({
   - Title: {{jobTitle}}
   - Description: {{jobDescription}}
 
-  **Candidate's Resume Text:**
+  **Candidate's Resume:**
   ---
-  {{resumeText}}
+  {{media url=resumeDataUri}}
   ---
 
   **Your Analysis:**
@@ -63,22 +63,22 @@ const analyzeApplicantFlow = ai.defineFlow(
         if (!response.ok) {
             throw new Error(`Failed to download resume from URL: ${response.statusText}`);
         }
-        const pdfBuffer = await response.arrayBuffer();
+        
+        // Get the MIME type from the response headers. Default if not present.
+        const mimeType = response.headers.get('content-type') || 'application/octet-stream';
+        
+        const fileBuffer = await response.arrayBuffer();
 
-        // 2. Parse the PDF to extract text
-        const pdf = (await import('pdf-parse/lib/pdf-parse.js')).default;
-        const data = await pdf(Buffer.from(pdfBuffer));
-        const resumeText = data.text;
+        // 2. Convert the buffer to a Base64 data URI
+        const base64Data = Buffer.from(fileBuffer).toString('base64');
+        const resumeDataUri = `data:${mimeType};base64,${base64Data}`;
 
-        if (!resumeText.trim()) {
-            throw new Error('Could not extract text from the provided resume PDF.');
-        }
-
-        // 3. Call the AI prompt with the extracted text
+        // 3. Call the AI prompt with the data URI.
+        // The model will handle extracting the text from the file data.
         const { output } = await analyzeApplicantPrompt({
             jobTitle: input.jobTitle,
             jobDescription: input.jobDescription,
-            resumeText: resumeText,
+            resumeDataUri: resumeDataUri,
         });
 
         if (!output) {
