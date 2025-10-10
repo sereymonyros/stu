@@ -1,88 +1,160 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isAuth() {
+    /**
+     * @description Secure user profile information. Only the user can read/write their own profile.
+     * @path /users/{userId}
+     * @allow (create, update, get, delete, list) if request.auth.uid == userId
+     * @deny (create, update, get, delete, list) if request.auth.uid != userId
+     * @principle Enforces document ownership for all operations on user profiles.
+     */
+    match /users/{userId} {
+      allow get, update, delete: if isOwner(userId);
+      allow create: if isSelfCreation(userId);
+      allow list: if false;
+    }
+
+    /**
+     * @description Secure a user's list of job application references. Only the user can read/write their own applications.
+     * @path /users/{userId}/applications/{applicationId}
+     * @allow (create, update, get, delete, list) if request.auth.uid == userId
+     * @deny (create, update, get, delete, list) if request.auth.uid != userId
+     * @principle Enforces document ownership for all operations on user applications.
+     */
+    match /users/{userId}/applications/{applicationId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Secure a user's list of favorite job references. Only the user can read/write their own favorites.
+     * @path /users/{userId}/favouriteJobs/{jobId}
+     * @allow (create, update, get, delete, list) if request.auth.uid == userId
+     * @deny (create, update, get, delete, list) if request.auth.uid != userId
+     * @principle Enforces document ownership for all operations on user favorites.
+     */
+    match /users/{userId}/favouriteJobs/{jobId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update, delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Collection of all listings.  Listings are publicly readable, but only the owner can modify them.
+     * @path /listings/{listingId}
+     * @allow (get, list) if true
+     * @allow (create) if request.resource.data.sellerId == request.auth.uid
+     * @allow (update, delete) if resource.data.sellerId == request.auth.uid
+     * @deny (create) if request.resource.data.sellerId != request.auth.uid
+     * @deny (update, delete) if resource.data.sellerId != request.auth.uid
+     * @principle Public read, owner-only write access for listings.
+     */
+    match /listings/{listingId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && request.resource.data.sellerId == resource.data.sellerId;
+    }
+
+    /**
+     * @description Collection of all job postings. Publicly readable, but only recruiters can modify.
+     * @path /jobs/{jobId}
+     * @allow (get, list) if true
+     * @allow (create) if request.auth.token.userType == "recruiter"
+     * @allow (update, delete) if request.auth.token.userType == "recruiter"
+     * @deny (create, update, delete) if request.auth.token.userType != "recruiter"
+     * @principle Public read, recruiter-only write access for jobs.
+     */
+    match /jobs/{jobId} {
+      allow get, list: if true;
+      allow create: if isRecruiter();
+      allow update: if isRecruiter();
+      allow delete: if isRecruiter();
+    }
+
+    /**
+     * @description Sub-collection for applications to a specific job.
+     * @path /jobs/{jobId}/applications/{applicationId}
+     */
+    match /jobs/{jobId}/applications/{applicationId} {
+        allow get: if isSignedIn();
+        allow list: if isSignedIn();
+        allow create: if isSignedIn() && request.resource.data.applicantId == request.auth.uid;
+        allow update: if isSignedIn() && resource.data.applicantId == request.auth.uid;
+        allow delete: if isSignedIn() && resource.data.applicantId == request.auth.uid;
+    }
+
+    /**
+     * @description Collection of all chat sessions.
+     * @path /chats/{chatId}
+     * @allow (get, create, update, delete) if request.auth.uid in resource.data.participants
+     * @deny (get, create, update, delete) if !(request.auth.uid in resource.data.participants)
+     * @principle Shared access: only participants can read/write chats.
+     */
+    match /chats/{chatId} {
+      allow get: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow list: if false;
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participants;
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow delete: if false; // Deny deletion of chat sessions.
+    }
+
+    /**
+     * @description Sub-collection for messages within a specific chat.
+     * @path /chats/{chatId}/messages/{messageId}
+     * @allow (get, create) if request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+     * @deny (get, create) if !(request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants)
+     * @principle Shared access: only participants can read/write messages in a chat.
+     */
+    match /chats/{chatId}/messages/{messageId} {
+      allow get, list: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+      allow update, delete: if false;
+    }
+
+    /**
+     * @description Collection of all user-submitted feedback.
+     * @path /feedbacks/{feedbackId}
+     */
+    match /feedbacks/{feedbackId} {
+        allow get, list: if true;
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+        allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    function isSignedIn() {
       return request.auth != null;
     }
 
-    function isUser(userId) {
-      return isAuth() && request.auth.uid == userId;
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId && resource.data.userId == userId;
+    }
+
+    function isSelfCreation(userId) {
+      return isSignedIn() && request.auth.uid == userId && request.resource.data.uid == userId;
     }
 
     function isRecruiter() {
-      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'recruiter';
+        return isSignedIn() && request.auth.token.userType == 'recruiter';
     }
 
-    function isStandardUser() {
-      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'standard';
-    }
-    
-    // USERS
-    match /users/{userId} {
-      allow read: if isAuth();
-      allow create: if isAuth() && request.auth.uid == userId;
-      allow update: if isUser(userId);
-      // Users can't delete their own profiles
-      allow delete: if false;
-
-      // SUB-COLLECTIONS
-      match /applications/{jobId} {
-        allow read, create, delete: if isUser(userId) && isStandardUser();
-        allow update: if isUser(userId) || isRecruiter(); // Recruiter can update status
-      }
-      match /favouriteJobs/{jobId} {
-        allow read, create, delete: if isUser(userId) && isStandardUser();
-        allow write: if isUser(userId) && isStandardUser();
-      }
+    function isExistingRecruiter(recruiterId) {
+        return isRecruiter() && resource.data.recruiterId == request.auth.uid;
     }
 
-    // JOBS
-    match /jobs/{jobId} {
-      allow read: if isAuth();
-      allow create: if isRecruiter();
-      // Only the recruiter who posted the job can update or delete it
-      allow update, delete: if isRecruiter() && resource.data.recruiterId == request.auth.uid;
-
-      // SUB-COLLECTIONS
-      match /applications/{applicationId} {
-        allow read: if isRecruiter() && get(/databases/$(database)/documents/jobs/$(jobId)).data.recruiterId == request.auth.uid;
-        allow create: if isStandardUser() && request.auth.uid == applicationId;
-        // Recruiter can update status, applicant can't
-        allow update: if isRecruiter() && get(/databases/$(database)/documents/jobs/$(jobId)).data.recruiterId == request.auth.uid;
-        allow delete: if false; // Don't allow deleting applications
-      }
+    function isApplicant(applicantId) {
+        return isSignedIn() && request.auth.uid == applicantId;
     }
 
-    // LISTINGS
-    match /listings/{listingId} {
-      allow read: if isAuth();
-      allow create: if isAuth();
-      allow update, delete: if isAuth() && resource.data.sellerId == request.auth.uid;
-    }
-
-    // CHATS
-    match /chats/{chatId} {
-      // Only participants can read the chat document
-      allow read, update: if isAuth() && request.auth.uid in resource.data.participants;
-      // Only participants can create a new chat
-      allow create: if isAuth() && request.auth.uid in request.resource.data.participants;
-      allow delete: if false;
-
-      match /messages/{messageId} {
-        allow read: if isAuth() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
-        allow create: if isAuth() && request.resource.data.senderId == request.auth.uid;
-        allow update, delete: if false;
-      }
-    }
-    
-    // FEEDBACK
-    match /feedbacks/{feedbackId} {
-      allow read: if isAuth(); // Or make public if you want
-      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if false; // Generally users shouldn't edit feedback
+    function isExistingApplicant(applicantId) {
+        return isSignedIn() && resource.data.applicantId == request.auth.uid;
     }
   }
 }
