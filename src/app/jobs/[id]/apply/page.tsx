@@ -120,39 +120,39 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
 
     // --- 2. Send email to recruiter ---
     if (job.recruiterId) {
-      try {
-        const recruiterProfile = await getPublicProfile({ userId: job.recruiterId });
-        
-        if (recruiterProfile && recruiterProfile.email) {
-          await sendEmail({
-            to: recruiterProfile.email,
-            subject: `New Application for ${job.title}`,
-            htmlBody: `
-              <h1>New Applicant</h1>
-              <p>Hi ${recruiterProfile.displayName || 'Recruiter'},</p>
-              <p><strong>${userProfile.displayName}</strong> has applied for the position of <strong>${job.title}</strong>.</p>
-              <p>You can review their application and resume in your dashboard.</p>
-              <p><em>The Cambodia Hub Team</em></p>
-            `,
-            replyTo: user.email || undefined,
-          });
-        } else {
-            console.error(`Could not find email for recruiter with ID: ${job.recruiterId}`);
-            toast({
-                variant: 'destructive',
-                title: 'Could not notify recruiter',
-                description: 'The application was submitted, but the recruiter could not be notified because their email address is missing.',
+        try {
+          const recruiterProfile = await getPublicProfile({ userId: job.recruiterId });
+          
+          if (recruiterProfile && recruiterProfile.email) {
+            await sendEmail({
+              to: recruiterProfile.email,
+              subject: `New Application for ${job.title}`,
+              htmlBody: `
+                <h1>New Applicant</h1>
+                <p>Hi ${recruiterProfile.displayName || 'Recruiter'},</p>
+                <p><strong>${userProfile.displayName}</strong> has applied for the position of <strong>${job.title}</strong>.</p>
+                <p>You can review their application and resume in your dashboard.</p>
+                <p><em>The Cambodia Hub Team</em></p>
+              `,
+              replyTo: user.email || undefined,
             });
+          } else {
+              console.error(`Could not find email for recruiter with ID: ${job.recruiterId}`);
+              toast({
+                  variant: 'destructive',
+                  title: 'Could not notify recruiter',
+                  description: 'Recruiter email is missing. Application submitted without notification.',
+              });
+          }
+        } catch (e: any) {
+          console.error('Failed to send recruiter notification email', e);
+          toast({
+            variant: 'destructive',
+            title: 'Could not notify recruiter',
+            description: 'The application was submitted, but there was an error sending the email notification to the recruiter.',
+          });
         }
-      } catch (e) {
-        console.error('Failed to send recruiter notification email', e);
-        toast({
-          variant: 'destructive',
-          title: 'Could not notify recruiter',
-          description: 'The application was submitted, but there was an error sending the email notification to the recruiter.',
-        });
       }
-    }
   };
 
   // --- Handlers ---

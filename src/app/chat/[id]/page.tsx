@@ -131,6 +131,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         }
 
         try {
+            // These are non-blocking, but we can still use Promise.all to handle combined failure.
             await Promise.all([
                 addDoc(messagesQuery, messageData).catch(serverError => {
                     errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -138,7 +139,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                         operation: 'create',
                         requestResourceData: messageData
                     }));
-                    throw serverError;
+                    throw serverError; // Propagate to outer catch
                 }),
                 updateDoc(chatRef, updateChatData).catch(serverError => {
                     errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -146,7 +147,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                         operation: 'update',
                         requestResourceData: updateChatData
                     }));
-                    throw serverError;
+                    throw serverError; // Propagate to outer catch
                 })
             ]);
             setNewMessage('');

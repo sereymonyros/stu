@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview A flow for securely fetching public user profile data.
+ * @fileOverview A flow for securely fetching public user profile data from Firestore.
  */
 
 import { ai } from '@/ai/genkit';
@@ -26,18 +26,33 @@ const getPublicProfileFlow = ai.defineFlow(
   },
   async (input) => {
     try {
+      // Use the Admin SDK to access Firestore, not Auth
       const { app } = initializeFirebaseAdmin();
-      const adminAuth = (await import('firebase-admin/auth')).getAuth(app);
-      const userRecord = await adminAuth.getUser(input.userId);
+      const firestore = (await import('firebase-admin/firestore')).getFirestore(app);
+      
+      const userDocRef = firestore.collection('users').doc(input.userId);
+      const userDoc = await userDocRef.get();
 
+      if (!userDoc.exists) {
+        throw new Error(`User profile not found for user ${input.userId}`);
+      }
+      
+      const userData = userDoc.data();
+
+      // Return data that matches the output schema.
+      // Zod will automatically strip any extra fields.
       return {
-        uid: userRecord.uid,
-        displayName: userRecord.displayName,
-        photoURL: userRecord.photoURL,
-        email: userRecord.email,
+        uid: userDoc.id,
+        displayName: userData?.displayName,
+        photoURL: userData?.photoURL,
+        email: userData?.email,
+        address: userData?.address,
+        phone: userData?.phone,
+        userType: userData?.userType,
       };
+
     } catch (e: any) {
-      console.error('Flow Error: Failed to fetch user profile.', e);
+      console.error('Flow Error: Failed to fetch user profile from Firestore.', e);
       throw new Error(`Failed to fetch profile for user ${input.userId}: ${e.message}`);
     }
   }
