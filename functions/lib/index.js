@@ -1,3 +1,4 @@
+
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -15,33 +16,19 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendApplicationConfirmationEmail = void 0;
 const firestore_1 = require("firebase-functions/v2/firestore");
 const sgMail = __importStar(require("@sendgrid/mail"));
 const app_1 = require("firebase-admin/app");
 const firestore_2 = require("firebase-admin/firestore");
-const params_1 = require("firebase-functions/params");
-// Define secrets and parameters. We will set the actual values in the Google Cloud console later.
-const SENDGRID_API_KEY = (0, params_1.defineString)('SENDGRID_API_KEY');
-const SENDGRID_FROM_EMAIL = (0, params_1.defineString)('SENDGRID_FROM_EMAIL');
 (0, app_1.initializeApp)();
 /**
  * Sends a confirmation email to the applicant and a notification to the recruiter
@@ -51,8 +38,15 @@ exports.sendApplicationConfirmationEmail = (0, firestore_1.onDocumentCreated)({
     document: 'jobs/{jobId}/applications/{applicationId}',
     secrets: ['SENDGRID_API_KEY', 'SENDGRID_FROM_EMAIL'],
 }, async (event) => {
+    // Get the secrets from the environment variables
+    const sendGridApiKey = process.env.SENDGRID_API_KEY;
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+    if (!sendGridApiKey || !fromEmail) {
+        console.error('Missing SendGrid API Key or From Email. Make sure secrets are set correctly.');
+        return;
+    }
     // Set the API key for SendGrid
-    sgMail.setApiKey(SENDGRID_API_KEY.value());
+    sgMail.setApiKey(sendGridApiKey);
     const snapshot = event.data;
     if (!snapshot) {
         return;
@@ -86,7 +80,7 @@ exports.sendApplicationConfirmationEmail = (0, firestore_1.onDocumentCreated)({
         // Email to the applicant
         const applicantMsg = {
             to: applicant.email,
-            from: SENDGRID_FROM_EMAIL.value(),
+            from: fromEmail,
             subject: `Your application for "${job.title}" has been received!`,
             text: `Hi ${applicant.displayName},\n\nThank you for applying for the position of "${job.title}" at ${job.companyName}. We have received your application and will be in touch soon.\n\nBest regards,\nThe Cambodia Hub Team`,
             html: `<p>Hi ${applicant.displayName},</p><p>Thank you for applying for the position of "<strong>${job.title}</strong>" at ${job.companyName}. We have received your application and will be in touch soon.</p><p>Best regards,<br>The Cambodia Hub Team</p>`,
@@ -94,7 +88,7 @@ exports.sendApplicationConfirmationEmail = (0, firestore_1.onDocumentCreated)({
         // Email to the recruiter
         const recruiterMsg = {
             to: recruiter.email,
-            from: SENDGRID_FROM_EMAIL.value(),
+            from: fromEmail,
             subject: `New application for "${job.title}"`,
             text: `Hi ${recruiter.displayName},\n\nA new candidate, ${applicant.displayName}, has applied for the position of "${job.title}".\n\nYou can view their application in your dashboard.\n\nBest regards,\nThe Cambodia Hub Team`,
             html: `<p>Hi ${recruiter.displayName},</p><p>A new candidate, <strong>${applicant.displayName}</strong>, has applied for the position of "<strong>${job.title}</strong>".</p><p>You can view their application in your dashboard.</p><p>Best regards,<br>The Cambodia Hub Team</p>`,
@@ -105,6 +99,8 @@ exports.sendApplicationConfirmationEmail = (0, firestore_1.onDocumentCreated)({
             sgMail.send(recruiterMsg)
         ]);
     }
-    catch (error) { }
+    catch (error) {
+        console.error("Error sending application confirmation email:", error);
+    }
 });
 //# sourceMappingURL=index.js.map
