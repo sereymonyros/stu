@@ -65,7 +65,7 @@ const analyzeApplicantFlow = ai.defineFlow(
         }
         const pdfBuffer = Buffer.from(base64Data, 'base64');
         
-        // 2. Parse the PDF to extract text using a dynamic import
+        // 2. Parse the PDF to extract text using a dynamic import suitable for Next.js server environments
         const pdf = (await import('pdf-parse/lib/pdf-parse.js')).default;
         const data = await pdf(pdfBuffer);
         const resumeText = data.text;
