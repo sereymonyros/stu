@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow to analyze a job applicant's resume against a job description.
@@ -65,7 +66,7 @@ const analyzeApplicantFlow = ai.defineFlow(
         const pdfBuffer = Buffer.from(base64Data, 'base64');
         
         // 2. Parse the PDF to extract text using a dynamic import
-        const pdf = (await import('pdf-parse')).default;
+        const pdf = (await import('pdf-parse/lib/pdf-parse.js')).default;
         const data = await pdf(pdfBuffer);
         const resumeText = data.text;
 
