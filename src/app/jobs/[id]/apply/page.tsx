@@ -168,10 +168,11 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
         }
 
         // 3. Email to recruiter
-        if (recruiterProfile.email) {
+        if (recruiterProfile.email && user.email) {
             await sendEmail({
                 to: recruiterProfile.email,
                 subject: `New Application for ${job.title}`,
+                replyTo: user.email, // Set the applicant's email as the Reply-To
                 htmlBody: `
                   <h1>New Application Received</h1>
                   <p>Hi ${recruiterProfile.displayName || 'Recruiter'},</p>

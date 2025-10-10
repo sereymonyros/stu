@@ -7,6 +7,7 @@ export const SendEmailInputSchema = z.object({
   to: z.string().email().describe('The recipient email address.'),
   subject: z.string().describe('The subject line of the email.'),
   htmlBody: z.string().describe('The HTML content of the email body.'),
+  replyTo: z.string().email().optional().describe('The email address to set as the reply-to.'),
 });
 export type SendEmailInput = z.infer<typeof SendEmailInputSchema>;
 

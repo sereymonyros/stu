@@ -30,9 +30,10 @@ const sendEmailFlow = ai.defineFlow(
     const smtpPort = process.env.SMTP_PORT;
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
+    const senderEmail = process.env.SENDER_EMAIL; // The verified "From" email address
 
-    if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
-        console.error("SMTP environment variables not set. Cannot send email.");
+    if (!smtpHost || !smtpPort || !smtpUser || !smtpPass || !senderEmail) {
+        console.error("SMTP environment variables not set. Cannot send email. Check SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SENDER_EMAIL.");
         throw new Error('Email service is not configured on the server.');
     }
 
@@ -48,10 +49,11 @@ const sendEmailFlow = ai.defineFlow(
       });
 
       const mailOptions = {
-        from: `Cambodia Hub <${smtpUser}>`,
+        from: `Cambodia Hub <${senderEmail}>`, // Use the verified sender email
         to: input.to,
         subject: input.subject,
         html: input.htmlBody,
+        replyTo: input.replyTo || senderEmail, // Add a reply-to for user convenience
       };
 
       const info = await transporter.sendMail(mailOptions);
