@@ -63,27 +63,23 @@ function AIAnalysisDisplay({ analysis, error }: { analysis: AnalyzeApplicantOutp
         <Card className="bg-muted/50 p-4">
             <CardHeader className="p-2">
                 <CardTitle className="text-xl flex items-center justify-between">
-                    <span>AI Analysis</span>
-                    <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold">{analysis.matchScore}%</span>
-                        <Progress value={analysis.matchScore} className="w-24" />
-                    </div>
+                    <span>AI Analysis Guide</span>
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-2 space-y-4">
                 <div>
-                    <h4 className="font-semibold text-base mb-2">Summary</h4>
+                    <h4 className="font-semibold text-base mb-2">Recruiter Guidance</h4>
                     <p className="text-sm text-muted-foreground">{analysis.summary}</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2"><ThumbsUp className="h-4 w-4 text-green-500" /> Strengths</h4>
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2"><ThumbsUp className="h-4 w-4 text-green-500" /> Key Strengths to Look For</h4>
                         <ul className="list-disc pl-5 text-sm space-y-1 text-muted-foreground">
                             {analysis.strengths.map((s, i) => <li key={i}>{s}</li>)}
                         </ul>
                     </div>
                     <div>
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2"><ThumbsDown className="h-4 w-4 text-red-500" /> Potential Gaps</h4>
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2"><ThumbsDown className="h-4 w-4 text-red-500" /> Points to Consider</h4>
                         <ul className="list-disc pl-5 text-sm space-y-1 text-muted-foreground">
                              {analysis.gaps.map((g, i) => <li key={i}>{g}</li>)}
                         </ul>
@@ -125,8 +121,8 @@ function ApplicantRow({ application, jobId, jobDetails }: { application: any, jo
     
 
     const handleGetAIAnalysis = async () => {
-        if (!jobDetails || !application.resumeUrl) {
-            toast({ variant: 'destructive', title: 'Missing Information', description: 'Cannot perform analysis without job details and a resume.'});
+        if (!jobDetails) {
+            toast({ variant: 'destructive', title: 'Missing Job Description', description: 'Cannot perform analysis without a job description.'});
             return;
         }
         
@@ -139,7 +135,6 @@ function ApplicantRow({ application, jobId, jobDetails }: { application: any, jo
             const result = await analyzeApplicant({
                 jobTitle: jobDetails.title,
                 jobDescription: jobDetails.description || '',
-                resumeUrl: application.resumeUrl,
             });
             setAnalysis(result);
         } catch (error: any) {
@@ -278,7 +273,7 @@ function ApplicantRow({ application, jobId, jobDetails }: { application: any, jo
                             <X className="h-5 w-5" />
                         </Button>
                     ) : (
-                        <Button variant="outline" size="sm" onClick={handleGetAIAnalysis} disabled={!application.resumeUrl || isAnalyzing}>
+                        <Button variant="outline" size="sm" onClick={handleGetAIAnalysis} disabled={isAnalyzing}>
                             {isAnalyzing ? (
                                 <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
                             ) : (
