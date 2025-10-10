@@ -119,8 +119,11 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
     }
 
     // --- 2. Send email to recruiter ---
+    
     if (job.recruiterId) {
         try {
+          
+          debugger;
           const recruiterProfile = await getPublicProfile({ userId: job.recruiterId });
           
           if (recruiterProfile && recruiterProfile.email) {

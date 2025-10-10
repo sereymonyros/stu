@@ -38,6 +38,7 @@ const getPublicProfileFlow = ai.defineFlow(
       // 1. Try to get the comprehensive profile from Firestore first.
       const userDocRef = firestore.collection('users').doc(input.userId);
       const userDoc = await userDocRef.get();
+      
 
       if (userDoc.exists) {
         const userData = userDoc.data();
