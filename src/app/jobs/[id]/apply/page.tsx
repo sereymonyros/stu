@@ -4,7 +4,7 @@
 import { useMemo, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useUser } from '@/firebase';
-import { doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, updateDoc, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/header';
@@ -30,7 +30,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
 import { sendEmail } from '@/ai/flows/send-email-flow';
 
 // Helper function to convert a File to a Base64 data URI
@@ -90,7 +89,7 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
 
   // --- Handlers ---
   const handleApply = async () => {
-    if (!user || !userProfile || !job || !jobId || hasApplied || isSubmitting) return;
+    if (!user || !userProfile || !job || !jobId || hasApplied || isSubmitting || !firestore) return;
     if (!userProfile.resumeUrl) {
       toast({ variant: 'destructive', title: 'Please upload a resume first.' });
       return;
@@ -158,15 +157,33 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
               <p>Thank you for your interest!</p>
               <p><em>The Cambodia Hub Team</em></p>
             `,
-            replyTo: user.email
           });
         }
-
-        // 2. Email to recruiter (no longer fetching profile, so this is disabled)
-        // You would re-enable this with a secure way to get the recruiter's email
+        
+        // 2. Fetch recruiter profile and send email
+        if (job.recruiterId) {
+            const recruiterProfileRef = doc(firestore, 'users', job.recruiterId);
+            const recruiterProfileSnap = await getDoc(recruiterProfileRef);
+            if (recruiterProfileSnap.exists()) {
+                const recruiterProfile = recruiterProfileSnap.data();
+                if (recruiterProfile.email && userProfile.displayName) {
+                    await sendEmail({
+                        to: recruiterProfile.email,
+                        subject: `New Application for ${job.title}`,
+                        htmlBody: `
+                          <h1>New Applicant</h1>
+                          <p>Hi ${recruiterProfile.displayName || 'Recruiter'},</p>
+                          <p><strong>${userProfile.displayName}</strong> has applied for the position of <strong>${job.title}</strong>.</p>
+                          <p>You can review their application and resume in your dashboard.</p>
+                          <p><em>The Cambodia Hub Team</em></p>
+                        `,
+                        replyTo: user.email || undefined
+                    });
+                }
+            }
+        }
       } catch (emailError: any) {
         console.error("Failed to send email:", emailError);
-        // Do not block the user, but you could show a non-critical toast here
         toast({ variant: "destructive", title: "Could not send confirmation email", description: "Your application was submitted, but the confirmation email could not be sent. Please check your dashboard for status."});
       }
 
