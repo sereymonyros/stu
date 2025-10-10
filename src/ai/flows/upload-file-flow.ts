@@ -39,8 +39,13 @@ const uploadFileFlow = ai.defineFlow(
   },
   async (input) => {
     try {
+      const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
+      if (!storageBucket) {
+        throw new Error('FIREBASE_STORAGE_BUCKET environment variable is not set.');
+      }
+      
       const { storage } = initializeFirebaseAdmin();
-      const bucket = storage.bucket();
+      const bucket = storage.bucket(storageBucket);
 
       const { mimeType, base64Data } = parseDataUri(input.fileDataUri);
       const buffer = Buffer.from(base64Data, 'base64');
