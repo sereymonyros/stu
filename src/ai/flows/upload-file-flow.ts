@@ -39,7 +39,7 @@ const uploadFileFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
+      const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
       if (!storageBucket) {
         throw new Error('FIREBASE_STORAGE_BUCKET environment variable is not set.');
       }
