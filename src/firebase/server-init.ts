@@ -1,7 +1,6 @@
 
 import { initializeApp, getApps, getApp, App } from 'firebase-admin/app';
-import { getStorage } from 'firebase-admin/storage';
-import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
 let app: App;
 
@@ -16,7 +15,6 @@ export function initializeFirebaseAdmin() {
 
   return { 
     app,
-    storage: getStorage(app),
-    auth: getAuth(app),
+    firestore: getFirestore(app),
   };
 }

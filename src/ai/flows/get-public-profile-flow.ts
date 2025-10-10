@@ -28,8 +28,8 @@ const getPublicProfileFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      const { app } = initializeFirebaseAdmin();
-      const firestore = getFirestore(app);
+      // This only initializes what we need: Firestore.
+      const { firestore } = initializeFirebaseAdmin();
 
       const userDocRef = firestore.collection('users').doc(input.userId);
       const userDoc = await userDocRef.get();
@@ -47,8 +47,8 @@ const getPublicProfileFlow = ai.defineFlow(
           userType: userData?.userType,
         };
       } else {
-        // If profile doesn't exist in Firestore, return null.
-        // The client will handle this gracefully.
+        // If the profile doesn't exist in Firestore, return null.
+        // The calling component will handle this gracefully.
         console.warn(`Firestore profile not found for user ${input.userId}.`);
         return null;
       }
