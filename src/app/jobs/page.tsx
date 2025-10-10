@@ -57,13 +57,13 @@ function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any
                 </div>
             </CardContent>
             <CardFooter>
-                 <Button asChild className="w-full" disabled={hasApplied}>
-                    {hasApplied ? (
-                        <span>Applied</span>
-                    ) : (
+                 {hasApplied ? (
+                    <Button className="w-full" disabled>Applied</Button>
+                 ) : (
+                    <Button asChild className="w-full">
                         <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
-                    )}
-                </Button>
+                    </Button>
+                 )}
             </CardFooter>
         </Card>
     );
@@ -78,7 +78,7 @@ export default function JobsPage() {
     // Fetch all jobs
     const jobsQuery = useMemo(() => {
         if (!firestore) return null;
-        return collection(firestore, 'jobs');
+        return query(collection(firestore, 'jobs'));
     }, [firestore]);
     const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
 
