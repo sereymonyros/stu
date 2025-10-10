@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
@@ -329,9 +330,10 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
     const { data: job, isLoading: isJobLoading, refetch: refetchJob } = useDoc(jobRef);
     
     const applicantsQuery = useMemo(() => {
-        if (!firestore || !finalJobId) return null;
+        // Wait for user to be loaded and authenticated before creating the query
+        if (!firestore || !finalJobId || !user) return null;
         return query(collection(firestore, `jobs/${finalJobId}/applications`));
-    }, [firestore, finalJobId]);
+    }, [firestore, finalJobId, user]);
     const { data: applicants, isLoading: areApplicantsLoading } = useCollection(applicantsQuery);
 
      useEffect(() => {
