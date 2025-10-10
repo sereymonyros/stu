@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow to extract text from a document using Gemini's multimodal capabilities.
@@ -29,7 +30,7 @@ const analyzeDocumentFlow = ai.defineFlow(
     async (input) => {
         // Use a model powerful enough for multimodal document analysis
         const { text } = await ai.generate({
-            model: 'googleai/gemini-2.5-pro-preview',
+            model: 'googleai/gemini-1.5-pro-latest',
             prompt: [
                 { media: { url: input.fileDataUri } },
                 { text: 'Extract all text from the document.' }
