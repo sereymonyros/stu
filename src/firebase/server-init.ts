@@ -14,9 +14,10 @@ export function initializeFirebaseAdmin() {
     app = getApp();
   }
 
+  // Only initialize and return the services that are actually needed and permitted.
+  // In this case, many server-side flows only need Firestore.
   return { 
     app,
     firestore: getFirestore(app),
-    auth: getAuth(app),
   };
 }

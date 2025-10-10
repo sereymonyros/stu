@@ -28,6 +28,8 @@ const getPublicProfileFlow = ai.defineFlow(
   },
   async (input) => {
     try {
+      // This flow uses the Admin SDK to access Firestore, which typically has broader read access
+      // than client-side SDKs, bypassing complex security rules for public, non-sensitive data.
       const { firestore } = initializeFirebaseAdmin();
 
       const userDocRef = firestore.collection('users').doc(input.userId);

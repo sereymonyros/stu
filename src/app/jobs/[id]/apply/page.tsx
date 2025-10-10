@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useEffect, useState, useRef } from 'react';
@@ -28,10 +27,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { sendEmail } from '@/ai/flows/send-email-flow';
-import { sendRecruiterEmail } from '@/ai/flows/send-recruiter-email-flow';
+import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
 
 
 // Helper function to convert a File to a Base64 data URI
@@ -118,16 +116,35 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
       }
     }
 
-    // --- 2. Send email to recruiter using the dedicated flow ---
+    // --- 2. Send email to recruiter ---
     if (job.recruiterId && userProfile.displayName && user.email) {
       try {
-        await sendRecruiterEmail({
-          recruiterId: job.recruiterId,
-          jobTitle: job.title,
-          applicantName: userProfile.displayName,
-          applicantEmail: user.email,
-        });
-      } catch (e) {
+        // Fetch the recruiter's public profile to get their email
+        const recruiterProfile = await getPublicProfile({ userId: job.recruiterId });
+
+        if (recruiterProfile && recruiterProfile.email) {
+            await sendEmail({
+                to: recruiterProfile.email,
+                subject: `New Application for ${job.title}`,
+                htmlBody: `
+                    <h1>New Applicant</h1>
+                    <p>Hi ${recruiterProfile.displayName || 'Recruiter'},</p>
+                    <p><strong>${userProfile.displayName}</strong> has applied for the position of <strong>${job.title}</strong>.</p>
+                    <p>You can review their application and resume in your dashboard.</p>
+                    <p><em>The Cambodia Hub Team</em></p>
+                `,
+                replyTo: user.email,
+            });
+        } else {
+            // This is a data-issue, not a system failure. Log it.
+            console.error(`Could not send recruiter notification. Recruiter profile or email not found for ID: ${job.recruiterId}`);
+            toast({
+                variant: 'destructive',
+                title: 'Could not notify recruiter',
+                description: 'The recruiter\'s contact information could not be found.',
+            });
+        }
+      } catch (e: any) {
         console.error('Failed to send recruiter notification email', e);
         toast({
           variant: 'destructive',
