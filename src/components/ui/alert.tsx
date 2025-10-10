@@ -1,5 +1,6 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
+import { Terminal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -28,7 +29,10 @@ const Alert = React.forwardRef<
     role="alert"
     className={cn(alertVariants({ variant }), className)}
     {...props}
-  />
+  >
+    {variant === 'destructive' && <Terminal className="h-4 w-4" />}
+    {props.children}
+  </div>
 ))
 Alert.displayName = "Alert"
 
