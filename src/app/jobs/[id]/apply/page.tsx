@@ -90,51 +90,70 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
   }, [user, isUserLoading, userProfile, router, toast]);
   
   const sendConfirmationEmails = async () => {
-    if (!user || !userProfile || !job ) return;
+    if (!user || !userProfile || !job) return;
 
-    // Send email to applicant
+    // --- 1. Send email to applicant ---
     if (user.email && userProfile.displayName) {
-        try {
-            await sendEmail({
-                to: user.email,
-                subject: `Your Application for ${job.title}`,
-                htmlBody: `
-                  <h1>Application Confirmation</h1>
-                  <p>Hi ${userProfile.displayName},</p>
-                  <p>This is to confirm that we have received your application for the position of <strong>${job.title}</strong> at <strong>${job.companyName}</strong>.</p>
-                  <p>You can check the status of your application in your dashboard.</p>
-                  <p>Thank you for your interest!</p>
-                  <p><em>The Cambodia Hub Team</em></p>
-                `,
-            });
-        } catch(e) {
-            console.error("Failed to send applicant confirmation email", e);
-            toast({ variant: 'destructive', title: 'Could not send confirmation email', description: "Your application was submitted, but the confirmation email could not be sent to you." });
-        }
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: `Your Application for ${job.title}`,
+          htmlBody: `
+            <h1>Application Confirmation</h1>
+            <p>Hi ${userProfile.displayName},</p>
+            <p>This is to confirm that we have received your application for the position of <strong>${job.title}</strong> at <strong>${job.companyName}</strong>.</p>
+            <p>You can check the status of your application in your dashboard.</p>
+            <p>Thank you for your interest!</p>
+            <p><em>The Cambodia Hub Team</em></p>
+          `,
+        });
+      } catch (e) {
+        console.error('Failed to send applicant confirmation email', e);
+        // Non-critical, so we just toast. The application was still submitted.
+        toast({
+          variant: 'destructive',
+          title: 'Could not send confirmation email',
+          description: 'Your application was submitted, but the confirmation email could not be sent to you.',
+        });
+      }
     }
 
-    // Send email to recruiter
+    // --- 2. Send email to recruiter ---
     if (job.recruiterId) {
-        try {
-            const recruiterProfile = await getPublicProfile({ userId: job.recruiterId });
-            if (recruiterProfile && recruiterProfile.email) {
-                await sendEmail({
-                    to: recruiterProfile.email,
-                    subject: `New Application for ${job.title}`,
-                    htmlBody: `
-                        <h1>New Applicant</h1>
-                        <p>Hi ${recruiterProfile.displayName || 'Recruiter'},</p>
-                        <p><strong>${userProfile.displayName}</strong> has applied for the position of <strong>${job.title}</strong>.</p>
-                        <p>You can review their application and resume in your dashboard.</p>
-                        <p><em>The Cambodia Hub Team</em></p>
-                    `,
-                    replyTo: user.email || undefined
-                });
-            }
-        } catch(e) {
-            console.error("Failed to send recruiter notification email", e);
-            toast({ variant: 'destructive', title: 'Could not notify recruiter', description: "Your application was submitted, but the recruiter could not be notified by email." });
+      try {
+        const recruiterProfile = await getPublicProfile({ userId: job.recruiterId });
+        
+        // **FIX**: Check if the recruiter profile and email exist before sending.
+        if (recruiterProfile && recruiterProfile.email) {
+          await sendEmail({
+            to: recruiterProfile.email,
+            subject: `New Application for ${job.title}`,
+            htmlBody: `
+              <h1>New Applicant</h1>
+              <p>Hi ${recruiterProfile.displayName || 'Recruiter'},</p>
+              <p><strong>${userProfile.displayName}</strong> has applied for the position of <strong>${job.title}</strong>.</p>
+              <p>You can review their application and resume in your dashboard.</p>
+              <p><em>The Cambodia Hub Team</em></p>
+            `,
+            replyTo: user.email || undefined,
+          });
+        } else {
+            // Log an error if we can't find the recruiter's email
+            console.error(`Could not find email for recruiter with ID: ${job.recruiterId}`);
+            toast({
+                variant: 'destructive',
+                title: 'Could not notify recruiter',
+                description: 'The application was submitted, but the recruiter could not be notified by email because their email address is missing.',
+            });
         }
+      } catch (e) {
+        console.error('Failed to send recruiter notification email', e);
+        toast({
+          variant: 'destructive',
+          title: 'Could not notify recruiter',
+          description: 'The application was submitted, but there was an error sending the email notification to the recruiter.',
+        });
+      }
     }
   };
 
