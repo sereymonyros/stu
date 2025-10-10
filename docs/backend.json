@@ -367,6 +367,49 @@
         "comment",
         "createdAt"
       ]
+    },
+    "SavedSearch": {
+      "title": "Saved Search",
+      "description": "Represents a user's saved job search criteria for email alerts.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "A user-defined name for the search."
+        },
+        "searchQuery": {
+          "type": "string",
+          "description": "The text query entered by the user."
+        },
+        "filters": {
+          "type": "object",
+          "properties": {
+            "companyNames": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "locations": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "jobTypes": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "description": "The selected filter criteria."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the search was saved."
+        }
+      },
+      "required": [
+        "name",
+        "filters",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -393,6 +436,12 @@
         "$ref": "#/entities/UserFavouriteJob"
       },
       "description": "A user's list of favorite job references."
+    },
+    "/users/{userId}/savedSearches/{searchId}": {
+      "schema": {
+        "$ref": "#/entities/SavedSearch"
+      },
+      "description": "A user's list of saved job searches for alerts."
     },
     "/listings/{listingId}": {
       "schema": {
