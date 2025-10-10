@@ -39,7 +39,7 @@ const getPublicProfileFlow = ai.defineFlow(
       const userDocRef = firestore.collection('users').doc(input.userId);
       const userDoc = await userDocRef.get();
 
-      if (!userDoc.exists() && !userAuthRecord) {
+      if (!userDoc.exists && !userAuthRecord) {
         console.warn(`No auth record or Firestore profile found for user ${input.userId}.`);
         return null;
       }
@@ -62,6 +62,21 @@ const getPublicProfileFlow = ai.defineFlow(
       // Handle cases where user is not found in Auth or other errors
       if (e.code === 'auth/user-not-found') {
           console.warn(`Auth record not found for user ${input.userId}.`);
+          // Try to get firestore data even if auth record is missing in some cases
+          const userDocRef = getFirestore().collection('users').doc(input.userId);
+          const userDoc = await userDocRef.get();
+          if (userDoc.exists) {
+            const firestoreData = userDoc.data()!;
+            return {
+              uid: input.userId,
+              displayName: firestoreData.displayName,
+              photoURL: firestoreData.photoURL,
+              email: firestoreData.email,
+              address: firestoreData.address,
+              phone: firestoreData.phone,
+              userType: firestoreData.userType,
+            }
+          }
           return null; // A missing user is not a system failure.
       }
       console.error(`Flow Error: Failed to fetch profile data for user ${input.userId}.`, e);
