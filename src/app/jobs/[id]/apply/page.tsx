@@ -43,7 +43,7 @@ const toBase64 = (file: File): Promise<string> =>
   });
 
 export default function ApplyPage({ params }: { params: { id: string } }) {
-  const jobId = params.id;
+  const jobId = Array.isArray(params.id) ? params.id[0] : params.id;
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
@@ -51,14 +51,13 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
   const resumeInputRef = useRef<HTMLInputElement>(null);
+  const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   
-  const finalJobId = Array.isArray(jobId) ? jobId[0] : jobId;
-
   // --- Data Fetching ---
   const jobRef = useMemo(() => {
-    if (!firestore || !finalJobId) return null;
-    return doc(firestore, 'jobs', finalJobId);
-  }, [firestore, finalJobId]);
+    if (!firestore || !jobId) return null;
+    return doc(firestore, 'jobs', jobId);
+  }, [firestore, jobId]);
 
   const userProfileRef = useMemo(() => {
     if (!firestore || !user) return null;
@@ -67,9 +66,9 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
 
   // --- Check if user has already applied ---
   const userApplicationRef = useMemo(() => {
-    if (!firestore || !user || !finalJobId) return null;
-    return doc(firestore, `users/${user.uid}/applications`, finalJobId);
-  }, [firestore, user, finalJobId]);
+    if (!firestore || !user || !jobId) return null;
+    return doc(firestore, `users/${user.uid}/applications`, jobId);
+  }, [firestore, user, jobId]);
 
   const { data: job, isLoading: isJobLoading } = useDoc(jobRef);
   const { data: userProfile, isLoading: isProfileLoading, refetch: refetchUserProfile } = useDoc(userProfileRef);
@@ -91,7 +90,7 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
 
   // --- Handlers ---
   const handleApply = async () => {
-    if (!user || !userProfile || !job || !finalJobId || hasApplied || isSubmitting) return;
+    if (!user || !userProfile || !job || !jobId || hasApplied || isSubmitting) return;
     if (!userProfile.resumeUrl) {
       toast({ variant: 'destructive', title: 'Please upload a resume first.' });
       return;
@@ -103,16 +102,16 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
       // This is the main application document stored under the job
       const applicationData = {
         applicantId: user.uid,
-        jobId: finalJobId,
+        jobId: jobId,
         status: 'submitted',
         appliedAt: serverTimestamp(),
         resumeUrl: userProfile.resumeUrl,
       };
-      const applicationRef = doc(firestore, 'jobs', finalJobId, 'applications', user.uid);
+      const applicationRef = doc(firestore, 'jobs', jobId, 'applications', user.uid);
 
       // This is the user's copy of the application, for their dashboard
       const userApplicationData = {
-        jobId: finalJobId,
+        jobId: jobId,
         appliedAt: serverTimestamp(),
         status: 'submitted', // Add status here as well
       };
@@ -143,15 +142,10 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
           throw permissionError;
         })
       ]);
-
-      toast({ title: 'Application submitted!', description: `You have successfully applied for ${job?.title}.` });
       
       // --- Send Emails ---
       try {
-        // 1. Get recruiter profile for email
-        const recruiterProfile = await getPublicProfile({ userId: job.recruiterId });
-
-        // 2. Email to applicant
+        // 1. Email to applicant
         if (user.email && userProfile.displayName) {
           await sendEmail({
             to: user.email,
@@ -163,33 +157,22 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
               <p>You can check the status of your application in your dashboard.</p>
               <p>Thank you for your interest!</p>
               <p><em>The Cambodia Hub Team</em></p>
-            `
+            `,
+            replyTo: user.email
           });
         }
 
-        // 3. Email to recruiter
-        if (recruiterProfile.email && user.email) {
-            await sendEmail({
-                to: recruiterProfile.email,
-                subject: `New Application for ${job.title}`,
-                replyTo: user.email, // Set the applicant's email as the Reply-To
-                htmlBody: `
-                  <h1>New Application Received</h1>
-                  <p>Hi ${recruiterProfile.displayName || 'Recruiter'},</p>
-                  <p>A new candidate, <strong>${userProfile.displayName}</strong>, has applied for the position of <strong>${job.title}</strong>.</p>
-                  <p>You can review their application and resume in your dashboard.</p>
-                  <p><em>The Cambodia Hub Team</em></p>
-                `
-            });
-        }
+        // 2. Email to recruiter (no longer fetching profile, so this is disabled)
+        // You would re-enable this with a secure way to get the recruiter's email
       } catch (emailError: any) {
-        console.error("Failed to send one or more emails:", emailError);
-        // Don't block the user, just show a silent error in the console.
-        // A more robust system might add this to a retry queue.
+        console.error("Failed to send email:", emailError);
+        // Do not block the user, but you could show a non-critical toast here
+        toast({ variant: "destructive", title: "Could not send confirmation email", description: "Your application was submitted, but the confirmation email could not be sent. Please check your dashboard for status."});
       }
 
+      // Show success dialog instead of navigating away
+      setIsSuccessDialogOpen(true);
 
-      router.push('/jobs');
     } catch (error) {
       // Errors are already emitted, but we can handle UI feedback here if needed.
       toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not submit your application. Please check permissions.' });
@@ -397,6 +380,28 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
             )}
             </Card>
         </div>
+
+        {/* Success Dialog */}
+        <AlertDialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Application Submitted!</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your application for "{job?.title}" has been successfully submitted.
+                  A confirmation has been sent to your email. You can track the status in your dashboard.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <Button variant="outline" onClick={() => router.push('/jobs')}>
+                  Return to Job Board
+                </Button>
+                <Button onClick={() => router.push('/dashboard')}>
+                  Go to My Dashboard
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
       </main>
     </div>
   );
