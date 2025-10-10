@@ -3,7 +3,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, serverTimestamp, query } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
-function JobCard({ job, isFavourite, onToggleFavourite }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; }) {
+function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; }) {
     const { user } = useUser();
     const isOwner = user && user.uid === job.recruiterId;
 
@@ -57,8 +57,12 @@ function JobCard({ job, isFavourite, onToggleFavourite }: { job: any; isFavourit
                 </div>
             </CardContent>
             <CardFooter>
-                <Button asChild className="w-full">
-                    <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
+                 <Button asChild className="w-full" disabled={hasApplied}>
+                    {hasApplied ? (
+                        <span>Applied</span>
+                    ) : (
+                        <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
+                    )}
                 </Button>
             </CardFooter>
         </Card>
@@ -93,6 +97,16 @@ export default function JobsPage() {
     const { data: favouriteJobs, isLoading: areFavouritesLoading } = useCollection(favouriteJobsQuery);
 
     const favouriteJobIds = useMemo(() => new Set(favouriteJobs?.map(fav => fav.jobId)), [favouriteJobs]);
+    
+    // Fetch user's applications
+    const applicationsQuery = useMemo(() => {
+        if (!firestore || !user || userProfile?.userType === 'recruiter') return null;
+        return query(collection(firestore, `users/${user.uid}/applications`));
+    }, [firestore, user, userProfile]);
+    const { data: applications, isLoading: areApplicationsLoading } = useCollection(applicationsQuery);
+    
+    const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
+
 
     const handleToggleFavourite = async (jobId: string, isCurrentlyFavourite: boolean) => {
         if (!user || !firestore) {
@@ -132,7 +146,7 @@ export default function JobsPage() {
         }
     };
 
-    const isLoading = isUserLoading || areJobsLoading || isProfileLoading || areFavouritesLoading;
+    const isLoading = isUserLoading || areJobsLoading || isProfileLoading || areFavouritesLoading || areApplicationsLoading;
     const isRecruiter = userProfile?.userType === 'recruiter';
 
     return (
@@ -169,6 +183,7 @@ export default function JobsPage() {
                                     job={job}
                                     isFavourite={favouriteJobIds.has(job.id)}
                                     onToggleFavourite={handleToggleFavourite}
+                                    hasApplied={appliedJobIds.has(job.id)}
                                 />
                             ))}
                         </div>
