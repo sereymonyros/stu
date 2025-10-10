@@ -79,7 +79,7 @@ function ApplicantRow({ application, jobId }: { application: any, jobId: string 
 
             await Promise.all(applicationUpdates);
             
-            let toastDescription = `${applicant.displayName}'s application is now '${newStatus}'.`;
+            let toastDescription = `${applicant.displayName || 'Applicant'}'s application is now '${newStatus}'.`;
 
             if (newStatus === 'accepted') {
                 const jobStatusUpdate = { status: 'Closed' };
@@ -121,25 +121,27 @@ function ApplicantRow({ application, jobId }: { application: any, jobId: string 
          return (
             <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    Could not load applicant profile.
+                    Could not load applicant profile. It may have been deleted.
                 </TableCell>
             </TableRow>
         );
     }
 
-    const fallbackText = applicant.displayName?.charAt(0).toUpperCase() || applicant.email?.charAt(0).toUpperCase() || 'U';
+    const applicantName = applicant.displayName || 'Unnamed User';
+    const applicantEmail = applicant.email || 'No email';
+    const fallbackText = applicantName.charAt(0).toUpperCase();
 
     return (
         <TableRow>
             <TableCell>
                  <Avatar>
-                    <AvatarImage src={applicant.photoURL} alt={applicant.displayName} />
+                    <AvatarImage src={applicant.photoURL} alt={applicantName} />
                     <AvatarFallback>{fallbackText}</AvatarFallback>
                 </Avatar>
             </TableCell>
             <TableCell>
-                <div className="font-medium">{applicant.displayName}</div>
-                <div className="text-sm text-muted-foreground">{applicant.email}</div>
+                <div className="font-medium">{applicantName}</div>
+                <div className="text-sm text-muted-foreground">{applicantEmail}</div>
             </TableCell>
             <TableCell>
                 <Select defaultValue={application.status} onValueChange={handleStatusChange} disabled={isUpdating}>

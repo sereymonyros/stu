@@ -171,6 +171,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
 
     const isLoading = isChatLoading || areMessagesLoading || isUserLoading || isOtherUserLoading;
+    const otherUserName = otherUser?.displayName || "User";
 
     return (
         <div className="flex flex-col h-screen">
@@ -193,10 +194,10 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                             <div className="flex items-center gap-3">
                                 <Avatar>
                                     <AvatarImage src={otherUser?.photoURL} />
-                                    <AvatarFallback>{otherUser?.displayName?.[0] || 'U'}</AvatarFallback>
+                                    <AvatarFallback>{otherUserName[0]}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <h2 className="font-semibold text-lg">{otherUser?.displayName}</h2>
+                                    <h2 className="font-semibold text-lg">{otherUserName}</h2>
                                     <p className="text-sm text-muted-foreground truncate">
                                         Regarding: <span className="font-medium text-foreground">{chat?.listingTitle}</span>
                                     </p>
