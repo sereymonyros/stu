@@ -5,7 +5,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import pdf from 'pdf-parse';
 
 export const AnalyzeApplicantInputSchema = z.object({
   jobTitle: z.string().describe('The title of the job posting.'),
@@ -73,7 +72,8 @@ const analyzeApplicantFlow = ai.defineFlow(
         }
         const pdfBuffer = Buffer.from(base64Data, 'base64');
         
-        // 2. Parse the PDF to extract text
+        // 2. Parse the PDF to extract text using a dynamic import
+        const pdf = (await import('pdf-parse')).default;
         const data = await pdf(pdfBuffer);
         const resumeText = data.text;
 
