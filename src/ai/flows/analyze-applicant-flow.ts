@@ -58,16 +58,16 @@ const analyzeApplicantFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-        // 1. Extract and decode the resume data
-        const base64Data = input.resumeDataUri.split(',')[1];
-        if (!base64Data) {
-            throw new Error('Invalid resume data URI: No Base64 data found.');
+        // 1. Fetch the resume file from the public URL
+        const response = await fetch(input.resumeUrl);
+        if (!response.ok) {
+            throw new Error(`Failed to download resume from URL: ${response.statusText}`);
         }
-        const pdfBuffer = Buffer.from(base64Data, 'base64');
-        
-        // 2. Parse the PDF to extract text using a dynamic import suitable for Next.js server environments
+        const pdfBuffer = await response.arrayBuffer();
+
+        // 2. Parse the PDF to extract text
         const pdf = (await import('pdf-parse/lib/pdf-parse.js')).default;
-        const data = await pdf(pdfBuffer);
+        const data = await pdf(Buffer.from(pdfBuffer));
         const resumeText = data.text;
 
         if (!resumeText.trim()) {

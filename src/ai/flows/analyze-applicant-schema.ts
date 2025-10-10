@@ -6,7 +6,7 @@ import { z } from 'zod';
 export const AnalyzeApplicantInputSchema = z.object({
   jobTitle: z.string().describe('The title of the job posting.'),
   jobDescription: z.string().describe('The full description of the job posting.'),
-  resumeDataUri: z.string().describe("The applicant's resume as a data URI. Expected format: 'data:application/pdf;base64,<encoded_data>'."),
+  resumeUrl: z.string().url().describe("A public URL to the applicant's resume file (PDF, DOC, DOCX)."),
 });
 export type AnalyzeApplicantInput = z.infer<typeof AnalyzeApplicantInputSchema>;
 
