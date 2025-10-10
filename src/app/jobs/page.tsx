@@ -238,8 +238,8 @@ export default function JobsPage() {
             
             if (aHasApplied === bHasApplied) {
                 // If statuses are same, sort by creation date (newest first)
-                const dateA = a.createdAt?.getTime() || 0;
-                const dateB = b.createdAt?.getTime() || 0;
+                const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (new Date(a.createdAt)).getTime();
+                const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (new Date(b.createdAt)).getTime();
                 return dateB - dateA;
             }
             return aHasApplied ? 1 : -1;
@@ -353,3 +353,5 @@ export default function JobsPage() {
         </div>
     );
 }
+
+    
