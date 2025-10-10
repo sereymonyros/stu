@@ -123,7 +123,6 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
       try {
         const recruiterProfile = await getPublicProfile({ userId: job.recruiterId });
         
-        // **FIX**: Check if the recruiter profile and email exist before sending.
         if (recruiterProfile && recruiterProfile.email) {
           await sendEmail({
             to: recruiterProfile.email,
@@ -138,12 +137,11 @@ export default function ApplyPage({ params }: { params: { id: string } }) {
             replyTo: user.email || undefined,
           });
         } else {
-            // Log an error if we can't find the recruiter's email
             console.error(`Could not find email for recruiter with ID: ${job.recruiterId}`);
             toast({
                 variant: 'destructive',
                 title: 'Could not notify recruiter',
-                description: 'The application was submitted, but the recruiter could not be notified by email because their email address is missing.',
+                description: 'The application was submitted, but the recruiter could not be notified because their email address is missing.',
             });
         }
       } catch (e) {
