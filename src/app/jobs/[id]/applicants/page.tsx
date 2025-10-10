@@ -21,7 +21,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
 import type { GetPublicProfileOutput } from '@/ai/flows/get-public-profile-schema';
 import { analyzeApplicant } from '@/ai/flows/analyze-applicant-flow';
-import type { AnalyzeApplicantOutput } from '@/ai/flows/analyze-applicant-flow';
+import type { AnalyzeApplicantOutput } from '@/ai/flows/analyze-applicant-schema';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -304,7 +304,7 @@ function ApplicantRow({ application, jobId, jobDetails }: { application: any, jo
             {isAnalysisVisible && (
                 <TableRow>
                     <TableCell colSpan={6}>
-                        <AIAnalysisDisplay analysis={analysis} error={analysisError} />
+                        <AIAnalysisDisplay analysis={isAnalyzing ? null : analysis} error={analysisError} />
                     </TableCell>
                 </TableRow>
             )}
