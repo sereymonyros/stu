@@ -16,7 +16,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Board } from '@/components/kanban';
 import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
-import { getPublicProfiles } from '@/ai/flows/get-public-profiles-flow';
+import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
 import type { GetPublicProfileOutput } from '@/ai/flows/get-public-profile-schema';
 
 // Define the stages for the Kanban board
@@ -24,7 +24,7 @@ const KANBAN_STAGES = ["submitted", "reviewed", "offered", "accepted", "rejected
 type KanbanStage = typeof KANBAN_STAGES[number];
 
 type ApplicantWithProfile = {
-    id: string; // This is the application doc ID (same as applicant UID)
+    id: string; // This is the application doc ID
     profile: GetPublicProfileOutput | null;
     application: any;
 }
@@ -70,32 +70,38 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
     // Effect to fetch profiles when applications are loaded
     useEffect(() => {
-        if (!applications || applications.length === 0) {
+        if (!applications) {
+            setIsDataLoading(areApplicationsLoading);
+            return;
+        }
+        if (applications.length === 0) {
             setApplicantsWithProfiles([]);
             setIsDataLoading(false);
             return;
         }
 
         setIsDataLoading(true);
-        const applicantIds = applications.map(app => app.applicantId);
-        
-        getPublicProfiles({ userIds: applicantIds })
-            .then(profilesMap => {
-                const combinedData = applications.map(app => ({
+        const fetchProfiles = async () => {
+            try {
+                const profilePromises = applications.map(app => getPublicProfile({ userId: app.applicantId }));
+                const profiles = await Promise.all(profilePromises);
+                
+                const combinedData = applications.map((app, index) => ({
                     id: app.id,
                     application: app,
-                    profile: profilesMap[app.applicantId] || null
+                    profile: profiles[index] || null
                 }));
                 setApplicantsWithProfiles(combinedData);
-            })
-            .catch(err => {
-                console.error("Failed to fetch applicant profiles:", err);
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not load applicant profiles.' });
-            })
-            .finally(() => {
+            } catch (err: any) {
+                 console.error("Failed to fetch applicant profiles:", err);
+                 toast({ variant: 'destructive', title: 'Error Loading Profiles', description: 'Could not load all applicant profiles. Check console for details.' });
+            } finally {
                 setIsDataLoading(false);
-            });
-    }, [applications, toast]);
+            }
+        };
+
+        fetchProfiles();
+    }, [applications, areApplicationsLoading, toast]);
     
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -159,7 +165,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         }
     };
 
-    const isLoading = isJobLoading || areApplicationsLoading || isUserLoading || isDataLoading;
+    const isLoading = isJobLoading || isDataLoading || isUserLoading;
     
     return (
         <div className="flex flex-col h-screen">
