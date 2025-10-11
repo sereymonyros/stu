@@ -360,47 +360,59 @@ export default function DashboardPage() {
                         <Separator />
                         <section>
                             <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Heart /> My Favorite Jobs</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {favouriteJobs.map(job => <FavouriteJobCard key={job.id} job={job} />)}
-                            </div>
+                             {areFavouriteJobsDetailsLoading ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {Array.from({ length: favouriteJobs.length }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+                                </div>
+                            ) : favouriteJobs.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {favouriteJobs.map(job => <FavouriteJobCard key={job.id} job={job} />)}
+                                </div>
+                            ) : (
+                                <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
+                                    <Heart className="mx-auto h-10 w-10 text-muted-foreground" />
+                                    <h3 className="text-xl font-semibold">No favorite jobs yet</h3>
+                                    <p className="text-muted-foreground">Browse jobs and save your favorites to find them here later.</p>
+                                    <Button asChild><Link href="/jobs">Browse Jobs</Link></Button>
+                                </div>
+                            )}
                         </section>
                         </>
                     )}
                     
-                    <Separator />
                     
-                    <section>
-                        <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Search /> My Saved Searches</h2>
-                        {areSavedSearchesLoading ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
-                            </div>
-                        ) : savedSearches && savedSearches.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {savedSearches.map(search => (
-                                    <SavedSearchCard
-                                        key={search.id}
-                                        savedSearch={search}
-                                        onExecute={handleExecuteSearch}
-                                        onDelete={handleDeleteSearch}
-                                        isDeleting={isDeletingSearch}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
-                                <Search className="mx-auto h-10 w-10 text-muted-foreground" />
-                                <h3 className="text-xl font-semibold">No saved searches yet</h3>
-                                <p className="text-muted-foreground">Save a search on the jobs page to see it here.</p>
-                                <Button asChild><Link href="/jobs">Browse Jobs</Link></Button>
-                            </div>
-                        )}
-                    </section>
+                    {!isStandardUserDashboardLoading && savedSearches && savedSearches.length > 0 && (
+                       <>
+                        <Separator />
+                        <section>
+                            <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Search /> My Saved Searches</h2>
+                            {areSavedSearchesLoading ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {savedSearches.map(search => (
+                                        <SavedSearchCard
+                                            key={search.id}
+                                            savedSearch={search}
+                                            onExecute={handleExecuteSearch}
+                                            onDelete={handleDeleteSearch}
+                                            isDeleting={isDeletingSearch}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+                       </>
+                    )}
                     </>
                 )}
             </main>
         </div>
     );
 }
+
+    
 
     
