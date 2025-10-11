@@ -247,6 +247,29 @@
         "createdAt"
       ]
     },
+    "Company": {
+      "title": "Company",
+      "description": "Represents a company with job listings.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The official name of the company."
+        },
+        "description": {
+          "type": "string",
+          "description": "A summary or mission statement for the company."
+        },
+        "logoUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "A URL for the company's logo."
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
     "Application": {
       "title": "Application",
       "description": "Represents a user's application for a job.",
@@ -478,8 +501,12 @@
         "$ref": "#/entities/Feedback"
       },
       "description": "Collection of all user-submitted feedback."
+    },
+    "/companies/{companyId}": {
+      "schema": {
+        "$ref": "#/entities/Company"
+      },
+      "description": "Collection of all company profiles."
     }
   }
 }
-
-    

@@ -28,7 +28,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog"
 import { Label } from '@/components/ui/label';
 
@@ -65,7 +64,9 @@ function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any
                     )}
                 </div>
                 <div className="flex flex-col text-sm text-muted-foreground gap-1 pt-1">
-                    <div className="flex items-center gap-2"><Building className="h-4 w-4" /> {job.companyName}</div>
+                    <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="flex items-center gap-2 hover:underline">
+                        <Building className="h-4 w-4" /> {job.companyName}
+                    </Link>
                     <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {job.location}</div>
                     {job.salary && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> {job.salary}</div>}
                 </div>
@@ -247,6 +248,7 @@ export default function JobsPage() {
             const newSearchDocRef = doc(collection(firestore, `users/${user.uid}/savedSearches`));
 
             const searchData = {
+                id: newSearchDocRef.id,
                 name: savedSearchName,
                 searchQuery: searchQuery,
                 filters: {
