@@ -10,30 +10,36 @@ export function initializeFirebaseAdmin() {
   if (getApps().length > 0) {
     app = getApp();
   } else {
-    const serviceAccountString = process.env.GOOGLE_APPLICATION_CREDENTIALS;
     const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
 
-    if (process.env.NODE_ENV !== 'production' && serviceAccountString) {
-      // Local development: Use the Base64 encoded service account key.
-      try {
-        const serviceAccount: ServiceAccount = JSON.parse(
-          Buffer.from(serviceAccountString, 'base64').toString('utf8')
-        );
+    // In a production Google Cloud environment (like App Hosting), GOOGLE_APPLICATION_CREDENTIALS
+    // might not be set as the SDK uses the environment's service account automatically.
+    if (process.env.NODE_ENV === 'production') {
         app = initializeApp({
-          credential: cert(serviceAccount),
-          storageBucket: storageBucket,
+            credential: applicationDefault(),
+            storageBucket: storageBucket,
         });
-      } catch (e: any) {
-        throw new Error(
-          `Failed to parse GOOGLE_APPLICATION_CREDENTIALS for local dev. Make sure it is a valid Base64-encoded JSON string. Original error: ${e.message}`
-        );
-      }
     } else {
-      // Production (e.g., App Hosting): Use Application Default Credentials.
-      app = initializeApp({
-        credential: applicationDefault(),
-        storageBucket: storageBucket,
-      });
+        // For local development, we expect a Base64-encoded service account key.
+        const serviceAccountString = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        if (!serviceAccountString) {
+            throw new Error(
+                'GOOGLE_APPLICATION_CREDENTIALS environment variable is not set for local development. This is required for server-side flows.'
+            );
+        }
+        try {
+            const serviceAccount: ServiceAccount = JSON.parse(
+              Buffer.from(serviceAccountString, 'base64').toString('utf8')
+            );
+            app = initializeApp({
+              credential: cert(serviceAccount),
+              storageBucket: storageBucket,
+            });
+        } catch (e: any) {
+            throw new Error(
+              `Failed to parse GOOGLE_APPLICATION_CREDENTIALS for local dev. Make sure it is a valid Base64-encoded JSON string. Original error: ${e.message}`
+            );
+        }
     }
   }
 
