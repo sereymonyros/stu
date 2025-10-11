@@ -7,29 +7,34 @@ import { getStorage } from 'firebase-admin/storage';
 let app: App;
 
 export function initializeFirebaseAdmin() {
-  if (!getApps().length) {
-    // In a local development environment, use the service account key.
-    // The GOOGLE_APPLICATION_CREDENTIALS environment variable should point to the key file.
-    if (process.env.NODE_ENV !== 'production' && process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  if (getApps().length) {
+    app = getApp();
+  } else {
+    const serviceAccountString = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+    // During local development, we use the Base64 encoded service account key.
+    if (process.env.NODE_ENV !== 'production' && serviceAccountString) {
       try {
-        const serviceAccount = JSON.parse(
-          Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'base64').toString('ascii')
+        const serviceAccount: ServiceAccount = JSON.parse(
+          Buffer.from(serviceAccountString, 'base64').toString('utf8')
         );
         app = initializeApp({
           credential: cert(serviceAccount),
-          storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+          storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
         });
-      } catch (e) {
-        console.error('Error parsing service account key from environment variable.', e);
-        // Fallback to default initialization if parsing fails
-        app = initializeApp();
+      } catch (e: any) {
+        // Throw a helpful error if the key is malformed.
+        throw new Error(
+          `Failed to parse GOOGLE_APPLICATION_CREDENTIALS. Make sure it is a valid Base64-encoded JSON string. Original error: ${e.message}`
+        );
       }
     } else {
-      // In a production environment (like App Hosting), the SDK can auto-discover credentials.
-      app = initializeApp();
+      // In production (e.g., App Hosting), the SDK auto-discovers credentials.
+      // The credential is not required in this case.
+      app = initializeApp({
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      });
     }
-  } else {
-    app = getApp();
   }
 
   // Return all necessary admin services.
