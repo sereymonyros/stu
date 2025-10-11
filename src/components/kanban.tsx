@@ -144,14 +144,23 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
         }
     };
         
-    // Safely convert Firestore Timestamp or JS Date to a Date object for formatting.
+    // Safely convert Firestore Timestamp, JS Date, or date string to a valid Date object.
     const appliedAtDate = useMemo(() => {
         const appliedAt = applicant.appliedAt;
         if (!appliedAt) return null;
+        // Case 1: Firestore Timestamp object (from live snapshot)
         if (typeof appliedAt.toDate === 'function') {
             return (appliedAt as Timestamp).toDate();
         }
-        return new Date(appliedAt);
+        // Case 2: Already a Date object
+        if (appliedAt instanceof Date) {
+            return appliedAt;
+        }
+        // Case 3: A string or number from cache or serialized data.
+        // The Date constructor can handle ISO strings and numbers (timestamps).
+        const date = new Date(appliedAt);
+        // Check if the created date is valid before returning
+        return isNaN(date.getTime()) ? null : date;
     }, [applicant.appliedAt]);
 
 
