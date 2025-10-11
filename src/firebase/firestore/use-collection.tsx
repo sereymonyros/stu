@@ -25,7 +25,6 @@ export type WithId<T> = T & { id: string };
 export interface UseCollectionResult<T> {
   data: WithId<T>[] | null; // Document data with ID, or null.
   isLoading: boolean;       // True if loading, especially on the initial fetch.
-  isRefreshing: boolean;    // True if fetching from Firestore after showing cached data.
   error: FirestoreError | Error | null; // Error object, or null.
 }
 
@@ -86,7 +85,7 @@ function convertTimestampsToDates(obj: any): any {
  * @template T Optional type for document data. Defaults to any.
  * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} targetRefOrQuery -
  * The Firestore CollectionReference or Query. Waits if null/undefined.
- * @returns {UseCollectionResult<T>} Object with data, isLoading, isRefreshing, error.
+ * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
  */
 export function useCollection<T = any>(
     targetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>))  | null | undefined,
@@ -96,14 +95,12 @@ export function useCollection<T = any>(
 
   const [data, setData] = useState<StateDataType>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
     if (!targetRefOrQuery) {
       setData(null);
       setIsLoading(false);
-      setIsRefreshing(false);
       setError(null);
       return;
     }
@@ -115,24 +112,22 @@ export function useCollection<T = any>(
 
     let didCancel = false;
     
-    // Reset state for new query
+    // Always start in a loading state for a new query.
     setIsLoading(true);
-    setIsRefreshing(false);
     setError(null);
 
-    // --- Phase 1: Load from IndexedDB if available ---
+    // --- Phase 1: Attempt to load from IndexedDB if cacheable ---
     if (isCacheable) {
         getStoreData(storeName).then(cachedData => {
             if (!didCancel && cachedData && cachedData.length > 0) {
                  const dataWithDates = cachedData.map(item => convertTimestampsToDates(item));
+                 // Set cached data for initial render, but DON'T set loading to false yet.
                  setData(dataWithDates as StateDataType);
-                 setIsLoading(false); // We have data for UI, initial load is done.
-                 setIsRefreshing(true); // Now, we refresh from Firestore.
             }
         }).catch(console.error);
     }
     
-    // --- Phase 2: Subscribe to Firestore ---
+    // --- Phase 2: Subscribe to Firestore for live data ---
     const unsubscribe = onSnapshot(
       targetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
@@ -147,10 +142,10 @@ export function useCollection<T = any>(
 
         setData(resultsWithDates as StateDataType);
         setError(null);
-        setIsLoading(false); // Data has arrived from Firestore.
-        setIsRefreshing(false); // Refresh is complete.
+        // Loading is only truly finished when we get the first snapshot from Firestore.
+        setIsLoading(false);
 
-        // --- Phase 3: Update IndexedDB cache ---
+        // --- Phase 3: Update IndexedDB cache in the background ---
         if (isCacheable) {
             updateStoreData(storeName, resultsWithDates).catch(console.error);
         }
@@ -166,7 +161,6 @@ export function useCollection<T = any>(
         setError(contextualError)
         setData(null)
         setIsLoading(false)
-        setIsRefreshing(false);
 
         // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
@@ -179,5 +173,5 @@ export function useCollection<T = any>(
     };
   }, [targetRefOrQuery]); // Re-run if the target query/reference object changes.
 
-  return { data, isLoading, isRefreshing, error };
+  return { data, isLoading, error };
 }
