@@ -16,7 +16,7 @@ import { Progress } from './ui/progress';
 import { Skeleton } from './ui/skeleton';
 import { analyzeApplicant } from '@/ai/flows/analyze-applicant-flow';
 import type { AnalyzeApplicantOutput } from '@/ai/flows/analyze-applicant-schema';
-import { useToast } from './ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import type { GetPublicProfileOutput } from '@/ai/flows/get-public-profile-schema';
 
 type ApplicantWithProfile = {
@@ -248,3 +248,5 @@ Board.Column = Column;
 Board.Card = ApplicantCard;
 
 export { Board };
+
+    
