@@ -11,7 +11,7 @@ import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Briefcase, Store, ClipboardList, FileText, Users, Heart } from 'lucide-react';
+import { Briefcase, ClipboardList, FileText, Users, Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -113,34 +113,6 @@ function FavouriteJobCard({ job }: { job: any }) {
     );
 }
 
-
-function ListingCard({ listing }: { listing: any }) {
-    return (
-        <Card className="overflow-hidden">
-            <div className="aspect-square relative w-full">
-                <Image 
-                    src={listing.imageUrls?.[0] || 'https://picsum.photos/seed/default/600/600'} 
-                    alt={listing.title} 
-                    fill 
-                    className="object-cover" 
-                />
-            </div>
-            <CardHeader>
-                <CardTitle className="text-xl truncate">{listing.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-lg font-bold text-primary">${listing.price}</p>
-            </CardContent>
-            <CardFooter>
-                <Button asChild variant="outline">
-                    <Link href={`/listings/${listing.id}/edit`}>View Details</Link>
-                </Button>
-            </CardFooter>
-        </Card>
-    );
-}
-
-
 export default function DashboardPage() {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
@@ -223,15 +195,6 @@ export default function DashboardPage() {
         return query(collection(firestore, 'jobs'), where('__name__', 'in', filteredFavouriteJobIds));
     }, [firestore, areFavouritesLoading, filteredFavouriteJobIds]);
     const { data: favouriteJobs, isLoading: areFavouriteJobsDetailsLoading } = useCollection(favouriteJobsDetailsQuery);
-
-
-
-    // For All Users: Fetch listings they created
-    const myListingsQuery = useMemo(() => {
-        if (!firestore || !user) return null;
-        return query(collection(firestore, 'listings'), where('sellerId', '==', user.uid));
-    }, [firestore, user]);
-    const { data: myListings, isLoading: isMyListingsLoading } = useCollection(myListingsQuery);
 
     // --- Loading and Rendering Logic ---
     const isLoading = isUserLoading || isProfileLoading;
@@ -336,24 +299,7 @@ export default function DashboardPage() {
                     </>
                 )}
 
-                <section>
-                    <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Store /> My Listings</h2>
-                    {isMyListingsLoading ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                             {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-64 w-full" />)}
-                        </div>
-                    ) : myListings && myListings.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            {myListings.map(listing => <ListingCard key={listing.id} listing={listing} />)}
-                        </div>
-                    ) : (
-                        null
-                    )}
-                </section>
-
             </main>
         </div>
     );
 }
-
-    
