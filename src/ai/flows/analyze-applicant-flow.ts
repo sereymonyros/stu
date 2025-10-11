@@ -19,6 +19,7 @@ export async function analyzeApplicant(input: AnalyzeApplicantInput): Promise<An
 
 const analyzeApplicantPrompt = ai.definePrompt({
   name: 'analyzeApplicantPrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: { schema: AnalyzeApplicantInputSchema },
   output: { schema: AnalyzeApplicantOutputSchema },
   prompt: `You are an expert HR recruiter with 20 years of experience, specializing in technical roles.
