@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react"
@@ -133,9 +134,8 @@ function JobCard({
     )
 }
 
-function Column({ id, title, children, isLoading }: { id: string, title: string, children: React.ReactNode, isLoading: boolean }) {
+function Column({ id, title, children, jobs, isLoading }: { id: string, title: string, children: React.ReactNode, jobs: any[], isLoading: boolean }) {
     const { setNodeRef, isOver } = useDroppable({ id });
-    const jobs = React.Children.toArray(children);
 
 
     const titleColors: { [key: string]: string } = {
@@ -145,8 +145,8 @@ function Column({ id, title, children, isLoading }: { id: string, title: string,
     };
 
     return (
-        <div className="w-72 flex-shrink-0">
-            <Card ref={setNodeRef} className={cn(
+        <div ref={setNodeRef} className={cn("w-72 flex-shrink-0", isOver && 'cursor-copy')}>
+            <Card className={cn(
                 "h-full transition-colors", 
                 isOver && id === 'Closed' ? 'bg-destructive/20' : 
                 isOver ? 'bg-primary/10' : 

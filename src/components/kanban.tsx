@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -225,7 +226,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
     };
 
     return (
-        <div ref={setNodeRef} className="w-72 flex-shrink-0">
+        <div ref={setNodeRef} className={cn("w-72 flex-shrink-0", isOver && 'cursor-copy')}>
             <Card className={cn("h-full transition-colors", isOver ? 'bg-primary/10' : 'bg-muted/40')}>
                 <CardHeader className={cn("p-3 border-b-4", titleColors[id] || 'border-gray-500')}>
                     <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
