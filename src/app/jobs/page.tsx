@@ -4,14 +4,14 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, addDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, serverTimestamp, query } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Briefcase, Building, MapPin, DollarSign, Pencil, Search, FilterX, Star } from 'lucide-react';
+import { Heart, Briefcase, Building, MapPin, DollarSign, Pencil, Search, FilterX, Star, LayoutGrid, List } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -31,6 +31,10 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
+import { Board as JobKanban } from '@/components/job-kanban';
+import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 
 function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; }) {
@@ -138,13 +142,20 @@ export default function JobsPage() {
     const router = useRouter();
     const { toast } = useToast();
     const searchParams = useSearchParams();
+    
+    // --- View State ---
+    const [viewMode, setViewMode] = useState<'card' | 'board'>('card');
+    
+    // --- Data for Kanban Board state ---
+    const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
+
 
     // --- Data Fetching ---
     const jobsQuery = useMemo(() => {
         if (!firestore) return null;
         return query(collection(firestore, 'jobs'));
     }, [firestore]);
-    const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
+    const { data: jobs, isLoading: areJobsLoading, refetch: refetchJobs } = useCollection(jobsQuery);
     
     // --- Dynamic Filter Options ---
     const { companyNames, locations, jobTypes, maxSalary } = useMemo(() => {
@@ -288,35 +299,34 @@ export default function JobsPage() {
         }
 
         setIsSaving(true);
-        try {
-            const newSearchDocRef = doc(collection(firestore, `users/${user.uid}/savedSearches`));
+        const newSearchDocRef = doc(collection(firestore, `users/${user.uid}/savedSearches`));
 
-            const searchData = {
-                id: newSearchDocRef.id,
-                name: savedSearchName,
-                searchQuery: searchQuery,
-                filters: {
-                    companyNames: selectedCompanies,
-                    locations: selectedLocations,
-                    jobTypes: selectedJobTypes,
-                },
-                createdAt: serverTimestamp(),
-            };
-            
-            await setDoc(newSearchDocRef, searchData);
-
+        const searchData = {
+            id: newSearchDocRef.id,
+            name: savedSearchName,
+            searchQuery: searchQuery,
+            filters: {
+                companyNames: selectedCompanies,
+                locations: selectedLocations,
+                jobTypes: selectedJobTypes,
+            },
+            createdAt: serverTimestamp(),
+        };
+        
+        setDoc(newSearchDocRef, searchData).catch(serverError => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: newSearchDocRef.path,
+                operation: 'create',
+                requestResourceData: searchData
+            }));
+             toast({ variant: "destructive", title: "Save failed", description: "Could not save your search." });
+        }).then(() => {
             toast({ title: "Search Saved!", description: `"${savedSearchName}" has been added to your dashboard.`});
             setIsSaveDialogOpen(false);
             setSavedSearchName('');
-        } catch (error) {
-             errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: `users/${user.uid}/savedSearches`,
-                operation: 'create'
-            }));
-             toast({ variant: "destructive", title: "Save failed", description: "Could not save your search." });
-        } finally {
+        }).finally(() => {
             setIsSaving(false);
-        }
+        });
     };
     
     const filteredAndSortedJobs = useMemo(() => {
@@ -373,6 +383,79 @@ export default function JobsPage() {
         });
     }, [jobs, user, appliedJobIds, searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, favouriteJobIds, salaryRange, maxSalary]);
 
+    // --- Kanban Board Logic ---
+    useEffect(() => {
+        // Group jobs by status for the Kanban board
+        if (jobs) {
+            const recruiterJobs = jobs.filter(job => job.recruiterId === user?.uid);
+            const grouped = recruiterJobs.reduce((acc, job) => {
+                const status = job.status || 'Available';
+                if (!acc[status]) {
+                    acc[status] = [];
+                }
+                acc[status].push(job);
+                return acc;
+            }, {} as Record<string, any[]>);
+            setJobsByStatus(grouped);
+        }
+    }, [jobs, user]);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: { distance: 8 },
+        })
+    );
+
+    const handleJobDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+        
+        const jobId = active.id as string;
+        const newStatus = over.id as string;
+        
+        let movedJob: any;
+        let oldStatus: string = '';
+
+        for (const status in jobsByStatus) {
+            const job = jobsByStatus[status].find(j => j.id === jobId);
+            if (job) {
+                movedJob = job;
+                oldStatus = status;
+                break;
+            }
+        }
+        
+        if (!movedJob || oldStatus === newStatus) return;
+
+        // Optimistic UI update
+        setJobsByStatus(prev => {
+            const newBoardState = { ...prev };
+            newBoardState[oldStatus] = newBoardState[oldStatus]?.filter(j => j.id !== jobId);
+            const updatedJob = { ...movedJob, status: newStatus };
+            if (!newBoardState[newStatus]) newBoardState[newStatus] = [];
+            newBoardState[newStatus].push(updatedJob);
+            return newBoardState;
+        });
+
+        // Call server-side flow
+        try {
+            await updateJobStatus({ jobId: jobId, newStatus: newStatus as any });
+            toast({ title: 'Job Status Updated', description: `Job moved to ${newStatus}.` });
+        } catch (error: any) {
+            console.error("Failed to update job status:", error);
+            // Revert UI on failure
+            setJobsByStatus(prev => {
+                 const revertedState = { ...prev };
+                 revertedState[newStatus] = revertedState[newStatus]?.filter(j => j.id !== jobId);
+                 if (!revertedState[oldStatus]) revertedState[oldStatus] = [];
+                 revertedState[oldStatus].push(movedJob);
+                 return revertedState;
+            });
+            toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
+        }
+    };
+    
+    const KANBAN_STAGES: ('Available' | 'Offering' | 'Closed')[] = ["Available", "Offering", "Closed"];
 
     const isLoading = isUserLoading || areJobsLoading || isProfileLoading || areFavouritesLoading || areApplicationsLoading;
     const isRecruiter = userProfile?.userType === 'recruiter';
@@ -387,147 +470,186 @@ export default function JobsPage() {
                             <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
                             <p className="text-muted-foreground mt-1">Find your next role in Cambodia.</p>
                         </div>
-                        {isRecruiter && (
-                            <Button asChild>
-                                <Link href="/jobs/new">Post a New Job</Link>
-                            </Button>
-                        )}
+                        <div className="flex items-center gap-2">
+                           {isRecruiter && (
+                                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
+                                    <ToggleGroupItem value="card" aria-label="Card view"><List /></ToggleGroupItem>
+                                    <ToggleGroupItem value="board" aria-label="Board view"><LayoutGrid /></ToggleGroupItem>
+                                </ToggleGroup>
+                            )}
+                            {isRecruiter && (
+                                <Button asChild>
+                                    <Link href="/jobs/new">Post a New Job</Link>
+                                </Button>
+                            )}
+                        </div>
                     </div>
                     
-                    <Card className="p-4 mb-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                             <div className="relative md:col-span-2 lg:col-span-3">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                <Input 
-                                    type="search"
-                                    placeholder="Search by title or description..."
-                                    className="pl-10 h-10"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {user && !isRecruiter && hasActiveFilters && (
-                                    <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
-                                        <DialogTrigger asChild>
-                                            <Button variant="outline">
-                                                <Star className="mr-2 h-4 w-4" /> Save Search
+                    {viewMode === 'card' && (
+                        <>
+                            <Card className="p-4 mb-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                    <div className="relative md:col-span-2 lg:col-span-3">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                        <Input 
+                                            type="search"
+                                            placeholder="Search by title or description..."
+                                            className="pl-10 h-10"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {user && !isRecruiter && hasActiveFilters && (
+                                            <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+                                                <DialogTrigger asChild>
+                                                    <Button variant="outline">
+                                                        <Star className="mr-2 h-4 w-4" /> Save Search
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="sm:max-w-[425px]">
+                                                    <DialogHeader>
+                                                        <DialogTitle>Save Job Search</DialogTitle>
+                                                        <DialogDescription>
+                                                            Name this search to save it to your dashboard for later.
+                                                        </DialogDescription>
+                                                    </DialogHeader>
+                                                    <div className="grid gap-4 py-4">
+                                                        <div className="grid grid-cols-4 items-center gap-4">
+                                                            <Label htmlFor="search-name" className="text-right">
+                                                                Name
+                                                            </Label>
+                                                            <Input
+                                                                id="search-name"
+                                                                value={savedSearchName}
+                                                                onChange={(e) => setSavedSearchName(e.target.value)}
+                                                                className="col-span-3"
+                                                                placeholder="e.g., 'React Jobs in PP'"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <DialogFooter>
+                                                        <Button type="button" variant="secondary" onClick={() => setIsSaveDialogOpen(false)}>Cancel</Button>
+                                                        <Button type="submit" onClick={handleSaveSearch} disabled={isSaving || !savedSearchName.trim()}>
+                                                            {isSaving ? 'Saving...' : 'Save'}
+                                                        </Button>
+                                                    </DialogFooter>
+                                                </DialogContent>
+                                            </Dialog>
+                                        )}
+                                        {hasActiveFilters && (
+                                            <Button variant="ghost" onClick={clearAllFilters}>
+                                                <FilterX className="mr-2 h-4 w-4" />
+                                                Clear
                                             </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="sm:max-w-[425px]">
-                                            <DialogHeader>
-                                                <DialogTitle>Save Job Search</DialogTitle>
-                                                <DialogDescription>
-                                                    Name this search to save it to your dashboard for later.
-                                                </DialogDescription>
-                                            </DialogHeader>
-                                            <div className="grid gap-4 py-4">
-                                                <div className="grid grid-cols-4 items-center gap-4">
-                                                    <Label htmlFor="search-name" className="text-right">
-                                                        Name
-                                                    </Label>
-                                                    <Input
-                                                        id="search-name"
-                                                        value={savedSearchName}
-                                                        onChange={(e) => setSavedSearchName(e.target.value)}
-                                                        className="col-span-3"
-                                                        placeholder="e.g., 'React Jobs in PP'"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <DialogFooter>
-                                                <Button type="button" variant="secondary" onClick={() => setIsSaveDialogOpen(false)}>Cancel</Button>
-                                                <Button type="submit" onClick={handleSaveSearch} disabled={isSaving || !savedSearchName.trim()}>
-                                                    {isSaving ? 'Saving...' : 'Save'}
-                                                </Button>
-                                            </DialogFooter>
-                                        </DialogContent>
-                                    </Dialog>
-                                )}
-                                {hasActiveFilters && (
-                                    <Button variant="ghost" onClick={clearAllFilters}>
-                                        <FilterX className="mr-2 h-4 w-4" />
-                                        Clear
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-
-                        <Separator className="mb-4" />
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
-                            <FilterGroup title="Company" options={companyNames} selected={selectedCompanies} onToggle={(val) => toggleFilter(setSelectedCompanies, val)} />
-                            <FilterGroup title="Location" options={locations} selected={selectedLocations} onToggle={(val) => toggleFilter(setSelectedLocations, val)} />
-                            <FilterGroup title="Job Type" options={jobTypes} selected={selectedJobTypes} onToggle={(val) => toggleFilter(setSelectedJobTypes, val)} />
-                            
-                            <div>
-                                <h3 className="text-sm font-semibold mb-2">Salary Range</h3>
-                                <Slider
-                                    value={salaryRange}
-                                    onValueChange={setSalaryRange}
-                                    max={maxSalary}
-                                    step={1000}
-                                    className="my-4"
-                                />
-                                <div className="flex justify-between text-xs text-muted-foreground">
-                                    <span>${salaryRange[0].toLocaleString()}</span>
-                                    <span>${salaryRange[1].toLocaleString()}</span>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        {user && !isRecruiter && (
-                            <div className="mt-4">
-                                <Toggle
-                                    size="sm"
-                                    variant="outline"
-                                    pressed={showFavoritesOnly}
-                                    onPressedChange={setShowFavoritesOnly}
-                                    className="h-10 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                                >
-                                    <Heart className="mr-2 h-4 w-4" />
-                                    Show My Favourites Only
-                                </Toggle>
-                            </div>
-                        )}
-                    </Card>
 
+                                <Separator className="mb-4" />
 
-                    {isLoading && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            {Array.from({ length: 8 }).map((_, i) => (
-                                <Card key={i}>
-                                    <CardHeader><Skeleton className="h-6 w-3/4" /><Skeleton className="h-4 w-1/2 mt-2" /></CardHeader>
-                                    <CardContent><Skeleton className="h-8 w-full" /></CardContent>
-                                    <CardFooter><Skeleton className="h-10 w-full" /></CardFooter>
-                                </Card>
-                            ))}
-                        </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+                                    <FilterGroup title="Company" options={companyNames} selected={selectedCompanies} onToggle={(val) => toggleFilter(setSelectedCompanies, val)} />
+                                    <FilterGroup title="Location" options={locations} selected={selectedLocations} onToggle={(val) => toggleFilter(setSelectedLocations, val)} />
+                                    <FilterGroup title="Job Type" options={jobTypes} selected={selectedJobTypes} onToggle={(val) => toggleFilter(setSelectedJobTypes, val)} />
+                                    
+                                    <div>
+                                        <h3 className="text-sm font-semibold mb-2">Salary Range</h3>
+                                        <Slider
+                                            value={salaryRange}
+                                            onValueChange={setSalaryRange}
+                                            max={maxSalary}
+                                            step={1000}
+                                            className="my-4"
+                                        />
+                                        <div className="flex justify-between text-xs text-muted-foreground">
+                                            <span>${salaryRange[0].toLocaleString()}</span>
+                                            <span>${salaryRange[1].toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {user && !isRecruiter && (
+                                    <div className="mt-4">
+                                        <Toggle
+                                            size="sm"
+                                            variant="outline"
+                                            pressed={showFavoritesOnly}
+                                            onPressedChange={setShowFavoritesOnly}
+                                            className="h-10 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                        >
+                                            <Heart className="mr-2 h-4 w-4" />
+                                            Show My Favourites Only
+                                        </Toggle>
+                                    </div>
+                                )}
+                            </Card>
+
+                            {isLoading && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                    {Array.from({ length: 8 }).map((_, i) => (
+                                        <Card key={i}>
+                                            <CardHeader><Skeleton className="h-6 w-3/4" /><Skeleton className="h-4 w-1/2 mt-2" /></CardHeader>
+                                            <CardContent><Skeleton className="h-8 w-full" /></CardContent>
+                                            <CardFooter><Skeleton className="h-10 w-full" /></CardFooter>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+
+                            {!isLoading && filteredAndSortedJobs && filteredAndSortedJobs.length > 0 && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {filteredAndSortedJobs.map((job) => (
+                                        <JobCard 
+                                            key={job.id} 
+                                            job={job}
+                                            isFavourite={favouriteJobIds.has(job.id)}
+                                            onToggleFavourite={handleToggleFavourite}
+                                            hasApplied={appliedJobIds.has(job.id)}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+
+                            {!isLoading && (!jobs || filteredAndSortedJobs.length === 0) && (
+                                <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
+                                    <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
+                                    <div className="text-center">
+                                        <h2 className="text-2xl font-semibold tracking-tight">{hasActiveFilters ? 'No Matching Jobs' : 'No jobs posted yet'}</h2>
+                                        <p className="text-muted-foreground mt-2">
+                                            {hasActiveFilters ? 'Try adjusting your filters.' : 'Check back soon for new opportunities!'}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
 
-                    {!isLoading && filteredAndSortedJobs && filteredAndSortedJobs.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {filteredAndSortedJobs.map((job) => (
-                                <JobCard 
-                                    key={job.id} 
-                                    job={job}
-                                    isFavourite={favouriteJobIds.has(job.id)}
-                                    onToggleFavourite={handleToggleFavourite}
-                                    hasApplied={appliedJobIds.has(job.id)}
-                                />
-                            ))}
-                        </div>
-                    )}
-
-                    {!isLoading && (!jobs || filteredAndSortedJobs.length === 0) && (
-                        <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
-                            <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
-                            <div className="text-center">
-                                <h2 className="text-2xl font-semibold tracking-tight">{hasActiveFilters ? 'No Matching Jobs' : 'No jobs posted yet'}</h2>
-                                <p className="text-muted-foreground mt-2">
-                                    {hasActiveFilters ? 'Try adjusting your filters.' : 'Check back soon for new opportunities!'}
-                                </p>
-                            </div>
-                        </div>
+                    {viewMode === 'board' && isRecruiter && (
+                         <div className="flex-1 flex flex-col overflow-x-auto">
+                            <DndContext sensors={sensors} onDragEnd={handleJobDragEnd}>
+                                <JobKanban>
+                                    {KANBAN_STAGES.map(stage => {
+                                        const stageJobs = jobsByStatus[stage] || [];
+                                        return (
+                                            <JobKanban.Column
+                                                key={stage}
+                                                id={stage}
+                                                title={stage}
+                                                jobs={stageJobs}
+                                                isLoading={isLoading}
+                                            >
+                                                {stageJobs.map((job: any) => (
+                                                    <JobKanban.Card
+                                                        key={job.id}
+                                                        job={job}
+                                                    />
+                                                ))}
+                                            </JobKanban.Column>
+                                        );
+                                    })}
+                                </JobKanban>
+                            </DndContext>
+                         </div>
                     )}
                 </div>
             </main>
