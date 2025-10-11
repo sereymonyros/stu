@@ -5,7 +5,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { collection, doc, setDoc, deleteDoc, serverTimestamp, query } from 'firebase/firestore';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
@@ -30,7 +30,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
-import { Board as JobKanban } from '@/components/job-kanban';
+import { JobKanban } from '@/components/job-kanban';
 import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
@@ -76,7 +76,7 @@ export default function JobsPage() {
         if (!firestore) return null;
         return query(collection(firestore, 'jobs'));
     }, [firestore]);
-    const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
+    const { data: jobs, isLoading: areJobsLoading, refetch: refetchJobs } = useCollection(jobsQuery);
     
     // --- Dynamic Filter Options ---
     const { companyNames, locations, jobTypes, maxSalary } = useMemo(() => {
@@ -306,7 +306,7 @@ export default function JobsPage() {
 
     // --- Kanban Board Logic ---
     useEffect(() => {
-        if (jobs && user) {
+        if (jobs && user && isRecruiter) {
             const recruiterJobs = jobs.filter(job => job.recruiterId === user.uid);
             const grouped = recruiterJobs.reduce((acc, job) => {
                 const status = job.status || 'Available';
@@ -318,7 +318,7 @@ export default function JobsPage() {
             }, {} as Record<string, any[]>);
             setJobsByStatus(grouped);
         }
-    }, [jobs, user]);
+    }, [jobs, user, isRecruiter]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -329,66 +329,46 @@ export default function JobsPage() {
     const handleJobDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         
-        if (!over || active.id === over.id) {
-            return;
-        }
-
+        if (!over) return;
+        
         const jobId = active.id as string;
+        const oldStatus = active.data.current?.sortable.containerId as string;
         const newStatus = over.id as string;
 
-        let oldStatus: string | undefined;
-        let movedJob: any;
-
-        // Find the job and its old status from the local state
-        for (const status in jobsByStatus) {
-            const job = jobsByStatus[status].find(j => j.id === jobId);
-            if (job) {
-                oldStatus = status;
-                movedJob = job;
-                break;
-            }
-        }
-        
-        if (!oldStatus || oldStatus === newStatus) {
+        if (oldStatus === newStatus) {
             return;
         }
-        
+
         // Optimistic UI update
-        setJobsByStatus(prev => {
-            const newState = { ...prev };
-            // Ensure old column exists and remove the item
-            if (newState[oldStatus!]) {
-                newState[oldStatus!] = newState[oldStatus!].filter(j => j.id !== jobId);
-            }
-            // Ensure new column exists and add the item
-            if (!newState[newStatus]) {
-                newState[newStatus] = [];
-            }
-            newState[newStatus].push({ ...movedJob, status: newStatus });
+        setJobsByStatus((prev) => {
+            const newBoardState = { ...prev };
+            const oldColumn = newBoardState[oldStatus] || [];
+            const newColumn = newBoardState[newStatus] || [];
+
+            const jobIndex = oldColumn.findIndex((job) => job.id === jobId);
+            if (jobIndex === -1) return prev; // Should not happen
+
+            const [movedJob] = oldColumn.splice(jobIndex, 1);
             
-            return newState;
+            newColumn.push({ ...movedJob, status: newStatus });
+            
+            newBoardState[oldStatus] = oldColumn;
+            newBoardState[newStatus] = newColumn;
+            
+            return newBoardState;
         });
         
         // Call server-side flow
         try {
             await updateJobStatus({ jobId: jobId, newStatus: newStatus as any });
             toast({ title: 'Job Status Updated', description: `Job moved to ${newStatus}.` });
+            refetchJobs(); // Refetch to ensure consistency after server update
         } catch (error: any) {
             console.error("Failed to update job status:", error);
-            // Revert UI on failure
-             setJobsByStatus(prev => {
-                const revertedState = { ...prev };
-                 // Remove from new column if it was added
-                if (revertedState[newStatus]) {
-                    revertedState[newStatus] = revertedState[newStatus].filter(app => app.id !== jobId);
-                }
-                // Add back to old column if it doesn't exist there anymore
-                if (revertedState[oldStatus!] && !revertedState[oldStatus!].find(app => app.id === jobId)) {
-                     revertedState[oldStatus!].push(movedJob);
-                }
-                return revertedState;
-            });
             toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
+            
+            // Revert UI on failure by refetching
+            refetchJobs();
         }
     };
     
@@ -577,17 +557,19 @@ export default function JobsPage() {
                                                 title={stage}
                                                 isLoading={isLoading}
                                             >
-                                                {stageJobs.map((job: any) => (
-                                                    <JobKanban.Card
-                                                        key={job.id}
-                                                        job={job}
-                                                        isFavourite={false}
-                                                        onToggleFavourite={() => {}}
-                                                        hasApplied={false}
-                                                        isRecruiter={true}
-                                                        isDraggable={true}
-                                                    />
-                                                ))}
+                                                <SortableContext items={stageJobs.map(j => j.id)} strategy={verticalListSortingStrategy}>
+                                                    {stageJobs.map((job: any) => (
+                                                        <JobKanban.Card
+                                                            key={job.id}
+                                                            job={job}
+                                                            isFavourite={false}
+                                                            onToggleFavourite={() => {}}
+                                                            hasApplied={false}
+                                                            isRecruiter={true}
+                                                            isDraggable={true}
+                                                        />
+                                                    ))}
+                                                </SortableContext>
                                             </JobKanban.Column>
                                         );
                                     })}
