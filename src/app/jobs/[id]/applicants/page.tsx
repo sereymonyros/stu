@@ -5,10 +5,9 @@
 import { useMemo, useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { doc, collection, query, updateDoc } from 'firebase/firestore';
+import { doc, collection, query } from 'firebase/firestore';
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Briefcase } from 'lucide-react';
 import Link from 'next/link';
@@ -81,26 +80,37 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         
-        if (!over || active.id === over.id || !firestore || !applications) {
+        if (!over || active.id === over.id) {
             return;
         }
         
         const applicationId = active.id as string;
         const newStatus = over.id as string;
         
-        const application = applications.find(a => a.id === applicationId);
-        if (!application || application.status === newStatus) {
-            return;
+        let movedApplicant: any;
+        let oldStatus: string = '';
+
+        // Find the applicant and their original status
+        for (const status in applicantsByStatus) {
+            const applicant = applicantsByStatus[status].find(app => app.id === applicationId);
+            if (applicant) {
+                movedApplicant = applicant;
+                oldStatus = status;
+                break;
+            }
         }
         
-        const oldStatus = application.status;
+        if (!movedApplicant || oldStatus === newStatus) {
+            return;
+        }
+
         // Optimistically update UI
         setApplicantsByStatus(prev => {
             const newBoardState = { ...prev };
             // Remove from old column
             newBoardState[oldStatus] = newBoardState[oldStatus]?.filter(app => app.id !== applicationId);
             // Add to new column
-            const updatedApp = { ...application, status: newStatus };
+            const updatedApp = { ...movedApplicant, status: newStatus };
             if (!newBoardState[newStatus]) newBoardState[newStatus] = [];
             newBoardState[newStatus].push(updatedApp);
             return newBoardState;
@@ -110,15 +120,14 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         try {
              await updateApplicationStatus({
                 jobId: finalJobId,
-                applicationId: application.id,
-                applicantId: application.applicantId,
+                applicationId: movedApplicant.id,
+                applicantId: movedApplicant.applicantId,
                 newStatus: newStatus,
              });
 
             toast({ title: 'Status Updated', description: `Applicant status moved to ${newStatus}.` });
 
-            // Refetch data to ensure UI is in sync with the backend after successful update
-            refetchApplications();
+            // Refetch job data if status is 'accepted' to update the job's overall status
             if (newStatus === 'accepted') {
                 refetchJob();
             }
@@ -132,7 +141,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                  revertedState[newStatus] = revertedState[newStatus]?.filter(app => app.id !== applicationId);
                  // Add back to old column
                   if (!revertedState[oldStatus]) revertedState[oldStatus] = [];
-                 revertedState[oldStatus].push(application);
+                 revertedState[oldStatus].push(movedApplicant);
                  return revertedState;
              });
              toast({ variant: 'destructive', title: 'Update Failed', description: error.message || 'Could not update applicant status.' });
