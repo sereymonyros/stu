@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -21,9 +22,6 @@ export function Header() {
             </Button>
             <Button variant="ghost" asChild>
               <Link href="/jobs" className="header-link">Jobs</Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="/chat" className="header-link">Chat</Link>
             </Button>
           </nav>
         </div>
