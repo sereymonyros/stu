@@ -1,10 +1,11 @@
 rules_version = '2';
-// Allow all reads and writes for development purposes.
-// TODO: Secure these rules before deploying to production.
+
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Allow any authenticated user to read and write to any document.
+    // This is for development purposes to avoid permission errors.
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null;
     }
   }
 }
