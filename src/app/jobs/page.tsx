@@ -84,7 +84,7 @@ function JobsPageContent() {
     }, [firestore, user]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
-    const isRecruiter = userProfile?.userType === 'recruiter';
+    const isRecruiter = !isProfileLoading && userProfile?.userType === 'recruiter';
     
     // --- Dynamic Filter Options ---
     const { companyNames, locations, jobTypes, maxSalary } = useMemo(() => {
@@ -333,36 +333,41 @@ function JobsPageContent() {
         if (!over || !active) return;
         
         const jobId = active.id as string;
-        const oldStatus = active.data.current?.sortable.containerId as string;
         const newStatus = over.id as string;
+        
+        let oldStatus: string | undefined;
 
-        if (oldStatus === newStatus) {
+        // Find the job and its old status from the current state
+        let movedJob: any;
+        for (const status in jobsByStatus) {
+            const job = jobsByStatus[status].find(j => j.id === jobId);
+            if (job) {
+                oldStatus = status;
+                movedJob = job;
+                break;
+            }
+        }
+        
+        if (!oldStatus || oldStatus === newStatus) {
             return;
         }
 
-        let movedJob: any;
         // Optimistic UI update
         setJobsByStatus((prev) => {
             const newBoardState = { ...prev };
-            const oldColumn = newBoardState[oldStatus] || [];
             
-            const jobIndex = oldColumn.findIndex((job) => job.id === jobId);
-            if (jobIndex === -1) return prev; // Should not happen
+            // Remove from old column
+            newBoardState[oldStatus!] = newBoardState[oldStatus!].filter(j => j.id !== jobId);
             
-            [movedJob] = oldColumn.splice(jobIndex, 1);
-            
-            const newColumn = newBoardState[newStatus] || [];
-            newColumn.push({ ...movedJob, status: newStatus });
-            
-            newBoardState[oldStatus] = oldColumn;
-            newBoardState[newStatus] = newColumn;
+            // Add to new column
+            newBoardState[newStatus] = [...(newBoardState[newStatus] || []), { ...movedJob, status: newStatus }];
             
             return newBoardState;
         });
         
         // Call server-side flow
         try {
-            await updateJobStatus({ jobId: jobId, newStatus: newStatus as any });
+            await updateJobStatus({ jobId, newStatus: newStatus as any });
             toast({ title: 'Job Status Updated', description: `Job moved to ${newStatus}.` });
         } catch (error: any) {
             console.error("Failed to update job status:", error);
@@ -372,10 +377,10 @@ function JobsPageContent() {
              setJobsByStatus((prev) => {
                  const revertedState = { ...prev };
                  // Remove from new column
-                 revertedState[newStatus] = revertedState[newStatus]?.filter(job => job.id !== jobId);
+                 revertedState[newStatus] = revertedState[newStatus]?.filter(j => j.id !== jobId);
                  // Add back to old column if it doesn't exist
-                 if (movedJob && !revertedState[oldStatus]?.find(job => job.id === jobId)) {
-                     revertedState[oldStatus].push(movedJob);
+                 if (movedJob && !revertedState[oldStatus!]?.find(j => j.id === jobId)) {
+                     revertedState[oldStatus!].push(movedJob);
                  }
                  return revertedState;
              });
@@ -568,6 +573,7 @@ function JobsPageContent() {
                                                 key={stage}
                                                 id={stage}
                                                 title={stage}
+                                                jobs={stageJobs}
                                                 isLoading={isLoading}
                                             >
                                                 {stageJobs.map((job: any) => (

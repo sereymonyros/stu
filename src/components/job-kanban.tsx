@@ -118,30 +118,30 @@ function JobCard({
     
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-            <Card className={cn(
-                "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
-                isDraggable ? "mb-2 bg-card" : "",
-                hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
-                isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
-            )}>
-               <div {...(isDraggable ? listeners : {})}>
-                    {cardContent}
-                </div>
+            <Card 
+                className={cn(
+                    "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
+                    isDraggable ? "mb-2 bg-card" : "",
+                    hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
+                    isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
+                )}
+                {...(isDraggable ? listeners : {})}
+            >
+               {cardContent}
             </Card>
         </div>
     )
 }
 
-function Column({ id, title, children, isLoading }: { id: string, title: string, children: React.ReactNode, isLoading: boolean }) {
+function Column({ id, title, children, jobs, isLoading }: { id: string, title: string, children: React.ReactNode, jobs: any[], isLoading: boolean }) {
     const { setNodeRef, isOver } = useDroppable({ id });
+    const jobIds = useMemo(() => jobs.map(j => j.id), [jobs]);
 
     const titleColors: { [key: string]: string } = {
         Available: 'border-blue-500',
         Offering: 'border-purple-500',
         Closed: 'border-red-500',
     };
-
-    const jobs = React.Children.toArray(children);
 
     return (
         <div className="w-72 flex-shrink-0">
@@ -159,7 +159,7 @@ function Column({ id, title, children, isLoading }: { id: string, title: string,
                              <Skeleton className="h-24 w-full" />
                         </div>
                     ) : (
-                        <SortableContext items={jobs.map(c => (c as React.ReactElement).key as string)} strategy={verticalListSortingStrategy}>
+                        <SortableContext items={jobIds} strategy={verticalListSortingStrategy}>
                             {children}
                         </SortableContext>
                     )}
