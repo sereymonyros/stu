@@ -80,8 +80,8 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         jobType: 'Full-time',
         status: 'Available',
         description: '',
-        salaryMin: undefined,
-        salaryMax: undefined,
+        salaryMin: '' as any,
+        salaryMax: '' as any,
     },
   });
 
@@ -94,8 +94,8 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         jobType: job.jobType,
         status: job.status || 'Available',
         description: job.description,
-        salaryMin: job.salaryMin,
-        salaryMax: job.salaryMax,
+        salaryMin: job.salaryMin || ('' as any),
+        salaryMax: job.salaryMax || ('' as any),
       });
     }
   }, [job, form]);

@@ -75,8 +75,8 @@ export default function NewJobPage() {
       location: '',
       jobType: 'Full-time',
       description: '',
-      salaryMin: undefined,
-      salaryMax: undefined,
+      salaryMin: '' as any,
+      salaryMax: '' as any,
     },
   });
 
