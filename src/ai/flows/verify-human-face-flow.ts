@@ -28,7 +28,7 @@ export async function verifyHumanFace(input: VerifyHumanFaceInput): Promise<Veri
 
 const prompt = ai.definePrompt({
   name: 'verifyHumanFacePrompt',
-  model: 'gemini-1.5-flash',
+  model: 'googleai/gemini-2.5-flash',
   input: { schema: VerifyHumanFaceInputSchema },
   output: { schema: VerifyHumanFaceOutputSchema },
   prompt: `You are an AI security expert responsible for verifying user profile pictures.
