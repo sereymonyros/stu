@@ -30,11 +30,30 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 
 
 function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; }) {
     const { user } = useUser();
     const isOwner = user && user.uid === job.recruiterId;
+
+    const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+    }
+
+    const salaryDisplay = useMemo(() => {
+        if (job.salaryMin && job.salaryMax) {
+            return `${formatCurrency(job.salaryMin)} - ${formatCurrency(job.salaryMax)}`;
+        }
+        if (job.salaryMin) {
+            return `From ${formatCurrency(job.salaryMin)}`;
+        }
+        if (job.salaryMax) {
+            return `Up to ${formatCurrency(job.salaryMax)}`;
+        }
+        return null;
+    }, [job.salaryMin, job.salaryMax]);
+
 
     return (
         <Card className={cn(
@@ -68,7 +87,7 @@ function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any
                         <Building className="h-4 w-4" /> {job.companyName}
                     </Link>
                     <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {job.location}</div>
-                    {job.salary && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> {job.salary}</div>}
+                    {salaryDisplay && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                 </div>
             </CardHeader>
             <CardContent className="flex-grow">
@@ -126,6 +145,7 @@ export default function JobsPage() {
     const [selectedLocations, setSelectedLocations] = useState<string[]>(searchParams.getAll('location') || []);
     const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>(searchParams.getAll('jobType') || []);
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(searchParams.get('favorites') === 'true');
+    const [salaryRange, setSalaryRange] = useState<[number, number] | null>(null);
 
     // --- Dialog State ---
     const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
@@ -140,10 +160,14 @@ export default function JobsPage() {
         selectedLocations.forEach(l => params.append('location', l));
         selectedJobTypes.forEach(t => params.append('jobType', t));
         if (showFavoritesOnly) params.set('favorites', 'true');
+        if (salaryRange) {
+            params.set('salaryMin', salaryRange[0].toString());
+            params.set('salaryMax', salaryRange[1].toString());
+        }
         
         // This will update the URL without reloading the page
         router.replace(`/jobs?${params.toString()}`);
-    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, router]);
+    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, router]);
 
 
     // --- Data Fetching ---
@@ -176,22 +200,35 @@ export default function JobsPage() {
     const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
 
     // --- Dynamic Filter Options ---
-    const { companyNames, locations, jobTypes } = useMemo(() => {
-        if (!jobs) return { companyNames: [], locations: [], jobTypes: [] };
+    const { companyNames, locations, jobTypes, maxSalary } = useMemo(() => {
+        if (!jobs) return { companyNames: [], locations: [], jobTypes: [], maxSalary: 150000 };
         const companies = new Set<string>();
         const locs = new Set<string>();
         const types = new Set<string>();
+        let maxSal = 0;
         jobs.forEach(job => {
             if (job.companyName) companies.add(job.companyName);
             if (job.location) locs.add(job.location);
             if (job.jobType) types.add(job.jobType);
+            if (job.salaryMax > maxSal) maxSal = job.salaryMax;
         });
         return {
             companyNames: Array.from(companies).sort(),
             locations: Array.from(locs).sort(),
             jobTypes: Array.from(types).sort(),
+            maxSalary: maxSal > 0 ? maxSal : 150000,
         };
     }, [jobs]);
+
+    useEffect(() => {
+        const min = searchParams.get('salaryMin');
+        const max = searchParams.get('salaryMax');
+        if (min && max) {
+            setSalaryRange([parseInt(min), parseInt(max)]);
+        } else {
+            setSalaryRange([0, maxSalary]);
+        }
+    }, [maxSalary, searchParams]);
 
     // --- Toggle Handlers ---
     const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
@@ -204,9 +241,10 @@ export default function JobsPage() {
         setSelectedLocations([]);
         setSelectedJobTypes([]);
         setShowFavoritesOnly(false);
+        setSalaryRange([0, maxSalary]);
     };
 
-    const hasActiveFilters = [searchQuery, ...selectedCompanies, ...selectedLocations, ...selectedJobTypes, showFavoritesOnly].some(Boolean);
+    const hasActiveFilters = [searchQuery, ...selectedCompanies, ...selectedLocations, ...selectedJobTypes, showFavoritesOnly].some(Boolean) || (salaryRange && (salaryRange[0] > 0 || salaryRange[1] < maxSalary));
 
     // --- Toggle Favourite ---
     const handleToggleFavourite = async (jobId: string, isCurrentlyFavourite: boolean) => {
@@ -244,7 +282,6 @@ export default function JobsPage() {
 
         setIsSaving(true);
         try {
-            // Explicitly create a doc reference with a new ID
             const newSearchDocRef = doc(collection(firestore, `users/${user.uid}/savedSearches`));
 
             const searchData = {
@@ -259,7 +296,6 @@ export default function JobsPage() {
                 createdAt: serverTimestamp(),
             };
             
-            // Use setDoc with the explicit reference
             await setDoc(newSearchDocRef, searchData);
 
             toast({ title: "Search Saved!", description: `"${savedSearchName}" has been added to your dashboard.`});
@@ -303,8 +339,21 @@ export default function JobsPage() {
         if (showFavoritesOnly) {
             filtered = filtered.filter(job => favouriteJobIds.has(job.id));
         }
+        // 3. Salary filter
+        if (salaryRange) {
+            filtered = filtered.filter(job => {
+                const jobMin = job.salaryMin ?? 0;
+                const jobMax = job.salaryMax ?? Infinity;
+                const filterMin = salaryRange[0];
+                const filterMax = salaryRange[1];
 
-        // 3. Sort for authenticated users
+                // The job's salary range must overlap with the filter's range
+                return Math.max(jobMin, filterMin) <= Math.min(jobMax, filterMax);
+            });
+        }
+
+
+        // 4. Sort for authenticated users
         if (!user) return filtered;
 
         return filtered.sort((a, b) => {
@@ -312,17 +361,16 @@ export default function JobsPage() {
             const bHasApplied = appliedJobIds.has(b.id);
             
             if (aHasApplied === bHasApplied) {
-                // If statuses are same, sort by creation date (newest first)
                 const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (new Date(a.createdAt)).getTime();
                 const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (new Date(b.createdAt)).getTime();
                 return dateB - dateA;
             }
             return aHasApplied ? 1 : -1;
         });
-    }, [jobs, user, appliedJobIds, searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, favouriteJobIds]);
+    }, [jobs, user, appliedJobIds, searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, favouriteJobIds, salaryRange]);
 
 
-    const isLoading = isUserLoading || areJobsLoading || isProfileLoading || areFavouritesLoading || areApplicationsLoading;
+    const isLoading = isUserLoading || areJobsLoading || isProfileLoading || areFavouritesLoading || areApplicationsLoading || !salaryRange;
     const isRecruiter = userProfile?.userType === 'recruiter';
 
     return (
@@ -343,8 +391,8 @@ export default function JobsPage() {
                     </div>
                     
                     <Card className="p-4 mb-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                             <div className="relative md:col-span-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                             <div className="relative md:col-span-2 lg:col-span-3">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                 <Input 
                                     type="search"
@@ -392,18 +440,6 @@ export default function JobsPage() {
                                         </DialogContent>
                                     </Dialog>
                                 )}
-                                {user && !isRecruiter && (
-                                     <Toggle
-                                        size="sm"
-                                        variant="outline"
-                                        pressed={showFavoritesOnly}
-                                        onPressedChange={setShowFavoritesOnly}
-                                        className="h-10 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                                    >
-                                        <Heart className="mr-2 h-4 w-4" />
-                                        My Favourites
-                                    </Toggle>
-                                )}
                                 {hasActiveFilters && (
                                     <Button variant="ghost" onClick={clearAllFilters}>
                                         <FilterX className="mr-2 h-4 w-4" />
@@ -415,11 +451,44 @@ export default function JobsPage() {
 
                         <Separator className="mb-4" />
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
                             <FilterGroup title="Company" options={companyNames} selected={selectedCompanies} onToggle={(val) => toggleFilter(setSelectedCompanies, val)} />
                             <FilterGroup title="Location" options={locations} selected={selectedLocations} onToggle={(val) => toggleFilter(setSelectedLocations, val)} />
                             <FilterGroup title="Job Type" options={jobTypes} selected={selectedJobTypes} onToggle={(val) => toggleFilter(setSelectedJobTypes, val)} />
+                            
+                            <div>
+                                <h3 className="text-sm font-semibold mb-2">Salary Range</h3>
+                                 {salaryRange && (
+                                     <>
+                                        <Slider
+                                            value={[salaryRange[0], salaryRange[1]]}
+                                            onValueChange={(value) => setSalaryRange(value as [number, number])}
+                                            max={maxSalary}
+                                            step={1000}
+                                            className="my-4"
+                                        />
+                                        <div className="flex justify-between text-xs text-muted-foreground">
+                                            <span>${salaryRange[0].toLocaleString()}</span>
+                                            <span>${salaryRange[1].toLocaleString()}</span>
+                                        </div>
+                                     </>
+                                 )}
+                            </div>
                         </div>
+                        {user && !isRecruiter && (
+                            <div className="mt-4">
+                                <Toggle
+                                    size="sm"
+                                    variant="outline"
+                                    pressed={showFavoritesOnly}
+                                    onPressedChange={setShowFavoritesOnly}
+                                    className="h-10 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                >
+                                    <Heart className="mr-2 h-4 w-4" />
+                                    Show My Favourites Only
+                                </Toggle>
+                            </div>
+                        )}
                     </Card>
 
 

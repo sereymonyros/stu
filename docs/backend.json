@@ -200,9 +200,13 @@
           "type": "string",
           "description": "The location of the job."
         },
-        "salary": {
-          "type": "string",
-          "description": "The salary or salary range for the job."
+        "salaryMin": {
+          "type": "number",
+          "description": "The minimum salary for the job."
+        },
+        "salaryMax": {
+          "type": "number",
+          "description": "The maximum salary for the job."
         },
         "jobType": {
           "type": "string",

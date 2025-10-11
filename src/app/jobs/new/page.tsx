@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -38,8 +40,18 @@ const jobSchema = z.object({
   location: z.string().min(2, 'Location is required.'),
   jobType: z.enum(['Full-time', 'Part-time', 'Contract', 'Internship']),
   description: z.string().optional(),
-  salary: z.string().optional(),
+  salaryMin: z.coerce.number().optional(),
+  salaryMax: z.coerce.number().optional(),
+}).refine(data => {
+    if (data.salaryMin && data.salaryMax) {
+        return data.salaryMax >= data.salaryMin;
+    }
+    return true;
+}, {
+    message: "Maximum salary must be greater than or equal to minimum salary.",
+    path: ["salaryMax"],
 });
+
 
 export default function NewJobPage() {
   const firestore = useFirestore();
@@ -63,7 +75,8 @@ export default function NewJobPage() {
       location: '',
       jobType: 'Full-time',
       description: '',
-      salary: '',
+      salaryMin: undefined,
+      salaryMax: undefined,
     },
   });
 
@@ -91,6 +104,8 @@ export default function NewJobPage() {
 
     const jobData = {
       ...values,
+      salaryMin: values.salaryMin || null,
+      salaryMax: values.salaryMax || null,
       recruiterId: user.uid,
       createdAt: serverTimestamp(),
       status: 'Available',
@@ -148,9 +163,17 @@ export default function NewJobPage() {
                     <FormField control={form.control} name="jobType" render={({ field }) => (
                     <FormItem><FormLabel>Job Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select employment type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Full-time">Full-time</SelectItem><SelectItem value="Part-time">Part-time</SelectItem><SelectItem value="Contract">Contract</SelectItem><SelectItem value="Internship">Internship</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                     )} />
-                    <FormField control={form.control} name="salary" render={({ field }) => (
-                    <FormItem><FormLabel>Salary (Optional)</FormLabel><FormControl><Input placeholder="e.g., $1000 - $1500 / month" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField control={form.control} name="salaryMin" render={({ field }) => (
+                        <FormItem><FormLabel>Minimum Salary (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50000" {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={form.control} name="salaryMax" render={({ field }) => (
+                        <FormItem><FormLabel>Maximum Salary (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g., 70000" {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                    </div>
+                    <FormDescription>Enter salary as annual numbers (e.g., 60000 for $60,000/year).</FormDescription>
+
                     <FormField control={form.control} name="description" render={({ field }) => (
                     <FormItem><FormLabel>Job Description</FormLabel><FormControl><Textarea placeholder="Describe the role, responsibilities, and requirements..." className="min-h-[150px]" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />

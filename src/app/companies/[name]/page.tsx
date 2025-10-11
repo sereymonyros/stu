@@ -17,15 +17,33 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+}
+
 // This is the same JobCard from the jobs page, slightly adapted.
 function JobCard({ job }: { job: any }) {
+
+     const salaryDisplay = useMemo(() => {
+        if (job.salaryMin && job.salaryMax) {
+            return `${formatCurrency(job.salaryMin)} - ${formatCurrency(job.salaryMax)}`;
+        }
+        if (job.salaryMin) {
+            return `From ${formatCurrency(job.salaryMin)}`;
+        }
+        if (job.salaryMax) {
+            return `Up to ${formatCurrency(job.salaryMax)}`;
+        }
+        return null;
+    }, [job.salaryMin, job.salaryMax]);
+
     return (
         <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200">
             <CardHeader>
                 <CardTitle className="text-xl font-bold">{job.title}</CardTitle>
                 <div className="flex flex-col text-sm text-muted-foreground gap-1 pt-1">
                     <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {job.location}</div>
-                    {job.salary && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> {job.salary}</div>}
+                    {salaryDisplay && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                 </div>
             </CardHeader>
             <CardContent className="flex-grow">
