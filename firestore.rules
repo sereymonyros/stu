@@ -1,9 +1,15 @@
+// ======================================================================
+// FORCE REDEPLOYMENT: This comment is to ensure that the file system
+// detects a change and deploys these rules to the Firebase backend.
+// We are setting permissive rules for development.
+// ======================================================================
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow any authenticated user to read and write to any document.
-    // This is for development purposes to avoid permission errors.
+
+    // Development Rule: Allow any authenticated user to read/write anywhere.
+    // This removes all security rule permission errors for logged-in users
+    // to speed up development. We will secure this before production.
     match /{document=**} {
       allow read, write: if request.auth != null;
     }
