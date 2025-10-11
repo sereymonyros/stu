@@ -30,9 +30,10 @@ import {
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
-import { JobKanban } from '@/components/job-kanban';
+import { Board as JobKanban } from '@/components/job-kanban';
 import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
 const FilterGroup = ({ title, options, selected, onToggle }: { title: string; options: string[]; selected: string[]; onToggle: (option: string) => void; }) => {
     if (!options || options.length === 0) return null;
@@ -329,7 +330,7 @@ export default function JobsPage() {
     const handleJobDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         
-        if (!over) return;
+        if (!over || !active) return;
         
         const jobId = active.id as string;
         const oldStatus = active.data.current?.sortable.containerId as string;
