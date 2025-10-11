@@ -23,11 +23,11 @@ export function initializeFirebaseAdmin() {
         });
     } else {
         // For local development, we require a Base64-encoded service account key.
-        const serviceAccountString = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        const serviceAccountString = process.env.NEXT_PUBLIC_GOOGLE_APPLICATION_CREDENTIALS;
         if (!serviceAccountString) {
             // Updated to be more descriptive and actionable for the developer.
             throw new Error(
-                'LOCAL DEV ERROR: The GOOGLE_APPLICATION_CREDENTIALS environment variable is not set. This is required for server-side flows that use the Firebase Admin SDK. Please go to your Firebase project settings, generate a new private key (service account), Base64-encode it, and add it to your .env file. See the README or setup documentation for more details.'
+                'LOCAL DEV ERROR: The NEXT_PUBLIC_GOOGLE_APPLICATION_CREDENTIALS environment variable is not set. This is required for server-side flows that use the Firebase Admin SDK. Please go to your Firebase project settings, generate a new private key (service account), Base64-encode it, and add it to your .env file. See the README or setup documentation for more details.'
             );
         }
         try {
@@ -40,7 +40,7 @@ export function initializeFirebaseAdmin() {
             });
         } catch (e: any) {
             throw new Error(
-              `Failed to parse GOOGLE_APPLICATION_CREDENTIALS for local dev. Make sure it is a valid Base64-encoded JSON string. Original error: ${e.message}`
+              `Failed to parse NEXT_PUBLIC_GOOGLE_APPLICATION_CREDENTIALS for local dev. Make sure it is a valid Base64-encoded JSON string. Original error: ${e.message}`
             );
         }
     }

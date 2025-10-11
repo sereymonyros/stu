@@ -98,7 +98,7 @@ export default function NewJobPage() {
 
   const onSubmit = (values: z.infer<typeof jobSchema>) => {
     setIsSubmitting(true);
-    if (!user) {
+    if (!user || !userProfile) {
       toast({ variant: 'destructive', title: 'Not authenticated' });
       setIsSubmitting(false);
       return;
@@ -114,6 +114,7 @@ export default function NewJobPage() {
       salaryMin: values.salaryMin || null,
       salaryMax: values.salaryMax || null,
       recruiterId: user.uid,
+      recruiterDisplayName: userProfile.displayName,
       createdAt: serverTimestamp(),
       status: 'Available',
     };
