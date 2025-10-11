@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
@@ -178,16 +177,16 @@ export default function DashboardPage() {
 
     // For Recruiters: Fetch jobs they created
     const postedJobsQuery = useMemo(() => {
-        if (!firestore || !shouldRunRoleQueries || !isRecruiter) return null;
+        if (!firestore || !user || !shouldRunRoleQueries || !isRecruiter) return null;
         return query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid));
-    }, [firestore, user?.uid, isRecruiter, shouldRunRoleQueries]);
+    }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
     const { data: postedJobs, isLoading: isPostedJobsLoading } = useCollection(postedJobsQuery);
 
     // For Standard Users: Fetch their applications (which now include status)
     const applicationsQuery = useMemo(() => {
-        if (!firestore || !shouldRunRoleQueries || isRecruiter) return null;
+        if (!firestore || !user || !shouldRunRoleQueries || isRecruiter) return null;
         return query(collection(firestore, `users/${user.uid}/applications`));
-    }, [firestore, user?.uid, isRecruiter, shouldRunRoleQueries]);
+    }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
     const { data: applications, isLoading: areApplicationsLoading } = useCollection(applicationsQuery);
     
     // Create a map of jobId to application status
@@ -202,7 +201,7 @@ export default function DashboardPage() {
 
     // For Standard Users: Fetch the details of the jobs they applied for
     const appliedJobsQuery = useMemo(() => {
-        if (!firestore || areApplicationsLoading || !applications || appliedJobIds.length === 0) {
+        if (areApplicationsLoading || !applications || appliedJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
@@ -211,9 +210,9 @@ export default function DashboardPage() {
     
     // For Standard Users: Fetch their favorite jobs
     const favouriteJobsQuery = useMemo(() => {
-        if (!firestore || !shouldRunRoleQueries || isRecruiter) return null;
+        if (!firestore || !user || !shouldRunRoleQueries || isRecruiter) return null;
         return query(collection(firestore, `users/${user.uid}/favouriteJobs`));
-    }, [firestore, user?.uid, isRecruiter, shouldRunRoleQueries]);
+    }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
     const { data: favouriteJobsRefs, isLoading: areFavouritesLoading } = useCollection(favouriteJobsQuery);
 
     const favouriteJobIds = useMemo(() => {
@@ -229,7 +228,7 @@ export default function DashboardPage() {
 
 
     const favouriteJobsDetailsQuery = useMemo(() => {
-        if (!firestore || areFavouritesLoading || !favouriteJobsRefs || filteredFavouriteJobIds.length === 0) {
+        if (areFavouritesLoading || !favouriteJobsRefs || filteredFavouriteJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', filteredFavouriteJobIds));
@@ -238,9 +237,9 @@ export default function DashboardPage() {
 
     // For Standard Users: Fetch their saved searches
     const savedSearchesQuery = useMemo(() => {
-        if (!firestore || !shouldRunRoleQueries || isRecruiter) return null;
+        if (!firestore || !user || !shouldRunRoleQueries || isRecruiter) return null;
         return query(collection(firestore, `users/${user.uid}/savedSearches`));
-    }, [firestore, user?.uid, isRecruiter, shouldRunRoleQueries]);
+    }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
     const { data: savedSearches, isLoading: areSavedSearchesLoading } = useCollection(savedSearchesQuery);
 
     // --- Saved Search Handlers ---
@@ -249,9 +248,9 @@ export default function DashboardPage() {
         if (savedSearch.searchQuery) {
             params.set('q', savedSearch.searchQuery);
         }
-        savedSearch.filters.companyNames?.forEach((c: string) => params.append('company', c));
-        savedSearch.filters.locations?.forEach((l: string) => params.append('location', l));
-        savedSearch.filters.jobTypes?.forEach((t: string) => params.append('jobType', t));
+        savedSearch.filters?.companyNames?.forEach((c: string) => params.append('company', c));
+        savedSearch.filters?.locations?.forEach((l: string) => params.append('location', l));
+        savedSearch.filters?.jobTypes?.forEach((t: string) => params.append('jobType', t));
         router.push(`/jobs?${params.toString()}`);
     };
 
@@ -412,3 +411,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    
