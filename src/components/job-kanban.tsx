@@ -4,18 +4,40 @@
 import { useMemo } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useDroppable } from '@dnd-kit/core';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useDroppable, useDraggable } from '@dnd-kit/core';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Building, DollarSign, Edit, MapPin, Users } from 'lucide-react';
+import { Briefcase, Building, DollarSign, Edit, MapPin, Users, Heart, Pencil } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { Badge } from './ui/badge';
 import Link from 'next/link';
+import { useUser } from '@/firebase';
 
-function JobCard({ job }: { job: any }) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: job.id });
+function JobCard({ 
+    job, 
+    isFavourite, 
+    onToggleFavourite, 
+    hasApplied, 
+    isRecruiter, 
+    isDraggable 
+}: { 
+    job: any; 
+    isFavourite: boolean; 
+    onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; 
+    hasApplied: boolean; 
+    isRecruiter: boolean;
+    isDraggable: boolean;
+}) {
+    const { user } = useUser();
+    const isOwner = user && user.uid === job.recruiterId;
+
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+        id: job.id,
+        disabled: !isDraggable,
+    });
+    
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
@@ -40,33 +62,78 @@ function JobCard({ job }: { job: any }) {
         return null;
     }, [job.salaryMin, job.salaryMax]);
 
-    return (
-        <div ref={setNodeRef} style={style} {...attributes}>
-            <Card className={cn("mb-2 bg-card hover:bg-muted/50 cursor-grab", isDragging && "cursor-grabbing")}>
-                <CardContent className="p-3" {...listeners}>
-                    <div className="flex items-start justify-between">
-                         <p className="font-semibold text-sm leading-tight">{job.title}</p>
-                         <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+    const cardContent = (
+        <>
+            <CardHeader>
+                <div className="flex justify-between items-start gap-2">
+                    <CardTitle className="text-xl font-bold">{job.title}</CardTitle>
+                    {user && !isOwner && !isRecruiter && (
+                         <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onToggleFavourite(job.id, isFavourite)}
+                            className="text-muted-foreground hover:text-red-500"
+                            disabled={hasApplied}
+                        >
+                            <Heart className={cn("h-6 w-6", isFavourite && "fill-red-500 text-red-500")} />
+                        </Button>
+                    )}
+                     {isOwner && (
+                        <Button asChild variant="ghost" size="icon" disabled={hasApplied}>
                             <Link href={`/jobs/${job.id}/edit`}>
-                                <Edit className="h-4 w-4" />
+                                <Pencil className="h-5 w-5" />
                             </Link>
                         </Button>
-                    </div>
-                    <div className="flex flex-col text-xs text-muted-foreground gap-1 pt-1">
-                        <div className="flex items-center gap-2"><Building className="h-3 w-3" /> {job.companyName}</div>
-                        <div className="flex items-center gap-2"><MapPin className="h-3 w-3" /> {job.location}</div>
-                        {salaryDisplay && <div className="flex items-center gap-2"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>}
-                    </div>
-                     <div className="flex flex-wrap gap-2 mt-2">
-                        <Badge variant="secondary" className="text-xs">{job.jobType}</Badge>
-                    </div>
-                     <Button variant="outline" size="sm" asChild className="w-full mt-3 text-xs">
-                        <Link href={`/jobs/${job.id}/applicants`}><Users className="mr-2 h-3 w-3" /> View Applicants</Link>
+                    )}
+                </div>
+                <div className="flex flex-col text-sm text-muted-foreground gap-1 pt-1">
+                    <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="flex items-center gap-2 hover:underline">
+                        <Building className="h-4 w-4" /> {job.companyName}
+                    </Link>
+                    <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {job.location}</div>
+                    {salaryDisplay && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
+                </div>
+            </CardHeader>
+            <CardContent className="flex-grow">
+                <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary">{job.jobType}</Badge>
+                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
+                </div>
+            </CardContent>
+            <CardFooter>
+                 {hasApplied ? (
+                    <Button className="w-full" disabled>Applied</Button>
+                 ) : isRecruiter ? (
+                     <Button asChild variant="outline" className="w-full">
+                        <Link href={`/jobs/${job.id}/applicants`}><Users className="mr-2 h-4 w-4" />View Applicants</Link>
                     </Button>
-                </CardContent>
-            </Card>
-        </div>
+                 ) : (
+                    <Button asChild className="w-full">
+                        <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
+                    </Button>
+                 )}
+            </CardFooter>
+        </>
     );
+
+    if (isDraggable) {
+        return (
+            <div ref={setNodeRef} style={style} {...attributes}>
+                <Card className={cn("mb-2 bg-card hover:bg-muted/50 cursor-grab", isDragging && "cursor-grabbing")}>
+                    <div {...listeners}>{cardContent}</div>
+                </Card>
+            </div>
+        );
+    }
+    
+    return (
+        <Card className={cn(
+            "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
+            hasApplied && "bg-muted/30 opacity-60 hover:shadow-none"
+        )}>
+           {cardContent}
+        </Card>
+    )
 }
 
 function Column({ id, title, children, jobs, isLoading }: { id: string, title: string, children: React.ReactNode, jobs: any[], isLoading: boolean }) {

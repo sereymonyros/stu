@@ -34,84 +34,6 @@ import { Board as JobKanban } from '@/components/job-kanban';
 import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
-
-function JobCard({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; isRecruiter: boolean; }) {
-    const { user } = useUser();
-    const isOwner = user && user.uid === job.recruiterId;
-
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
-    }
-
-    const salaryDisplay = useMemo(() => {
-        if (job.salaryMin && job.salaryMax) {
-            return `${formatCurrency(job.salaryMin)} - ${formatCurrency(job.salaryMax)}`;
-        }
-        if (job.salaryMin) {
-            return `From ${formatCurrency(job.salaryMin)}`;
-        }
-        if (job.salaryMax) {
-            return `Up to ${formatCurrency(job.salaryMax)}`;
-        }
-        return null;
-    }, [job.salaryMin, job.salaryMax]);
-
-
-    return (
-        <Card className={cn(
-            "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
-            hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
-            isDragging && "cursor-grabbing"
-        )}>
-            <CardHeader>
-                <div className="flex justify-between items-start gap-2">
-                    <CardTitle className="text-xl font-bold">{job.title}</CardTitle>
-                    {user && !isOwner && (
-                         <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onToggleFavourite(job.id, isFavourite)}
-                            className="text-muted-foreground hover:text-red-500"
-                            disabled={hasApplied}
-                        >
-                            <Heart className={cn("h-6 w-6", isFavourite && "fill-red-500 text-red-500")} />
-                        </Button>
-                    )}
-                     {isOwner && (
-                        <Button asChild variant="ghost" size="icon" disabled={hasApplied}>
-                            <Link href={`/jobs/${job.id}/edit`}>
-                                <Pencil className="h-5 w-5" />
-                            </Link>
-                        </Button>
-                    )}
-                </div>
-                <div className="flex flex-col text-sm text-muted-foreground gap-1 pt-1">
-                    <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="flex items-center gap-2 hover:underline">
-                        <Building className="h-4 w-4" /> {job.companyName}
-                    </Link>
-                    <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {job.location}</div>
-                    {salaryDisplay && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
-                </div>
-            </CardHeader>
-            <CardContent className="flex-grow">
-                <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">{job.jobType}</Badge>
-                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
-                </div>
-            </CardContent>
-            <CardFooter>
-                 {hasApplied ? (
-                    <Button className="w-full" disabled>Applied</Button>
-                 ) : (
-                    <Button asChild className="w-full">
-                        <Link href={`/jobs/${job.id}/apply`}>{isRecruiter ? 'View' : 'View & Apply'}</Link>
-                    </Button>
-                 )}
-            </CardFooter>
-        </Card>
-    );
-}
-
 const FilterGroup = ({ title, options, selected, onToggle }: { title: string; options: string[]; selected: string[]; onToggle: (option: string) => void; }) => {
     if (!options || options.length === 0) return null;
     return (
@@ -418,26 +340,25 @@ export default function JobsPage() {
         }
         
         let movedJob: any;
-        
-        // Find the job being moved
-        for (const status in jobsByStatus) {
-            const job = jobsByStatus[status].find(j => j.id === jobId);
-            if (job) {
-                movedJob = job;
-                break;
-            }
-        }
-        
-        if (!movedJob) return;
 
         // Optimistic UI update
         setJobsByStatus(prev => {
             const newState = { ...prev };
-            // Remove from old column
-            newState[oldStatus] = newState[oldStatus]?.filter(j => j.id !== jobId);
+            // Find and remove from old column
+            const oldColumn = newState[oldStatus];
+            if (!oldColumn) return prev;
+            
+            const jobIndex = oldColumn.findIndex(j => j.id === jobId);
+            if (jobIndex === -1) return prev;
+            
+            [movedJob] = oldColumn.splice(jobIndex, 1);
+            if (!movedJob) return prev;
+
             // Add to new column
-            if (!newState[newStatus]) newState[newStatus] = [];
-            newState[newStatus].push({ ...movedJob, status: newStatus });
+            const newColumn = newState[newStatus] || [];
+            newColumn.push({ ...movedJob, status: newStatus });
+            newState[newStatus] = newColumn;
+            
             return newState;
         });
         
@@ -608,13 +529,14 @@ export default function JobsPage() {
                             {!isLoading && filteredAndSortedJobs && filteredAndSortedJobs.length > 0 && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {filteredAndSortedJobs.map((job) => (
-                                        <JobCard 
+                                        <JobKanban.Card 
                                             key={job.id} 
                                             job={job}
                                             isFavourite={favouriteJobIds.has(job.id)}
                                             onToggleFavourite={handleToggleFavourite}
                                             hasApplied={appliedJobIds.has(job.id)}
                                             isRecruiter={isRecruiter}
+                                            isDraggable={false}
                                         />
                                     ))}
                                 </div>
@@ -652,6 +574,11 @@ export default function JobsPage() {
                                                     <JobKanban.Card
                                                         key={job.id}
                                                         job={job}
+                                                        isFavourite={false}
+                                                        onToggleFavourite={() => {}}
+                                                        hasApplied={false}
+                                                        isRecruiter={true}
+                                                        isDraggable={true}
                                                     />
                                                 ))}
                                             </JobKanban.Column>
