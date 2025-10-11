@@ -1,36 +1,46 @@
 /**
  * @file Firestore Security Rules
- * @description This ruleset enforces a strict user-ownership model for user profiles and associated data,
- * and a public-read, owner-write model for listings, jobs, and feedback. Chats and messages are secured
- * using a shared-access pattern based on the participants list.
+ * @description This ruleset enforces a strict user-ownership model for user profiles and related data,
+ *              and a public-read, owner-write model for listings and jobs. Chat access is restricted to
+ *              participants, and feedback is open to all authenticated users.
  *
  * Data Structure:
- * - User profiles and related data (applications, favorites, searches) are nested under /users/{userId}.
- * - Listings, jobs, chats, and feedback are stored in top-level collections.
- * - Applications are stored as subcollections of jobs.
- * - Messages are stored as subcollections of chats.
+ * - /users/{userId}: Stores user profile information, accessible only by the user.
+ * - /users/{userId}/applications/{applicationId}: Stores references to job applications, accessible only by the user.
+ * - /users/{userId}/favouriteJobs/{jobId}: Stores references to favorite jobs, accessible only by the user.
+ * - /users/{userId}/savedSearches/{searchId}: Stores saved job searches, accessible only by the user.
+ * - /listings/{listingId}: Stores listing data, publicly readable, but only the seller can modify.
+ * - /jobs/{jobId}: Stores job data, publicly readable, but only the recruiter can modify.
+ * - /jobs/{jobId}/applications/{applicationId}: Stores applications for a job, accessible to the applicant.
+ * - /chats/{chatId}: Stores chat session data, accessible only by participants.
+ * - /chats/{chatId}/messages/{messageId}: Stores messages within a chat session, accessible only by participants.
+ * - /feedbacks/{feedbackId}: Stores user feedback, accessible to all authenticated users.
  *
  * Key Security Decisions:
- * - Users can only read, create, update, and delete their own profile data.
- * - Listings and Jobs are publicly readable but only the owner (seller/recruiter) can modify them.
- * - Chats and messages are only accessible to participants.
- * - Listing isFavourite and Job isFavourite are client-side flags and not secured.
- * - Denormalization is used on chats to include listingTitle and participants for simpler rules.
+ * - User profiles are strictly private and only accessible by the authenticated user.
+ * - Listings and Jobs are publicly readable to maximize visibility but can only be created, updated, or deleted by their owners.
+ * - Chats are private and accessible only to the participants (buyer and seller).
+ * - Feedback is open to all authenticated users, allowing anyone to submit feedback.
+ *
+ * Denormalization for Authorization:
+ * - Listings and Jobs: Both include `sellerId` and `recruiterId` fields, respectively, to allow for owner-based write rules.
+ * - Chats: Include a `participants` array to enable efficient access control based on user IDs.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows users to read, create, update, and delete their own profile data.
+     * @description Secures user profiles, allowing only the owner to read and write their own profile.
      * @path /users/{userId}
-     * @allow (create) request.auth.uid == userId
-     * @allow (get, update, delete) request.auth.uid == userId
-     * @deny (create) request.auth.uid != userId
-     * @deny (get, update, delete) request.auth.uid != userId
-     * @principle Enforces document ownership for all operations.
+     * @allow (create, update, delete) if request.auth.uid == userId
+     * @allow (get, list) if request.auth.uid == userId
+     * @deny (create) if request.auth.uid != userId
+     * @deny (update, delete) if request.auth.uid != userId
+     * @principle Enforces document ownership for all operations on user profiles.
      */
     match /users/{userId} {
+      //function
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
@@ -38,173 +48,224 @@ service cloud.firestore {
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
-
       allow get: if isOwner(userId);
-      allow list: if false;
+      allow list: if isOwner(userId);
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
-
-      /**
-       * @description Allows a user to read, create, update, and delete their own job application references.
-       * @path /users/{userId}/applications/{applicationId}
-       * @allow (create) request.auth.uid == userId
-       * @allow (get, update, delete) request.auth.uid == userId
-       * @deny (create) request.auth.uid != userId
-       * @deny (get, update, delete) request.auth.uid != userId
-       * @principle Enforces document ownership for all operations.
-       */
-      match /applications/{applicationId} {
-        allow get: if isOwner(userId);
-        allow list: if false;
-        allow create: if isOwner(userId);
-        allow update: if isExistingOwner(userId);
-        allow delete: if isExistingOwner(userId);
-      }
-
-      /**
-       * @description Allows a user to read, create, update, and delete their own favourite job references.
-       * @path /users/{userId}/favouriteJobs/{jobId}
-       * @allow (create) request.auth.uid == userId
-       * @allow (get, update, delete) request.auth.uid == userId
-       * @deny (create) request.auth.uid != userId
-       * @deny (get, update, delete) request.auth.uid != userId
-       * @principle Enforces document ownership for all operations.
-       */
-      match /favouriteJobs/{jobId} {
-        allow get: if isOwner(userId);
-        allow list: if false;
-        allow create: if isOwner(userId);
-        allow update: if isExistingOwner(userId);
-        allow delete: if isExistingOwner(userId);
-      }
-
-      /**
-       * @description Allows a user to read, create, update, and delete their own saved job searches.
-       * @path /users/{userId}/savedSearches/{searchId}
-       * @allow (create) request.auth.uid == userId
-       * @allow (get, update, delete) request.auth.uid == userId
-       * @deny (create) request.auth.uid != userId
-       * @deny (get, update, delete) request.auth.uid != userId
-       * @principle Enforces document ownership for all operations.
-       */
-      match /savedSearches/{searchId} {
-        allow get: if isOwner(userId);
-        allow list: if false;
-        allow create: if isOwner(userId);
-        allow update: if isExistingOwner(userId);
-        allow delete: if isExistingOwner(userId);
-      }
     }
 
     /**
-     * @description Allows anyone to read listings, but only the seller can create, update, or delete them.
+     * @description Secures user application references, allowing only the owner to read and write their own application references.
+     * @path /users/{userId}/applications/{applicationId}
+     * @allow (create, update, delete) if request.auth.uid == userId
+     * @allow (get, list) if request.auth.uid == userId
+     * @deny (create) if request.auth.uid != userId
+     * @deny (update, delete) if request.auth.uid != userId
+     * @principle Enforces document ownership for all operations on user application references.
+     */
+    match /users/{userId}/applications/{applicationId} {
+        //function
+        function isOwner(userId) {
+          return request.auth.uid == userId;
+        }
+
+        function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+        }
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isExistingOwner(userId);
+        allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Secures user favorite job references, allowing only the owner to read and write their own favorite job references.
+     * @path /users/{userId}/favouriteJobs/{jobId}
+     * @allow (create, update, delete) if request.auth.uid == userId
+     * @allow (get, list) if request.auth.uid == userId
+     * @deny (create) if request.auth.uid != userId
+     * @deny (update, delete) if request.auth.uid != userId
+     * @principle Enforces document ownership for all operations on user favorite job references.
+     */
+    match /users/{userId}/favouriteJobs/{jobId} {
+        //function
+        function isOwner(userId) {
+          return request.auth.uid == userId;
+        }
+
+        function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+        }
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isExistingOwner(userId);
+        allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Secures user saved searches, allowing only the owner to read and write their own saved searches.
+     * @path /users/{userId}/savedSearches/{searchId}
+     * @allow (create, update, delete) if request.auth.uid == userId
+     * @allow (get, list) if request.auth.uid == userId
+     * @deny (create) if request.auth.uid != userId
+     * @deny (update, delete) if request.auth.uid != userId
+     * @principle Enforces document ownership for all operations on user saved searches.
+     */
+    match /users/{userId}/savedSearches/{searchId} {
+        //function
+        function isOwner(userId) {
+          return request.auth.uid == userId;
+        }
+
+        function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+        }
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isExistingOwner(userId);
+        allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows public read access to listings, but restricts write access to the seller only.
      * @path /listings/{listingId}
-     * @allow (get, list) if true
-     * @allow (create) request.auth.uid == request.resource.data.sellerId
-     * @allow (update, delete) request.auth.uid == resource.data.sellerId
-     * @deny (create) request.auth.uid != request.resource.data.sellerId
-     * @deny (update, delete) request.auth.uid != resource.data.sellerId
-     * @principle Public read, owner-only write.
+     * @allow get, list: if true
+     * @allow create: if request.resource.data.sellerId == request.auth.uid
+     * @allow update, delete: if resource.data.sellerId == request.auth.uid && resource != null
+     * @deny create: if request.resource.data.sellerId != request.auth.uid
+     * @deny update, delete: if resource.data.sellerId != request.auth.uid
+     * @principle Allows public listing visibility with owner-only write access.
      */
     match /listings/{listingId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if request.auth.uid == request.resource.data.sellerId;
-      allow update: if request.auth.uid == resource.data.sellerId;
-      allow delete: if request.auth.uid == resource.data.sellerId;
+      //function
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
+      allow update: if isSignedIn() && resource != null && resource.data.sellerId == request.auth.uid;
+      allow delete: if isSignedIn() && resource != null && resource.data.sellerId == request.auth.uid;
     }
 
     /**
-     * @description Allows anyone to read job postings, but only the recruiter can create, update, or delete them.
+     * @description Allows public read access to jobs, but restricts write access to the recruiter only.
      * @path /jobs/{jobId}
-     * @allow (get, list) if true
-     * @allow (create) request.auth.uid == request.resource.data.recruiterId
-     * @allow (update, delete) request.auth.uid == resource.data.recruiterId
-     * @deny (create) request.auth.uid != request.resource.data.recruiterId
-     * @deny (update, delete) request.auth.uid != request.resource.data.recruiterId
-     * @principle Public read, owner-only write.
+     * @allow get, list: if true
+     * @allow create: if request.resource.data.recruiterId == request.auth.uid
+     * @allow update, delete: if resource.data.recruiterId == request.auth.uid && resource != null
+     * @deny create: if request.resource.data.recruiterId != request.auth.uid
+     * @deny update, delete: if resource.data.recruiterId != request.auth.uid
+     * @principle Allows public job visibility with owner-only write access.
      */
     match /jobs/{jobId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if request.auth.uid == request.resource.data.recruiterId;
-      allow update: if request.auth.uid == resource.data.recruiterId;
-      allow delete: if request.auth.uid == resource.data.recruiterId;
-
-      /**
-       * @description Allows creation, retrieval, update, and deletion of job applications only by the applicant.
-       * @path /jobs/{jobId}/applications/{applicationId}
-       * @allow (create) request.auth.uid == request.resource.data.applicantId
-       * @allow (get, update, delete) request.auth.uid == resource.data.applicantId
-       * @deny (create) request.auth.uid != request.resource.data.applicantId
-       * @deny (get, update, delete) request.auth.uid != request.resource.data.applicantId
-       * @principle: Applications are owned by the user submitting them
-       */
-      match /applications/{applicationId} {
-        allow get: if request.auth.uid == resource.data.applicantId;
-        allow list: if false;
-        allow create: if request.auth.uid == request.resource.data.applicantId;
-        allow update: if request.auth.uid == resource.data.applicantId;
-        allow delete: if request.auth.uid == resource.data.applicantId;
+      //function
+      function isSignedIn() {
+        return request.auth != null;
       }
+
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.recruiterId == request.auth.uid;
+      allow update: if isSignedIn() && resource != null && resource.data.recruiterId == request.auth.uid;
+      allow delete: if isSignedIn() && resource != null && resource.data.recruiterId == request.auth.uid;
     }
 
     /**
-     * @description Allows only participants to read and write to chats.
+     * @description Secures job applications, allowing only the applicant to create, read and write their own applications.
+     * @path /jobs/{jobId}/applications/{applicationId}
+     * @allow (create) if request.auth.uid == request.resource.data.applicantId
+     * @allow (get, list) if request.auth.uid == resource.data.applicantId
+     * @allow (update, delete) if request.auth.uid == resource.data.applicantId && resource != null
+     * @deny (create) if request.auth.uid != request.resource.data.applicantId
+     * @deny (get, list) if request.auth.uid != resource.data.applicantId
+     * @deny (update, delete) if request.auth.uid != resource.data.applicantId
+     * @principle Enforces document ownership for all operations on job applications.
+     */
+    match /jobs/{jobId}/applications/{applicationId} {
+      //function
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.applicantId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.applicantId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.applicantId == request.auth.uid;
+      allow update: if isSignedIn() && resource != null && resource.data.applicantId == request.auth.uid;
+      allow delete: if isSignedIn() && resource != null && resource.data.applicantId == request.auth.uid;
+    }
+
+    /**
+     * @description Secures chats, allowing only participants to read and write messages.
      * @path /chats/{chatId}
-     * @allow (get, list) request.auth.uid in resource.data.participants
-     * @allow (create, update, delete) request.auth.uid in resource.data.participants
-     * @deny (get, list) !(request.auth.uid in resource.data.participants)
-     * @deny (create, update, delete) !(request.auth.uid in resource.data.participants)
-     * @principle Shared access based on the participants list.
+     * @allow (get, list) if request.auth.uid in resource.data.participants
+     * @allow (create, update, delete) if request.auth.uid in request.resource.data.participants
+     * @deny (get, list) if !(request.auth.uid in resource.data.participants)
+     * @deny (create, update, delete) if !(request.auth.uid in request.resource.data.participants)
+     * @principle Enforces shared access based on the participants array.
      */
     match /chats/{chatId} {
+      //function
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
       function isParticipant() {
-        return request.auth.uid in resource.data.participants;
+          return request.auth.uid in resource.data.participants;
       }
 
-      function isExistingParticipant() {
-          return isParticipant() && resource != null;
-      }
-      allow get: if isParticipant();
-      allow list: if false;
-      allow create: if request.resource.data.participants.hasAny([request.auth.uid]);
-      allow update: if isExistingParticipant();
-      allow delete: if false; // No deleting chats
-
-      /**
-       * @description Allows only participants to read and write messages within a chat.
-       * @path /chats/{chatId}/messages/{messageId}
-       * @allow (get, list, create) get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid])
-       * @deny (get, list, create) !get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid])
-       * @principle Shared access based on the participants list of the parent chat.
-       */
-      match /messages/{messageId} {
-        function isChatParticipant(chatId) {
-            return request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
-        }
-          allow get: if isChatParticipant(chatId);
-          allow list: if false;
-          allow create: if isChatParticipant(chatId) && request.auth.uid == request.resource.data.senderId;
-          allow update: if false;
-          allow delete: if false;
-      }
+      allow get, list: if isSignedIn() && isParticipant();
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participants;
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow delete: if isSignedIn() && request.auth.uid in resource.data.participants && resource != null;
     }
 
     /**
-     * @description Allows anyone to create feedback, but does not allow updating or deleting.
+     * @description Secures messages within chats, allowing only participants to read and write messages.
+     * @path /chats/{chatId}/messages/{messageId}
+     * @allow (create) if get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid])
+     * @allow (get, list) if get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid])
+     * @allow (update, delete) if false
+     * @deny (create) if !get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid])
+     * @deny (get, list) if !get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid])
+     * @deny (update, delete) if true
+     * @principle Enforces shared access to chat messages based on the participants of the parent chat.
+     */
+    match /chats/{chatId}/messages/{messageId} {
+       //function
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isParticipant(chatId) {
+        return isSignedIn() && get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid]);
+      }
+
+      allow get, list: if isParticipant(chatId);
+      allow create: if isParticipant(chatId);
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Allows any authenticated user to submit feedback.
      * @path /feedbacks/{feedbackId}
-     * @allow (get, list) if true
-     * @allow (create) request.auth.uid == request.resource.data.userId
-     * @deny (create) request.auth.uid != request.resource.data.userId
-     * @deny (update, delete) if false
-     * @principle Public read, owner-only create, no updates or deletes.
+     * @allow get, list: if true
+     * @allow create: if request.auth != null
+     * @deny create: if request.auth == null
+     * @allow update, delete: if false;
+     * @principle Allows open feedback submission for authenticated users.
      */
     match /feedbacks/{feedbackId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if request.auth.uid == request.resource.data.userId;
+      //function
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get, list: if true;
+      allow create: if isSignedIn();
       allow update: if false;
       allow delete: if false;
     }
