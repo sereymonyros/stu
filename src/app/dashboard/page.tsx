@@ -195,16 +195,19 @@ export default function DashboardPage() {
         return new Map(applications.map(app => [app.jobId, app.status]));
     }, [applications]);
 
-    const appliedJobIds = useMemo(() => Array.from(applicationStatusMap.keys()), [applicationStatusMap]);
+    const appliedJobIds = useMemo(() => {
+        if (!applications) return [];
+        return applications.map(app => app.jobId);
+    }, [applications]);
 
     // For Standard Users: Fetch the details of the jobs they applied for
     const appliedJobsQuery = useMemo(() => {
-        // Return null if loading, or if there are no IDs to query. This prevents an invalid Firestore query.
-        if (areApplicationsLoading || appliedJobIds.length === 0) {
+        // Return null if loading, applications is still null, or there are no IDs to query. This prevents an invalid Firestore query.
+        if (areApplicationsLoading || !applications || appliedJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
-    }, [firestore, areApplicationsLoading, appliedJobIds]);
+    }, [firestore, areApplicationsLoading, applications, appliedJobIds]);
     const { data: appliedJobs, isLoading: areAppliedJobsLoading } = useCollection(appliedJobsQuery);
     
     // For Standard Users: Fetch their favorite jobs
@@ -228,12 +231,12 @@ export default function DashboardPage() {
 
 
     const favouriteJobsDetailsQuery = useMemo(() => {
-        // Return null if loading, or if there are no IDs to query. This prevents an invalid Firestore query.
-        if (areFavouritesLoading || filteredFavouriteJobIds.length === 0) {
+        // Return null if loading, refs are null, or there are no IDs to query. This prevents an invalid Firestore query.
+        if (areFavouritesLoading || !favouriteJobsRefs || filteredFavouriteJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', filteredFavouriteJobIds));
-    }, [firestore, areFavouritesLoading, filteredFavouriteJobIds]);
+    }, [firestore, areFavouritesLoading, favouriteJobsRefs, filteredFavouriteJobIds]);
     const { data: favouriteJobs, isLoading: areFavouriteJobsDetailsLoading } = useCollection(favouriteJobsDetailsQuery);
 
     // For Standard Users: Fetch their saved searches
