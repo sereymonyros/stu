@@ -29,6 +29,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Alert } from '@/components/ui/alert';
 import { sendEmail } from '@/ai/flows/send-email-flow';
