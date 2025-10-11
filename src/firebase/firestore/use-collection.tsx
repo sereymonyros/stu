@@ -111,7 +111,6 @@ export function useCollection<T = any>(
     const isCacheable = CACHEABLE_STORES.includes(storeName) && !isFilteredQuery;
 
     let didCancel = false;
-    let hasLoadedFromCache = false;
     
     setIsLoading(true);
     setError(null);
@@ -121,10 +120,9 @@ export function useCollection<T = any>(
     if (isCacheable) {
         getStoreData(storeName).then(cachedData => {
             if (!didCancel && cachedData && cachedData.length > 0) {
-                 hasLoadedFromCache = true;
                  const dataWithDates = cachedData.map(item => convertTimestampsToDates(item));
                  setData(dataWithDates as StateDataType);
-                 // We don't set loading to false here, to wait for Firestore confirmation.
+                 // We still keep isLoading true, to wait for Firestore confirmation.
             }
         }).catch(console.error);
     }
@@ -134,13 +132,6 @@ export function useCollection<T = any>(
       targetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
         if (didCancel) return;
-
-        // ** THE FIX IS HERE **
-        // If we have already loaded from cache and the new snapshot is empty,
-        // it's likely a temporary state during connection. Ignore it to prevent flashing.
-        if (hasLoadedFromCache && snapshot.empty) {
-            return; 
-        }
 
         const results: ResultItemType[] = snapshot.docs.map(doc => ({
             ...(doc.data() as T),
@@ -155,11 +146,7 @@ export function useCollection<T = any>(
 
         // --- Phase 3: Update IndexedDB cache in the background ---
         if (isCacheable) {
-            // No need to clear first, `put` will overwrite existing keys.
-            // And we want to preserve old data if the new snapshot is empty.
-            if (resultsWithDates.length > 0) {
-                updateStoreData(storeName, resultsWithDates).catch(console.error);
-            }
+            updateStoreData(storeName, resultsWithDates).catch(console.error);
         }
       },
       (error: FirestoreError) => {
@@ -187,3 +174,4 @@ export function useCollection<T = any>(
 
   return { data, isLoading, error };
 }
+
