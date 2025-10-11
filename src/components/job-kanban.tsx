@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo } from 'react';
@@ -21,7 +22,6 @@ function JobCard({
     hasApplied, 
     isRecruiter,
     isDraggable,
-    isDragging
 }: { 
     job: any; 
     isFavourite: boolean; 
@@ -29,12 +29,11 @@ function JobCard({
     hasApplied: boolean; 
     isRecruiter: boolean;
     isDraggable: boolean;
-    isDragging: boolean;
 }) {
     const { user } = useUser();
     const isOwner = user && user.uid === job.recruiterId;
 
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ 
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
         id: job.id,
         disabled: !isDraggable,
     });
@@ -106,7 +105,7 @@ function JobCard({
                     <Button className="w-full" disabled>Applied</Button>
                  ) : isRecruiter ? (
                      <Button asChild variant="outline" className="w-full">
-                        <Link href={`/jobs/${job.id}/edit`}>View & Manage</Link>
+                        <Link href={`/jobs/${job.id}/edit`}>View</Link>
                     </Button>
                  ) : (
                     <Button asChild className="w-full">
@@ -116,29 +115,24 @@ function JobCard({
             </CardFooter>
         </>
     );
-
-    if (isDraggable) {
-        return (
-            <div ref={setNodeRef} style={style} {...attributes}>
-                <Card className={cn("mb-2 bg-card hover:bg-muted/50", isDragging ? "cursor-grabbing" : "cursor-grab")}>
-                    <div {...listeners}>{cardContent}</div>
-                </Card>
-            </div>
-        );
-    }
     
     return (
-        <Card className={cn(
-            "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
-            hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
-            isDragging && "cursor-grabbing",
-        )}>
-           {cardContent}
-        </Card>
+        <div ref={setNodeRef} style={style} {...attributes}>
+            <Card className={cn(
+                "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
+                isDraggable ? "mb-2 bg-card" : "",
+                hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
+                isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
+            )}>
+               <div {...(isDraggable ? listeners : {})}>
+                    {cardContent}
+                </div>
+            </Card>
+        </div>
     )
 }
 
-function Column({ id, title, children, jobs, isLoading }: { id: string, title: string, children: React.ReactNode, jobs: any[], isLoading: boolean }) {
+function Column({ id, title, children, isLoading }: { id: string, title: string, children: React.ReactNode, isLoading: boolean }) {
     const { setNodeRef, isOver } = useDroppable({ id });
 
     const titleColors: { [key: string]: string } = {
@@ -146,6 +140,8 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
         Offering: 'border-purple-500',
         Closed: 'border-red-500',
     };
+
+    const jobs = React.Children.toArray(children);
 
     return (
         <div className="w-72 flex-shrink-0">
@@ -163,7 +159,7 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
                              <Skeleton className="h-24 w-full" />
                         </div>
                     ) : (
-                        <SortableContext items={jobs.map(j => j.id)} strategy={verticalListSortingStrategy}>
+                        <SortableContext items={jobs.map(c => (c as React.ReactElement).key as string)} strategy={verticalListSortingStrategy}>
                             {children}
                         </SortableContext>
                     )}

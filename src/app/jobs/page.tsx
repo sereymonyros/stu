@@ -332,31 +332,39 @@ export default function JobsPage() {
     const handleJobDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         if (!over) return;
-
+    
         const jobId = active.id as string;
         const newStatus = over.id as string;
-        const oldStatus = active.data.current?.sortable.containerId as string;
-
+    
+        // Find the old status from the job itself within the local state
+        let oldStatus: string | undefined;
+        let movedJob: any;
+    
+        for (const status in jobsByStatus) {
+            const job = jobsByStatus[status].find(j => j.id === jobId);
+            if (job) {
+                oldStatus = status;
+                movedJob = job;
+                break;
+            }
+        }
+    
+        if (!oldStatus || !movedJob) {
+            console.error("Could not find job in local state to determine old status.");
+            return;
+        }
+    
         if (oldStatus === newStatus) {
             return;
         }
         
-        let movedJob: any;
-
         // Optimistic UI update
         setJobsByStatus(prev => {
             const newState = { ...prev };
-            const oldColumn = newState[oldStatus];
-            if (!oldColumn) return prev;
+            const oldColumn = newState[oldStatus] ? newState[oldStatus].filter(j => j.id !== jobId) : [];
+            const newColumn = newState[newStatus] ? [...newState[newStatus], { ...movedJob, status: newStatus }] : [{ ...movedJob, status: newStatus }];
             
-            const jobIndex = oldColumn.findIndex(j => j.id === jobId);
-            if (jobIndex === -1) return prev;
-            
-            [movedJob] = oldColumn.splice(jobIndex, 1);
-            if (!movedJob) return prev;
-
-            const newColumn = newState[newStatus] || [];
-            newColumn.push({ ...movedJob, status: newStatus });
+            newState[oldStatus] = oldColumn;
             newState[newStatus] = newColumn;
             
             return newState;
@@ -567,7 +575,6 @@ export default function JobsPage() {
                                                 key={stage}
                                                 id={stage}
                                                 title={stage}
-                                                jobs={stageJobs}
                                                 isLoading={isLoading}
                                             >
                                                 {stageJobs.map((job: any) => (
