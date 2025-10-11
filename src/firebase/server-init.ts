@@ -6,21 +6,23 @@ import { getStorage } from 'firebase-admin/storage';
 
 let app: App;
 
+// Helper to determine if running in a Google Cloud production environment
+const isProduction = !!(process.env.K_SERVICE || process.env.GOOGLE_CLOUD_PROJECT);
+
 export function initializeFirebaseAdmin() {
   if (getApps().length > 0) {
     app = getApp();
   } else {
     const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
 
-    // In a production Google Cloud environment (like App Hosting), GOOGLE_APPLICATION_CREDENTIALS
-    // might not be set as the SDK uses the environment's service account automatically.
-    if (process.env.NODE_ENV === 'production') {
+    // Use Application Default Credentials in production environments (like App Hosting)
+    if (isProduction) {
         app = initializeApp({
             credential: applicationDefault(),
             storageBucket: storageBucket,
         });
     } else {
-        // For local development, we expect a Base64-encoded service account key.
+        // For local development, we require a Base64-encoded service account key.
         const serviceAccountString = process.env.GOOGLE_APPLICATION_CREDENTIALS;
         if (!serviceAccountString) {
             throw new Error(
