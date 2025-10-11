@@ -199,7 +199,8 @@ export default function DashboardPage() {
 
     // For Standard Users: Fetch the details of the jobs they applied for
     const appliedJobsQuery = useMemo(() => {
-        if (!firestore || areApplicationsLoading || !appliedJobIds || appliedJobIds.length === 0) {
+        // Return null if loading, or if there are no IDs to query. This prevents an invalid Firestore query.
+        if (areApplicationsLoading || appliedJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
@@ -227,7 +228,8 @@ export default function DashboardPage() {
 
 
     const favouriteJobsDetailsQuery = useMemo(() => {
-        if (!firestore || areFavouritesLoading || !filteredFavouriteJobIds || filteredFavouriteJobIds.length === 0) {
+        // Return null if loading, or if there are no IDs to query. This prevents an invalid Firestore query.
+        if (areFavouritesLoading || filteredFavouriteJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', filteredFavouriteJobIds));
