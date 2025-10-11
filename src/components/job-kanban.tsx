@@ -136,7 +136,7 @@ function JobCard({
 
 function Column({ id, title, children, jobs, isLoading }: { id: string, title: string, children: React.ReactNode, jobs: any[], isLoading: boolean }) {
     const { setNodeRef, isOver } = useDroppable({ id });
-
+    const jobIds = useMemo(() => jobs.map(j => j.id), [jobs]);
 
     const titleColors: { [key: string]: string } = {
         Available: 'border-blue-500',
@@ -165,7 +165,7 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
                              <Skeleton className="h-24 w-full" />
                         </div>
                     ) : (
-                        <SortableContext items={jobs.map((c: any) => c.props.job.id)} strategy={verticalListSortingStrategy}>
+                        <SortableContext items={jobIds} strategy={verticalListSortingStrategy}>
                             {children}
                         </SortableContext>
                     )}
