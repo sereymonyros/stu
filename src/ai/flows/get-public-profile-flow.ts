@@ -39,7 +39,7 @@ const getPublicProfileFlow = ai.defineFlow(
       const userDocRef = firestore.collection('users').doc(input.userId);
       const userDoc = await userDocRef.get();
 
-      if (!userDoc.exists() && !userAuthRecord) {
+      if (!userDoc.exists && !userAuthRecord) {
         console.warn(`No auth record or Firestore profile found for user ${input.userId}.`);
         return null;
       }
@@ -66,7 +66,7 @@ const getPublicProfileFlow = ai.defineFlow(
           const { firestore } = initializeFirebaseAdmin();
           const userDocRef = firestore.collection('users').doc(input.userId);
           const userDoc = await userDocRef.get();
-          if (userDoc.exists()) {
+          if (userDoc.exists) {
             const firestoreData = userDoc.data()!;
             return {
               uid: input.userId,
