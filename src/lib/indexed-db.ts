@@ -4,7 +4,7 @@ import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
 const DB_NAME = 'CambodiaHubCache';
 const DB_VERSION = 2;
-const STORES = ['listings', 'jobs', 'feedbacks', 'users'];
+const STORES = ['listings', 'jobs', 'feedbacks', 'chats'];
 
 interface CacheDB extends DBSchema {
   listings: {
@@ -19,7 +19,7 @@ interface CacheDB extends DBSchema {
     key: string;
     value: any;
   };
-  users: {
+  chats: {
     key: string;
     value: any;
   }

@@ -50,7 +50,7 @@ function getCollectionPath(target: CollectionReference | Query): string {
     return (target as unknown as InternalQuery)._query.path.canonicalString();
 }
 
-const CACHEABLE_STORES = ['listings', 'jobs', 'feedbacks', 'chats', 'users'];
+const CACHEABLE_STORES = ['listings', 'jobs', 'feedbacks', 'chats'];
 
 // Firestore Timestamps are not clonable for IndexedDB, so we convert them to JS Dates
 function convertTimestampsToDates(obj: any): any {
@@ -111,6 +111,7 @@ export function useCollection<T = any>(
     const isCacheable = CACHEABLE_STORES.includes(storeName) && !isFilteredQuery;
 
     let didCancel = false;
+    let hasLoadedFromCache = false;
     
     setIsLoading(true);
     setError(null);
@@ -120,6 +121,7 @@ export function useCollection<T = any>(
     if (isCacheable) {
         getStoreData(storeName).then(cachedData => {
             if (!didCancel && cachedData && cachedData.length > 0) {
+                 hasLoadedFromCache = true;
                  const dataWithDates = cachedData.map(item => convertTimestampsToDates(item));
                  setData(dataWithDates as StateDataType);
                  // We still keep isLoading true, to wait for Firestore confirmation.
@@ -132,6 +134,13 @@ export function useCollection<T = any>(
       targetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
         if (didCancel) return;
+
+        // If we have cached data and the firestore snapshot is empty,
+        // we wait for the next snapshot, because this could be a temporary state
+        // during initial connection.
+        if (hasLoadedFromCache && snapshot.empty) {
+            return;
+        }
 
         const results: ResultItemType[] = snapshot.docs.map(doc => ({
             ...(doc.data() as T),
@@ -174,4 +183,3 @@ export function useCollection<T = any>(
 
   return { data, isLoading, error };
 }
-

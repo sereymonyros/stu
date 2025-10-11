@@ -28,7 +28,7 @@ export interface UseDocResult<T> {
   refetch: () => void; // Function to manually refetch data.
 }
 
-const CACHEABLE_STORES = ['listings', 'jobs', 'feedbacks', 'users'];
+const CACHEABLE_STORES = ['listings', 'jobs', 'feedbacks'];
 
 // Firestore Timestamps are not clonable for IndexedDB, so we convert them to JS Dates
 function convertTimestampsToDates(obj: any): any {
