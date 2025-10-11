@@ -1,7 +1,7 @@
 
-
 'use client';
 
+import * as React from "react"
 import { useMemo } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -145,14 +145,14 @@ function Column({ id, title, children, isLoading }: { id: string, title: string,
 
     return (
         <div className="w-72 flex-shrink-0">
-            <Card className={cn("h-full transition-colors", isOver ? 'bg-primary/10' : 'bg-muted/40')}>
+            <Card ref={setNodeRef} className={cn("h-full transition-colors", isOver ? 'bg-primary/10' : 'bg-muted/40')}>
                 <CardHeader className={cn("p-3 border-b-4", titleColors[id] || 'border-gray-500')}>
                     <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
                         <span>{title}</span>
                         <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{jobs.length}</span>
                     </CardTitle>
                 </CardHeader>
-                <div ref={setNodeRef} className="p-2 min-h-[200px] overflow-y-auto">
+                <div className="p-2 min-h-[200px] overflow-y-auto">
                      {isLoading ? (
                         <div className="space-y-2">
                              <Skeleton className="h-24 w-full" />
