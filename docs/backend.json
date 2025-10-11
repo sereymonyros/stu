@@ -283,6 +283,15 @@
           "type": "string",
           "description": "The UID of the user who applied."
         },
+        "applicantName": {
+          "type": "string",
+          "description": "Denormalized display name of the applicant for quick access."
+        },
+        "applicantPhotoURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "Denormalized photo URL of the applicant."
+        },
         "jobId": {
           "type": "string",
           "description": "The ID of the job being applied for."
@@ -311,6 +320,7 @@
       },
       "required": [
         "applicantId",
+        "applicantName",
         "jobId",
         "status",
         "appliedAt",

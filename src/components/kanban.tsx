@@ -17,14 +17,7 @@ import { Skeleton } from './ui/skeleton';
 import { analyzeApplicant } from '@/ai/flows/analyze-applicant-flow';
 import type { AnalyzeApplicantOutput } from '@/ai/flows/analyze-applicant-schema';
 import { useToast } from '@/hooks/use-toast';
-import type { UserProfile } from '@/types/user';
 import type { Timestamp } from 'firebase/firestore';
-
-type ApplicantWithProfile = {
-    id: string;
-    profile: UserProfile | null;
-    application: any;
-}
 
 // Helper function to convert a file URL to a Base64 data URI
 const urlToDataUri = async (url: string): Promise<string> => {
@@ -109,7 +102,7 @@ function AIAnalysisDisplay({ analysis, error }: { analysis: AnalyzeApplicantOutp
     )
 }
 
-function ApplicantCard({ applicant, jobDetails }: { applicant: ApplicantWithProfile, jobDetails: any }) {
+function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: any }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: applicant.id });
     const { toast } = useToast();
     const style = {
@@ -123,7 +116,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: ApplicantWithProf
     const [analysisError, setAnalysisError] = useState<string | null>(null);
 
     const handleGetAIAnalysis = async () => {
-        if (!jobDetails || !applicant.application.resumeUrl) {
+        if (!jobDetails || !applicant.resumeUrl) {
             toast({ variant: 'destructive', title: 'Missing Information', description: 'Cannot perform analysis without a job description and a resume.'});
             return;
         }
@@ -134,7 +127,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: ApplicantWithProf
         setAnalysisError(null);
 
         try {
-            const resumeDataUri = await urlToDataUri(applicant.application.resumeUrl);
+            const resumeDataUri = await urlToDataUri(applicant.resumeUrl);
             const result = await analyzeApplicant({
                 jobTitle: jobDetails.title,
                 jobDescription: jobDetails.description || '',
@@ -148,24 +141,16 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: ApplicantWithProf
             setIsAnalyzing(false);
         }
     };
-    
-    if (!applicant.profile) {
-        return (
-             <Card className="mb-2 bg-card p-3">
-                <p className="text-xs text-destructive">Could not load applicant profile.</p>
-            </Card>
-        );
-    }
-    
+        
     // Safely convert Firestore Timestamp or JS Date to a Date object for formatting.
     const appliedAtDate = useMemo(() => {
-        const appliedAt = applicant.application.appliedAt;
+        const appliedAt = applicant.appliedAt;
         if (!appliedAt) return null;
         if (typeof appliedAt.toDate === 'function') {
             return (appliedAt as Timestamp).toDate();
         }
         return new Date(appliedAt);
-    }, [applicant.application.appliedAt]);
+    }, [applicant.appliedAt]);
 
 
     return (
@@ -175,19 +160,19 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: ApplicantWithProf
                     <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
                              <Avatar className="h-9 w-9">
-                                <AvatarImage src={applicant.profile.photoURL} />
-                                <AvatarFallback>{applicant.profile.displayName?.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={applicant.applicantPhotoURL} />
+                                <AvatarFallback>{applicant.applicantName?.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div>
-                                <p className="font-semibold text-sm leading-tight">{applicant.profile.displayName}</p>
+                                <p className="font-semibold text-sm leading-tight">{applicant.applicantName}</p>
                                 {appliedAtDate && (
                                     <p className="text-xs text-muted-foreground leading-tight">Applied {formatDistanceToNow(appliedAtDate, { addSuffix: true })}</p>
                                 )}
                             </div>
                         </div>
-                         {applicant.application.resumeUrl && (
+                         {applicant.resumeUrl && (
                              <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                <a href={applicant.application.resumeUrl} target="_blank" rel="noopener noreferrer">
+                                <a href={applicant.resumeUrl} target="_blank" rel="noopener noreferrer">
                                     <FileText className="h-4 w-4" />
                                 </a>
                             </Button>

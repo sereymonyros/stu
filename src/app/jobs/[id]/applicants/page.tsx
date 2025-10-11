@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useEffect, useState, use } from 'react';
@@ -16,57 +17,6 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Board } from '@/components/kanban';
 import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
-import type { UserProfile } from '@/types/user';
-import { Card } from '@/components/ui/card';
-
-type ApplicantWithProfile = {
-    id: string; // This is the application doc ID
-    profile: UserProfile | null;
-    application: any;
-}
-
-// A new component to fetch and render each applicant's details
-function ApplicantCardWrapper({ applicantId, application, jobDetails }: { applicantId: string, application: any, jobDetails: any }) {
-    const firestore = useFirestore();
-
-    const userProfileRef = useMemo(() => {
-        if (!firestore) return null;
-        return doc(firestore, `users/${applicantId}`);
-    }, [firestore, applicantId]);
-
-    const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
-
-    if (isProfileLoading) {
-        return (
-            <Card className="mb-2 bg-card p-3">
-                <div className="flex items-center gap-2">
-                    <Skeleton className="h-9 w-9 rounded-full" />
-                    <div className="space-y-1">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-3 w-16" />
-                    </div>
-                </div>
-            </Card>
-        );
-    }
-    
-    if (!userProfile) {
-        return (
-            <Card className="mb-2 bg-destructive/10 p-3">
-                <p className="text-xs text-destructive-foreground">Error: Could not load profile for applicant {applicantId}.</p>
-            </Card>
-        );
-    }
-    
-    const applicantWithProfile: ApplicantWithProfile = {
-        id: application.id,
-        application: application,
-        profile: userProfile
-    };
-
-    return <Board.Card applicant={applicantWithProfile} jobDetails={jobDetails} />;
-}
-
 
 export default function ApplicantsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: jobId } = use(params);
@@ -239,10 +189,9 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                                     isLoading={isLoading}
                                 >
                                     {stageApplicants.map((app: any) => (
-                                        <ApplicantCardWrapper 
+                                        <Board.Card 
                                           key={app.id}
-                                          applicantId={app.applicantId}
-                                          application={app}
+                                          applicant={app}
                                           jobDetails={job}
                                         />
                                     ))}

@@ -177,6 +177,9 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
         status: 'submitted',
         appliedAt: serverTimestamp(),
         resumeUrl: userProfile.resumeUrl,
+        // Denormalized data for recruiter's dashboard
+        applicantName: userProfile.displayName || user.email,
+        applicantPhotoURL: userProfile.photoURL || '',
       };
       const applicationRef = doc(firestore, 'jobs', jobId, 'applications', user.uid);
 
