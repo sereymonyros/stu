@@ -4,11 +4,10 @@
 import { useMemo } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useDroppable, useDraggable } from '@dnd-kit/core';
+import { useDroppable } from '@dnd-kit/core';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Briefcase, Building, DollarSign, Edit, MapPin, Users, Heart, Pencil } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { Badge } from './ui/badge';
@@ -20,8 +19,9 @@ function JobCard({
     isFavourite, 
     onToggleFavourite, 
     hasApplied, 
-    isRecruiter, 
-    isDraggable 
+    isRecruiter,
+    isDraggable,
+    isDragging
 }: { 
     job: any; 
     isFavourite: boolean; 
@@ -29,11 +29,12 @@ function JobCard({
     hasApplied: boolean; 
     isRecruiter: boolean;
     isDraggable: boolean;
+    isDragging: boolean;
 }) {
     const { user } = useUser();
     const isOwner = user && user.uid === job.recruiterId;
 
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ 
         id: job.id,
         disabled: !isDraggable,
     });
@@ -105,7 +106,7 @@ function JobCard({
                     <Button className="w-full" disabled>Applied</Button>
                  ) : isRecruiter ? (
                      <Button asChild variant="outline" className="w-full">
-                        <Link href={`/jobs/${job.id}/applicants`}><Users className="mr-2 h-4 w-4" />View</Link>
+                        <Link href={`/jobs/${job.id}/edit`}>View & Manage</Link>
                     </Button>
                  ) : (
                     <Button asChild className="w-full">
@@ -130,6 +131,7 @@ function JobCard({
         <Card className={cn(
             "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
             hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
+            isDragging && "cursor-grabbing",
         )}>
            {cardContent}
         </Card>
@@ -138,7 +140,6 @@ function JobCard({
 
 function Column({ id, title, children, jobs, isLoading }: { id: string, title: string, children: React.ReactNode, jobs: any[], isLoading: boolean }) {
     const { setNodeRef, isOver } = useDroppable({ id });
-    const jobIds = useMemo(() => jobs.map(j => j.id), [jobs]);
 
     const titleColors: { [key: string]: string } = {
         Available: 'border-blue-500',
@@ -147,7 +148,7 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
     };
 
     return (
-        <div ref={setNodeRef} className="w-72 flex-shrink-0">
+        <div className="w-72 flex-shrink-0">
             <Card className={cn("h-full transition-colors", isOver ? 'bg-primary/10' : 'bg-muted/40')}>
                 <CardHeader className={cn("p-3 border-b-4", titleColors[id] || 'border-gray-500')}>
                     <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
@@ -155,18 +156,18 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
                         <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{jobs.length}</span>
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 min-h-[200px] overflow-y-auto">
+                <div ref={setNodeRef} className="p-2 min-h-[200px] overflow-y-auto">
                      {isLoading ? (
                         <div className="space-y-2">
                              <Skeleton className="h-24 w-full" />
                              <Skeleton className="h-24 w-full" />
                         </div>
                     ) : (
-                        <SortableContext items={jobIds} strategy={verticalListSortingStrategy}>
+                        <SortableContext items={jobs.map(j => j.id)} strategy={verticalListSortingStrategy}>
                             {children}
                         </SortableContext>
                     )}
-                </CardContent>
+                </div>
             </Card>
         </div>
     );
