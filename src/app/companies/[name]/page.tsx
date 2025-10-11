@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useMemo, Suspense, use } from 'react';
+import { useMemo, Suspense, use, useState, useEffect } from 'react';
 import { useCollection, useFirestore, useUser } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { getCompanyByName } from '@/ai/flows/get-company-by-name-flow';
+import type { GetCompanyByNameOutput } from '@/ai/flows/get-company-by-name-flow';
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
@@ -64,17 +66,23 @@ function JobCard({ job }: { job: any }) {
 function CompanyProfile({ name: encodedName }: { name: string }) {
     const companyName = decodeURIComponent(encodedName);
     const firestore = useFirestore();
+    const { toast } = useToast();
 
-    // --- Data Fetching ---
-    // 1. Fetch company profile
-    const companyQuery = useMemo(() => {
-        if (!firestore) return null;
-        return query(collection(firestore, 'companies'), where('name', '==', companyName));
-    }, [firestore, companyName]);
-    const { data: companies, isLoading: isCompanyLoading } = useCollection(companyQuery);
-    const company = companies?.[0];
+    const [company, setCompany] = useState<GetCompanyByNameOutput | null>(null);
+    const [isCompanyLoading, setIsCompanyLoading] = useState(true);
 
-    // 2. Fetch jobs for this company
+    useEffect(() => {
+      setIsCompanyLoading(true);
+      getCompanyByName({ companyName })
+        .then(setCompany)
+        .catch(err => {
+            console.error("Failed to fetch company profile:", err);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load company information.' });
+        })
+        .finally(() => setIsCompanyLoading(false));
+    }, [companyName, toast]);
+
+    // Fetch jobs for this company (this can remain client-side as it should be public)
     const jobsQuery = useMemo(() => {
         if (!firestore) return null;
         return query(collection(firestore, 'jobs'), where('companyName', '==', companyName));

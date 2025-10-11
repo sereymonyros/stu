@@ -157,7 +157,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-            <Card className={cn("mb-2 bg-card hover:bg-muted/50 cursor-grab", isDragging && "cursor-grabbing")}>
+            <Card className={cn("mb-2 bg-card hover:bg-muted/50", isDragging ? "cursor-grabbing" : "cursor-grab")}>
                 <CardContent className="p-3" {...listeners}>
                     <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
 }
 
 function Column({ id, title, children, applicants, isLoading }: { id: string, title: string, children: React.ReactNode, applicants: any[], isLoading: boolean }) {
-    const { setNodeRef } = useDroppable({ id });
+    const { setNodeRef, isOver } = useDroppable({ id });
     const applicantIds = useMemo(() => applicants.map(a => a.id), [applicants]);
 
     const titleColors: { [key: string]: string } = {
@@ -217,7 +217,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
 
     return (
         <div ref={setNodeRef} className="w-72 flex-shrink-0">
-            <Card className="bg-muted/40 h-full">
+            <Card className={cn("h-full transition-colors", isOver ? 'bg-primary/10' : 'bg-muted/40')}>
                 <CardHeader className={cn("p-3 border-b-4", titleColors[id] || 'border-gray-500')}>
                     <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
                         <span>{title}</span>

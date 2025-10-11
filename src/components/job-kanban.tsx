@@ -105,7 +105,7 @@ function JobCard({
                     <Button className="w-full" disabled>Applied</Button>
                  ) : isRecruiter ? (
                      <Button asChild variant="outline" className="w-full">
-                        <Link href={`/jobs/${job.id}/applicants`}><Users className="mr-2 h-4 w-4" />View Applicants</Link>
+                        <Link href={`/jobs/${job.id}/applicants`}><Users className="mr-2 h-4 w-4" />View</Link>
                     </Button>
                  ) : (
                     <Button asChild className="w-full">
@@ -119,7 +119,7 @@ function JobCard({
     if (isDraggable) {
         return (
             <div ref={setNodeRef} style={style} {...attributes}>
-                <Card className={cn("mb-2 bg-card hover:bg-muted/50 cursor-grab", isDragging && "cursor-grabbing")}>
+                <Card className={cn("mb-2 bg-card hover:bg-muted/50", isDragging ? "cursor-grabbing" : "cursor-grab")}>
                     <div {...listeners}>{cardContent}</div>
                 </Card>
             </div>
@@ -129,7 +129,7 @@ function JobCard({
     return (
         <Card className={cn(
             "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
-            hasApplied && "bg-muted/30 opacity-60 hover:shadow-none"
+            hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
         )}>
            {cardContent}
         </Card>
@@ -137,7 +137,7 @@ function JobCard({
 }
 
 function Column({ id, title, children, jobs, isLoading }: { id: string, title: string, children: React.ReactNode, jobs: any[], isLoading: boolean }) {
-    const { setNodeRef } = useDroppable({ id });
+    const { setNodeRef, isOver } = useDroppable({ id });
     const jobIds = useMemo(() => jobs.map(j => j.id), [jobs]);
 
     const titleColors: { [key: string]: string } = {
@@ -148,7 +148,7 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
 
     return (
         <div ref={setNodeRef} className="w-72 flex-shrink-0">
-            <Card className="bg-muted/40 h-full">
+            <Card className={cn("h-full transition-colors", isOver ? 'bg-primary/10' : 'bg-muted/40')}>
                 <CardHeader className={cn("p-3 border-b-4", titleColors[id] || 'border-gray-500')}>
                     <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
                         <span>{title}</span>
