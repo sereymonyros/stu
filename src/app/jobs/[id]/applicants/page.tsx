@@ -7,19 +7,15 @@ import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { doc, collection, query, updateDoc } from 'firebase/firestore';
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Briefcase } from 'lucide-react';
+import { ArrowLeft, Briefcase } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
-import type { GetPublicProfileOutput } from '@/ai/flows/get-public-profile-schema';
 import { Board } from '@/components/kanban';
-import { DndContext, type DragEndEvent, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
 
 // Define the stages for the Kanban board
 const KANBAN_STAGES = ["submitted", "reviewed", "offered", "accepted", "rejected"] as const;
@@ -27,9 +23,27 @@ type KanbanStage = typeof KANBAN_STAGES[number];
 
 type ApplicantWithProfile = {
     id: string;
-    profile: GetPublicProfileOutput;
+    profile: any; // Using any because we fetch it dynamically
     application: any;
 }
+
+// A new component to fetch and render a single applicant's profile
+function ApplicantProfile({ applicantId, children }: { applicantId: string, children: (profile: any | null) => React.ReactNode }) {
+    const firestore = useFirestore();
+    const profileRef = useMemo(() => {
+        if (!firestore || !applicantId) return null;
+        return doc(firestore, 'users', applicantId);
+    }, [firestore, applicantId]);
+
+    const { data: profile, isLoading } = useDoc(profileRef);
+
+    if (isLoading) {
+        return <Skeleton className="h-24 w-full" />;
+    }
+
+    return <>{children(profile)}</>;
+}
+
 
 export default function ApplicantsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: jobId } = use(params);
@@ -40,10 +54,9 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
     const finalJobId = Array.isArray(jobId) ? jobId[0] : jobId;
     
-    // State to hold combined applicant and profile data
-    const [applicantsData, setApplicantsData] = useState<ApplicantWithProfile[]>([]);
-    const [isDerivedDataLoading, setIsDerivedDataLoading] = useState(true);
-
+    // This state will now only hold the raw application data
+    const [applicationsData, setApplicationsData] = useState<any[]>([]);
+    
     const jobRef = useMemo(() => {
         if (!firestore || !finalJobId) return null;
         return doc(firestore, 'jobs', finalJobId);
@@ -54,6 +67,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         if (!firestore || !finalJobId || !user) return null;
         return query(collection(firestore, `jobs/${finalJobId}/applications`));
     }, [firestore, finalJobId, user]);
+    // useCollection will now just fetch the applications, not the profiles
     const { data: applications, isLoading: areApplicationsLoading } = useCollection(applicantsQuery);
 
      useEffect(() => {
@@ -68,35 +82,12 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         }
     }, [user, isUserLoading, job, isJobLoading, router, toast]);
 
-    // This effect fetches profiles for each applicant and combines the data.
+    // Store the raw applications in state when they load
     useEffect(() => {
-        if (!applications) {
-            if (!areApplicationsLoading) {
-                 setApplicantsData([]);
-                 setIsDerivedDataLoading(false);
-            }
-            return;
-        };
-
-        setIsDerivedDataLoading(true);
-        Promise.all(
-            applications.map(async (app) => {
-                try {
-                    const profile = await getPublicProfile({ userId: app.applicantId });
-                    if (profile) {
-                        return { id: app.id, profile, application: app };
-                    }
-                } catch (error) {
-                    console.error(`Failed to fetch profile for applicant ${app.applicantId}`, error);
-                }
-                return null;
-            })
-        ).then(results => {
-            setApplicantsData(results.filter((r): r is ApplicantWithProfile => r !== null));
-            setIsDerivedDataLoading(false);
-        });
-
-    }, [applications, areApplicationsLoading]);
+        if (applications) {
+            setApplicationsData(applications);
+        }
+    }, [applications]);
     
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -109,26 +100,26 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         
-        if (!over || active.id === over.id) {
+        if (!over || active.id === over.id || !firestore) {
             return;
         }
         
-        const applicantId = active.id as string;
+        const applicantId = active.id as string; // This is the application ID (same as user UID in this case)
         const newStatus = over.id as KanbanStage;
         
-        const applicant = applicantsData.find(a => a.id === applicantId);
-        if (!applicant || applicant.application.status === newStatus) {
+        const applicant = applicationsData.find(a => a.id === applicantId);
+        if (!applicant || applicant.status === newStatus) {
             return;
         }
         
         // Optimistically update UI
-        setApplicantsData(prev => prev.map(a => 
-            a.id === applicantId ? { ...a, application: { ...a.application, status: newStatus } } : a
+        setApplicationsData(prev => prev.map(a => 
+            a.id === applicantId ? { ...a, status: newStatus } : a
         ));
 
         // Update Firestore
-        const mainApplicationRef = doc(firestore, `jobs/${finalJobId}/applications`, applicantId);
-        const userApplicationRef = doc(firestore, `users/${applicant.application.applicantId}/applications`, finalJobId);
+        const mainApplicationRef = doc(firestore, `jobs/${finalJobId}/applications`, applicant.applicantId);
+        const userApplicationRef = doc(firestore, `users/${applicant.applicantId}/applications`, finalJobId);
         
         const statusUpdate = { status: newStatus };
         try {
@@ -136,7 +127,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                 updateDoc(mainApplicationRef, statusUpdate),
                 updateDoc(userApplicationRef, statusUpdate)
              ]);
-            toast({ title: 'Status Updated', description: `${applicant.profile.displayName}'s status moved to ${newStatus}.` });
+            toast({ title: 'Status Updated', description: `Applicant status moved to ${newStatus}.` });
 
             if (newStatus === 'accepted') {
                 const jobRef = doc(firestore, 'jobs', finalJobId);
@@ -148,8 +139,8 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
         } catch (error) {
             // Revert UI on failure
-            setApplicantsData(prev => prev.map(a => 
-                a.id === applicantId ? { ...a, application: { ...a.application, status: applicant.application.status } } : a
+             setApplicationsData(prev => prev.map(a => 
+                a.id === applicantId ? { ...a, status: applicant.status } : a
             ));
             errorEmitter.emit('permission-error', new FirestorePermissionError({
                 path: mainApplicationRef.path,
@@ -160,8 +151,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         }
     };
 
-
-    const isLoading = isJobLoading || areApplicationsLoading || isUserLoading || isDerivedDataLoading;
+    const isLoading = isJobLoading || areApplicationsLoading || isUserLoading;
     
     return (
         <div className="flex flex-col h-screen">
@@ -191,16 +181,30 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
                 <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
                     <Board>
-                        {KANBAN_STAGES.map(stage => (
-                            <Board.Column 
-                                key={stage}
-                                id={stage} 
-                                title={stage}
-                                applicants={applicantsData.filter(a => a.application.status === stage)}
-                                jobDetails={job}
-                                isLoading={isLoading}
-                            />
-                        ))}
+                        {KANBAN_STAGES.map(stage => {
+                            const stageApplicants = applicationsData.filter(a => a.status === stage);
+                            return (
+                                <Board.Column 
+                                    key={stage}
+                                    id={stage} 
+                                    title={stage}
+                                    applicants={stageApplicants}
+                                    jobDetails={job}
+                                    isLoading={isLoading}
+                                >
+                                    {stageApplicants.map(app => (
+                                        <ApplicantProfile key={app.id} applicantId={app.applicantId}>
+                                            {(profile) => (
+                                                <Board.Card 
+                                                  applicant={{ id: app.id, application: app, profile: profile }} 
+                                                  jobDetails={job} 
+                                                />
+                                            )}
+                                        </ApplicantProfile>
+                                    ))}
+                                </Board.Column>
+                            )
+                        })}
                     </Board>
                 </DndContext>
             </main>

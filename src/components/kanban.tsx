@@ -21,14 +21,12 @@ import type { GetPublicProfileOutput } from '@/ai/flows/get-public-profile-schem
 
 type ApplicantWithProfile = {
     id: string;
-    profile: GetPublicProfileOutput;
+    profile: GetPublicProfileOutput | null; // Profile can be null
     application: any;
 }
 
 // Helper function to convert a file URL to a Base64 data URI
 const urlToDataUri = async (url: string): Promise<string> => {
-    // This proxy might be needed if running into CORS issues in development
-    // const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`Failed to fetch file: ${response.statusText}`);
@@ -149,6 +147,15 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: ApplicantWithProf
             setIsAnalyzing(false);
         }
     };
+    
+    // Don't render card if profile is missing
+    if (!applicant.profile) {
+        return (
+             <Card className="mb-2 bg-card p-3">
+                <p className="text-xs text-destructive">Could not load applicant profile.</p>
+            </Card>
+        );
+    }
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
@@ -196,7 +203,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: ApplicantWithProf
     );
 }
 
-function Column({ id, title, applicants, jobDetails, isLoading }: { id: string, title: string, applicants: ApplicantWithProfile[], jobDetails: any, isLoading: boolean }) {
+function Column({ id, title, children, applicants, isLoading }: { id: string, title: string, children: React.ReactNode, applicants: any[], isLoading: boolean }) {
     const { setNodeRef } = useDroppable({ id });
     const applicantIds = useMemo(() => applicants.map(a => a.id), [applicants]);
 
@@ -217,7 +224,7 @@ function Column({ id, title, applicants, jobDetails, isLoading }: { id: string, 
                         <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{applicants.length}</span>
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 min-h-[200px]">
+                <CardContent className="p-2 min-h-[200px] overflow-y-auto">
                      {isLoading ? (
                         <div className="space-y-2">
                              <Skeleton className="h-20 w-full" />
@@ -225,9 +232,7 @@ function Column({ id, title, applicants, jobDetails, isLoading }: { id: string, 
                         </div>
                     ) : (
                         <SortableContext items={applicantIds} strategy={verticalListSortingStrategy}>
-                            {applicants.map(applicant => (
-                                <ApplicantCard key={applicant.id} applicant={applicant} jobDetails={jobDetails} />
-                            ))}
+                            {children}
                         </SortableContext>
                     )}
                 </CardContent>
@@ -248,5 +253,3 @@ Board.Column = Column;
 Board.Card = ApplicantCard;
 
 export { Board };
-
-    
