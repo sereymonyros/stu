@@ -8,15 +8,15 @@ import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { doc, collection, query, updateDoc } from 'firebase/firestore';
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Briefcase } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 import { Board } from '@/components/kanban';
 import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
+import { updateApplicationStatus } from '@/ai/flows/update-application-status-flow';
 
 export default function ApplicantsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: jobId } = use(params);
@@ -39,7 +39,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         return query(collection(firestore, `jobs/${finalJobId}/applications`));
     }, [firestore, finalJobId]);
     
-    const { data: applications, isLoading: areApplicationsLoading } = useCollection(applicantsQuery);
+    const { data: applications, isLoading: areApplicationsLoading, refetch: refetchApplications } = useCollection(applicantsQuery);
 
      useEffect(() => {
         if (isUserLoading || isJobLoading) return;
@@ -93,8 +93,8 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
             return;
         }
         
-        // Optimistically update UI
         const oldStatus = application.status;
+        // Optimistically update UI
         setApplicantsByStatus(prev => {
             const newBoardState = { ...prev };
             // Remove from old column
@@ -106,43 +106,36 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
             return newBoardState;
         });
 
-        // Update Firestore
-        const mainApplicationRef = doc(firestore, `jobs/${finalJobId}/applications`, application.id);
-        const userApplicationRef = doc(firestore, `users/${application.applicantId}/applications`, finalJobId);
-        
-        const statusUpdate = { status: newStatus };
+        // Call the server-side flow to update Firestore
         try {
-             await Promise.all([
-                updateDoc(mainApplicationRef, statusUpdate),
-                updateDoc(userApplicationRef, statusUpdate)
-             ]);
+             await updateApplicationStatus({
+                jobId: finalJobId,
+                applicationId: application.id,
+                applicantId: application.applicantId,
+                newStatus: newStatus,
+             });
+
             toast({ title: 'Status Updated', description: `Applicant status moved to ${newStatus}.` });
 
+            // Refetch data to ensure UI is in sync with the backend after successful update
+            refetchApplications();
             if (newStatus === 'accepted') {
-                const jobRef = doc(firestore, 'jobs', finalJobId);
-                const jobStatusUpdate = { status: 'Closed' };
-                await updateDoc(jobRef, jobStatusUpdate);
-                toast({ title: "Job Closed", description: "The job posting has been automatically closed as an applicant was accepted." });
                 refetchJob();
             }
 
-        } catch (error) {
-            // Revert UI on failure
-            setApplicantsByStatus(prev => {
-                const revertedState = { ...prev };
-                // Remove from new column
-                revertedState[newStatus] = revertedState[newStatus]?.filter(app => app.id !== applicationId);
-                // Add back to old column
-                 if (!revertedState[oldStatus]) revertedState[oldStatus] = [];
-                revertedState[oldStatus].push(application);
-                return revertedState;
-            });
-            errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: mainApplicationRef.path,
-                operation: 'update',
-                requestResourceData: statusUpdate
-            }));
-            toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update applicant status.' });
+        } catch (error: any) {
+             console.error("Failed to update status via flow:", error);
+             // Revert UI on failure
+             setApplicantsByStatus(prev => {
+                 const revertedState = { ...prev };
+                 // Remove from new column
+                 revertedState[newStatus] = revertedState[newStatus]?.filter(app => app.id !== applicationId);
+                 // Add back to old column
+                  if (!revertedState[oldStatus]) revertedState[oldStatus] = [];
+                 revertedState[oldStatus].push(application);
+                 return revertedState;
+             });
+             toast({ variant: 'destructive', title: 'Update Failed', description: error.message || 'Could not update applicant status.' });
         }
     };
 
