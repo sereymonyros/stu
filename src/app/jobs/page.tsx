@@ -3,22 +3,34 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc, serverTimestamp, query } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, addDoc } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Briefcase, Building, MapPin, DollarSign, Pencil, Search, FilterX } from 'lucide-react';
+import { Heart, Briefcase, Building, MapPin, DollarSign, Pencil, Search, FilterX, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Input } from '@/components/ui/input';
 import { Toggle } from '@/components/ui/toggle';
 import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog"
+import { Label } from '@/components/ui/label';
+
 
 function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; }) {
     const { user } = useUser();
@@ -104,13 +116,33 @@ export default function JobsPage() {
     const { user, isUserLoading } = useUser();
     const router = useRouter();
     const { toast } = useToast();
+    const searchParams = useSearchParams();
 
     // --- Search & Filter State ---
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
-    const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
-    const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
-    const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+    const [selectedCompanies, setSelectedCompanies] = useState<string[]>(searchParams.getAll('company') || []);
+    const [selectedLocations, setSelectedLocations] = useState<string[]>(searchParams.getAll('location') || []);
+    const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>(searchParams.getAll('jobType') || []);
+    const [showFavoritesOnly, setShowFavoritesOnly] = useState(searchParams.get('favorites') === 'true');
+
+    // --- Dialog State ---
+    const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+    const [savedSearchName, setSavedSearchName] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    
+    // Update URL when filters change
+    useEffect(() => {
+        const params = new URLSearchParams();
+        if (searchQuery) params.set('q', searchQuery);
+        selectedCompanies.forEach(c => params.append('company', c));
+        selectedLocations.forEach(l => params.append('location', l));
+        selectedJobTypes.forEach(t => params.append('jobType', t));
+        if (showFavoritesOnly) params.set('favorites', 'true');
+        
+        // This will update the URL without reloading the page
+        router.replace(`/jobs?${params.toString()}`);
+    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, router]);
+
 
     // --- Data Fetching ---
     const jobsQuery = useMemo(() => {
@@ -200,6 +232,43 @@ export default function JobsPage() {
             toast({ variant: "destructive", title: "An error occurred", description: "You may not have permission to perform this action." });
         }
     };
+
+    // --- Save Search Handler ---
+    const handleSaveSearch = async () => {
+        if (!user || !firestore || !savedSearchName.trim()) {
+            toast({ variant: 'destructive', title: "Cannot save", description: "Please provide a name for your search."});
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const savedSearchRef = collection(firestore, `users/${user.uid}/savedSearches`);
+            const searchData = {
+                name: savedSearchName,
+                searchQuery: searchQuery,
+                filters: {
+                    companyNames: selectedCompanies,
+                    locations: selectedLocations,
+                    jobTypes: selectedJobTypes,
+                },
+                createdAt: serverTimestamp(),
+            };
+            
+            await addDoc(savedSearchRef, searchData);
+
+            toast({ title: "Search Saved!", description: `"${savedSearchName}" has been added to your dashboard.`});
+            setIsSaveDialogOpen(false);
+            setSavedSearchName('');
+        } catch (error) {
+             errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: `users/${user.uid}/savedSearches`,
+                operation: 'create'
+            }));
+             toast({ variant: "destructive", title: "Save failed", description: "Could not save your search." });
+        } finally {
+            setIsSaving(false);
+        }
+    };
     
     const filteredAndSortedJobs = useMemo(() => {
         if (!jobs) return [];
@@ -268,8 +337,8 @@ export default function JobsPage() {
                     </div>
                     
                     <Card className="p-4 mb-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                             <div className="relative">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                             <div className="relative md:col-span-2">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                 <Input 
                                     type="search"
@@ -280,13 +349,50 @@ export default function JobsPage() {
                                 />
                             </div>
                             <div className="flex items-center gap-2">
+                                {user && !isRecruiter && hasActiveFilters && (
+                                    <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline">
+                                                <Star className="mr-2 h-4 w-4" /> Save Search
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[425px]">
+                                            <DialogHeader>
+                                                <DialogTitle>Save Job Search</DialogTitle>
+                                                <DialogDescription>
+                                                    Name this search to save it to your dashboard for later.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="grid gap-4 py-4">
+                                                <div className="grid grid-cols-4 items-center gap-4">
+                                                    <Label htmlFor="search-name" className="text-right">
+                                                        Name
+                                                    </Label>
+                                                    <Input
+                                                        id="search-name"
+                                                        value={savedSearchName}
+                                                        onChange={(e) => setSavedSearchName(e.target.value)}
+                                                        className="col-span-3"
+                                                        placeholder="e.g., 'React Jobs in PP'"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <DialogFooter>
+                                                <Button type="button" variant="secondary" onClick={() => setIsSaveDialogOpen(false)}>Cancel</Button>
+                                                <Button type="submit" onClick={handleSaveSearch} disabled={isSaving || !savedSearchName.trim()}>
+                                                    {isSaving ? 'Saving...' : 'Save'}
+                                                </Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
                                 {user && !isRecruiter && (
                                      <Toggle
                                         size="sm"
                                         variant="outline"
                                         pressed={showFavoritesOnly}
                                         onPressedChange={setShowFavoritesOnly}
-                                        className="rounded-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                        className="h-10 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                                     >
                                         <Heart className="mr-2 h-4 w-4" />
                                         My Favourites
@@ -295,7 +401,7 @@ export default function JobsPage() {
                                 {hasActiveFilters && (
                                     <Button variant="ghost" onClick={clearAllFilters}>
                                         <FilterX className="mr-2 h-4 w-4" />
-                                        Clear Filters
+                                        Clear
                                     </Button>
                                 )}
                             </div>
@@ -353,5 +459,3 @@ export default function JobsPage() {
         </div>
     );
 }
-
-    

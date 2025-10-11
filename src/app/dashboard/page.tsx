@@ -3,17 +3,22 @@
 
 import { useMemo, useEffect } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, query, where, doc } from 'firebase/firestore';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { collection, query, where, doc, deleteDoc } from 'firebase/firestore';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Briefcase, ClipboardList, FileText, Users, Heart, User } from 'lucide-react';
+import { Briefcase, ClipboardList, FileText, Users, Heart, User, Search, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
 
 function JobCard({ job }: { job: any }) {
     const firestore = useFirestore();
@@ -113,10 +118,43 @@ function FavouriteJobCard({ job }: { job: any }) {
     );
 }
 
+function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting }: { savedSearch: any, onExecute: (search: any) => void, onDelete: (searchId: string) => void, isDeleting: boolean }) {
+    const { name, searchQuery, filters } = savedSearch;
+    const filterCount = (filters.companyNames?.length || 0) + (filters.locations?.length || 0) + (filters.jobTypes?.length || 0);
+
+    return (
+        <Card className="flex flex-col justify-between">
+            <CardHeader>
+                <CardTitle className="text-lg">{name}</CardTitle>
+                 {searchQuery && <CardDescription>Query: "{searchQuery}"</CardDescription>}
+            </CardHeader>
+            <CardContent>
+                <div className="flex flex-wrap gap-2">
+                    {filterCount > 0 ? (
+                        <Badge variant="secondary">{filterCount} {filterCount === 1 ? 'Filter' : 'Filters'} Applied</Badge>
+                    ) : (
+                         <Badge variant="outline">No Filters</Badge>
+                    )}
+                </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+                <Button onClick={() => onExecute(savedSearch)}>
+                    <Search className="mr-2 h-4 w-4" /> Run Search
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => onDelete(savedSearch.id)} disabled={isDeleting}>
+                     <Trash2 className="h-4 w-4" />
+                </Button>
+            </CardFooter>
+        </Card>
+    )
+}
+
 export default function DashboardPage() {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const router = useRouter();
+    const { toast } = useToast();
+    const [isDeletingSearch, setIsDeletingSearch] = useState(false);
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -196,9 +234,47 @@ export default function DashboardPage() {
     }, [firestore, areFavouritesLoading, filteredFavouriteJobIds]);
     const { data: favouriteJobs, isLoading: areFavouriteJobsDetailsLoading } = useCollection(favouriteJobsDetailsQuery);
 
+    // For Standard Users: Fetch their saved searches
+    const savedSearchesQuery = useMemo(() => {
+        if (!firestore || !shouldRunRoleQueries || isRecruiter) return null;
+        return query(collection(firestore, `users/${user.uid}/savedSearches`));
+    }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
+    const { data: savedSearches, isLoading: areSavedSearchesLoading } = useCollection(savedSearchesQuery);
+
+    // --- Saved Search Handlers ---
+    const handleExecuteSearch = (savedSearch: any) => {
+        const params = new URLSearchParams();
+        if (savedSearch.searchQuery) {
+            params.set('q', savedSearch.searchQuery);
+        }
+        savedSearch.filters.companyNames?.forEach((c: string) => params.append('company', c));
+        savedSearch.filters.locations?.forEach((l: string) => params.append('location', l));
+        savedSearch.filters.jobTypes?.forEach((t: string) => params.append('jobType', t));
+        router.push(`/jobs?${params.toString()}`);
+    };
+
+    const handleDeleteSearch = async (searchId: string) => {
+        if (!user || !firestore) return;
+        setIsDeletingSearch(true);
+        const searchDocRef = doc(firestore, `users/${user.uid}/savedSearches`, searchId);
+        try {
+            await deleteDoc(searchDocRef);
+            toast({ title: "Search Deleted", description: "The saved search has been removed." });
+        } catch (error) {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: searchDocRef.path,
+                operation: 'delete'
+            }));
+            toast({ variant: "destructive", title: "Delete failed", description: "Could not delete the saved search." });
+        } finally {
+            setIsDeletingSearch(false);
+        }
+    };
+
+
     // --- Loading and Rendering Logic ---
     const isLoading = isUserLoading || isProfileLoading;
-    const isStandardUserDashboardLoading = areApplicationsLoading || areAppliedJobsLoading || areFavouritesLoading || areFavouriteJobsDetailsLoading;
+    const isStandardUserDashboardLoading = areApplicationsLoading || areAppliedJobsLoading || areFavouritesLoading || areFavouriteJobsDetailsLoading || areSavedSearchesLoading;
 
     if (isLoading) {
         return (
@@ -276,6 +352,9 @@ export default function DashboardPage() {
                             </div>
                         )}
                     </section>
+
+                    <Separator />
+
                     <section>
                         <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Heart /> My Favorite Jobs</h2>
                          {isStandardUserDashboardLoading ? (
@@ -295,6 +374,36 @@ export default function DashboardPage() {
                             </div>
                          )}
                     </section>
+                    
+                    <Separator />
+                    
+                    <section>
+                        <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Search /> My Saved Searches</h2>
+                        {isStandardUserDashboardLoading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+                            </div>
+                        ) : savedSearches && savedSearches.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {savedSearches.map(search => (
+                                    <SavedSearchCard
+                                        key={search.id}
+                                        savedSearch={search}
+                                        onExecute={handleExecuteSearch}
+                                        onDelete={handleDeleteSearch}
+                                        isDeleting={isDeletingSearch}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
+                                <Search className="mx-auto h-10 w-10 text-muted-foreground" />
+                                <h3 className="text-xl font-semibold">No saved searches yet</h3>
+                                <p className="text-muted-foreground">Save a search on the jobs page to see it here.</p>
+                                <Button asChild><Link href="/jobs">Browse Jobs</Link></Button>
+                            </div>
+                        )}
+                    </section>
                     </>
                 )}
 
@@ -302,5 +411,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-
-    
