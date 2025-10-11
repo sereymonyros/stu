@@ -202,7 +202,6 @@ export default function DashboardPage() {
 
     // For Standard Users: Fetch the details of the jobs they applied for
     const appliedJobsQuery = useMemo(() => {
-        // Return null if loading, applications is still null, or there are no IDs to query. This prevents an invalid Firestore query.
         if (areApplicationsLoading || !applications || appliedJobIds.length === 0) {
             return null;
         }
@@ -231,7 +230,6 @@ export default function DashboardPage() {
 
 
     const favouriteJobsDetailsQuery = useMemo(() => {
-        // Return null if loading, refs are null, or there are no IDs to query. This prevents an invalid Firestore query.
         if (areFavouritesLoading || !favouriteJobsRefs || filteredFavouriteJobIds.length === 0) {
             return null;
         }
@@ -416,3 +414,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    
