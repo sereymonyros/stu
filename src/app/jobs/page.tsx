@@ -408,35 +408,28 @@ export default function JobsPage() {
 
     const handleJobDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
-        if (!over || active.id === over.id) return;
-        
+        if (!over || !active) return;
+
         const jobId = active.id as string;
         const newStatus = over.id as string;
-        
-        let movedJob: any;
-        let oldStatus: string = '';
+        const oldStatus = active.data.current?.sortable.containerId as string;
 
-        for (const status in jobsByStatus) {
-            const job = jobsByStatus[status].find(j => j.id === jobId);
-            if (job) {
-                movedJob = job;
-                oldStatus = status;
-                break;
-            }
+        if (oldStatus === newStatus) {
+            return;
         }
-        
-        if (!movedJob || oldStatus === newStatus) return;
+
+        const movedJob = jobsByStatus[oldStatus]?.find(j => j.id === jobId);
+        if (!movedJob) return;
 
         // Optimistic UI update
         setJobsByStatus(prev => {
-            const newBoardState = { ...prev };
-            newBoardState[oldStatus] = newBoardState[oldStatus]?.filter(j => j.id !== jobId);
-            const updatedJob = { ...movedJob, status: newStatus };
-            if (!newBoardState[newStatus]) newBoardState[newStatus] = [];
-            newBoardState[newStatus].push(updatedJob);
-            return newBoardState;
+            const newState = { ...prev };
+            newState[oldStatus] = newState[oldStatus]?.filter(j => j.id !== jobId);
+            if (!newState[newStatus]) newState[newStatus] = [];
+            newState[newStatus].push({ ...movedJob, status: newStatus });
+            return newState;
         });
-
+        
         // Call server-side flow
         try {
             await updateJobStatus({ jobId: jobId, newStatus: newStatus as any });
