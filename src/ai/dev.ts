@@ -6,7 +6,6 @@ import './flows/get-public-profile-flow';
 import './flows/get-public-profiles-flow';
 import './flows/send-email-flow';
 import './flows/analyze-applicant-flow';
-import './flows/analyze-document-flow';
 import './flows/update-application-status-flow';
 import './flows/update-job-status-flow';
 import './flows/get-company-by-name-flow';
