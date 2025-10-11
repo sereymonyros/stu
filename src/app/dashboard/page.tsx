@@ -279,16 +279,7 @@ export default function DashboardPage() {
     const isStandardUserDashboardLoading = areApplicationsLoading || areAppliedJobsLoading || areFavouritesLoading || areFavouriteJobsDetailsLoading || areSavedSearchesLoading;
 
     if (isLoading) {
-        return (
-            <div className="flex flex-col min-h-screen">
-                <Header />
-                <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
-                    <Skeleton className="h-10 w-1/3" />
-                    <Skeleton className="h-64 w-full" />
-                    <Skeleton className="h-64 w-full" />
-                </main>
-            </div>
-        );
+        return <DashboardLoading />;
     }
     
     if (!user) {
@@ -413,6 +404,15 @@ export default function DashboardPage() {
     );
 }
 
-    
-
-    
+function DashboardLoading() {
+    return (
+        <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
+                <Skeleton className="h-10 w-1/3" />
+                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-64 w-full" />
+            </main>
+        </div>
+    );
+}
