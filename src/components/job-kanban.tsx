@@ -87,9 +87,9 @@ function JobCard({
                     )}
                 </div>
                 <div className="flex flex-col text-sm text-muted-foreground gap-1 pt-1">
-                    <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="flex items-center gap-2 hover:underline">
+                    <div className="flex items-center gap-2">
                         <Building className="h-4 w-4" /> {job.companyName}
-                    </Link>
+                    </div>
                     <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {job.location}</div>
                     {salaryDisplay && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                 </div>
