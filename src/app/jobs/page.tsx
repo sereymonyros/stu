@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, Suspense } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { collection, doc, setDoc, deleteDoc, serverTimestamp, query } from 'firebase/firestore';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
@@ -58,7 +58,7 @@ const FilterGroup = ({ title, options, selected, onToggle }: { title: string; op
     );
 };
 
-export default function JobsPage() {
+function JobsPageContent() {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const router = useRouter();
@@ -78,6 +78,14 @@ export default function JobsPage() {
         return query(collection(firestore, 'jobs'));
     }, [firestore]);
     const { data: jobs, isLoading: areJobsLoading, refetch: refetchJobs } = useCollection(jobsQuery);
+
+     const userProfileRef = useMemo(() => {
+        if (!firestore || !user) return null;
+        return doc(firestore, 'users', user.uid);
+    }, [firestore, user]);
+    const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+
+    const isRecruiter = userProfile?.userType === 'recruiter';
     
     // --- Dynamic Filter Options ---
     const { companyNames, locations, jobTypes, maxSalary } = useMemo(() => {
@@ -140,15 +148,6 @@ export default function JobsPage() {
         
         router.replace(`/jobs?${params.toString()}`);
     }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, router, maxSalary]);
-
-
-    const userProfileRef = useMemo(() => {
-        if (!firestore || !user) return null;
-        return doc(firestore, 'users', user.uid);
-    }, [firestore, user]);
-    const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
-
-    const isRecruiter = userProfile?.userType === 'recruiter';
 
     const favouriteJobsQuery = useMemo(() => {
         if (!firestore || !user || userProfile?.userType === 'recruiter') return null;
@@ -342,17 +341,18 @@ export default function JobsPage() {
             return;
         }
 
+        let movedJob: any;
         // Optimistic UI update
         setJobsByStatus((prev) => {
             const newBoardState = { ...prev };
             const oldColumn = newBoardState[oldStatus] || [];
-            const newColumn = newBoardState[newStatus] || [];
-
+            
             const jobIndex = oldColumn.findIndex((job) => job.id === jobId);
             if (jobIndex === -1) return prev; // Should not happen
-
-            const [movedJob] = oldColumn.splice(jobIndex, 1);
             
+            [movedJob] = oldColumn.splice(jobIndex, 1);
+            
+            const newColumn = newBoardState[newStatus] || [];
             newColumn.push({ ...movedJob, status: newStatus });
             
             newBoardState[oldStatus] = oldColumn;
@@ -370,8 +370,17 @@ export default function JobsPage() {
             console.error("Failed to update job status:", error);
             toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
             
-            // Revert UI on failure by refetching
-            refetchJobs();
+            // Revert UI on failure
+             setJobsByStatus((prev) => {
+                 const revertedState = { ...prev };
+                 // Remove from new column
+                 revertedState[newStatus] = revertedState[newStatus]?.filter(job => job.id !== jobId);
+                 // Add back to old column if it doesn't exist
+                 if (movedJob && !revertedState[oldStatus]?.find(job => job.id === jobId)) {
+                     revertedState[oldStatus].push(movedJob);
+                 }
+                 return revertedState;
+             });
         }
     };
     
@@ -388,6 +397,9 @@ export default function JobsPage() {
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                         <div className="flex-1">
                             <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
+                            {isRecruiter && viewMode === 'board' && (
+                                <p className="text-muted-foreground mt-1">Manage the status of your job postings.</p>
+                            )}
                         </div>
                         <div className="flex items-center gap-2">
                            {isRecruiter && jobs && jobs.length > 0 && (
@@ -560,19 +572,17 @@ export default function JobsPage() {
                                                 title={stage}
                                                 isLoading={isLoading}
                                             >
-                                                <SortableContext items={stageJobs.map(j => j.id)} strategy={verticalListSortingStrategy}>
-                                                    {stageJobs.map((job: any) => (
-                                                        <Board.Card
-                                                            key={job.id}
-                                                            job={job}
-                                                            isFavourite={false}
-                                                            onToggleFavourite={() => {}}
-                                                            hasApplied={false}
-                                                            isRecruiter={true}
-                                                            isDraggable={true}
-                                                        />
-                                                    ))}
-                                                </SortableContext>
+                                                {stageJobs.map((job: any) => (
+                                                    <Board.Card
+                                                        key={job.id}
+                                                        job={job}
+                                                        isFavourite={false}
+                                                        onToggleFavourite={() => {}}
+                                                        hasApplied={false}
+                                                        isRecruiter={true}
+                                                        isDraggable={true}
+                                                    />
+                                                ))}
                                             </Board.Column>
                                         );
                                     })}
@@ -584,4 +594,12 @@ export default function JobsPage() {
             </main>
         </div>
     );
+}
+
+export default function JobsPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <JobsPageContent />
+        </Suspense>
+    )
 }
