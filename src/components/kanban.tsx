@@ -157,7 +157,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-            <Card className="mb-2 bg-card hover:bg-muted/50" >
+            <Card className={cn("mb-2 bg-card hover:bg-muted/50 cursor-grab", isDragging && "cursor-grabbing")}>
                 <CardContent className="p-3" {...listeners}>
                     <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
