@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -27,7 +26,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -37,7 +35,7 @@ import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 
-function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; }) {
+function JobCard({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; isRecruiter: boolean; }) {
     const { user } = useUser();
     const isOwner = user && user.uid === job.recruiterId;
 
@@ -62,7 +60,8 @@ function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any
     return (
         <Card className={cn(
             "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
-            hasApplied && "bg-muted/30 opacity-60 hover:shadow-none"
+            hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
+            isDragging && "cursor-grabbing"
         )}>
             <CardHeader>
                 <div className="flex justify-between items-start gap-2">
@@ -105,7 +104,7 @@ function JobCard({ job, isFavourite, onToggleFavourite, hasApplied }: { job: any
                     <Button className="w-full" disabled>Applied</Button>
                  ) : (
                     <Button asChild className="w-full">
-                        <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
+                        <Link href={`/jobs/${job.id}/apply`}>{isRecruiter ? 'View' : 'View & Apply'}</Link>
                     </Button>
                  )}
             </CardFooter>
@@ -417,14 +416,26 @@ export default function JobsPage() {
         if (oldStatus === newStatus) {
             return;
         }
-
-        const movedJob = jobsByStatus[oldStatus]?.find(j => j.id === jobId);
+        
+        let movedJob: any;
+        
+        // Find the job being moved
+        for (const status in jobsByStatus) {
+            const job = jobsByStatus[status].find(j => j.id === jobId);
+            if (job) {
+                movedJob = job;
+                break;
+            }
+        }
+        
         if (!movedJob) return;
 
         // Optimistic UI update
         setJobsByStatus(prev => {
             const newState = { ...prev };
+            // Remove from old column
             newState[oldStatus] = newState[oldStatus]?.filter(j => j.id !== jobId);
+            // Add to new column
             if (!newState[newStatus]) newState[newStatus] = [];
             newState[newStatus].push({ ...movedJob, status: newStatus });
             return newState;
@@ -439,9 +450,14 @@ export default function JobsPage() {
             // Revert UI on failure
             setJobsByStatus(prev => {
                  const revertedState = { ...prev };
-                 revertedState[newStatus] = revertedState[newStatus]?.filter(j => j.id !== jobId);
-                 if (!revertedState[oldStatus]) revertedState[oldStatus] = [];
-                 revertedState[oldStatus].push(movedJob);
+                 // Remove from new column if it exists there
+                 if (revertedState[newStatus]) {
+                     revertedState[newStatus] = revertedState[newStatus].filter(j => j.id !== jobId);
+                 }
+                 // Add back to old column if it doesn't exist there anymore
+                 if (revertedState[oldStatus] && !revertedState[oldStatus].find(j => j.id === jobId)) {
+                     revertedState[oldStatus].push(movedJob);
+                 }
                  return revertedState;
             });
             toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
@@ -598,6 +614,7 @@ export default function JobsPage() {
                                             isFavourite={favouriteJobIds.has(job.id)}
                                             onToggleFavourite={handleToggleFavourite}
                                             hasApplied={appliedJobIds.has(job.id)}
+                                            isRecruiter={isRecruiter}
                                         />
                                     ))}
                                 </div>
