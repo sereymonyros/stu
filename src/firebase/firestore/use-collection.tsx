@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -49,7 +50,7 @@ function getCollectionPath(target: CollectionReference | Query): string {
     return (target as unknown as InternalQuery)._query.path.canonicalString();
 }
 
-const CACHEABLE_STORES = ['listings', 'jobs', 'feedbacks'];
+const CACHEABLE_STORES = ['listings', 'jobs', 'feedbacks', 'chats', 'users'];
 
 // Firestore Timestamps are not clonable for IndexedDB, so we convert them to JS Dates
 function convertTimestampsToDates(obj: any): any {
@@ -114,7 +115,15 @@ export function useCollection<T = any>(
     if (isCacheable) {
         getStoreData(storeName).then(cachedData => {
             if (!didCancel && cachedData && cachedData.length > 0) {
-                 setData(cachedData.map(item => ({ ...item, createdAt: item.createdAt ? new Date(item.createdAt) : undefined })) as StateDataType);
+                 // Convert any potential string timestamps from cache back to Date objects
+                 const dataWithDates = cachedData.map(item => ({ 
+                    ...item, 
+                    createdAt: item.createdAt ? new Date(item.createdAt) : undefined,
+                    updatedAt: item.updatedAt ? new Date(item.updatedAt) : undefined,
+                    appliedAt: item.appliedAt ? new Date(item.appliedAt) : undefined,
+                    timestamp: item.timestamp ? new Date(item.timestamp) : undefined,
+                 }))
+                 setData(dataWithDates as StateDataType);
                  setIsLoading(false); // We have data, so loading is "done" for the UI
             }
         }).catch(console.error);
