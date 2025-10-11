@@ -20,18 +20,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useAuth, useFirestore, useUser, useDoc } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { uploadFile } from '@/ai/flows/upload-file-flow';
 import { ACCEPTED_IMAGE_TYPES, ACCEPTED_RESUME_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
 import { FileText, UploadCloud } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Progress } from '@/components/ui/progress';
 
 const profileSchema = z.object({
   displayName: z.string().min(2, { message: 'Full name must be at least 2 characters.' }).max(50, { message: 'Display name cannot be longer than 50 characters.' }),
@@ -51,14 +52,6 @@ const profileSchema = z.object({
     ),
 });
 
-// Helper function to convert a File to a Base64 data URI
-const toBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-  });
 
 export default function ProfilePage() {
   const firestore = useFirestore();
@@ -70,6 +63,7 @@ export default function ProfilePage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const userProfileRef = useMemo(() => {
     if (!firestore || !user) return null;
@@ -128,6 +122,30 @@ export default function ProfilePage() {
     }
   };
 
+  const uploadFileWithProgress = (file: File, path: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const storage = getStorage();
+        const fileRef = storageRef(storage, path);
+        const uploadTask = uploadBytesResumable(fileRef, file);
+
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                setUploadProgress(progress);
+            },
+            (error) => {
+                setUploadProgress(null);
+                reject(error);
+            },
+            async () => {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                setUploadProgress(null);
+                resolve(downloadURL);
+            }
+        );
+    });
+};
+
 
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     setIsSubmitting(true);
@@ -142,34 +160,20 @@ export default function ProfilePage() {
       const imageFile = values.photo?.[0];
 
       if (imageFile) {
-        const fileDataUri = await toBase64(imageFile);
-        const uploadResult = await uploadFile({
-            fileDataUri,
-            fileName: imageFile.name,
-            path: `profiles/${auth.currentUser.uid}`
-        });
-        photoURL = uploadResult.downloadUrl;
+        photoURL = await uploadFileWithProgress(imageFile, `profiles/${auth.currentUser.uid}/${imageFile.name}`);
       }
       
       let resumeUrl = userProfile?.resumeUrl;
       const resumeFile = values.resume?.[0];
       if (resumeFile) {
-         const fileDataUri = await toBase64(resumeFile);
-         const uploadResult = await uploadFile({
-             fileDataUri,
-             fileName: resumeFile.name,
-             path: `resumes/${auth.currentUser.uid}`
-         });
-         resumeUrl = uploadResult.downloadUrl;
+        resumeUrl = await uploadFileWithProgress(resumeFile, `resumes/${auth.currentUser.uid}/${resumeFile.name}`);
       }
 
-      // This is non-blocking
-      updateProfile(auth.currentUser, {
+      await updateProfile(auth.currentUser, {
         displayName: values.displayName,
         photoURL: photoURL,
       });
 
-      // Prepare data for Firestore, excluding undefined values
       const dataToUpdate: {[key: string]: any} = {
         displayName: values.displayName,
         address: values.address,
@@ -183,8 +187,7 @@ export default function ProfilePage() {
         dataToUpdate.resumeUrl = resumeUrl;
       }
       
-      // Update Firestore profile (non-blocking)
-      updateDoc(userProfileRef, dataToUpdate).catch(serverError => {
+      await updateDoc(userProfileRef, dataToUpdate).catch(serverError => {
         errorEmitter.emit(
           'permission-error',
           new FirestorePermissionError({
@@ -193,6 +196,7 @@ export default function ProfilePage() {
             requestResourceData: dataToUpdate,
           })
         );
+        throw serverError;
       });
 
       toast({
@@ -200,14 +204,12 @@ export default function ProfilePage() {
         description: 'Your profile has been successfully updated.',
       });
 
-      // Manually reset state after success
       setImagePreview(null);
       if (photoInputRef.current) photoInputRef.current.value = '';
       if (resumeInputRef.current) resumeInputRef.current.value = '';
       form.resetField('photo');
       form.resetField('resume');
       
-      // Refetch profile to show updated resume URL if changed
       refetchUserProfile();
 
     } catch (error: any) {
@@ -219,6 +221,7 @@ export default function ProfilePage() {
       });
     } finally {
         setIsSubmitting(false);
+        setUploadProgress(null);
     }
   };
 
@@ -324,7 +327,7 @@ export default function ProfilePage() {
                       <FormField control={form.control} name="resume" render={({ field }) => (
                           <FormItem className="w-full">
                               <FormLabel>Resume</FormLabel>
-                                {userProfile.resumeUrl && (
+                                {userProfile.resumeUrl && !form.getValues("resume")?.[0] && (
                                   <div className="flex items-center gap-3 p-2 rounded-md border bg-muted/50 mb-4">
                                       <FileText className="h-6 w-6 text-muted-foreground" />
                                       <a href={userProfile.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline flex-1 truncate">
@@ -360,7 +363,14 @@ export default function ProfilePage() {
                       )}/>
                     </>
                   )}
-
+                  
+                  {uploadProgress !== null && (
+                    <div className="space-y-2">
+                        <Label>{isSubmitting ? 'Uploading...' : 'Upload Complete'}</Label>
+                        <Progress value={uploadProgress} />
+                        <p className="text-sm text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
+                    </div>
+                  )}
 
                   <Button type="submit" disabled={isSubmitting} className="w-full">
                     {isSubmitting ? 'Saving...' : 'Save Changes'}
