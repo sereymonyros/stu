@@ -84,22 +84,31 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         
         const applicationId = active.id as string;
         const newStatus = over.id as string;
-        const oldStatus = active.data.current?.sortable.containerId as string;
-
-        if (oldStatus === newStatus) return;
-
-        // Find the moved applicant from the state
-        const oldColumn = applicantsByStatus[oldStatus];
-        const applicantIndex = oldColumn.findIndex(app => app.id === applicationId);
-        if (applicantIndex === -1) return;
-
-        const movedApplicant = oldColumn[applicantIndex];
         
+        let oldStatus: string | undefined;
+        let movedApplicant: any;
+
+        // Find the applicant and its old status from the current state
+        for (const status in applicantsByStatus) {
+            const app = applicantsByStatus[status].find(a => a.id === applicationId);
+            if (app) {
+                oldStatus = status;
+                movedApplicant = app;
+                break;
+            }
+        }
+        
+        if (!oldStatus || !movedApplicant || oldStatus === newStatus) {
+            return;
+        }
+
         // Optimistically update UI
         setApplicantsByStatus(prev => {
             const newBoardState = { ...prev };
             // Remove from old column
-            newBoardState[oldStatus] = prev[oldStatus].filter(app => app.id !== applicationId);
+            if (newBoardState[oldStatus!]) {
+                newBoardState[oldStatus!] = newBoardState[oldStatus!].filter(app => app.id !== applicationId);
+            }
             // Add to new column
             const newColumn = newBoardState[newStatus] || [];
             newColumn.push({ ...movedApplicant, status: newStatus });
