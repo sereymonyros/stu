@@ -224,7 +224,6 @@ export default function DashboardPage() {
             <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
-                    <p className="text-muted-foreground">Manage your activity on Cambodia Hub.</p>
                 </div>
 
                 {isRecruiter && (
@@ -303,3 +302,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    
