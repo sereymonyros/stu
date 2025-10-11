@@ -347,12 +347,7 @@ export default function DashboardPage() {
                             {myListings.map(listing => <ListingCard key={listing.id} listing={listing} />)}
                         </div>
                     ) : (
-                         <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
-                            <Store className="mx-auto h-10 w-10 text-muted-foreground" />
-                            <h3 className="text-xl font-semibold">You have no active listings</h3>
-                            <p className="text-muted-foreground">Sell your items and reach buyers across the country.</p>
-                            <Button asChild><Link href="/listings/new">Post an Item</Link></Button>
-                        </div>
+                        null
                     )}
                 </section>
 
