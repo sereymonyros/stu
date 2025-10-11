@@ -33,6 +33,7 @@ import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } f
 import { Board } from '@/components/job-kanban';
 import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import JobsLoading from './loading';
 
 const FilterGroup = ({ title, options, selected, onToggle }: { title: string; options: string[]; selected: string[]; onToggle: (option: string) => void; }) => {
     if (!options || options.length === 0) return null;
@@ -59,7 +60,7 @@ const FilterGroup = ({ title, options, selected, onToggle }: { title: string; op
 
 function JobsPageContent() {
     const firestore = useFirestore();
-    const { user, isUserLoading } = useUser();
+    const { user } = useUser(); // isUserLoading is handled by Suspense
     const router = useRouter();
     const { toast } = useToast();
     const searchParams = useSearchParams();
@@ -70,23 +71,22 @@ function JobsPageContent() {
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
 
-
     // --- Data Fetching ---
-    const jobsQuery = useMemo(() => {
-        if (!firestore) return null;
-        return query(collection(firestore, 'jobs'));
-    }, [firestore]);
-    const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
+    const jobsQuery = useMemo(() => collection(firestore, 'jobs'), [firestore]);
+    const { data: jobs } = useCollection(jobsQuery);
 
-     const userProfileRef = useMemo(() => {
-        if (!firestore || !user) return null;
-        return doc(firestore, 'users', user.uid);
-    }, [firestore, user]);
-    const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
-
-    const isRecruiter = !isProfileLoading && userProfile?.userType === 'recruiter';
+    const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
+    const { data: userProfile } = useDoc(userProfileRef);
     
-    // --- Dynamic Filter Options ---
+    const isRecruiter = userProfile?.userType === 'recruiter';
+    
+    const favouriteJobsQuery = useMemo(() => (firestore && user && !isRecruiter) ? collection(firestore, `users/${user.uid}/favouriteJobs`) : null, [firestore, user, isRecruiter]);
+    const { data: favouriteJobs } = useCollection(favouriteJobsQuery);
+
+    const applicationsQuery = useMemo(() => (firestore && user && !isRecruiter) ? query(collection(firestore, `users/${user.uid}/applications`)) : null, [firestore, user, isRecruiter]);
+    const { data: applications } = useCollection(applicationsQuery);
+
+    // --- Derived State ---
     const { companyNames, locations, jobTypes, maxSalary } = useMemo(() => {
         if (!jobs) return { companyNames: [], locations: [], jobTypes: [], maxSalary: 150000 };
         const companies = new Set<string>();
@@ -107,6 +107,9 @@ function JobsPageContent() {
             maxSalary: finalMaxSalary,
         };
     }, [jobs]);
+
+    const favouriteJobIds = useMemo(() => new Set(favouriteJobs?.map(fav => fav.jobId)), [favouriteJobs]);
+    const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
 
     // --- Search & Filter State ---
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
@@ -139,7 +142,6 @@ function JobsPageContent() {
         selectedJobTypes.forEach(t => params.append('jobType', t));
         if (showFavoritesOnly) params.set('favorites', 'true');
         
-        // Only add salary to URL if it's not the default range
         if (salaryRange[0] > 0 || salaryRange[1] < maxSalary) {
             params.set('salaryMin', salaryRange[0].toString());
             params.set('salaryMax', salaryRange[1].toString());
@@ -147,22 +149,6 @@ function JobsPageContent() {
         
         router.replace(`/jobs?${params.toString()}`);
     }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, router, maxSalary]);
-
-    const favouriteJobsQuery = useMemo(() => {
-        if (!firestore || !user || userProfile?.userType === 'recruiter') return null;
-        return collection(firestore, `users/${user.uid}/favouriteJobs`);
-    }, [firestore, user, userProfile]);
-    const { data: favouriteJobs, isLoading: areFavouritesLoading } = useCollection(favouriteJobsQuery);
-
-    const favouriteJobIds = useMemo(() => new Set(favouriteJobs?.map(fav => fav.jobId)), [favouriteJobs]);
-    
-    const applicationsQuery = useMemo(() => {
-        if (!firestore || !user || userProfile?.userType === 'recruiter') return null;
-        return query(collection(firestore, `users/${user.uid}/applications`));
-    }, [firestore, user, userProfile]);
-    const { data: applications, isLoading: areApplicationsLoading } = useCollection(applicationsQuery);
-    
-    const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
 
     // --- Toggle Handlers ---
     const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
@@ -254,9 +240,8 @@ function JobsPageContent() {
     const filteredAndSortedJobs = useMemo(() => {
         if (!jobs) return [];
         
-        let filtered = jobs.filter(job => job.title); // Ensure job has a title
+        let filtered = jobs.filter(job => job.title);
 
-        // 1. Search filter
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             filtered = filtered.filter(job => 
@@ -265,7 +250,6 @@ function JobsPageContent() {
             );
         }
 
-        // 2. Toggle filters
         if (selectedCompanies.length > 0) {
             filtered = filtered.filter(job => selectedCompanies.includes(job.companyName));
         }
@@ -278,18 +262,15 @@ function JobsPageContent() {
         if (showFavoritesOnly) {
             filtered = filtered.filter(job => favouriteJobIds.has(job.id));
         }
-        // 3. Salary filter
         const [filterMin, filterMax] = salaryRange;
         if (filterMin > 0 || filterMax < maxSalary) {
              filtered = filtered.filter(job => {
                 const jobMin = job.salaryMin ?? 0;
                 const jobMax = job.salaryMax ?? Infinity;
-                // The job's salary range must overlap with the filter's range
                 return Math.max(jobMin, filterMin) <= Math.min(jobMax, filterMax);
             });
         }
 
-        // 4. Sort for authenticated users
         if (!user) return filtered;
 
         return filtered.sort((a, b) => {
@@ -336,8 +317,6 @@ function JobsPageContent() {
         const newStatus = over.id as string;
         
         let oldStatus: string | undefined;
-
-        // Find the job and its old status from the current state
         let movedJob: any;
         for (const status in jobsByStatus) {
             const job = jobsByStatus[status].find(j => j.id === jobId);
@@ -352,20 +331,13 @@ function JobsPageContent() {
             return;
         }
 
-        // Optimistic UI update
         setJobsByStatus((prev) => {
             const newBoardState = { ...prev };
-            
-            // Remove from old column
             newBoardState[oldStatus!] = newBoardState[oldStatus!].filter(j => j.id !== jobId);
-            
-            // Add to new column
             newBoardState[newStatus] = [...(newBoardState[newStatus] || []), { ...movedJob, status: newStatus }];
-            
             return newBoardState;
         });
         
-        // Call server-side flow
         try {
             await updateJobStatus({ jobId, newStatus: newStatus as any });
             toast({ title: 'Job Status Updated', description: `Job moved to ${newStatus}.` });
@@ -373,12 +345,9 @@ function JobsPageContent() {
             console.error("Failed to update job status:", error);
             toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
             
-            // Revert UI on failure
              setJobsByStatus((prev) => {
                  const revertedState = { ...prev };
-                 // Remove from new column
                  revertedState[newStatus] = revertedState[newStatus]?.filter(j => j.id !== jobId);
-                 // Add back to old column if it doesn't exist
                  if (movedJob && !revertedState[oldStatus!]?.find(j => j.id === jobId)) {
                      revertedState[oldStatus!].push(movedJob);
                  }
@@ -388,9 +357,11 @@ function JobsPageContent() {
     };
     
     const KANBAN_STAGES: ('Available' | 'Offering' | 'Closed')[] = ["Available", "Offering", "Closed"];
-
-    const isLoading = isUserLoading || areJobsLoading || isProfileLoading || areFavouritesLoading || areApplicationsLoading;
     
+    if (!jobs) {
+        // This case is handled by Suspense, but as a safeguard:
+        return <JobsLoading />;
+    }
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -405,7 +376,7 @@ function JobsPageContent() {
                             )}
                         </div>
                         <div className="flex items-center gap-2">
-                           {isRecruiter && jobs && jobs.length > 0 && (
+                           {isRecruiter && jobs.length > 0 && (
                                 <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
                                     <ToggleGroupItem value="card" aria-label="Card view"><List /></ToggleGroupItem>
                                     <ToggleGroupItem value="board" aria-label="Board view"><LayoutGrid /></ToggleGroupItem>
@@ -421,7 +392,7 @@ function JobsPageContent() {
                     
                     {viewMode === 'card' && (
                         <>
-                             {jobs && jobs.length > 0 && (
+                             {jobs.length > 0 && (
                                 <Card className="p-4 mb-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                                         <div className="relative md:col-span-2 lg:col-span-3">
@@ -519,20 +490,8 @@ function JobsPageContent() {
                                     )}
                                 </Card>
                             )}
-
-                            {isLoading && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                    {Array.from({ length: 8 }).map((_, i) => (
-                                        <Card key={i}>
-                                            <CardHeader><Skeleton className="h-6 w-3/4" /><Skeleton className="h-4 w-1/2 mt-2" /></CardHeader>
-                                            <CardContent><Skeleton className="h-8 w-full" /></CardContent>
-                                            <CardFooter><Skeleton className="h-10 w-full" /></CardFooter>
-                                        </Card>
-                                    ))}
-                                </div>
-                            )}
-
-                            {!isLoading && filteredAndSortedJobs && filteredAndSortedJobs.length > 0 && (
+                            
+                            {filteredAndSortedJobs.length > 0 && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {filteredAndSortedJobs.map((job) => (
                                         <Board.Card 
@@ -548,7 +507,7 @@ function JobsPageContent() {
                                 </div>
                             )}
 
-                            {!isLoading && (!jobs || filteredAndSortedJobs.length === 0) && (
+                            {(!jobs || filteredAndSortedJobs.length === 0) && (
                                 <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
                                     <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
                                     <div className="text-center">
@@ -574,7 +533,7 @@ function JobsPageContent() {
                                                 id={stage}
                                                 title={stage}
                                                 jobs={stageJobs}
-                                                isLoading={isLoading}
+                                                isLoading={!jobs} // Kanban uses its own loading prop
                                             >
                                                 {stageJobs.map((job: any) => (
                                                     <Board.Card
@@ -602,8 +561,10 @@ function JobsPageContent() {
 
 export default function JobsPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<JobsLoading />}>
             <JobsPageContent />
         </Suspense>
     )
 }
+
+    
