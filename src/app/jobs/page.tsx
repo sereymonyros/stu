@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -242,7 +243,9 @@ export default function JobsPage() {
 
         setIsSaving(true);
         try {
-            const savedSearchRef = collection(firestore, `users/${user.uid}/savedSearches`);
+            // Explicitly create a doc reference with a new ID
+            const newSearchDocRef = doc(collection(firestore, `users/${user.uid}/savedSearches`));
+
             const searchData = {
                 name: savedSearchName,
                 searchQuery: searchQuery,
@@ -254,7 +257,8 @@ export default function JobsPage() {
                 createdAt: serverTimestamp(),
             };
             
-            await addDoc(savedSearchRef, searchData);
+            // Use setDoc with the explicit reference
+            await setDoc(newSearchDocRef, searchData);
 
             toast({ title: "Search Saved!", description: `"${savedSearchName}" has been added to your dashboard.`});
             setIsSaveDialogOpen(false);
