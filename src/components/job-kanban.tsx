@@ -133,9 +133,11 @@ function JobCard({
     )
 }
 
-function Column({ id, title, children, jobs, isLoading }: { id: string, title: string, children: React.ReactNode, jobs: any[], isLoading: boolean }) {
+function Column({ id, title, children, isLoading }: { id: string, title: string, children: React.ReactNode, isLoading: boolean }) {
     const { setNodeRef, isOver } = useDroppable({ id });
-    const jobIds = useMemo(() => jobs.map(j => j.id), [jobs]);
+    const jobs = React.Children.toArray(children);
+    const jobIds = useMemo(() => jobs.map((child: any) => child.props.job.id), [jobs]);
+
 
     const titleColors: { [key: string]: string } = {
         Available: 'border-blue-500',
@@ -145,7 +147,12 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
 
     return (
         <div className="w-72 flex-shrink-0">
-            <Card ref={setNodeRef} className={cn("h-full transition-colors", isOver ? 'bg-primary/10' : 'bg-muted/40')}>
+            <Card ref={setNodeRef} className={cn(
+                "h-full transition-colors", 
+                isOver && id === 'Closed' ? 'bg-destructive/20' : 
+                isOver ? 'bg-primary/10' : 
+                'bg-muted/40'
+            )}>
                 <CardHeader className={cn("p-3 border-b-4", titleColors[id] || 'border-gray-500')}>
                     <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
                         <span>{title}</span>
