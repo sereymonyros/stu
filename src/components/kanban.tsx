@@ -17,12 +17,12 @@ import { Skeleton } from './ui/skeleton';
 import { analyzeApplicant } from '@/ai/flows/analyze-applicant-flow';
 import type { AnalyzeApplicantOutput } from '@/ai/flows/analyze-applicant-schema';
 import { useToast } from '@/hooks/use-toast';
-import type { GetPublicProfileOutput } from '@/ai/flows/get-public-profile-schema';
+import type { UserProfile } from '@/types/user';
 import type { Timestamp } from 'firebase/firestore';
 
 type ApplicantWithProfile = {
     id: string;
-    profile: GetPublicProfileOutput | null; // Profile can be null
+    profile: UserProfile | null;
     application: any;
 }
 
@@ -149,7 +149,6 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: ApplicantWithProf
         }
     };
     
-    // Don't render card if profile is missing
     if (!applicant.profile) {
         return (
              <Card className="mb-2 bg-card p-3">
@@ -162,11 +161,9 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: ApplicantWithProf
     const appliedAtDate = useMemo(() => {
         const appliedAt = applicant.application.appliedAt;
         if (!appliedAt) return null;
-        // Check if it's a Firestore Timestamp
         if (typeof appliedAt.toDate === 'function') {
             return (appliedAt as Timestamp).toDate();
         }
-        // Otherwise, assume it's already a Date or a string that can be converted
         return new Date(appliedAt);
     }, [applicant.application.appliedAt]);
 

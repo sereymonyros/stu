@@ -16,17 +16,54 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Board } from '@/components/kanban';
 import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
-import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
-import type { GetPublicProfileOutput } from '@/ai/flows/get-public-profile-schema';
-
-// Define the stages for the Kanban board
-const KANBAN_STAGES = ["submitted", "reviewed", "offered", "accepted", "rejected"] as const;
-type KanbanStage = typeof KANBAN_STAGES[number];
+import type { UserProfile } from '@/types/user';
 
 type ApplicantWithProfile = {
     id: string; // This is the application doc ID
-    profile: GetPublicProfileOutput | null;
+    profile: UserProfile | null;
     application: any;
+}
+
+// A new component to fetch and render each applicant's details
+function ApplicantCardWrapper({ applicantId, application, jobDetails }: { applicantId: string, application: any, jobDetails: any }) {
+    const firestore = useFirestore();
+
+    const userProfileRef = useMemo(() => {
+        if (!firestore) return null;
+        return doc(firestore, `users/${applicantId}`);
+    }, [firestore, applicantId]);
+
+    const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
+
+    if (isProfileLoading) {
+        return (
+            <Card className="mb-2 bg-card p-3">
+                <div className="flex items-center gap-2">
+                    <Skeleton className="h-9 w-9 rounded-full" />
+                    <div className="space-y-1">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-16" />
+                    </div>
+                </div>
+            </Card>
+        );
+    }
+    
+    if (!userProfile) {
+        return (
+            <Card className="mb-2 bg-destructive/10 p-3">
+                <p className="text-xs text-destructive-foreground">Error: Could not load profile for applicant {applicantId}.</p>
+            </Card>
+        );
+    }
+    
+    const applicantWithProfile: ApplicantWithProfile = {
+        id: application.id,
+        application: application,
+        profile: userProfile
+    };
+
+    return <Board.Card applicant={applicantWithProfile} jobDetails={jobDetails} />;
 }
 
 
@@ -39,21 +76,18 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
     const finalJobId = Array.isArray(jobId) ? jobId[0] : jobId;
     
-    // This state will now hold the combined applicant and profile data
-    const [applicantsWithProfiles, setApplicantsWithProfiles] = useState<ApplicantWithProfile[]>([]);
-    const [isDataLoading, setIsDataLoading] = useState(true);
-    
     const jobRef = useMemo(() => {
         if (!firestore || !finalJobId) return null;
         return doc(firestore, 'jobs', finalJobId);
     }, [firestore, finalJobId]);
+
     const { data: job, isLoading: isJobLoading, refetch: refetchJob } = useDoc(jobRef);
     
-    // This query just fetches the raw application data
     const applicantsQuery = useMemo(() => {
         if (!firestore || !finalJobId) return null;
         return query(collection(firestore, `jobs/${finalJobId}/applications`));
     }, [firestore, finalJobId]);
+    
     const { data: applications, isLoading: areApplicationsLoading } = useCollection(applicantsQuery);
 
      useEffect(() => {
@@ -68,40 +102,22 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         }
     }, [user, isUserLoading, job, isJobLoading, router, toast]);
 
-    // Effect to fetch profiles when applications are loaded
+    const [applicantsByStatus, setApplicantsByStatus] = useState<Record<string, any[]>>({});
+
     useEffect(() => {
-        if (!applications) {
-            setIsDataLoading(areApplicationsLoading);
-            return;
+        if (applications) {
+            const grouped = applications.reduce((acc, app) => {
+                const status = app.status || 'submitted';
+                if (!acc[status]) {
+                    acc[status] = [];
+                }
+                acc[status].push(app);
+                return acc;
+            }, {} as Record<string, any[]>);
+            setApplicantsByStatus(grouped);
         }
-        if (applications.length === 0) {
-            setApplicantsWithProfiles([]);
-            setIsDataLoading(false);
-            return;
-        }
+    }, [applications]);
 
-        setIsDataLoading(true);
-        const fetchProfiles = async () => {
-            try {
-                const profilePromises = applications.map(app => getPublicProfile({ userId: app.applicantId }));
-                const profiles = await Promise.all(profilePromises);
-                
-                const combinedData = applications.map((app, index) => ({
-                    id: app.id,
-                    application: app,
-                    profile: profiles[index] || null
-                }));
-                setApplicantsWithProfiles(combinedData);
-            } catch (err: any) {
-                 console.error("Failed to fetch applicant profiles:", err);
-                 toast({ variant: 'destructive', title: 'Error Loading Profiles', description: 'Could not load all applicant profiles. Check console for details.' });
-            } finally {
-                setIsDataLoading(false);
-            }
-        };
-
-        fetchProfiles();
-    }, [applications, areApplicationsLoading, toast]);
     
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -114,26 +130,34 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         
-        if (!over || active.id === over.id || !firestore) {
+        if (!over || active.id === over.id || !firestore || !applications) {
             return;
         }
         
-        const applicantId = active.id as string; // This is the application ID (same as user UID)
-        const newStatus = over.id as KanbanStage;
+        const applicationId = active.id as string;
+        const newStatus = over.id as string;
         
-        const applicant = applicantsWithProfiles.find(a => a.id === applicantId);
-        if (!applicant || applicant.application.status === newStatus) {
+        const application = applications.find(a => a.id === applicationId);
+        if (!application || application.status === newStatus) {
             return;
         }
         
         // Optimistically update UI
-        setApplicantsWithProfiles(prev => prev.map(a => 
-            a.id === applicantId ? { ...a, application: { ...a.application, status: newStatus } } : a
-        ));
+        const oldStatus = application.status;
+        setApplicantsByStatus(prev => {
+            const newBoardState = { ...prev };
+            // Remove from old column
+            newBoardState[oldStatus] = newBoardState[oldStatus]?.filter(app => app.id !== applicationId);
+            // Add to new column
+            const updatedApp = { ...application, status: newStatus };
+            if (!newBoardState[newStatus]) newBoardState[newStatus] = [];
+            newBoardState[newStatus].push(updatedApp);
+            return newBoardState;
+        });
 
         // Update Firestore
-        const mainApplicationRef = doc(firestore, `jobs/${finalJobId}/applications`, applicant.application.applicantId);
-        const userApplicationRef = doc(firestore, `users/${applicant.application.applicantId}/applications`, finalJobId);
+        const mainApplicationRef = doc(firestore, `jobs/${finalJobId}/applications`, application.id);
+        const userApplicationRef = doc(firestore, `users/${application.applicantId}/applications`, finalJobId);
         
         const statusUpdate = { status: newStatus };
         try {
@@ -153,9 +177,15 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
         } catch (error) {
             // Revert UI on failure
-             setApplicantsWithProfiles(prev => prev.map(a => 
-                a.id === applicantId ? { ...a, application: { ...a.application, status: applicant.application.status } } : a
-            ));
+            setApplicantsByStatus(prev => {
+                const revertedState = { ...prev };
+                // Remove from new column
+                revertedState[newStatus] = revertedState[newStatus]?.filter(app => app.id !== applicationId);
+                // Add back to old column
+                 if (!revertedState[oldStatus]) revertedState[oldStatus] = [];
+                revertedState[oldStatus].push(application);
+                return revertedState;
+            });
             errorEmitter.emit('permission-error', new FirestorePermissionError({
                 path: mainApplicationRef.path,
                 operation: 'update',
@@ -165,7 +195,9 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         }
     };
 
-    const isLoading = isJobLoading || isDataLoading || isUserLoading;
+    const isLoading = isJobLoading || areApplicationsLoading || isUserLoading;
+
+    const KANBAN_STAGES = ["submitted", "reviewed", "offered", "accepted", "rejected"] as const;
     
     return (
         <div className="flex flex-col h-screen">
@@ -196,7 +228,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                 <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
                     <Board>
                         {KANBAN_STAGES.map(stage => {
-                            const stageApplicants = applicantsWithProfiles.filter(a => a.application.status === stage);
+                            const stageApplicants = applicantsByStatus[stage] || [];
                             return (
                                 <Board.Column 
                                     key={stage}
@@ -205,11 +237,12 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                                     applicants={stageApplicants}
                                     isLoading={isLoading}
                                 >
-                                    {stageApplicants.map(app => (
-                                        <Board.Card 
+                                    {stageApplicants.map((app: any) => (
+                                        <ApplicantCardWrapper 
                                           key={app.id}
-                                          applicant={app} 
-                                          jobDetails={job} 
+                                          applicantId={app.applicantId}
+                                          application={app}
+                                          jobDetails={job}
                                         />
                                     ))}
                                 </Board.Column>
