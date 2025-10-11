@@ -202,11 +202,11 @@ export default function DashboardPage() {
 
     // For Standard Users: Fetch the details of the jobs they applied for
     const appliedJobsQuery = useMemo(() => {
-        if (areApplicationsLoading || !applications || appliedJobIds.length === 0) {
+        if (!firestore || appliedJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
-    }, [firestore, areApplicationsLoading, applications, appliedJobIds]);
+    }, [firestore, appliedJobIds]);
     const { data: appliedJobs, isLoading: areAppliedJobsLoading } = useCollection(appliedJobsQuery);
     
     // For Standard Users: Fetch their favorite jobs
@@ -230,11 +230,11 @@ export default function DashboardPage() {
 
 
     const favouriteJobsDetailsQuery = useMemo(() => {
-        if (areFavouritesLoading || !favouriteJobsRefs || filteredFavouriteJobIds.length === 0) {
+        if (!firestore || filteredFavouriteJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', filteredFavouriteJobIds));
-    }, [firestore, areFavouritesLoading, favouriteJobsRefs, filteredFavouriteJobIds]);
+    }, [firestore, filteredFavouriteJobIds]);
     const { data: favouriteJobs, isLoading: areFavouriteJobsDetailsLoading } = useCollection(favouriteJobsDetailsQuery);
 
     // For Standard Users: Fetch their saved searches
@@ -414,5 +414,7 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    
 
     
