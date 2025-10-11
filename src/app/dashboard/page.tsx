@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
@@ -119,7 +120,7 @@ function FavouriteJobCard({ job }: { job: any }) {
 }
 
 function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting }: { savedSearch: any, onExecute: (search: any) => void, onDelete: (searchId: string) => void, isDeleting: boolean }) {
-    const { name, searchQuery, filters } = savedSearch;
+    const { name, searchQuery, filters = {} } = savedSearch;
     const filterCount = (filters.companyNames?.length || 0) + (filters.locations?.length || 0) + (filters.jobTypes?.length || 0);
 
     return (
@@ -173,20 +174,20 @@ export default function DashboardPage() {
     const isRecruiter = userProfile?.userType === 'recruiter';
     
     // This state gates all dependent queries, preventing race conditions.
-    const shouldRunRoleQueries = user && !isProfileLoading && userProfile;
+    const shouldRunRoleQueries = !isUserLoading && userProfile;
 
     // For Recruiters: Fetch jobs they created
     const postedJobsQuery = useMemo(() => {
         if (!firestore || !shouldRunRoleQueries || !isRecruiter) return null;
         return query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid));
-    }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
+    }, [firestore, user?.uid, isRecruiter, shouldRunRoleQueries]);
     const { data: postedJobs, isLoading: isPostedJobsLoading } = useCollection(postedJobsQuery);
 
     // For Standard Users: Fetch their applications (which now include status)
     const applicationsQuery = useMemo(() => {
         if (!firestore || !shouldRunRoleQueries || isRecruiter) return null;
         return query(collection(firestore, `users/${user.uid}/applications`));
-    }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
+    }, [firestore, user?.uid, isRecruiter, shouldRunRoleQueries]);
     const { data: applications, isLoading: areApplicationsLoading } = useCollection(applicationsQuery);
     
     // Create a map of jobId to application status
@@ -196,29 +197,27 @@ export default function DashboardPage() {
     }, [applications]);
 
     const appliedJobIds = useMemo(() => {
-        if (!applications) return [];
-        return applications.map(app => app.jobId);
+        return applications ? applications.map(app => app.jobId).filter(id => !!id) : [];
     }, [applications]);
 
     // For Standard Users: Fetch the details of the jobs they applied for
     const appliedJobsQuery = useMemo(() => {
-        if (!firestore || appliedJobIds.length === 0) {
+        if (!firestore || areApplicationsLoading || !applications || appliedJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
-    }, [firestore, appliedJobIds]);
+    }, [firestore, areApplicationsLoading, applications, appliedJobIds]);
     const { data: appliedJobs, isLoading: areAppliedJobsLoading } = useCollection(appliedJobsQuery);
     
     // For Standard Users: Fetch their favorite jobs
     const favouriteJobsQuery = useMemo(() => {
         if (!firestore || !shouldRunRoleQueries || isRecruiter) return null;
         return query(collection(firestore, `users/${user.uid}/favouriteJobs`));
-    }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
+    }, [firestore, user?.uid, isRecruiter, shouldRunRoleQueries]);
     const { data: favouriteJobsRefs, isLoading: areFavouritesLoading } = useCollection(favouriteJobsQuery);
 
     const favouriteJobIds = useMemo(() => {
-        if (!favouriteJobsRefs) return [];
-        return favouriteJobsRefs.map(fav => fav.jobId);
+        return favouriteJobsRefs ? favouriteJobsRefs.map(fav => fav.jobId).filter(id => !!id) : [];
     }, [favouriteJobsRefs]);
     
     const favouriteJobIdsSet = useMemo(() => new Set(favouriteJobIds), [favouriteJobIds]);
@@ -230,18 +229,18 @@ export default function DashboardPage() {
 
 
     const favouriteJobsDetailsQuery = useMemo(() => {
-        if (!firestore || filteredFavouriteJobIds.length === 0) {
+        if (!firestore || areFavouritesLoading || !favouriteJobsRefs || filteredFavouriteJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', filteredFavouriteJobIds));
-    }, [firestore, filteredFavouriteJobIds]);
+    }, [firestore, areFavouritesLoading, favouriteJobsRefs, filteredFavouriteJobIds]);
     const { data: favouriteJobs, isLoading: areFavouriteJobsDetailsLoading } = useCollection(favouriteJobsDetailsQuery);
 
     // For Standard Users: Fetch their saved searches
     const savedSearchesQuery = useMemo(() => {
         if (!firestore || !shouldRunRoleQueries || isRecruiter) return null;
         return query(collection(firestore, `users/${user.uid}/savedSearches`));
-    }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
+    }, [firestore, user?.uid, isRecruiter, shouldRunRoleQueries]);
     const { data: savedSearches, isLoading: areSavedSearchesLoading } = useCollection(savedSearchesQuery);
 
     // --- Saved Search Handlers ---
@@ -382,7 +381,7 @@ export default function DashboardPage() {
                     
                     <section>
                         <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Search /> My Saved Searches</h2>
-                        {isStandardUserDashboardLoading ? (
+                        {areSavedSearchesLoading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
                             </div>
@@ -409,10 +408,7 @@ export default function DashboardPage() {
                     </section>
                     </>
                 )}
-
             </main>
         </div>
     );
 }
-
-    
