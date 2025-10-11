@@ -11,7 +11,7 @@ import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Briefcase, ClipboardList, FileText, Users, Heart } from 'lucide-react';
+import { Briefcase, ClipboardList, FileText, Users, Heart, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -38,7 +38,7 @@ function JobCard({ job }: { job: any }) {
                         <Skeleton className="h-6 w-16 rounded-full" />
                     ) : (
                         <Badge variant="outline" className="flex items-center gap-1">
-                           <Users className="h-3 w-3" />
+                           {applicants?.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
                            {applicants?.length || 0} {applicants?.length === 1 ? 'Applicant' : 'Applicants'}
                         </Badge>
                     )}
