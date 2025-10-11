@@ -36,12 +36,12 @@ function JobCard({ job }: { job: any }) {
                     {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
                      {isLoading ? (
                         <Skeleton className="h-6 w-16 rounded-full" />
-                    ) : (
+                    ) : applicants && applicants.length > 0 ? (
                         <Badge variant="outline" className="flex items-center gap-1">
-                           {applicants?.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
-                           {applicants?.length || 0} {applicants?.length === 1 ? 'Applicant' : 'Applicants'}
+                           {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
+                           {applicants.length} {applicants.length === 1 ? 'Applicant' : 'Applicants'}
                         </Badge>
-                    )}
+                    ) : null}
                 </div>
             </CardContent>
             <CardFooter>
