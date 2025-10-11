@@ -9,11 +9,9 @@ import {
   FirestoreError,
   QuerySnapshot,
   CollectionReference,
-  Timestamp,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { getStoreData, updateStoreData } from '@/lib/indexed-db';
 
 /** Utility type to add an 'id' field to a given type T. */
 export type WithId<T> = T & { id: string };
@@ -50,29 +48,6 @@ function getCollectionPath(target: CollectionReference | Query): string {
     return (target as unknown as InternalQuery)._query.path.canonicalString();
 }
 
-const CACHEABLE_STORES = ['listings', 'jobs', 'feedbacks', 'chats'];
-
-// Firestore Timestamps are not clonable for IndexedDB, so we convert them to JS Dates
-function convertTimestampsToDates(obj: any): any {
-    if (obj instanceof Timestamp) {
-        return obj.toDate();
-    }
-    if (Array.isArray(obj)) {
-        return obj.map(convertTimestampsToDates);
-    }
-    if (obj && typeof obj === 'object' && obj !== null) {
-        const newObj: { [key: string]: any } = {};
-        for (const key in obj) {
-            if (Object.prototype.hasOwnProperty.call(obj, key)) {
-                newObj[key] = convertTimestampsToDates(obj[key]);
-            }
-        }
-        return newObj;
-    }
-    return obj;
-}
-
-
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
  * Handles nullable references/queries.
@@ -105,65 +80,25 @@ export function useCollection<T = any>(
       return;
     }
 
-    const path = getCollectionPath(targetRefOrQuery);
-    const storeName = path.split('/')[0];
-    const isFilteredQuery = (targetRefOrQuery as unknown as InternalQuery)._query.filters.length > 0;
-    const isCacheable = CACHEABLE_STORES.includes(storeName) && !isFilteredQuery;
-
-    let didCancel = false;
-    let hasLoadedFromCache = false;
-    
     setIsLoading(true);
     setError(null);
-    setData(null); // Reset data on new query
 
-    // --- Phase 1: Attempt to load from IndexedDB if cacheable ---
-    if (isCacheable) {
-        getStoreData(storeName).then(cachedData => {
-            if (!didCancel && cachedData && cachedData.length > 0) {
-                 hasLoadedFromCache = true;
-                 const dataWithDates = cachedData.map(item => convertTimestampsToDates(item));
-                 setData(dataWithDates as StateDataType);
-                 // We still keep isLoading true, to wait for Firestore confirmation.
-            }
-        }).catch(console.error);
-    }
-    
-    // --- Phase 2: Subscribe to Firestore for live data ---
     const unsubscribe = onSnapshot(
       targetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
-        if (didCancel) return;
-
-        // If we have cached data and the firestore snapshot is empty,
-        // we wait for the next snapshot, because this could be a temporary state
-        // during initial connection.
-        if (hasLoadedFromCache && snapshot.empty) {
-            return;
-        }
-
         const results: ResultItemType[] = snapshot.docs.map(doc => ({
             ...(doc.data() as T),
             id: doc.id
         }));
         
-        const resultsWithDates = results.map(item => convertTimestampsToDates(item));
-
-        setData(resultsWithDates as StateDataType);
+        setData(results);
         setError(null);
         setIsLoading(false);
-
-        // --- Phase 3: Update IndexedDB cache in the background ---
-        if (isCacheable) {
-            updateStoreData(storeName, resultsWithDates).catch(console.error);
-        }
       },
       (error: FirestoreError) => {
-        if (didCancel) return;
-
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path: path,
+          path: getCollectionPath(targetRefOrQuery),
         })
 
         setError(contextualError)
@@ -176,7 +111,6 @@ export function useCollection<T = any>(
     );
 
     return () => {
-        didCancel = true;
         unsubscribe();
     };
   }, [targetRefOrQuery]); // Re-run if the target query/reference object changes.
