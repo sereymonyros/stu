@@ -33,7 +33,6 @@ import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } f
 import { Board } from '@/components/job-kanban';
 import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
 const FilterGroup = ({ title, options, selected, onToggle }: { title: string; options: string[]; selected: string[]; onToggle: (option: string) => void; }) => {
     if (!options || options.length === 0) return null;
@@ -77,7 +76,7 @@ function JobsPageContent() {
         if (!firestore) return null;
         return query(collection(firestore, 'jobs'));
     }, [firestore]);
-    const { data: jobs, isLoading: areJobsLoading, refetch: refetchJobs } = useCollection(jobsQuery);
+    const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
 
      const userProfileRef = useMemo(() => {
         if (!firestore || !user) return null;
@@ -365,7 +364,6 @@ function JobsPageContent() {
         try {
             await updateJobStatus({ jobId: jobId, newStatus: newStatus as any });
             toast({ title: 'Job Status Updated', description: `Job moved to ${newStatus}.` });
-            refetchJobs(); // Refetch to ensure consistency after server update
         } catch (error: any) {
             console.error("Failed to update job status:", error);
             toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
@@ -418,7 +416,7 @@ function JobsPageContent() {
                     
                     {viewMode === 'card' && (
                         <>
-                            {jobs && jobs.length > 0 && (
+                             {jobs && jobs.length > 0 && (
                                 <Card className="p-4 mb-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                                         <div className="relative md:col-span-2 lg:col-span-3">
