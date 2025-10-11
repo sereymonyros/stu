@@ -80,37 +80,30 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         
-        if (!over) {
-            return;
-        }
+        if (!over) return;
         
         const applicationId = active.id as string;
         const newStatus = over.id as string;
         const oldStatus = active.data.current?.sortable.containerId as string;
 
-        // If the card is dropped in the same column, do nothing.
-        if (oldStatus === newStatus) {
-            return;
-        }
-        
-        let movedApplicant: any;
+        if (oldStatus === newStatus) return;
 
+        // Find the moved applicant from the state
+        const oldColumn = applicantsByStatus[oldStatus];
+        const applicantIndex = oldColumn.findIndex(app => app.id === applicationId);
+        if (applicantIndex === -1) return;
+
+        const movedApplicant = oldColumn[applicantIndex];
+        
         // Optimistically update UI
         setApplicantsByStatus(prev => {
             const newBoardState = { ...prev };
-            const oldColumn = newBoardState[oldStatus];
-            if (!oldColumn) return prev;
-
-            const applicantIndex = oldColumn.findIndex(app => app.id === applicationId);
-            if (applicantIndex === -1) return prev;
-
-            [movedApplicant] = oldColumn.splice(applicantIndex, 1);
-            if (!movedApplicant) return prev;
-            
+            // Remove from old column
+            newBoardState[oldStatus] = prev[oldStatus].filter(app => app.id !== applicationId);
+            // Add to new column
             const newColumn = newBoardState[newStatus] || [];
             newColumn.push({ ...movedApplicant, status: newStatus });
             newBoardState[newStatus] = newColumn;
-            
             return newBoardState;
         });
 
@@ -131,18 +124,19 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
         } catch (error: any) {
              console.error("Failed to update status via flow:", error);
-             // Revert UI on failure
+             // Revert UI on failure by restoring the original state from before the drag
              setApplicantsByStatus(prev => {
-                 const revertedState = { ...prev };
-                 // Remove from new column if it was added
-                 if (revertedState[newStatus]) {
-                     revertedState[newStatus] = revertedState[newStatus].filter(app => app.id !== applicationId);
-                 }
-                 // Add back to old column if it doesn't exist there anymore
-                 if (revertedState[oldStatus] && !revertedState[oldStatus].find(app => app.id === applicationId)) {
-                     revertedState[oldStatus].push(movedApplicant);
-                 }
-                 return revertedState;
+                // To revert, just re-group the original `applications` data
+                 if (applications) {
+                    const grouped = applications.reduce((acc, app) => {
+                        const status = app.status || 'submitted';
+                        if (!acc[status]) acc[status] = [];
+                        acc[status].push(app);
+                        return acc;
+                    }, {} as Record<string, any[]>);
+                    return grouped;
+                }
+                return prev; // Fallback
              });
              toast({ variant: 'destructive', title: 'Update Failed', description: error.message || 'Could not update applicant status.' });
         }
