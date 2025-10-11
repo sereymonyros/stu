@@ -80,39 +80,37 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         
-        if (!over || active.id === over.id) {
+        if (!over) {
             return;
         }
         
         const applicationId = active.id as string;
         const newStatus = over.id as string;
-        
-        let movedApplicant: any;
-        let oldStatus: string = '';
+        const oldStatus = active.data.current?.sortable.containerId as string;
 
-        // Find the applicant and their original status
-        for (const status in applicantsByStatus) {
-            const applicant = applicantsByStatus[status].find(app => app.id === applicationId);
-            if (applicant) {
-                movedApplicant = applicant;
-                oldStatus = status;
-                break;
-            }
-        }
-        
-        if (!movedApplicant || oldStatus === newStatus) {
+        // If the card is dropped in the same column, do nothing.
+        if (oldStatus === newStatus) {
             return;
         }
+        
+        let movedApplicant: any;
 
         // Optimistically update UI
         setApplicantsByStatus(prev => {
             const newBoardState = { ...prev };
-            // Remove from old column
-            newBoardState[oldStatus] = newBoardState[oldStatus]?.filter(app => app.id !== applicationId);
-            // Add to new column
-            const updatedApp = { ...movedApplicant, status: newStatus };
-            if (!newBoardState[newStatus]) newBoardState[newStatus] = [];
-            newBoardState[newStatus].push(updatedApp);
+            const oldColumn = newBoardState[oldStatus];
+            if (!oldColumn) return prev;
+
+            const applicantIndex = oldColumn.findIndex(app => app.id === applicationId);
+            if (applicantIndex === -1) return prev;
+
+            [movedApplicant] = oldColumn.splice(applicantIndex, 1);
+            if (!movedApplicant) return prev;
+            
+            const newColumn = newBoardState[newStatus] || [];
+            newColumn.push({ ...movedApplicant, status: newStatus });
+            newBoardState[newStatus] = newColumn;
+            
             return newBoardState;
         });
 
@@ -122,12 +120,11 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                 jobId: finalJobId,
                 applicationId: movedApplicant.id,
                 applicantId: movedApplicant.applicantId,
-                newStatus: newStatus,
+                newStatus: newStatus as any,
              });
 
             toast({ title: 'Status Updated', description: `Applicant status moved to ${newStatus}.` });
 
-            // Refetch job data if status is 'accepted' to update the job's overall status
             if (newStatus === 'accepted') {
                 refetchJob();
             }
@@ -137,11 +134,14 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
              // Revert UI on failure
              setApplicantsByStatus(prev => {
                  const revertedState = { ...prev };
-                 // Remove from new column
-                 revertedState[newStatus] = revertedState[newStatus]?.filter(app => app.id !== applicationId);
-                 // Add back to old column
-                  if (!revertedState[oldStatus]) revertedState[oldStatus] = [];
-                 revertedState[oldStatus].push(movedApplicant);
+                 // Remove from new column if it was added
+                 if (revertedState[newStatus]) {
+                     revertedState[newStatus] = revertedState[newStatus].filter(app => app.id !== applicationId);
+                 }
+                 // Add back to old column if it doesn't exist there anymore
+                 if (revertedState[oldStatus] && !revertedState[oldStatus].find(app => app.id === applicationId)) {
+                     revertedState[oldStatus].push(movedApplicant);
+                 }
                  return revertedState;
              });
              toast({ variant: 'destructive', title: 'Update Failed', description: error.message || 'Could not update applicant status.' });

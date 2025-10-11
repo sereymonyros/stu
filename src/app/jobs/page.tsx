@@ -27,6 +27,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -308,8 +309,8 @@ export default function JobsPage() {
     // --- Kanban Board Logic ---
     useEffect(() => {
         // Group jobs by status for the Kanban board
-        if (jobs) {
-            const recruiterJobs = jobs.filter(job => job.recruiterId === user?.uid);
+        if (jobs && user) {
+            const recruiterJobs = jobs.filter(job => job.recruiterId === user.uid);
             const grouped = recruiterJobs.reduce((acc, job) => {
                 const status = job.status || 'Available';
                 if (!acc[status]) {
@@ -330,7 +331,7 @@ export default function JobsPage() {
 
     const handleJobDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
-        if (!over || !active) return;
+        if (!over) return;
 
         const jobId = active.id as string;
         const newStatus = over.id as string;
@@ -345,7 +346,6 @@ export default function JobsPage() {
         // Optimistic UI update
         setJobsByStatus(prev => {
             const newState = { ...prev };
-            // Find and remove from old column
             const oldColumn = newState[oldStatus];
             if (!oldColumn) return prev;
             
@@ -355,7 +355,6 @@ export default function JobsPage() {
             [movedJob] = oldColumn.splice(jobIndex, 1);
             if (!movedJob) return prev;
 
-            // Add to new column
             const newColumn = newState[newStatus] || [];
             newColumn.push({ ...movedJob, status: newStatus });
             newState[newStatus] = newColumn;
@@ -372,7 +371,7 @@ export default function JobsPage() {
             // Revert UI on failure
             setJobsByStatus(prev => {
                  const revertedState = { ...prev };
-                 // Remove from new column if it exists there
+                 // Remove from new column if it was added
                  if (revertedState[newStatus]) {
                      revertedState[newStatus] = revertedState[newStatus].filter(j => j.id !== jobId);
                  }
