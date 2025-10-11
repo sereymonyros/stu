@@ -18,6 +18,7 @@ import { analyzeApplicant } from '@/ai/flows/analyze-applicant-flow';
 import type { AnalyzeApplicantOutput } from '@/ai/flows/analyze-applicant-schema';
 import { useToast } from '@/hooks/use-toast';
 import type { GetPublicProfileOutput } from '@/ai/flows/get-public-profile-schema';
+import type { Timestamp } from 'firebase/firestore';
 
 type ApplicantWithProfile = {
     id: string;
@@ -156,6 +157,19 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: ApplicantWithProf
             </Card>
         );
     }
+    
+    // Safely convert Firestore Timestamp or JS Date to a Date object for formatting.
+    const appliedAtDate = useMemo(() => {
+        const appliedAt = applicant.application.appliedAt;
+        if (!appliedAt) return null;
+        // Check if it's a Firestore Timestamp
+        if (typeof appliedAt.toDate === 'function') {
+            return (appliedAt as Timestamp).toDate();
+        }
+        // Otherwise, assume it's already a Date or a string that can be converted
+        return new Date(appliedAt);
+    }, [applicant.application.appliedAt]);
+
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
@@ -169,7 +183,9 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: ApplicantWithProf
                             </Avatar>
                             <div>
                                 <p className="font-semibold text-sm leading-tight">{applicant.profile.displayName}</p>
-                                <p className="text-xs text-muted-foreground leading-tight">Applied {formatDistanceToNow(applicant.application.appliedAt?.toDate(), { addSuffix: true })}</p>
+                                {appliedAtDate && (
+                                    <p className="text-xs text-muted-foreground leading-tight">Applied {formatDistanceToNow(appliedAtDate, { addSuffix: true })}</p>
+                                )}
                             </div>
                         </div>
                          {applicant.application.resumeUrl && (
