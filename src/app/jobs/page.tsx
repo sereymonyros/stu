@@ -331,16 +331,17 @@ export default function JobsPage() {
 
     const handleJobDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
-        if (!over) {
+        
+        if (!over || active.id === over.id) {
             return;
         }
-    
+
         const jobId = active.id as string;
         const newStatus = over.id as string;
-    
+
         let oldStatus: string | undefined;
         let movedJob: any;
-    
+
         // Find the job and its old status from the local state
         for (const status in jobsByStatus) {
             const job = jobsByStatus[status].find(j => j.id === jobId);
@@ -350,7 +351,7 @@ export default function JobsPage() {
                 break;
             }
         }
-    
+        
         if (!oldStatus || oldStatus === newStatus) {
             return;
         }
@@ -358,11 +359,15 @@ export default function JobsPage() {
         // Optimistic UI update
         setJobsByStatus(prev => {
             const newState = { ...prev };
-            const oldColumn = newState[oldStatus] ? newState[oldStatus].filter(j => j.id !== jobId) : [];
-            const newColumn = newState[newStatus] ? [...newState[newStatus], { ...movedJob, status: newStatus }] : [{ ...movedJob, status: newStatus }];
-            
-            newState[oldStatus] = oldColumn;
-            newState[newStatus] = newColumn;
+            // Ensure old column exists and remove the item
+            if (newState[oldStatus!]) {
+                newState[oldStatus!] = newState[oldStatus!].filter(j => j.id !== jobId);
+            }
+            // Ensure new column exists and add the item
+            if (!newState[newStatus]) {
+                newState[newStatus] = [];
+            }
+            newState[newStatus].push({ ...movedJob, status: newStatus });
             
             return newState;
         });
@@ -376,17 +381,14 @@ export default function JobsPage() {
             // Revert UI on failure
              setJobsByStatus(prev => {
                 const revertedState = { ...prev };
-                // Remove from new column
-                const newCol = revertedState[newStatus].filter(j => j.id !== jobId);
-                revertedState[newStatus] = newCol;
-
-                // Add back to old column
-                const oldCol = revertedState[oldStatus] || [];
-                if (!oldCol.find(j => j.id === jobId)) {
-                     oldCol.push(movedJob);
+                 // Remove from new column if it was added
+                if (revertedState[newStatus]) {
+                    revertedState[newStatus] = revertedState[newStatus].filter(app => app.id !== jobId);
                 }
-                revertedState[oldStatus] = oldCol;
-
+                // Add back to old column if it doesn't exist there anymore
+                if (revertedState[oldStatus!] && !revertedState[oldStatus!].find(app => app.id === jobId)) {
+                     revertedState[oldStatus!].push(movedJob);
+                }
                 return revertedState;
             });
             toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
@@ -409,7 +411,7 @@ export default function JobsPage() {
                             <p className="text-muted-foreground mt-1">Find your next role in Cambodia.</p>
                         </div>
                         <div className="flex items-center gap-2">
-                           {isRecruiter && (
+                           {isRecruiter && jobs && jobs.length > 0 && (
                                 <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
                                     <ToggleGroupItem value="card" aria-label="Card view"><List /></ToggleGroupItem>
                                     <ToggleGroupItem value="board" aria-label="Board view"><LayoutGrid /></ToggleGroupItem>
