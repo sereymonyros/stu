@@ -139,19 +139,57 @@ export default function JobsPage() {
     const { toast } = useToast();
     const searchParams = useSearchParams();
 
+    // --- Data Fetching ---
+    const jobsQuery = useMemo(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'jobs'));
+    }, [firestore]);
+    const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
+    
+    // --- Dynamic Filter Options ---
+    const { companyNames, locations, jobTypes, maxSalary } = useMemo(() => {
+        if (!jobs) return { companyNames: [], locations: [], jobTypes: [], maxSalary: 150000 };
+        const companies = new Set<string>();
+        const locs = new Set<string>();
+        const types = new Set<string>();
+        let maxSal = 0;
+        jobs.forEach(job => {
+            if (job.companyName) companies.add(job.companyName);
+            if (job.location) locs.add(job.location);
+            if (job.jobType) types.add(job.jobType);
+            if (job.salaryMax > maxSal) maxSal = job.salaryMax;
+        });
+        const finalMaxSalary = maxSal > 0 ? Math.ceil(maxSal / 1000) * 1000 : 150000;
+        return {
+            companyNames: Array.from(companies).sort(),
+            locations: Array.from(locs).sort(),
+            jobTypes: Array.from(types).sort(),
+            maxSalary: finalMaxSalary,
+        };
+    }, [jobs]);
+
     // --- Search & Filter State ---
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
     const [selectedCompanies, setSelectedCompanies] = useState<string[]>(searchParams.getAll('company') || []);
     const [selectedLocations, setSelectedLocations] = useState<string[]>(searchParams.getAll('location') || []);
     const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>(searchParams.getAll('jobType') || []);
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(searchParams.get('favorites') === 'true');
-    const [salaryRange, setSalaryRange] = useState<[number, number] | null>(null);
+    const [salaryRange, setSalaryRange] = useState<[number, number]>([0, maxSalary]);
 
     // --- Dialog State ---
     const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
     const [savedSearchName, setSavedSearchName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     
+    // Initialize salary range from URL params or default
+    useEffect(() => {
+        const min = searchParams.get('salaryMin');
+        const max = searchParams.get('salaryMax');
+        const initialMin = min ? parseInt(min, 10) : 0;
+        const initialMax = max ? parseInt(max, 10) : maxSalary;
+        setSalaryRange([initialMin, initialMax]);
+    }, [maxSalary, searchParams]);
+
     // Update URL when filters change
     useEffect(() => {
         const params = new URLSearchParams();
@@ -160,22 +198,16 @@ export default function JobsPage() {
         selectedLocations.forEach(l => params.append('location', l));
         selectedJobTypes.forEach(t => params.append('jobType', t));
         if (showFavoritesOnly) params.set('favorites', 'true');
-        if (salaryRange) {
+        
+        // Only add salary to URL if it's not the default range
+        if (salaryRange[0] > 0 || salaryRange[1] < maxSalary) {
             params.set('salaryMin', salaryRange[0].toString());
             params.set('salaryMax', salaryRange[1].toString());
         }
         
-        // This will update the URL without reloading the page
         router.replace(`/jobs?${params.toString()}`);
-    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, router]);
+    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, router, maxSalary]);
 
-
-    // --- Data Fetching ---
-    const jobsQuery = useMemo(() => {
-        if (!firestore) return null;
-        return query(collection(firestore, 'jobs'));
-    }, [firestore]);
-    const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
 
     const userProfileRef = useMemo(() => {
         if (!firestore || !user) return null;
@@ -199,37 +231,6 @@ export default function JobsPage() {
     
     const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
 
-    // --- Dynamic Filter Options ---
-    const { companyNames, locations, jobTypes, maxSalary } = useMemo(() => {
-        if (!jobs) return { companyNames: [], locations: [], jobTypes: [], maxSalary: 150000 };
-        const companies = new Set<string>();
-        const locs = new Set<string>();
-        const types = new Set<string>();
-        let maxSal = 0;
-        jobs.forEach(job => {
-            if (job.companyName) companies.add(job.companyName);
-            if (job.location) locs.add(job.location);
-            if (job.jobType) types.add(job.jobType);
-            if (job.salaryMax > maxSal) maxSal = job.salaryMax;
-        });
-        return {
-            companyNames: Array.from(companies).sort(),
-            locations: Array.from(locs).sort(),
-            jobTypes: Array.from(types).sort(),
-            maxSalary: maxSal > 0 ? maxSal : 150000,
-        };
-    }, [jobs]);
-
-    useEffect(() => {
-        const min = searchParams.get('salaryMin');
-        const max = searchParams.get('salaryMax');
-        if (min && max) {
-            setSalaryRange([parseInt(min), parseInt(max)]);
-        } else {
-            setSalaryRange([0, maxSalary]);
-        }
-    }, [maxSalary, searchParams]);
-
     // --- Toggle Handlers ---
     const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
         setter(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
@@ -244,7 +245,13 @@ export default function JobsPage() {
         setSalaryRange([0, maxSalary]);
     };
 
-    const hasActiveFilters = [searchQuery, ...selectedCompanies, ...selectedLocations, ...selectedJobTypes, showFavoritesOnly].some(Boolean) || (salaryRange && (salaryRange[0] > 0 || salaryRange[1] < maxSalary));
+    const hasActiveFilters = 
+      searchQuery !== '' ||
+      selectedCompanies.length > 0 ||
+      selectedLocations.length > 0 ||
+      selectedJobTypes.length > 0 ||
+      showFavoritesOnly ||
+      (salaryRange[0] > 0 || salaryRange[1] < maxSalary);
 
     // --- Toggle Favourite ---
     const handleToggleFavourite = async (jobId: string, isCurrentlyFavourite: boolean) => {
@@ -340,18 +347,15 @@ export default function JobsPage() {
             filtered = filtered.filter(job => favouriteJobIds.has(job.id));
         }
         // 3. Salary filter
-        if (salaryRange) {
-            filtered = filtered.filter(job => {
+        const [filterMin, filterMax] = salaryRange;
+        if (filterMin > 0 || filterMax < maxSalary) {
+             filtered = filtered.filter(job => {
                 const jobMin = job.salaryMin ?? 0;
                 const jobMax = job.salaryMax ?? Infinity;
-                const filterMin = salaryRange[0];
-                const filterMax = salaryRange[1];
-
                 // The job's salary range must overlap with the filter's range
                 return Math.max(jobMin, filterMin) <= Math.min(jobMax, filterMax);
             });
         }
-
 
         // 4. Sort for authenticated users
         if (!user) return filtered;
@@ -367,10 +371,10 @@ export default function JobsPage() {
             }
             return aHasApplied ? 1 : -1;
         });
-    }, [jobs, user, appliedJobIds, searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, favouriteJobIds, salaryRange]);
+    }, [jobs, user, appliedJobIds, searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, favouriteJobIds, salaryRange, maxSalary]);
 
 
-    const isLoading = isUserLoading || areJobsLoading || isProfileLoading || areFavouritesLoading || areApplicationsLoading || !salaryRange;
+    const isLoading = isUserLoading || areJobsLoading || isProfileLoading || areFavouritesLoading || areApplicationsLoading;
     const isRecruiter = userProfile?.userType === 'recruiter';
 
     return (
@@ -458,21 +462,17 @@ export default function JobsPage() {
                             
                             <div>
                                 <h3 className="text-sm font-semibold mb-2">Salary Range</h3>
-                                 {salaryRange && (
-                                     <>
-                                        <Slider
-                                            value={[salaryRange[0], salaryRange[1]]}
-                                            onValueChange={(value) => setSalaryRange(value as [number, number])}
-                                            max={maxSalary}
-                                            step={1000}
-                                            className="my-4"
-                                        />
-                                        <div className="flex justify-between text-xs text-muted-foreground">
-                                            <span>${salaryRange[0].toLocaleString()}</span>
-                                            <span>${salaryRange[1].toLocaleString()}</span>
-                                        </div>
-                                     </>
-                                 )}
+                                <Slider
+                                    value={salaryRange}
+                                    onValueChange={setSalaryRange}
+                                    max={maxSalary}
+                                    step={1000}
+                                    className="my-4"
+                                />
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                    <span>${salaryRange[0].toLocaleString()}</span>
+                                    <span>${salaryRange[1].toLocaleString()}</span>
+                                </div>
                             </div>
                         </div>
                         {user && !isRecruiter && (
