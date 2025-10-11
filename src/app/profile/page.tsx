@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -28,11 +29,21 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ACCEPTED_IMAGE_TYPES, ACCEPTED_RESUME_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
-import { FileText, UploadCloud } from 'lucide-react';
+import { FileText, Sparkles, UploadCloud } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Progress } from '@/components/ui/progress';
+import { verifyHumanFace } from '@/ai/flows/verify-human-face-flow';
+
+// Helper function to convert a File to a Base64 data URI
+const toBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
 
 const profileSchema = z.object({
   displayName: z.string().min(2, { message: 'Full name must be at least 2 characters.' }).max(50, { message: 'Display name cannot be longer than 50 characters.' }),
@@ -64,6 +75,7 @@ export default function ProfilePage() {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
 
   const userProfileRef = useMemo(() => {
     if (!firestore || !user) return null;
@@ -97,16 +109,43 @@ export default function ProfilePage() {
     }
   }, [user, isUserLoading, router]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
+    if (!file) {
+      setImagePreview(null);
+      setVerificationMessage(null);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // AI Verification
+    setVerificationMessage('Verifying image...');
+    setIsSubmitting(true);
+    try {
+      const dataUri = await toBase64(file);
+      const { isHumanFace, reason } = await verifyHumanFace({ fileDataUri: dataUri });
+
+      if (!isHumanFace) {
+        toast({ variant: 'destructive', title: 'Invalid Profile Picture', description: reason });
+        // Reject the upload by clearing the file input
+        form.setValue('photo', undefined);
         setImagePreview(null);
+        if (photoInputRef.current) photoInputRef.current.value = '';
+        setVerificationMessage(reason);
+      } else {
+        setVerificationMessage('Image is a valid human face.');
+        toast({ title: 'Image Verified', description: reason });
+      }
+    } catch (err: any) {
+        toast({ variant: 'destructive', title: 'Verification Failed', description: err.message });
+        setVerificationMessage('Could not verify image.');
+    } finally {
+        setIsSubmitting(false);
     }
   };
   
@@ -149,6 +188,8 @@ export default function ProfilePage() {
 
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     setIsSubmitting(true);
+    setVerificationMessage(null); // Clear verification message on submit
+
     if (!auth.currentUser || !userProfileRef) {
       toast({ variant: 'destructive', title: 'Authentication Error', description: 'Please log in again.' });
       setIsSubmitting(false);
@@ -160,6 +201,16 @@ export default function ProfilePage() {
       const imageFile = values.photo?.[0];
 
       if (imageFile) {
+        setVerificationMessage('Verifying new image...');
+        const dataUri = await toBase64(imageFile);
+        const { isHumanFace, reason } = await verifyHumanFace({ fileDataUri: dataUri });
+        if (!isHumanFace) {
+          toast({ variant: 'destructive', title: 'Invalid Profile Picture', description: reason });
+          setIsSubmitting(false);
+          setVerificationMessage(reason);
+          return;
+        }
+        setVerificationMessage('Uploading...');
         photoURL = await uploadFileWithProgress(imageFile, `profiles/${auth.currentUser.uid}/${imageFile.name}`);
       }
       
@@ -205,6 +256,7 @@ export default function ProfilePage() {
       });
 
       setImagePreview(null);
+      setVerificationMessage(null);
       if (photoInputRef.current) photoInputRef.current.value = '';
       if (resumeInputRef.current) resumeInputRef.current.value = '';
       form.resetField('photo');
@@ -235,7 +287,7 @@ export default function ProfilePage() {
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle>My Profile</CardTitle>
-            <CardDescription>Update your personal information and profile picture.</CardDescription>
+            <CardDescription>A complete profile with a real photo is required to post or apply for jobs.</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -260,7 +312,7 @@ export default function ProfilePage() {
                     </Avatar>
                     <FormField control={form.control} name="photo" render={({ field }) => (
                         <FormItem className="w-full">
-                            <FormLabel>Update Picture</FormLabel>
+                            <FormLabel>Update Picture (Must be a human face)</FormLabel>
                             <FormControl>
                               <div className="w-full">
                                 <Label htmlFor="photo-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
@@ -286,6 +338,11 @@ export default function ProfilePage() {
                                 </Label>
                               </div>
                             </FormControl>
+                            {verificationMessage && (
+                                <FormDescription className="flex items-center gap-2 mt-2">
+                                  <Sparkles className="h-4 w-4 text-yellow-500" /> {verificationMessage}
+                                </FormDescription>
+                            )}
                             <FormMessage />
                         </FormItem>
                     )}/>

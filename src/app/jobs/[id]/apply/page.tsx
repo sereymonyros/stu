@@ -12,7 +12,7 @@ import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { FileText, ArrowLeft, CheckCircle, UploadCloud } from 'lucide-react';
+import { FileText, ArrowLeft, CheckCircle, UploadCloud, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -29,8 +29,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Alert } from '@/components/ui/alert';
 import { sendEmail } from '@/ai/flows/send-email-flow';
 import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
 import { applicantConfirmationTemplate } from '@/components/emails/applicant-confirmation-template';
@@ -79,6 +79,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
   const { data: application, isLoading: isApplicationLoading } = useDoc(userApplicationRef);
   
   const hasApplied = !!application;
+  const profileComplete = !!userProfile?.photoURL && !!userProfile?.resumeUrl;
 
   // --- Effects ---
   useEffect(() => {
@@ -162,8 +163,8 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
   // --- Handlers ---
   const handleApply = async () => {
     if (!user || !userProfile || !job || !jobId || hasApplied || isSubmitting || !firestore) return;
-    if (!userProfile.resumeUrl) {
-      toast({ variant: 'destructive', title: 'Please upload a resume first.' });
+    if (!profileComplete) {
+      toast({ variant: 'destructive', title: 'Please complete your profile first.' });
       return;
     }
 
@@ -342,7 +343,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
                 </div>
                 </div>
 
-                {hasApplied && (
+                {hasApplied ? (
                     <div className="bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-300 p-4 rounded-md flex items-center gap-2">
                          <CheckCircle className="h-5 w-5 text-green-500" />
                          <div>
@@ -350,7 +351,16 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
                             <p className="text-sm">Your application status is: <span className="font-semibold capitalize">{application.status}</span></p>
                          </div>
                     </div>
-                )}
+                ) : !profileComplete ? (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <CardTitle className="mb-2">Profile Incomplete</CardTitle>
+                      <CardDescription>You must have a profile picture and a resume uploaded to apply for jobs.</CardDescription>
+                      <Button asChild className="mt-4">
+                        <Link href="/profile">Go to Profile</Link>
+                      </Button>
+                    </Alert>
+                ) : null}
 
                 {userProfile && userProfile.resumeUrl ? (
                 <div>
@@ -366,36 +376,38 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
                     </p>
                 </div>
                 ) : (
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Upload Resume to Apply</h3>
-                   <Label htmlFor="resume-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          {isUploadingResume ? (
-                            <>
-                               <div className="animate-spin h-8 w-8 border-2 border-current border-t-transparent rounded-full" role="status" />
-                               <p className="mt-2 text-sm text-muted-foreground">Uploading...</p>
-                            </>
-                          ) : (
-                            <>
-                                <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
-                                <p className="mb-1 text-sm text-primary underline">
-                                  Click to upload a resume
-                                </p>
-                                <p className="text-xs text-muted-foreground">You must have a resume to apply for jobs.</p>
-                             </>
-                          )}
-                      </div>
-                      <Input
-                          id="resume-upload"
-                          type="file"
-                          className="hidden"
-                          accept=".pdf,.doc,.docx"
-                          disabled={isUploadingResume}
-                          ref={resumeInputRef}
-                          onChange={handleResumeUpload}
-                      />
-                  </Label>
-                </div>
+                !hasApplied && profileComplete && (
+                  <div className="space-y-2">
+                    <h3 className="font-semibold">Upload Resume to Apply</h3>
+                    <Label htmlFor="resume-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            {isUploadingResume ? (
+                              <>
+                                <div className="animate-spin h-8 w-8 border-2 border-current border-t-transparent rounded-full" role="status" />
+                                <p className="mt-2 text-sm text-muted-foreground">Uploading...</p>
+                              </>
+                            ) : (
+                              <>
+                                  <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                                  <p className="mb-1 text-sm text-primary underline">
+                                    Click to upload a resume
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">You must have a resume to apply for jobs.</p>
+                              </>
+                            )}
+                        </div>
+                        <Input
+                            id="resume-upload"
+                            type="file"
+                            className="hidden"
+                            accept=".pdf,.doc,.docx"
+                            disabled={isUploadingResume}
+                            ref={resumeInputRef}
+                            onChange={handleResumeUpload}
+                        />
+                    </Label>
+                  </div>
+                )
                 )}
 
             </CardContent>
@@ -405,7 +417,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
                     <AlertDialogTrigger asChild>
                       <Button 
                           className="w-full"
-                          disabled={isSubmitting || !userProfile?.resumeUrl || job.status === 'Closed' || isUploadingResume}
+                          disabled={isSubmitting || !profileComplete || job.status === 'Closed' || isUploadingResume}
                       >
                       {isSubmitting ? 'Submitting...' : 'Confirm and Submit Application'}
                       </Button>

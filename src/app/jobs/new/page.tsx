@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useUser, useDoc, useFirestore } from '@/firebase';
 import { addDoc, collection, serverTimestamp, doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
@@ -33,6 +33,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Alert, AlertTitle } from '@/components/ui/alert';
+import Link from 'next/link';
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -101,6 +103,11 @@ export default function NewJobPage() {
       setIsSubmitting(false);
       return;
     }
+     if (!userProfile?.photoURL) {
+      toast({ variant: 'destructive', title: 'Profile Incomplete', description: 'Please upload a profile picture before posting a job.' });
+      setIsSubmitting(false);
+      return;
+    }
 
     const jobData = {
       ...values,
@@ -129,6 +136,7 @@ export default function NewJobPage() {
 
   const isLoading = isUserLoading || isProfileLoading;
   const isAuthorized = !isLoading && userProfile?.userType === 'recruiter';
+  const profileComplete = isAuthorized && !!userProfile?.photoURL;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -147,38 +155,57 @@ export default function NewJobPage() {
 
         {isAuthorized && (
             <Card className="max-w-2xl mx-auto">
-            <CardHeader><CardTitle>Post a New Job</CardTitle></CardHeader>
+            <CardHeader>
+                <CardTitle>Post a New Job</CardTitle>
+                 {!profileComplete && (
+                  <CardDescription>
+                      You must upload a profile picture before you can post a job.
+                  </CardDescription>
+                 )}
+            </CardHeader>
             <CardContent>
+                 {!profileComplete && (
+                    <Alert variant="destructive" className="mb-6">
+                        <AlertTitle>Profile Picture Required</AlertTitle>
+                        <AlertDescription>
+                            Please go to your <Link href="/profile" className="font-bold underline">Profile Page</Link> to upload a profile picture.
+                        </AlertDescription>
+                    </Alert>
+                 )}
                 <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <FormField control={form.control} name="title" render={({ field }) => (
-                    <FormItem><FormLabel>Job Title</FormLabel><FormControl><Input placeholder="e.g., Software Engineer" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="companyName" render={({ field }) => (
-                    <FormItem><FormLabel>Company Name</FormLabel><FormControl><Input placeholder="e.g., Acme Inc." {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="location" render={({ field }) => (
-                    <FormItem><FormLabel>Location</FormLabel><FormControl><Input placeholder="e.g., Phnom Penh, Cambodia" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="jobType" render={({ field }) => (
-                    <FormItem><FormLabel>Job Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select employment type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Full-time">Full-time</SelectItem><SelectItem value="Part-time">Part-time</SelectItem><SelectItem value="Contract">Contract</SelectItem><SelectItem value="Internship">Internship</SelectItem></SelectContent></Select><FormMessage /></FormItem>
-                    )} />
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField control={form.control} name="salaryMin" render={({ field }) => (
-                        <FormItem><FormLabel>Minimum Salary (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50000" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="salaryMax" render={({ field }) => (
-                        <FormItem><FormLabel>Maximum Salary (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g., 70000" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
-                    <FormDescription>Enter salary as annual numbers (e.g., 60000 for $60,000/year).</FormDescription>
+                    <fieldset disabled={!profileComplete || isSubmitting}>
+                        <div className="space-y-6">
+                            <FormField control={form.control} name="title" render={({ field }) => (
+                            <FormItem><FormLabel>Job Title</FormLabel><FormControl><Input placeholder="e.g., Software Engineer" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="companyName" render={({ field }) => (
+                            <FormItem><FormLabel>Company Name</FormLabel><FormControl><Input placeholder="e.g., Acme Inc." {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="location" render={({ field }) => (
+                            <FormItem><FormLabel>Location</FormLabel><FormControl><Input placeholder="e.g., Phnom Penh, Cambodia" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="jobType" render={({ field }) => (
+                            <FormItem><FormLabel>Job Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select employment type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Full-time">Full-time</SelectItem><SelectItem value="Part-time">Part-time</SelectItem><SelectItem value="Contract">Contract</SelectItem><SelectItem value="Internship">Internship</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                            )} />
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={form.control} name="salaryMin" render={({ field }) => (
+                                <FormItem><FormLabel>Minimum Salary (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50000" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="salaryMax" render={({ field }) => (
+                                <FormItem><FormLabel>Maximum Salary (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g., 70000" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            </div>
+                            <FormDescription>Enter salary as annual numbers (e.g., 60000 for $60,000/year).</FormDescription>
 
-                    <FormField control={form.control} name="description" render={({ field }) => (
-                    <FormItem><FormLabel>Job Description</FormLabel><FormControl><Textarea placeholder="Describe the role, responsibilities, and requirements..." className="min-h-[150px]" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <Button type="submit" disabled={isSubmitting} className="w-full">
-                    {isSubmitting ? 'Posting Job...' : 'Post Job'}
+                            <FormField control={form.control} name="description" render={({ field }) => (
+                            <FormItem><FormLabel>Job Description</FormLabel><FormControl><Textarea placeholder="Describe the role, responsibilities, and requirements..." className="min-h-[150px]" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </div>
+                    </fieldset>
+                    <Button type="submit" disabled={isSubmitting || !profileComplete} className="w-full">
+                        {isSubmitting ? 'Posting Job...' : 'Post Job'}
                     </Button>
                 </form>
                 </Form>
