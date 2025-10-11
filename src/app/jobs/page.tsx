@@ -30,7 +30,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
-import { Board as JobKanban } from '@/components/job-kanban';
+import { Board } from '@/components/job-kanban';
 import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -147,6 +147,8 @@ export default function JobsPage() {
         return doc(firestore, 'users', user.uid);
     }, [firestore, user]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+
+    const isRecruiter = userProfile?.userType === 'recruiter';
 
     const favouriteJobsQuery = useMemo(() => {
         if (!firestore || !user || userProfile?.userType === 'recruiter') return null;
@@ -376,7 +378,7 @@ export default function JobsPage() {
     const KANBAN_STAGES: ('Available' | 'Offering' | 'Closed')[] = ["Available", "Offering", "Closed"];
 
     const isLoading = isUserLoading || areJobsLoading || isProfileLoading || areFavouritesLoading || areApplicationsLoading;
-    const isRecruiter = userProfile?.userType === 'recruiter';
+    
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -518,7 +520,7 @@ export default function JobsPage() {
                             {!isLoading && filteredAndSortedJobs && filteredAndSortedJobs.length > 0 && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {filteredAndSortedJobs.map((job) => (
-                                        <JobKanban.Card 
+                                        <Board.Card 
                                             key={job.id} 
                                             job={job}
                                             isFavourite={favouriteJobIds.has(job.id)}
@@ -548,11 +550,11 @@ export default function JobsPage() {
                     {viewMode === 'board' && isRecruiter && (
                          <div className="flex-1 flex flex-col overflow-x-auto">
                             <DndContext sensors={sensors} onDragEnd={handleJobDragEnd}>
-                                <JobKanban>
+                                <Board>
                                     {KANBAN_STAGES.map(stage => {
                                         const stageJobs = jobsByStatus[stage] || [];
                                         return (
-                                            <JobKanban.Column
+                                            <Board.Column
                                                 key={stage}
                                                 id={stage}
                                                 title={stage}
@@ -560,7 +562,7 @@ export default function JobsPage() {
                                             >
                                                 <SortableContext items={stageJobs.map(j => j.id)} strategy={verticalListSortingStrategy}>
                                                     {stageJobs.map((job: any) => (
-                                                        <JobKanban.Card
+                                                        <Board.Card
                                                             key={job.id}
                                                             job={job}
                                                             isFavourite={false}
@@ -571,10 +573,10 @@ export default function JobsPage() {
                                                         />
                                                     ))}
                                                 </SortableContext>
-                                            </JobKanban.Column>
+                                            </Board.Column>
                                         );
                                     })}
-                                </JobKanban>
+                                </Board>
                             </DndContext>
                          </div>
                     )}
