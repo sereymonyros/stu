@@ -5,16 +5,14 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { collection, doc, setDoc, deleteDoc, serverTimestamp, query } from 'firebase/firestore';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
-import { Heart, Briefcase, Building, MapPin, DollarSign, Pencil, Search, FilterX, Star, LayoutGrid, List } from 'lucide-react';
+import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Input } from '@/components/ui/input';
@@ -78,7 +76,7 @@ export default function JobsPage() {
         if (!firestore) return null;
         return query(collection(firestore, 'jobs'));
     }, [firestore]);
-    const { data: jobs, isLoading: areJobsLoading, refetch: refetchJobs } = useCollection(jobsQuery);
+    const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
     
     // --- Dynamic Filter Options ---
     const { companyNames, locations, jobTypes, maxSalary } = useMemo(() => {
@@ -308,7 +306,6 @@ export default function JobsPage() {
 
     // --- Kanban Board Logic ---
     useEffect(() => {
-        // Group jobs by status for the Kanban board
         if (jobs && user) {
             const recruiterJobs = jobs.filter(job => job.recruiterId === user.uid);
             const grouped = recruiterJobs.reduce((acc, job) => {
@@ -408,7 +405,6 @@ export default function JobsPage() {
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                         <div className="flex-1">
                             <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
-                            <p className="text-muted-foreground mt-1">Find your next role in Cambodia.</p>
                         </div>
                         <div className="flex items-center gap-2">
                            {isRecruiter && jobs && jobs.length > 0 && (
