@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useMemo, Suspense } from 'react';
+import { useMemo, Suspense, use } from 'react';
 import { useCollection, useFirestore, useUser } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -144,10 +145,11 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
     );
 }
 
-export default function CompanyPage({ params }: { params: { name: string } }) {
+export default function CompanyPage({ params }: { params: Promise<{ name: string }> }) {
+    const { name } = use(params);
     return (
         <Suspense fallback={<div>Loading company...</div>}>
-            <CompanyProfile name={params.name} />
+            <CompanyProfile name={name} />
         </Suspense>
     )
 }
