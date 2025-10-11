@@ -33,7 +33,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { Alert, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 
 const jobSchema = z.object({
