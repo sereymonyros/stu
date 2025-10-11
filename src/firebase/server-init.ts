@@ -6,8 +6,8 @@ import { getStorage } from 'firebase-admin/storage';
 
 let app: App;
 
-// Helper to determine if running in a Google Cloud production environment
-const isProduction = !!(process.env.K_SERVICE || process.env.GOOGLE_CLOUD_PROJECT);
+// Helper to determine if running in a Google Cloud production environment, specifically App Hosting
+const isProduction = !!(process.env.K_SERVICE || process.env.GOOGLE_CLOUD_PROJECT || process.env.APP_HOSTING);
 
 export function initializeFirebaseAdmin() {
   if (getApps().length > 0) {
