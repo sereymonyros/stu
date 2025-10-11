@@ -111,18 +111,20 @@ export function useCollection<T = any>(
     const isCacheable = CACHEABLE_STORES.includes(storeName) && !isFilteredQuery;
 
     let didCancel = false;
+    let hasLoadedFromCache = false;
     
-    // Always start in a loading state for a new query.
     setIsLoading(true);
     setError(null);
+    setData(null); // Reset data on new query
 
     // --- Phase 1: Attempt to load from IndexedDB if cacheable ---
     if (isCacheable) {
         getStoreData(storeName).then(cachedData => {
             if (!didCancel && cachedData && cachedData.length > 0) {
+                 hasLoadedFromCache = true;
                  const dataWithDates = cachedData.map(item => convertTimestampsToDates(item));
-                 // Set cached data for initial render, but DON'T set loading to false yet.
                  setData(dataWithDates as StateDataType);
+                 // We don't set loading to false here, to wait for Firestore confirmation.
             }
         }).catch(console.error);
     }
@@ -133,6 +135,13 @@ export function useCollection<T = any>(
       (snapshot: QuerySnapshot<DocumentData>) => {
         if (didCancel) return;
 
+        // ** THE FIX IS HERE **
+        // If we have already loaded from cache and the new snapshot is empty,
+        // it's likely a temporary state during connection. Ignore it to prevent flashing.
+        if (hasLoadedFromCache && snapshot.empty) {
+            return; 
+        }
+
         const results: ResultItemType[] = snapshot.docs.map(doc => ({
             ...(doc.data() as T),
             id: doc.id
@@ -142,12 +151,15 @@ export function useCollection<T = any>(
 
         setData(resultsWithDates as StateDataType);
         setError(null);
-        // Loading is only truly finished when we get the first snapshot from Firestore.
         setIsLoading(false);
 
         // --- Phase 3: Update IndexedDB cache in the background ---
         if (isCacheable) {
-            updateStoreData(storeName, resultsWithDates).catch(console.error);
+            // No need to clear first, `put` will overwrite existing keys.
+            // And we want to preserve old data if the new snapshot is empty.
+            if (resultsWithDates.length > 0) {
+                updateStoreData(storeName, resultsWithDates).catch(console.error);
+            }
         }
       },
       (error: FirestoreError) => {
