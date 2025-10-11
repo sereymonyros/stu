@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useAuth, useDoc, useFirestore } from '@/firebase';
@@ -52,7 +53,7 @@ export function UserAuthButton() {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={userProfile?.photoURL ?? ''} alt={userProfile?.displayName ?? 'User'} />
+              <AvatarImage src={userProfile?.photoURL || undefined} alt={userProfile?.displayName ?? 'User'} />
               <AvatarFallback>{fallbackText}</AvatarFallback>
             </Avatar>
           </Button>
