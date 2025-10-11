@@ -223,7 +223,7 @@ export default function DashboardPage() {
             <Header />
             <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                 </div>
 
                 {isRecruiter && (
