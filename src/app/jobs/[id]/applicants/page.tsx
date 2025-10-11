@@ -17,6 +17,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { Board } from '@/components/kanban';
 import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
 import type { UserProfile } from '@/types/user';
+import { Card } from '@/components/ui/card';
 
 type ApplicantWithProfile = {
     id: string; // This is the application doc ID
