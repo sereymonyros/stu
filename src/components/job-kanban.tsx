@@ -15,10 +15,12 @@ import { Badge } from './ui/badge';
 import Link from 'next/link';
 
 function JobCard({ job }: { job: any }) {
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: job.id });
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: job.id });
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
+        boxShadow: isDragging ? '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' : undefined,
+        zIndex: isDragging ? 10 : 'auto',
     };
 
     const formatCurrency = (value: number) => {

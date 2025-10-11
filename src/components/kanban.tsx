@@ -103,11 +103,13 @@ function AIAnalysisDisplay({ analysis, error }: { analysis: AnalyzeApplicantOutp
 }
 
 function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: any }) {
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: applicant.id });
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: applicant.id });
     const { toast } = useToast();
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
+        boxShadow: isDragging ? '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' : undefined,
+        zIndex: isDragging ? 10 : 'auto',
     };
     
     const [isAnalysisVisible, setIsAnalysisVisible] = useState(false);
