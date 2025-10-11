@@ -254,7 +254,7 @@ function JobsPageContent() {
     const filteredAndSortedJobs = useMemo(() => {
         if (!jobs) return [];
         
-        let filtered = [...jobs];
+        let filtered = jobs.filter(job => job.title); // Ensure job has a title
 
         // 1. Search filter
         if (searchQuery) {
