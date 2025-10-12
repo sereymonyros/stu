@@ -64,22 +64,22 @@ function JobCard({
 
     const cardContent = (
         <>
-            <CardHeader className="p-4">
+            <CardHeader className="p-3">
                 <div className="flex justify-between items-start gap-2">
-                    <CardTitle className="text-base font-bold">{job.title}</CardTitle>
+                    <CardTitle className="text-sm font-bold">{job.title}</CardTitle>
                     {user && !isOwner && !isRecruiter && (
                          <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => onToggleFavourite(job.id, isFavourite)}
-                            className="text-muted-foreground hover:text-red-500 h-7 w-7"
+                            className="text-muted-foreground hover:text-red-500 h-6 w-6"
                             disabled={hasApplied}
                         >
-                            <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
+                            <Heart className={cn("h-4 w-4", isFavourite && "fill-red-500 text-red-500")} />
                         </Button>
                     )}
                      {isOwner && (
-                        <Button asChild variant="ghost" size="icon" disabled={hasApplied} className="h-7 w-7">
+                        <Button asChild variant="ghost" size="icon" disabled={hasApplied} className="h-6 w-6">
                             <Link href={`/jobs/${job.id}/edit`}>
                                 <Pencil className="h-4 w-4" />
                             </Link>
@@ -94,13 +94,13 @@ function JobCard({
                     {salaryDisplay && <div className="flex items-center gap-2"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>}
                 </div>
             </CardHeader>
-            <CardContent className="flex-grow p-4 pt-0">
+            <CardContent className="flex-grow p-3 pt-0">
                 <div className="flex flex-wrap gap-1">
-                    <Badge variant="secondary">{job.jobType}</Badge>
-                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">{job.jobType}</Badge>
+                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5">{job.status}</Badge>
                 </div>
             </CardContent>
-            <CardFooter className="p-4 pt-0">
+            <CardFooter className="p-3 pt-0">
                  {hasApplied ? (
                     <Button className="w-full" disabled size="sm">Applied</Button>
                  ) : isRecruiter ? (
@@ -144,7 +144,7 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
     };
 
     return (
-        <div ref={setNodeRef} className={cn("w-full md:w-80 flex-shrink-0", isOver && 'cursor-copy')}>
+        <div ref={setNodeRef} className={cn("w-full sm:w-80 flex-shrink-0", isOver && 'cursor-copy')}>
             <Card className={cn(
                 "h-full transition-colors w-full", 
                 isOver && id === 'Closed' ? 'bg-destructive/20' : 
@@ -176,7 +176,7 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
 
 function Board({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex-1 flex flex-col md:flex-row gap-4 pb-4 md:overflow-x-auto">
+        <div className="flex-1 flex flex-row gap-4 pb-4 overflow-x-auto">
             {children}
         </div>
     );

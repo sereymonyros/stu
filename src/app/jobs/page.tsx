@@ -1,6 +1,7 @@
 
 
 
+
 'use client';
 
 import { useMemo, useState, useEffect, Suspense } from 'react';
@@ -523,7 +524,7 @@ function JobsPageContent() {
 
                 {viewMode === 'board' && isRecruiter && (
                     <DndContext sensors={sensors} onDragEnd={handleJobDragEnd}>
-                        <ScrollArea className="flex-1 -mx-4 px-4">
+                        <ScrollArea className="w-full">
                             <Board>
                                 {KANBAN_STAGES.map(stage => {
                                     const stageJobs = jobsByStatus[stage] || [];

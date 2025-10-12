@@ -231,7 +231,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                     )}
                 </div>
                  <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                    <ScrollArea className="flex-1">
+                    <ScrollArea className="w-full">
                         <Board>
                             {KANBAN_STAGES.map(stage => {
                                 const stageApplicants = applicantsByStatus[stage] || [];

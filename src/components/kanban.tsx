@@ -208,10 +208,10 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
             <Card className={cn("mb-2 bg-card hover:bg-muted/50", isDragging ? "cursor-grabbing" : "cursor-grab")}>
-                <div className="p-2 md:p-3" {...listeners}>
+                <div className="p-3" {...listeners}>
                     <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
-                             <Avatar className="h-9 w-9">
+                             <Avatar className="h-8 w-8">
                                 <AvatarImage src={applicant.applicantPhotoURL} />
                                 <AvatarFallback>{applicant.applicantName?.charAt(0)}</AvatarFallback>
                             </Avatar>
@@ -237,7 +237,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                                 AI Review
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-3xl h-[70vh] flex flex-col">
+                        <DialogContent className="max-w-2xl h-[70vh] flex flex-col">
                             <DialogHeader>
                                 <DialogTitle>AI Applicant Analysis</DialogTitle>
                                 <DialogDescription>
@@ -273,7 +273,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
     };
 
     return (
-        <div ref={setNodeRef} className={cn("w-full md:w-72 flex-shrink-0", isOver && 'cursor-copy')}>
+        <div ref={setNodeRef} className={cn("w-full sm:w-72 flex-shrink-0", isOver && 'cursor-copy')}>
             <Card className={cn(
                 "h-full transition-colors w-full", 
                 isOver ? 'bg-primary/10' : 
@@ -304,7 +304,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
 
 function Board({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex-1 flex flex-col md:flex-row gap-4 pb-4 md:overflow-x-auto">
+        <div className="flex-1 flex flex-row gap-4 pb-4 overflow-x-auto">
             {children}
         </div>
     );
