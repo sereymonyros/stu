@@ -3,15 +3,13 @@ import Image from "next/image";
 import { search } from "@/app/actions";
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { SearchBox } from "@/components/search-box";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find(p => p.id === 'cambodia-hero');
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <main className="relative flex-1 flex flex-col items-center justify-center overflow-hidden p-4 text-center">
+    <div className="flex flex-col flex-1">
+      <div className="relative flex-grow flex flex-col items-center justify-center overflow-hidden p-4 text-center">
         {heroImage && (
           <Image
             src={heroImage.imageUrl}
@@ -24,9 +22,9 @@ export default function Home() {
         )}
         <div className="absolute inset-0 bg-background/70 backdrop-blur-sm z-10" />
 
-        <div className="z-20 flex flex-col items-center space-y-8">
+        <div className="z-20 flex flex-col items-center space-y-8 w-full">
           <div className="flex flex-col items-center space-y-4">
-            <h1 className="text-5xl font-extrabold tracking-tight text-foreground sm:text-6xl md:text-7xl drop-shadow-md">
+             <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-foreground drop-shadow-md">
               Cambodia Hub
             </h1>
             <p className="max-w-xl text-lg text-foreground/90 sm:text-xl md:text-2xl drop-shadow">
@@ -38,7 +36,7 @@ export default function Home() {
             <SearchBox searchAction={search} />
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

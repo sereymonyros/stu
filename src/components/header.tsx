@@ -14,7 +14,7 @@ export function Header() {
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2 text-2xl font-bold">
             <Slack className="h-8 w-8" />
-            <span>Cambodia Hub</span>
+            <span className="hidden sm:inline-block">Cambodia Hub</span>
           </Link>
           <nav className="hidden md:flex gap-4">
             <Button variant="ghost" asChild>

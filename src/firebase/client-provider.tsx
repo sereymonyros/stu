@@ -10,6 +10,7 @@ import { type Firestore } from 'firebase/firestore';
 import { type FirebaseStorage } from 'firebase/storage';
 import { Header } from '@/components/header';
 import { Toaster } from '@/components/ui/toaster';
+import { BottomNavbar } from '@/components/bottom-navbar';
 
 
 interface FirebaseClientProviderProps {
@@ -47,9 +48,14 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       firestore={firebaseServices.firestore}
       storage={firebaseServices.storage}
     >
-      <Header />
-      {children}
-      <Toaster />
+      <div className="relative flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 pb-16 md:pb-0">
+          {children}
+        </main>
+        <BottomNavbar />
+        <Toaster />
+      </div>
     </FirebaseProvider>
   );
 }
