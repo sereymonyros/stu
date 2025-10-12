@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview A flow to find matching jobs for users' saved searches and send email alerts.
- * This flow is designed to be triggered by a scheduled cron job.
+ * This flow can be triggered for all users (by a cron job) or for a single user (manually).
  */
 
 import { ai } from '@/ai/genkit';
@@ -10,8 +10,14 @@ import { z } from 'zod';
 import { initializeFirebaseAdmin } from '@/firebase/server-init';
 import { sendEmail } from './send-email-flow';
 import { jobAlertTemplate } from '@/components/emails/job-alert-template';
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
-// No input schema needed as this flow is triggered by a cron job with no parameters.
+const FindJobMatchesInputSchema = z.object({
+    userId: z.string().optional().describe("If provided, the search will only run for this specific user."),
+    searchId: z.string().optional().describe("If provided with a userId, only this specific saved search will be checked."),
+});
+export type FindJobMatchesInput = z.infer<typeof FindJobMatchesInputSchema>;
+
 const FindJobMatchesOutputSchema = z.object({
   processedUsers: z.number(),
   matchedJobs: z.number(),
@@ -20,18 +26,18 @@ const FindJobMatchesOutputSchema = z.object({
 export type FindJobMatchesOutput = z.infer<typeof FindJobMatchesOutputSchema>;
 
 
-export async function findJobMatches(): Promise<FindJobMatchesOutput> {
-  return findJobMatchesFlow();
+export async function findJobMatches(input: FindJobMatchesInput): Promise<FindJobMatchesOutput> {
+  return findJobMatchesFlow(input);
 }
 
 const findJobMatchesFlow = ai.defineFlow(
   {
     name: 'findJobMatchesFlow',
-    inputSchema: z.void(),
+    inputSchema: FindJobMatchesInputSchema,
     outputSchema: FindJobMatchesOutputSchema,
   },
-  async () => {
-    console.log("Starting job match analysis...");
+  async ({ userId, searchId }) => {
+    console.log(`Starting job match analysis. Single user mode: ${userId ? 'ON' : 'OFF'}`);
     const { firestore } = initializeFirebaseAdmin();
     let emailsSent = 0;
     let totalMatches = 0;
@@ -40,13 +46,10 @@ const findJobMatchesFlow = ai.defineFlow(
     // Look for jobs created in the last 24 hours. The cron job should run daily.
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     
-    // Simplified query to avoid composite index requirement.
-    // We will filter by status in the code.
     const recentJobsSnapshot = await firestore.collection('jobs')
       .where('createdAt', '>=', oneDayAgo)
       .get();
     
-    // Filter for 'Available' jobs in the code.
     const recentJobs = recentJobsSnapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
       .filter(job => job.status === 'Available');
@@ -57,17 +60,41 @@ const findJobMatchesFlow = ai.defineFlow(
     }
     console.log(`Found ${recentJobs.length} new jobs to process.`);
 
-    // --- 2. Fetch all users ---
-    // In a larger app, you'd paginate this, but for now, we fetch all.
-    const usersSnapshot = await firestore.collection('users').get();
-    const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // --- 2. Fetch users to process ---
+    let usersToProcess: QueryDocumentSnapshot<DocumentData>[] = [];
+    if (userId) {
+        // Single user mode
+        const userDoc = await firestore.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+            usersToProcess.push(userDoc);
+        }
+    } else {
+        // All users mode
+        const allUsersSnapshot = await firestore.collection('users').get();
+        usersToProcess = allUsersSnapshot.docs;
+    }
+    
+    if (usersToProcess.length === 0) {
+        console.log("No users to process. Exiting.");
+        return { processedUsers: 0, matchedJobs: 0, emailsSent: 0 };
+    }
 
     // --- 3. Iterate through each user to check their saved searches ---
-    for (const user of users) {
-      const savedSearchesSnapshot = await firestore.collection('users').doc(user.id).collection('savedSearches').get();
+    for (const userDoc of usersToProcess) {
+      const user = { id: userDoc.id, ...userDoc.data() };
+
+      let savedSearchesSnapshot;
+      if (searchId && userId) {
+          // If a specific searchId is provided for a user, only fetch that one.
+          const singleSearchDoc = await firestore.collection('users').doc(user.id).collection('savedSearches').doc(searchId).get();
+          savedSearchesSnapshot = singleSearchDoc.exists ? { docs: [singleSearchDoc], empty: false } : { docs: [], empty: true };
+      } else {
+          // Otherwise, fetch all saved searches for the user.
+          savedSearchesSnapshot = await firestore.collection('users').doc(user.id).collection('savedSearches').get();
+      }
       
       if (savedSearchesSnapshot.empty) {
-        continue; // Skip user if they have no saved searches
+        continue;
       }
 
       const savedSearches = savedSearchesSnapshot.docs.map(doc => doc.data());
@@ -109,7 +136,6 @@ const findJobMatchesFlow = ai.defineFlow(
            }
 
           if (isMatch) {
-            // Avoid adding duplicate jobs if a user has multiple matching searches
             if (!userMatchedJobs.some(mj => mj.id === job.id)) {
               userMatchedJobs.push(job);
             }
@@ -137,9 +163,9 @@ const findJobMatchesFlow = ai.defineFlow(
       }
     }
     
-    console.log(`Finished job match analysis. Processed ${users.length} users, found ${totalMatches} total matches, and sent ${emailsSent} emails.`);
+    console.log(`Finished job match analysis. Processed ${usersToProcess.length} users, found ${totalMatches} total matches, and sent ${emailsSent} emails.`);
     return {
-      processedUsers: users.length,
+      processedUsers: usersToProcess.length,
       matchedJobs: totalMatches,
       emailsSent,
     };

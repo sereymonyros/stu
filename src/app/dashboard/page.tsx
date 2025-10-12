@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Briefcase, ClipboardList, FileText, Users, Heart, User, Search, Trash2, Send } from 'lucide-react';
+import { Briefcase, ClipboardList, FileText, Users, Heart, User, Search, Trash2, Send, BellDot } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -120,7 +120,7 @@ function FavouriteJobCard({ job }: { job: any }) {
     );
 }
 
-function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting }: { savedSearch: any, onExecute: (search: any) => void, onDelete: (searchId: string) => void, isDeleting: boolean }) {
+function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting, onNotify, isNotifying }: { savedSearch: any, onExecute: (search: any) => void, onDelete: (searchId: string) => void, isDeleting: boolean, onNotify: (searchId: string) => void, isNotifying: boolean }) {
     const { name, searchQuery, filters = {} } = savedSearch;
     const filterCount = (filters.companyNames?.length || 0) + (filters.locations?.length || 0) + (filters.jobTypes?.length || 0) + (filters.salaryMin || filters.salaryMax ? 1 : 0);
 
@@ -139,10 +139,15 @@ function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting }: { sav
                     )}
                 </div>
             </CardContent>
-            <CardFooter className="flex justify-between">
-                <Button onClick={() => onExecute(savedSearch)}>
-                    <Search className="mr-2 h-4 w-4" /> Run Search
-                </Button>
+            <CardFooter className="flex justify-between items-center">
+                <div className="flex gap-2">
+                    <Button onClick={() => onExecute(savedSearch)} size="sm">
+                        <Search className="mr-2 h-4 w-4" /> Run
+                    </Button>
+                    <Button onClick={() => onNotify(savedSearch.id)} size="sm" variant="outline" disabled={isNotifying}>
+                        <BellDot className="mr-2 h-4 w-4" /> Notify Me Now
+                    </Button>
+                </div>
                 <Button variant="ghost" size="icon" onClick={() => onDelete(savedSearch.id)} disabled={isDeleting}>
                      <Trash2 className="h-4 w-4" />
                 </Button>
@@ -158,6 +163,7 @@ export default function DashboardPage() {
     const { toast } = useToast();
     const [isDeletingSearch, setIsDeletingSearch] = useState(false);
     const [isSendingAlerts, setIsSendingAlerts] = useState(false);
+    const [isSendingSingleAlert, setIsSendingSingleAlert] = useState<string | null>(null);
 
 
     useEffect(() => {
@@ -280,9 +286,9 @@ export default function DashboardPage() {
     
     const handleFindMatches = async () => {
         setIsSendingAlerts(true);
-        toast({ title: "Processing Job Alerts...", description: "Finding matches and sending emails. This may take a moment." });
+        toast({ title: "Processing Job Alerts...", description: "Finding matches for all users. This may take a moment." });
         try {
-            const result = await findJobMatches();
+            const result = await findJobMatches({});
             toast({
                 title: "Processing Complete!",
                 description: `Sent ${result.emailsSent} emails for ${result.matchedJobs} matched jobs across ${result.processedUsers} users.`,
@@ -293,6 +299,31 @@ export default function DashboardPage() {
             setIsSendingAlerts(false);
         }
     }
+
+    const handleNotifyUser = async (searchId: string) => {
+        if (!user) return;
+        setIsSendingSingleAlert(searchId);
+        toast({ title: "Checking for new jobs...", description: "This might take a moment." });
+        try {
+            const result = await findJobMatches({ userId: user.uid, searchId: searchId });
+            if (result.emailsSent > 0) {
+                 toast({
+                    title: "Alert Sent!",
+                    description: `We found ${result.matchedJobs} new job(s) and sent you an email.`,
+                });
+            } else {
+                 toast({
+                    title: "No New Jobs Found",
+                    description: "There are no new jobs matching this search right now. Check back later!",
+                });
+            }
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Failed to Get Alerts", description: error.message });
+        } finally {
+            setIsSendingSingleAlert(null);
+        }
+    }
+
 
     if (!user) {
         // The useEffect hook handles redirection, so we can return null here.
@@ -312,7 +343,7 @@ export default function DashboardPage() {
                              <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><Briefcase /> My Job Postings</h2>
                              <Button onClick={handleFindMatches} disabled={isSendingAlerts}>
                                 <Send className="mr-2 h-4 w-4" />
-                                {isSendingAlerts ? 'Sending Alerts...' : 'Send Job Alerts'}
+                                {isSendingAlerts ? 'Sending to All Users...' : 'Send Job Alerts to All'}
                              </Button>
                         </div>
                         {postedJobs && postedJobs.length > 0 ? (
@@ -382,6 +413,7 @@ export default function DashboardPage() {
                         <Separator />
                         <section>
                             <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Search /> My Saved Searches</h2>
+                             <CardDescription className="mb-4">Get instant email notifications for your saved searches.</CardDescription>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {savedSearches.map(search => (
                                     <SavedSearchCard
@@ -390,6 +422,8 @@ export default function DashboardPage() {
                                         onExecute={handleExecuteSearch}
                                         onDelete={handleDeleteSearch}
                                         isDeleting={isDeletingSearch}
+                                        onNotify={handleNotifyUser}
+                                        isNotifying={isSendingSingleAlert === search.id}
                                     />
                                 ))}
                             </div>
