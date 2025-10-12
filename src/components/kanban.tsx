@@ -273,7 +273,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
     };
 
     return (
-        <div ref={setNodeRef} className={cn("w-72 flex-shrink-0", isOver && 'cursor-copy')}>
+        <div ref={setNodeRef} className={cn("w-full md:w-80 flex-shrink-0", isOver && 'cursor-copy')}>
             <Card className={cn(
                 "h-full transition-colors w-full flex flex-col", 
                 isOver ? 'bg-primary/10' : 
@@ -285,7 +285,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
                         <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{applicants.length}</span>
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 flex-1 overflow-y-auto">
+                <CardContent className="p-2 flex-1 overflow-y-auto min-h-[100px]">
                      {isLoading ? (
                         <div className="space-y-2">
                              <Skeleton className="h-20 w-full" />
@@ -304,7 +304,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
 
 function Board({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex h-full flex-row gap-4 pb-4">
+        <div className="flex flex-wrap md:flex-nowrap gap-4 pb-4">
             {children}
         </div>
     );

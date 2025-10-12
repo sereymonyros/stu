@@ -207,7 +207,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
     const KANBAN_STAGES = ["submitted", "reviewed", "offered", "accepted", "rejected"] as const;
 
     return (
-        <div className="flex flex-col h-[calc(100vh_-_var(--header-height,65px))]">
+        <div className="flex flex-col h-full">
             <div className="p-4 md:p-6 lg:p-8">
                  <div className="mb-6">
                     <Button variant="ghost" size="sm" className="mb-4" asChild>
@@ -233,7 +233,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
             </div>
              <div className="flex-1 px-4 md:px-6 lg:px-8 pb-4 flex flex-col min-h-0">
                 <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                    <ScrollArea className="w-full h-full">
+                    <ScrollArea className="w-full h-full" type="auto">
                         <Board>
                             {KANBAN_STAGES.map(stage => {
                                 const stageApplicants = applicantsByStatus[stage] || [];
