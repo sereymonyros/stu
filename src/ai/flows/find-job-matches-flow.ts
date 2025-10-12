@@ -39,15 +39,20 @@ const findJobMatchesFlow = ai.defineFlow(
     // --- 1. Fetch recently posted jobs ---
     // Look for jobs created in the last 24 hours. The cron job should run daily.
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    // Simplified query to avoid composite index requirement.
+    // We will filter by status in the code.
     const recentJobsSnapshot = await firestore.collection('jobs')
       .where('createdAt', '>=', oneDayAgo)
-      .where('status', '==', 'Available')
       .get();
     
-    const recentJobs = recentJobsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Filter for 'Available' jobs in the code.
+    const recentJobs = recentJobsSnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(job => job.status === 'Available');
 
     if (recentJobs.length === 0) {
-        console.log("No new jobs posted in the last 24 hours. Exiting.");
+        console.log("No new 'Available' jobs posted in the last 24 hours. Exiting.");
         return { processedUsers: 0, matchedJobs: 0, emailsSent: 0 };
     }
     console.log(`Found ${recentJobs.length} new jobs to process.`);
