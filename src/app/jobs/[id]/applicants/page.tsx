@@ -163,18 +163,18 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                     <Button variant="ghost" size="sm" className="mb-4" asChild>
                         <Link href="/dashboard"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
                     </Button>
-                     {isLoading ? (
-                        <div className="space-y-2">
-                            <Skeleton className="h-8 w-1/2" />
-                            <Skeleton className="h-5 w-1/3" />
-                        </div>
-                    ) : job ? (
+                     {job ? (
                         <div>
                             <div className="flex items-center gap-4">
                                 <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2"><Briefcase className="h-7 w-7" /> {job.title}</h1>
-                                {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-base">{job.status}</Badge>}
+                                {job.status && <Badge variant={job.status === 'Sold' ? 'destructive' : 'default'} className="capitalize text-base">{job.status}</Badge>}
                             </div>
                             <p className="text-muted-foreground">{job.companyName} - {job.location}</p>
+                        </div>
+                    ) : isLoading ? (
+                         <div className="space-y-2">
+                            <Skeleton className="h-8 w-1/2" />
+                            <Skeleton className="h-5 w-1/3" />
                         </div>
                     ) : (
                          <h1 className="text-3xl font-bold tracking-tight">Job not found</h1>

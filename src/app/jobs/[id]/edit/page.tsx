@@ -40,7 +40,7 @@ const jobSchema = z.object({
   companyName: z.string().min(2, 'Company name is required.'),
   location: z.string().min(2, 'Location is required.'),
   jobType: z.enum(['Full-time', 'Part-time', 'Contract', 'Internship']),
-  status: z.enum(['Available', 'Offering', 'Closed']),
+  status: z.enum(['Available', 'Pending', 'Sold']),
   description: z.string().optional(),
   salaryMin: z.coerce.number().optional(),
   salaryMax: z.coerce.number().optional(),
@@ -151,25 +151,11 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     router.push(`/jobs`);
   };
 
-  const isLoading = isUserLoading || isJobLoading;
-
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-        {isLoading && (
-          <Card className="max-w-2xl mx-auto">
-            <CardHeader><Skeleton className="h-8 w-1/2" /></CardHeader>
-            <CardContent className="space-y-8">
-              <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-              <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-20 w-full" /></div>
-              <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-              <Skeleton className="h-10 w-full" />
-            </CardContent>
-          </Card>
-        )}
-
-        {!isLoading && job && (
+        {job ? (
             <Card className="max-w-2xl mx-auto">
             <CardHeader><CardTitle>Edit Job Posting</CardTitle></CardHeader>
             <CardContent>
@@ -188,7 +174,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                     <FormItem><FormLabel>Job Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select employment type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Full-time">Full-time</SelectItem><SelectItem value="Part-time">Part-time</SelectItem><SelectItem value="Contract">Contract</SelectItem><SelectItem value="Internship">Internship</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                   )} />
                    <FormField control={form.control} name="status" render={({ field }) => (
-                    <FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select job status" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Available">Available</SelectItem><SelectItem value="Offering">Offering</SelectItem><SelectItem value="Closed">Closed</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select job status" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Available">Available</SelectItem><SelectItem value="Pending">Pending</SelectItem><SelectItem value="Sold">Sold</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                   )} />
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -211,14 +197,14 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                 </Form>
             </CardContent>
             </Card>
-        )}
-
-        {!isLoading && !job && (
+        ) : (
+          !isJobLoading && (
             <div className="text-center py-20">
                 <h2 className="text-2xl font-semibold">Job not found</h2>
                 <p className="text-muted-foreground mt-2">This job posting may have been removed or the link is incorrect.</p>
                 <Button asChild className="mt-6"><Link href="/jobs">Back to Jobs</Link></Button>
             </div>
+          )
         )}
       </main>
     </div>

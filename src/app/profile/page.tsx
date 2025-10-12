@@ -277,7 +277,6 @@ export default function ProfilePage() {
     }
   };
 
-  const isLoading = isUserLoading || isProfileLoading;
   const currentPhoto = imagePreview || userProfile?.photoURL;
 
   return (
@@ -290,19 +289,7 @@ export default function ProfilePage() {
             <CardDescription>A complete profile with a real photo is required to post or apply for jobs.</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="space-y-6">
-                <div className="flex items-center space-x-4">
-                  <Skeleton className="h-24 w-24 rounded-full" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-10 w-48" />
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                </div>
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            ) : user && userProfile ? (
+            {user && userProfile ? (
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                   <div className="flex flex-col sm:flex-row items-center gap-6">

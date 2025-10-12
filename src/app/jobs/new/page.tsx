@@ -30,7 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -135,26 +134,14 @@ export default function NewJobPage() {
     router.push('/jobs');
   };
 
-  const isLoading = isUserLoading || isProfileLoading;
-  const isAuthorized = !isLoading && userProfile?.userType === 'recruiter';
+  const isAuthorized = !isUserLoading && !isProfileLoading && userProfile?.userType === 'recruiter';
   const profileComplete = isAuthorized && !!userProfile?.photoURL;
 
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-        {isLoading && (
-            <Card className="max-w-2xl mx-auto">
-                <CardHeader><Skeleton className="h-8 w-1/2" /></CardHeader>
-                <CardContent className="space-y-8">
-                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-                </CardContent>
-            </Card>
-        )}
-
-        {isAuthorized && (
+        {isAuthorized ? (
             <Card className="max-w-2xl mx-auto">
             <CardHeader>
                 <CardTitle>Post a New Job</CardTitle>
@@ -212,7 +199,7 @@ export default function NewJobPage() {
                 </Form>
             </CardContent>
             </Card>
-        )}
+        ): null}
       </main>
     </div>
   );

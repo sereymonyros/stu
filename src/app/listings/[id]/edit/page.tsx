@@ -24,7 +24,6 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { useEffect, useMemo, useState, use } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import {
   Select,
@@ -44,7 +43,7 @@ const listingSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters long.' }),
   description: z.string().optional(),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
-  status: z.enum(['available', 'pending', 'sold']),
+  status: z.enum(['Available', 'Pending', 'Sold']),
   images: z.custom<FileList>().optional()
     .refine((files) => !files || Array.from(files).every((file) => file.size <= MAX_FILE_SIZE), `Max file size is 5MB.`)
     .refine(
@@ -89,7 +88,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
       title: '',
       description: '',
       price: 0,
-      status: 'available',
+      status: 'Available',
     },
   });
 
@@ -250,25 +249,11 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const isLoading = isUserLoading || isListingLoading;
-
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-        {isLoading && (
-          <Card className="max-w-2xl mx-auto">
-            <CardHeader><Skeleton className="h-8 w-1/2" /></CardHeader>
-            <CardContent className="space-y-8">
-              <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-              <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-20 w-full" /></div>
-              <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-              <Skeleton className="h-10 w-full" />
-            </CardContent>
-          </Card>
-        )}
-
-        {!isLoading && listing && (
+        {listing ? (
             <Card className="max-w-2xl mx-auto">
             <CardHeader><CardTitle>Edit Your Item</CardTitle></CardHeader>
             <CardContent>
@@ -284,7 +269,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
                         <FormItem><FormLabel>Price</FormLabel><FormControl><div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span><Input type="number" placeholder="0.00" className="pl-7" {...field} step="0.01"/></div></FormControl><FormDescription>If you change the price, the previous price will be shown with a strikethrough.</FormDescription><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="status" render={({ field }) => (
-                        <FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent><SelectItem value="available">Available</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="sold">Sold</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Available">Available</SelectItem><SelectItem value="Pending">Pending</SelectItem><SelectItem value="Sold">Sold</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                     )}/>
 
                     <FormItem>
@@ -333,14 +318,14 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
                 </Form>
             </CardContent>
             </Card>
-        )}
-
-        {!isLoading && !listing && (
+        ) : (
+          !isListingLoading && (
             <div className="text-center py-20">
                 <h2 className="text-2xl font-semibold">Listing not found</h2>
                 <p className="text-muted-foreground mt-2">This listing may have been removed or the link is incorrect.</p>
                 <Button asChild className="mt-6"><Link href="/listings">Back to Listings</Link></Button>
             </div>
+          )
         )}
       </main>
     </div>

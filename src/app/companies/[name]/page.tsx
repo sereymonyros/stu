@@ -51,7 +51,7 @@ function JobCard({ job }: { job: any }) {
             <CardContent className="flex-grow">
                 <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">{job.jobType}</Badge>
-                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
+                    <Badge variant={job.status === 'Sold' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
                 </div>
             </CardContent>
             <CardFooter>
@@ -89,8 +89,6 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
     }, [firestore, companyName]);
     const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
 
-    const isLoading = isCompanyLoading || areJobsLoading;
-
     return (
         <div className="flex flex-col min-h-screen">
             <Header />
@@ -101,28 +99,7 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
                     </Button>
                 </div>
 
-                {isLoading && (
-                     <div className="space-y-8">
-                        <Card>
-                            <CardHeader className="flex flex-col md:flex-row items-center gap-6">
-                                <Skeleton className="h-24 w-24 rounded-lg" />
-                                <div className="space-y-2">
-                                    <Skeleton className="h-8 w-64" />
-                                    <Skeleton className="h-5 w-full" />
-                                    <Skeleton className="h-5 w-4/5" />
-                                </div>
-                            </CardHeader>
-                        </Card>
-                        <Skeleton className="h-8 w-48" />
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <Skeleton className="h-64 w-full" />
-                            <Skeleton className="h-64 w-full" />
-                            <Skeleton className="h-64 w-full" />
-                        </div>
-                    </div>
-                )}
-                
-                {!isLoading && company && (
+                {company && (
                      <Card className="mb-8">
                         <CardHeader className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
                            <Image
@@ -140,7 +117,7 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
                     </Card>
                 )}
                 
-                 {!isLoading && !company && (
+                 {!isCompanyLoading && !areJobsLoading && !company && (
                     <div className="text-center py-10 border-2 border-dashed rounded-lg">
                         <Building className="mx-auto h-12 w-12 text-muted-foreground" />
                         <h2 className="mt-4 text-2xl font-semibold">Company Not Found</h2>
@@ -158,7 +135,7 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
                     </div>
                 )}
                 
-                {!isLoading && jobs && jobs.length === 0 && company && (
+                {!areJobsLoading && jobs && jobs.length === 0 && company && (
                      <div className="text-center py-10 border-2 border-dashed rounded-lg">
                         <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
                         <h2 className="mt-4 text-xl font-semibold">No Current Openings</h2>
@@ -174,7 +151,26 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
 export default function CompanyPage({ params }: { params: Promise<{ name: string }> }) {
     const { name } = use(params);
     return (
-        <Suspense fallback={<div>Loading company...</div>}>
+        <Suspense fallback={
+          <div className="space-y-8 container mx-auto p-4 md:p-6 lg:p-8">
+            <Card>
+                <CardHeader className="flex flex-col md:flex-row items-center gap-6">
+                    <Skeleton className="h-24 w-24 rounded-lg" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-8 w-64" />
+                        <Skeleton className="h-5 w-full" />
+                        <Skeleton className="h-5 w-4/5" />
+                    </div>
+                </CardHeader>
+            </Card>
+            <Skeleton className="h-8 w-48" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-64 w-full" />
+            </div>
+        </div>
+        }>
             <CompanyProfile name={name} />
         </Suspense>
     )

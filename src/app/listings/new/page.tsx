@@ -123,7 +123,7 @@ export default function NewListingPage() {
         sellerId: user.uid,
         createdAt: serverTimestamp(),
         imageUrls: imageUrls,
-        status: 'available',
+        status: 'Available',
       };
       
       addDoc(listingsCollection, listingData).catch(serverError => {

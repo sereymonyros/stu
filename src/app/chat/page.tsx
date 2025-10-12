@@ -68,20 +68,8 @@ export default function ChatsPage() {
         });
     }, [chats]);
 
-    if (isUserLoading) {
-        return (
-             <div className="flex flex-col min-h-screen">
-                <Header />
-                <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-                     <Skeleton className="h-8 w-1/4 mb-6" />
-                     <div className="space-y-4">
-                        <Skeleton className="h-20 w-full" />
-                        <Skeleton className="h-20 w-full" />
-                        <Skeleton className="h-20 w-full" />
-                    </div>
-                </main>
-            </div>
-        )
+    if (!user) {
+        return null;
     }
 
     return (

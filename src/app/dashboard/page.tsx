@@ -39,7 +39,7 @@ function JobCard({ job }: { job: any }) {
             <CardContent>
                 <div className="flex items-center gap-2">
                     {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
-                    {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
+                    {job.status && <Badge variant={job.status === 'Sold' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
                      {isLoading ? (
                         <Skeleton className="h-6 w-16 rounded-full" />
                     ) : applicants && applicants.length > 0 ? (
@@ -107,7 +107,7 @@ function FavouriteJobCard({ job }: { job: any }) {
             <CardContent>
                  <div className="flex items-center gap-2">
                     {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
-                    {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
+                    {job.status && <Badge variant={job.status === 'Sold' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
                 </div>
             </CardContent>
             <CardFooter>
@@ -275,13 +275,8 @@ export default function DashboardPage() {
 
 
     // --- Loading and Rendering Logic ---
-    const isLoading = isUserLoading || isProfileLoading;
     const isStandardUserDashboardLoading = areApplicationsLoading || areAppliedJobsLoading || areFavouritesLoading || areFavouriteJobsDetailsLoading || areSavedSearchesLoading;
 
-    if (isLoading) {
-        return <DashboardLoading />;
-    }
-    
     if (!user) {
         // The useEffect hook handles redirection, so we can return null here.
         return null;
@@ -399,19 +394,6 @@ export default function DashboardPage() {
                     )}
                     </>
                 )}
-            </main>
-        </div>
-    );
-}
-
-function DashboardLoading() {
-    return (
-        <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
-                <Skeleton className="h-10 w-1/3" />
-                <Skeleton className="h-64 w-full" />
-                <Skeleton className="h-64 w-full" />
             </main>
         </div>
     );

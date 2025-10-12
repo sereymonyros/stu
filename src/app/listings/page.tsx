@@ -28,7 +28,7 @@ export default function ListingsPage() {
     return collection(firestore, 'listings');
   }, [firestore]);
 
-  const { data: listings, isLoading } = useCollection(listingsCollection);
+  const { data: listings } = useCollection(listingsCollection);
 
   const handleContactSeller = async (listing: any) => {
     if (!user) {
@@ -103,23 +103,7 @@ export default function ListingsPage() {
             </Button>
           </div>
 
-          {isLoading && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Card key={i}>
-                  <CardHeader>
-                    <Skeleton className="h-40 w-full" />
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-6 w-3/4 mb-2" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {!isLoading && listings && (
+          {listings && (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {listings.map((listing) => {
                 const isOwner = user && user.uid === listing.sellerId;
@@ -207,7 +191,7 @@ export default function ListingsPage() {
             </div>
           )}
 
-          {!isLoading && (!listings || listings.length === 0) && (
+          {(!listings) && (
              <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
                 <Store className="mx-auto h-12 w-12 text-muted-foreground" />
                 <div className="text-center">

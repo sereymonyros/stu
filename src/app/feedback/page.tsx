@@ -148,15 +148,8 @@ export default function FeedbackPage() {
     }
   };
 
-  if (isUserLoading) {
-      return (
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 flex items-center justify-center">
-                <p>Loading...</p>
-            </main>
-          </div>
-      )
+  if (!user) {
+      return null;
   }
 
   return (

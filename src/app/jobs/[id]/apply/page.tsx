@@ -288,27 +288,6 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
-  // --- Loading & Render States ---
-  const isLoading = isUserLoading || isProfileLoading || isJobLoading || isApplicationLoading;
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1 container mx-auto p-4 md:p:6 lg:p-8">
-          <Card className="max-w-2xl mx-auto">
-            <CardHeader><Skeleton className="h-8 w-3/4" /></CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </CardContent>
-          </Card>
-        </main>
-      </div>
-    );
-  }
-
   if (!job) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -340,7 +319,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
                 <h3 className="font-semibold mb-2">Job Details</h3>
                 <div className="flex items-center gap-2">
                     {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
-                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
+                    <Badge variant={job.status === 'Sold' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
                 </div>
                 </div>
 
@@ -418,7 +397,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
                     <AlertDialogTrigger asChild>
                       <Button 
                           className="w-full"
-                          disabled={isSubmitting || !profileComplete || job.status === 'Closed' || isUploadingResume}
+                          disabled={isSubmitting || !profileComplete || job.status === 'Sold' || isUploadingResume}
                       >
                       {isSubmitting ? 'Submitting...' : 'Confirm and Submit Application'}
                       </Button>

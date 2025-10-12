@@ -170,8 +170,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         });
     }, [messages]);
 
-
-    const isLoading = isChatLoading || areMessagesLoading || isUserLoading || isOtherUserLoading;
     const otherUserName = otherUser?.displayName || "User";
 
     return (
@@ -183,15 +181,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         <Link href="/chat"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Conversations</Link>
                     </Button>
                     <div className="mt-2">
-                        {isLoading ? (
-                            <div className="flex items-center gap-3">
-                                <Skeleton className="h-10 w-10 rounded-full" />
-                                <div className="space-y-1.5">
-                                    <Skeleton className="h-5 w-32" />
-                                    <Skeleton className="h-4 w-48" />
-                                </div>
-                            </div>
-                        ) : (
+                        {chat && otherUser ? (
                             <div className="flex items-center gap-3">
                                 <Avatar>
                                     <AvatarImage src={otherUser?.photoURL} />
@@ -202,6 +192,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                     <p className="text-sm text-muted-foreground truncate">
                                         Regarding: <span className="font-medium text-foreground">{chat?.listingTitle}</span>
                                     </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <div className="space-y-1.5">
+                                    <Skeleton className="h-5 w-32" />
+                                    <Skeleton className="h-4 w-48" />
                                 </div>
                             </div>
                         )}
@@ -233,10 +231,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                             placeholder="Type a message..."
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
-                            disabled={isSending || isLoading}
+                            disabled={isSending || isChatLoading || areMessagesLoading || isUserLoading}
                             autoComplete="off"
                         />
-                        <Button type="submit" size="icon" disabled={isSending || isLoading || !newMessage.trim()}>
+                        <Button type="submit" size="icon" disabled={isSending || isChatLoading || areMessagesLoading || isUserLoading || !newMessage.trim()}>
                             {isSending ? <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full" /> : <Send />}
                         </Button>
                     </form>
