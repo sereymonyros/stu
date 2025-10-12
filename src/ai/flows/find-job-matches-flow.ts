@@ -52,7 +52,7 @@ const findJobMatchesFlow = ai.defineFlow(
     
     const recentJobs = recentJobsSnapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(job => job.status === 'Available');
+      .filter(job => job && job.status === 'Available');
 
     if (recentJobs.length === 0) {
         console.log("No new 'Available' jobs posted in the last 24 hours. Exiting.");
