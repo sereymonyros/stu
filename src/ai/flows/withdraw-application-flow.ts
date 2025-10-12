@@ -50,7 +50,7 @@ const withdrawApplicationFlow = ai.defineFlow(
       const applicantUserRecord = await auth.getUser(userId);
 
       if (!jobDoc.exists) {
-        throw new Error("Job or applicant profile not found.");
+        throw new Error("Job not found.");
       }
 
       const jobData = jobDoc.data()!;
