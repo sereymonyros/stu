@@ -2,11 +2,13 @@
 'use server';
 /**
  * @fileOverview A secure, server-side flow to withdraw a job application.
+ * This flow now also sends an email notification to the recruiter.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { initializeFirebaseAdmin } from '@/firebase/server-init';
+import { sendEmail } from './send-email-flow';
 
 const WithdrawApplicationInputSchema = z.object({
   jobId: z.string().describe("The ID of the job from which to withdraw."),
@@ -34,22 +36,52 @@ const withdrawApplicationFlow = ai.defineFlow(
     outputSchema: WithdrawApplicationOutputSchema,
   },
   async ({ jobId, userId }) => {
-    try {
-      const { firestore } = initializeFirebaseAdmin();
+    const { firestore, auth } = initializeFirebaseAdmin();
 
-      // Path to the main application document under the job
-      const mainApplicationRef = firestore.collection('jobs').doc(jobId).collection('applications').doc(userId);
-      
-      // Path to the user's copy of the application reference
+    try {
+      // --- 1. Define document references ---
+      const jobRef = firestore.collection('jobs').doc(jobId);
+      const mainApplicationRef = jobRef.collection('applications').doc(userId);
       const userApplicationRef = firestore.collection('users').doc(userId).collection('applications').doc(jobId);
 
-      // Use a batch write to ensure both documents are deleted atomically
+      // --- 2. Fetch data needed for notification BEFORE deleting ---
+      const jobDoc = await jobRef.get();
+      const applicantDoc = await firestore.collection('users').doc(userId).get();
+
+      if (!jobDoc.exists() || !applicantDoc.exists()) {
+        throw new Error("Job or applicant profile not found.");
+      }
+
+      const jobData = jobDoc.data()!;
+      const applicantData = applicantDoc.data()!;
+      const recruiterId = jobData.recruiterId;
+
+      // --- 3. Use a batch write to delete both documents atomically ---
       const batch = firestore.batch();
-      
       batch.delete(mainApplicationRef);
       batch.delete(userApplicationRef);
-
       await batch.commit();
+
+      // --- 4. Send email notification to the recruiter (non-blocking) ---
+      try {
+        const recruiterUser = await auth.getUser(recruiterId);
+        if (recruiterUser.email) {
+          await sendEmail({
+            to: recruiterUser.email,
+            subject: `Application Withdrawn for ${jobData.title}`,
+            htmlBody: `
+              <h1>Application Withdrawn</h1>
+              <p>Hi ${recruiterUser.displayName || 'Recruiter'},</p>
+              <p>Please be advised that <strong>${applicantData.displayName}</strong> has withdrawn their application for the position of <strong>${jobData.title}</strong>.</p>
+              <p>No further action is required.</p>
+              <p><em>The Cambodia Hub Team</em></p>
+            `,
+          });
+        }
+      } catch (emailError: any) {
+        // Log the email error but do not fail the flow. The withdrawal was successful.
+        console.error(`Successfully withdrew application, but failed to send notification email to recruiter ${recruiterId}. Reason: ${emailError.message}`);
+      }
 
       return { success: true, message: "Application successfully withdrawn." };
 
