@@ -7,7 +7,9 @@ const { getStorage } = require('firebase-admin/storage');
 
 let app;
 
-const isProduction = !!(process.env.K_SERVICE || process.env.GOOGLE_CLOUD_PROJECT || process.env.APP_HOSTING);
+// In a Cloud Function environment, process.env.FUNCTIONS_EMULATOR will be undefined.
+// It will be 'true' only when running locally with the Firebase Emulator Suite.
+const isProduction = !process.env.FUNCTIONS_EMULATOR;
 
 function initializeFirebaseAdmin() {
   if (getApps().length > 0) {
@@ -16,14 +18,16 @@ function initializeFirebaseAdmin() {
     const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
 
     if (isProduction) {
+        // In the deployed production environment, use Application Default Credentials.
         app = initializeApp({
             credential: applicationDefault(),
             storageBucket: storageBucket,
         });
     } else {
+        // For local development (using the emulator), require a service account.
         const serviceAccountString = process.env.NEXT_PUBLIC_GOOGLE_APPLICATION_CREDENTIALS;
         if (!serviceAccountString) {
-            throw new Error('LOCAL DEV ERROR: The NEXT_PUBLIC_GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.');
+            throw new Error('LOCAL DEV ERROR: The NEXT_PUBLIC_GOOGLE_APPLICATION_CREDENTIALS environment variable is not set. This is required for local testing with the Firebase Emulator.');
         }
         try {
             const serviceAccount = JSON.parse(

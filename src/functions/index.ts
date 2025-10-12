@@ -5,8 +5,8 @@
  * by Cloud Scheduler to run the daily job alert process.
  */
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { findJobMatches } from '@/ai/flows/find-job-matches-flow';
-import { initializeFirebaseAdmin } from '@/firebase/server-init';
+import { findJobMatches } from './../ai/flows/find-job-matches-flow';
+import { initializeFirebaseAdmin } from './../firebase/server-init';
 
 // Initialize the Firebase Admin SDK.
 // This is necessary for the function to have the correct permissions.
