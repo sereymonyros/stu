@@ -69,6 +69,7 @@ function JobsPageContent() {
     
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
+    const [recruiterHasJobs, setRecruiterHasJobs] = useState(false);
 
     // --- Data Fetching ---
     const jobsQuery = useMemo(() => collection(firestore, 'jobs'), [firestore]);
@@ -289,6 +290,7 @@ function JobsPageContent() {
     useEffect(() => {
         if (jobs && user && isRecruiter) {
             const recruiterJobs = jobs.filter(job => job.recruiterId === user.uid);
+            setRecruiterHasJobs(recruiterJobs.length > 0);
             const grouped = recruiterJobs.reduce((acc, job) => {
                 const status = job.status || 'Available';
                 if (!acc[status]) {
@@ -298,6 +300,8 @@ function JobsPageContent() {
                 return acc;
             }, {} as Record<string, any[]>);
             setJobsByStatus(grouped);
+        } else {
+            setRecruiterHasJobs(false);
         }
     }, [jobs, user, isRecruiter]);
 
@@ -373,7 +377,7 @@ function JobsPageContent() {
                         )}
                     </div>
                     <div className="flex items-center gap-2">
-                       {isRecruiter && jobs.length > 0 && (
+                       {isRecruiter && recruiterHasJobs && (
                             <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
                                 <ToggleGroupItem value="card" aria-label="Card view"><List /></ToggleGroupItem>
                                 <ToggleGroupItem value="board" aria-label="Board view"><LayoutGrid /></ToggleGroupItem>
