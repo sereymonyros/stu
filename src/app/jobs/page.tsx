@@ -1,9 +1,3 @@
-
-
-
-
-
-
 'use client';
 
 import { useMemo, useState, useEffect, Suspense } from 'react';
@@ -226,7 +220,7 @@ function JobsPageContent({ searchParams }: { searchParams: { [key: string]: stri
         const searchData = {
             id: newSearchDocRef.id,
             name: savedSearchName,
-            searchQuery: savedSearchName.toLowerCase() || '',
+            searchQuery: searchQuery.toLowerCase() || '',
             filters: {
                 companyNames: selectedCompanies,
                 locations: selectedLocations,
@@ -505,24 +499,21 @@ function JobsPageContent({ searchParams }: { searchParams: { [key: string]: stri
                             </Card>
                         )}
                         
-                        {filteredAndSortedJobs.length > 0 && (
-                            <div className="grid grid-cols-1 gap-4">
-                                {filteredAndSortedJobs.map((job) => (
-                                    <Board.Card 
-                                        key={job.id} 
-                                        job={job}
-                                        isFavourite={favouriteJobIds.has(job.id)}
-                                        onToggleFavourite={handleToggleFavourite}
-                                        hasApplied={appliedJobIds.has(job.id)}
-                                        isRecruiter={isRecruiter}
-                                        isDraggable={false}
-                                    />
-                                ))}
-                            </div>
-                        )}
-
-                        {(!jobs || filteredAndSortedJobs.length === 0) && (
-                            <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
+                        <div className="grid grid-cols-1 gap-4">
+                            {filteredAndSortedJobs.length > 0 ? (
+                                filteredAndSortedJobs.map((job) => (
+                                <Board.Card 
+                                    key={job.id} 
+                                    job={job}
+                                    isFavourite={favouriteJobIds.has(job.id)}
+                                    onToggleFavourite={handleToggleFavourite}
+                                    hasApplied={appliedJobIds.has(job.id)}
+                                    isRecruiter={isRecruiter}
+                                    isDraggable={false}
+                                />
+                                ))
+                            ) : (
+                                <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
                                 <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
                                 <div className="text-center">
                                     <h2 className="text-2xl font-semibold tracking-tight">{hasActiveFilters ? 'No Matching Jobs' : 'No jobs posted yet'}</h2>
@@ -530,8 +521,9 @@ function JobsPageContent({ searchParams }: { searchParams: { [key: string]: stri
                                         {hasActiveFilters ? 'Try adjusting your filters.' : 'Check back soon for new opportunities!'}
                                     </p>
                                 </div>
-                            </div>
-                        )}
+                                </div>
+                            )}
+                        </div>
                     </>
                 )}
 
@@ -583,3 +575,5 @@ export default function JobsPage({
         </Suspense>
     )
 }
+
+    
