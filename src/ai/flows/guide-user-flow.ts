@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A chatbot flow to guide users on how to use the application.
@@ -16,7 +17,8 @@ const AppFeatureSchema = z.object({
     'withdraw-application',
     'view-dashboard',
     'search-jobs',
-    'save-job-search'
+    'save-job-search',
+    'become-recruiter',
   ]),
 });
 
@@ -112,6 +114,17 @@ const featureDatabase: Record<string, FeatureInfo> = {
         ],
         requiredRole: 'standard',
         relatedPage: '/jobs'
+    },
+    'become-recruiter': {
+        featureName: 'Becoming a Recruiter',
+        description: "You can select your user type when you first create your account.",
+        steps: [
+            "Go to the 'Sign Up' page.",
+            "Fill in your name, email, and other details.",
+            "At the bottom of the form, you will see a choice between 'General User' and 'Recruiter'.",
+            "Select the 'Recruiter' option before creating your account."
+        ],
+        relatedPage: '/signup'
     }
 };
 
