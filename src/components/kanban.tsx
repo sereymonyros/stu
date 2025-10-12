@@ -119,6 +119,12 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
     const [analysisError, setAnalysisError] = useState<string | null>(null);
 
     const handleGetAIAnalysis = async () => {
+        // If analysis is already available, just show it.
+        if (analysis || analysisError) {
+            setIsAnalysisVisible(true);
+            return;
+        }
+
         if (!jobDetails || !applicant.resumeUrl) {
             toast({ variant: 'destructive', title: 'Missing Information', description: 'Cannot perform analysis without a job description and a resume.'});
             return;
@@ -126,7 +132,6 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
         
         setIsAnalysisVisible(true);
         setIsAnalyzing(true);
-        setAnalysis(null);
         setAnalysisError(null);
 
         try {
@@ -139,7 +144,9 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
             setAnalysis(result);
         } catch (error: any) {
             console.error("AI Analysis Failed:", error);
-            setAnalysisError(error.message || 'An unknown error occurred during analysis.');
+            const friendlyError = error.message || 'An unknown error occurred during analysis.';
+            setAnalysisError(friendlyError);
+            toast({ variant: 'destructive', title: 'Analysis Failed', description: friendlyError });
         } finally {
             setIsAnalyzing(false);
         }
