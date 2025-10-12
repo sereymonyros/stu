@@ -53,19 +53,27 @@ const updateResumeOnApplicationsFlow = ai.defineFlow(
       const batch = firestore.batch();
       let updatedCount = 0;
 
-      // 3. For each application reference, update the corresponding document in the 'jobs' collection.
+      // 3. For each application reference, find the main application document, VERIFY it exists, then add to batch.
       for (const userAppDoc of userApplicationsSnapshot.docs) {
-        // THE FIX: The document ID of the user's application reference *is* the jobId.
+        // The ID of the user's reference document IS the jobId.
         const jobId = userAppDoc.id;
         
         if (jobId) {
-          // Construct the correct path to the main application document.
+          // Construct the path to the main application document.
           // The document ID for an application under a job is the applicant's UID.
           const mainApplicationRef = firestore.collection('jobs').doc(jobId).collection('applications').doc(userId);
           
-          // Add the update operation to the batch.
-          batch.update(mainApplicationRef, { resumeUrl: newResumeUrl });
-          updatedCount++;
+          // **THE FIX**: Explicitly check if the document exists before trying to update it.
+          const mainApplicationDoc = await mainApplicationRef.get();
+
+          if (mainApplicationDoc.exists) {
+            // Add the update operation to the batch ONLY if the document was found.
+            batch.update(mainApplicationRef, { resumeUrl: newResumeUrl });
+            updatedCount++;
+          } else {
+             // This can happen if data is inconsistent. Log it for debugging.
+             console.warn(`Data inconsistency: Found application reference for job ${jobId} for user ${userId}, but the main application document was not found.`);
+          }
         }
       }
 
