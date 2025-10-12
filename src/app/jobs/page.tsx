@@ -80,7 +80,6 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     return (
         <Card className="hover:shadow-md transition-shadow duration-200 w-full">
             <div className="p-4 flex flex-col sm:flex-row items-start gap-4 relative">
-
                 <div className="absolute top-2 left-2 flex items-center gap-2">
                     {user && !isOwner && !isRecruiter && (
                         <Button
@@ -95,18 +94,14 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         </Button>
                     )}
                 </div>
-
                 <div className="absolute top-2 right-2 flex items-center gap-2">
                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm">{job.jobType}</Badge>
                      <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm">{job.status}</Badge>
                 </div>
-
-
-                <Avatar className="h-12 w-12 hidden sm:flex">
+                <Avatar className="h-12 w-12 hidden sm:flex mt-8 sm:mt-0">
                     <AvatarImage src={job.companyLogoUrl || `https://picsum.photos/seed/${job.companyName}/100`} />
                     <AvatarFallback>{job.companyName?.charAt(0)}</AvatarFallback>
                 </Avatar>
-
                 <div className="flex-1 w-full sm:w-auto pt-8 sm:pt-0">
                     <Link href={`/jobs/${job.id}/apply`} className="font-semibold text-lg hover:text-primary leading-tight">{job.title}</Link>
                     <div className="flex flex-col sm:flex-row sm:items-center text-sm text-muted-foreground gap-x-3 gap-y-1 mt-1">
@@ -115,7 +110,6 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                     </div>
                 </div>
-
                 <div className="w-full sm:w-auto flex justify-end items-center sm:self-center ml-auto">
                     {hasApplied ? (
                         <Button disabled size="sm">Applied</Button>
@@ -200,7 +194,6 @@ function JobsPageContent() {
     const [savedSearchName, setSavedSearchName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     
-    // Initialize salary range from URL params or default
     useEffect(() => {
         const min = searchParams.get('salaryMin');
         const max = searchParams.get('salaryMax');
@@ -209,7 +202,7 @@ function JobsPageContent() {
         setSalaryRange([initialMin, initialMax]);
     }, [maxSalary, searchParams]);
 
-    // Update URL when filters change
+    // This effect SYNCS the URL with the state.
     useEffect(() => {
         const params = new URLSearchParams();
         
@@ -222,6 +215,7 @@ function JobsPageContent() {
         selectedLocations.forEach(l => params.append('location', l));
         selectedJobTypes.forEach(t => params.append('jobType', t));
         
+        // Using router.replace to update the URL without adding to history
         router.replace(`/jobs?${params.toString()}`, { scroll: false });
     }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, router]);
 
