@@ -9,7 +9,7 @@ import { type NextRequest } from 'next/server'
 export async function POST(request: NextRequest) {
   // 1. Secure the endpoint
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET}`) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
