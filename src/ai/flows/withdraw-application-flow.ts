@@ -48,7 +48,7 @@ const withdrawApplicationFlow = ai.defineFlow(
       const jobDoc = await jobRef.get();
       const applicantDoc = await firestore.collection('users').doc(userId).get();
 
-      if (!jobDoc.exists() || !applicantDoc.exists()) {
+      if (!jobDoc.exists || !applicantDoc.exists) {
         throw new Error("Job or applicant profile not found.");
       }
 
