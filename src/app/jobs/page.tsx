@@ -211,27 +211,19 @@ function JobsPageContent() {
 
     // Update URL when filters change
     useEffect(() => {
-        const params = new URLSearchParams(searchParams.toString());
+        const params = new URLSearchParams();
         
-        // Handle single value params
-        if (searchQuery) params.set('q', searchQuery); else params.delete('q');
-        if (showFavoritesOnly) params.set('favorites', 'true'); else params.delete('favorites');
-        if (salaryRange[0] > 0) params.set('salaryMin', salaryRange[0].toString()); else params.delete('salaryMin');
-        if (salaryRange[1] < maxSalary) params.set('salaryMax', salaryRange[1].toString()); else params.delete('salaryMax');
+        if (searchQuery) params.set('q', searchQuery);
+        if (showFavoritesOnly) params.set('favorites', 'true');
+        if (salaryRange[0] > 0) params.set('salaryMin', salaryRange[0].toString());
+        if (salaryRange[1] < maxSalary) params.set('salaryMax', salaryRange[1].toString());
         
-        // Handle multi-value params
-        params.delete('company');
         selectedCompanies.forEach(c => params.append('company', c));
-
-        params.delete('location');
         selectedLocations.forEach(l => params.append('location', l));
-        
-        params.delete('jobType');
         selectedJobTypes.forEach(t => params.append('jobType', t));
         
-        // Using router.replace to avoid re-triggering Suspense boundary and adding to history
-        router.replace(`/jobs?${params.toString()}`);
-    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, router, searchParams]);
+        router.replace(`/jobs?${params.toString()}`, { scroll: false });
+    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, router]);
 
     // --- Toggle Handlers ---
     const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
