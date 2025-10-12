@@ -237,14 +237,14 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                                 AI Review
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-3xl">
+                        <DialogContent className="max-w-3xl h-[70vh] flex flex-col">
                             <DialogHeader>
                                 <DialogTitle>AI Applicant Analysis</DialogTitle>
                                 <DialogDescription>
                                     This is an AI-generated analysis of the applicant's resume against the job description.
                                 </DialogDescription>
                             </DialogHeader>
-                            <div className="py-4">
+                            <div className="py-4 overflow-y-auto flex-1">
                                 <AIAnalysisDisplay 
                                   analysis={analysis} 
                                   error={analysisError} 
@@ -275,7 +275,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
     return (
         <div ref={setNodeRef} className={cn("w-full md:w-72 flex-shrink-0", isOver && 'cursor-copy')}>
             <Card className={cn(
-                "h-full transition-colors", 
+                "h-full transition-colors w-full", 
                 isOver ? 'bg-primary/10' : 
                 'bg-muted/40'
             )}>
