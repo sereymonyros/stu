@@ -11,6 +11,7 @@ import { type FirebaseStorage } from 'firebase/storage';
 import { Header } from '@/components/header';
 import { Toaster } from '@/components/ui/toaster';
 import { BottomNavbar } from '@/components/bottom-navbar';
+import { Chatbot } from '@/components/chatbot';
 
 
 interface FirebaseClientProviderProps {
@@ -53,6 +54,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
         <div className="flex-1 flex flex-col">
           {children}
         </div>
+        <Chatbot />
         <BottomNavbar />
         <Toaster />
       </div>
