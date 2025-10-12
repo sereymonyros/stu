@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { findJobMatches } from '@/ai/flows/find-job-matches-flow';
+import { WithdrawApplicationButton } from '@/components/withdraw-application-button';
 
 
 function JobCard({ job }: { job: any }) {
@@ -64,7 +65,7 @@ function JobCard({ job }: { job: any }) {
     );
 }
 
-function AppliedJobCard({ job, applicationStatus, isFavourite }: { job: any, applicationStatus: string, isFavourite: boolean }) {
+function AppliedJobCard({ job, application, isFavourite, onWithdrawSuccess }: { job: any, application: any, isFavourite: boolean, onWithdrawSuccess: () => void }) {
 
     const statusColors: { [key: string]: string } = {
         submitted: 'bg-blue-500 hover:bg-blue-600',
@@ -73,6 +74,8 @@ function AppliedJobCard({ job, applicationStatus, isFavourite }: { job: any, app
         accepted: 'bg-green-500 hover:bg-green-600',
         rejected: 'bg-red-500 hover:bg-red-600',
     }
+    
+    const canWithdraw = application.status === 'submitted' || application.status === 'reviewed';
 
     return (
         <Card>
@@ -89,11 +92,19 @@ function AppliedJobCard({ job, applicationStatus, isFavourite }: { job: any, app
                  <div className="flex justify-between items-center">
                      <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-muted-foreground">Status:</span>
-                        <Badge className={cn("capitalize text-white", statusColors[applicationStatus] || 'bg-gray-500')}>{applicationStatus}</Badge>
+                        <Badge className={cn("capitalize text-white", statusColors[application.status] || 'bg-gray-500')}>{application.status}</Badge>
                     </div>
-                    <Button asChild variant="outline" size="sm">
-                       <Link href={`/jobs/${job.id}/apply`}>View Job</Link>
-                   </Button>
+                    <div className="flex items-center gap-1">
+                        <Button asChild variant="outline" size="sm">
+                           <Link href={`/jobs/${job.id}/apply`}>View</Link>
+                        </Button>
+                        {canWithdraw && (
+                            <WithdrawApplicationButton 
+                                jobId={job.id} 
+                                onWithdrawSuccess={onWithdrawSuccess}
+                            />
+                        )}
+                   </div>
                 </div>
             </CardContent>
         </Card>
@@ -200,12 +211,12 @@ export default function DashboardPage() {
         if (!firestore || !user || !shouldRunRoleQueries || isRecruiter) return null;
         return query(collection(firestore, `users/${user.uid}/applications`));
     }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
-    const { data: applications } = useCollection(applicationsQuery);
+    const { data: applications, refetch: refetchApplications } = useCollection(applicationsQuery);
 
-    // Create a map of jobId to application status
-    const applicationStatusMap = useMemo(() => {
+    // Create a map of jobId to application data
+    const applicationMap = useMemo(() => {
         if (!applications) return new Map();
-        return new Map(applications.map(app => [app.jobId, app.status]));
+        return new Map(applications.map(app => [app.jobId, app]));
     }, [applications]);
 
     const appliedJobIds = useMemo(() => {
@@ -376,8 +387,9 @@ export default function DashboardPage() {
                                     <AppliedJobCard
                                         key={job.id}
                                         job={job}
-                                        applicationStatus={applicationStatusMap.get(job.id) || 'submitted'}
+                                        application={applicationMap.get(job.id)}
                                         isFavourite={favouriteJobIdsSet.has(job.id)}
+                                        onWithdrawSuccess={() => refetchApplications()}
                                     />
                                 ))}
                             </div>

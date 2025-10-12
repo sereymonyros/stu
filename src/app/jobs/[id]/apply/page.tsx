@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { FileText, ArrowLeft, CheckCircle, UploadCloud, AlertTriangle, Trash2 } from 'lucide-react';
+import { FileText, ArrowLeft, CheckCircle, UploadCloud, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -34,7 +34,7 @@ import { sendEmail } from '@/ai/flows/send-email-flow';
 import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
 import { applicantConfirmationTemplate } from '@/components/emails/applicant-confirmation-template';
 import { recruiterNotificationTemplate } from '@/components/emails/recruiter-notification-template';
-import { withdrawApplication } from '@/ai/flows/withdraw-application-flow';
+import { WithdrawApplicationButton } from '@/components/withdraw-application-button';
 
 
 // Helper function to convert a File to a Base64 data URI
@@ -80,7 +80,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
 
   const hasApplied = !!application;
   const profileComplete = !!userProfile?.photoURL && !!userProfile?.resumeUrl;
-  const canWithdraw = hasApplied && (!application.status || application.status === 'submitted' || application.status === 'reviewed');
+  const canWithdraw = hasApplied && (application.status === 'submitted' || application.status === 'reviewed');
 
   // --- Effects ---
   useEffect(() => {
@@ -232,23 +232,6 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
-  const handleWithdraw = async () => {
-    if (!user || !jobId) return;
-
-    setIsSubmitting(true);
-    try {
-      await withdrawApplication({ jobId, userId: user.uid });
-      toast({ title: "Application Withdrawn", description: "You have successfully withdrawn your application." });
-      // Manually refetch the application status to update the UI
-      refetchApplication();
-    } catch (error: any) {
-       toast({ variant: 'destructive', title: 'Withdrawal Failed', description: error.message });
-    } finally {
-        setIsSubmitting(false);
-    }
-  };
-
-
   const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user || !userProfileRef) return;
@@ -346,27 +329,10 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
                             <p className="text-sm">Your application status is: <span className="font-semibold capitalize">{application.status}</span></p>
                          </div>
                          {canWithdraw && (
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="sm" disabled={isSubmitting}>
-                                        <Trash2 className="mr-2 h-4 w-4" /> Withdraw
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will permanently remove your application for this role. Are you sure?
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleWithdraw} disabled={isSubmitting} className="bg-destructive hover:bg-destructive/90">
-                                            {isSubmitting ? 'Withdrawing...' : 'Yes, Withdraw'}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                            <WithdrawApplicationButton 
+                                jobId={jobId} 
+                                onWithdrawSuccess={() => refetchApplication()}
+                            />
                          )}
                     </div>
                 ) : !profileComplete ? (
