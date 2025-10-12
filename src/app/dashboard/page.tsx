@@ -10,13 +10,14 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Briefcase, ClipboardList, FileText, Users, Heart, User, Search, Trash2 } from 'lucide-react';
+import { Briefcase, ClipboardList, FileText, Users, Heart, User, Search, Trash2, Send } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { findJobMatches } from '@/ai/flows/find-job-matches-flow';
 
 
 function JobCard({ job }: { job: any }) {
@@ -156,6 +157,8 @@ export default function DashboardPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [isDeletingSearch, setIsDeletingSearch] = useState(false);
+    const [isSendingAlerts, setIsSendingAlerts] = useState(false);
+
 
     useEffect(() => {
         if (!user) {
@@ -274,6 +277,22 @@ export default function DashboardPage() {
             setIsDeletingSearch(false);
         }
     };
+    
+    const handleFindMatches = async () => {
+        setIsSendingAlerts(true);
+        toast({ title: "Processing Job Alerts...", description: "Finding matches and sending emails. This may take a moment." });
+        try {
+            const result = await findJobMatches();
+            toast({
+                title: "Processing Complete!",
+                description: `Sent ${result.emailsSent} emails for ${result.matchedJobs} matched jobs across ${result.processedUsers} users.`,
+            });
+        } catch (error: any) {
+             toast({ variant: "destructive", title: "Failed to Send Alerts", description: error.message });
+        } finally {
+            setIsSendingAlerts(false);
+        }
+    }
 
     if (!user) {
         // The useEffect hook handles redirection, so we can return null here.
@@ -289,7 +308,13 @@ export default function DashboardPage() {
 
                 {isRecruiter && (
                     <section>
-                        <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Briefcase /> My Job Postings</h2>
+                        <div className="flex justify-between items-center mb-4">
+                             <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><Briefcase /> My Job Postings</h2>
+                             <Button onClick={handleFindMatches} disabled={isSendingAlerts}>
+                                <Send className="mr-2 h-4 w-4" />
+                                {isSendingAlerts ? 'Sending Alerts...' : 'Send Job Alerts'}
+                             </Button>
+                        </div>
                         {postedJobs && postedJobs.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {postedJobs.map(job => <JobCard key={job.id} job={job} />)}
