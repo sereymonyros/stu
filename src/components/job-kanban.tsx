@@ -108,13 +108,13 @@ function JobCard({
             </CardContent>
             <CardFooter className="p-3 pt-0">
                  {hasApplied ? (
-                    <Button className="w-full" disabled size="sm">Applied</Button>
+                    <Button disabled size="sm">Applied</Button>
                  ) : isRecruiter ? (
-                     <Button asChild variant="outline" className="w-full" size="sm">
+                     <Button asChild variant="outline" size="sm">
                         <Link href={`/jobs/${job.id}/edit`}>View</Link>
                     </Button>
                  ) : (
-                    <Button asChild className="w-full" size="sm">
+                    <Button asChild size="sm">
                         <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
                     </Button>
                  )}
