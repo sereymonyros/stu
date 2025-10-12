@@ -64,51 +64,51 @@ function JobCard({
 
     const cardContent = (
         <>
-            <CardHeader className="p-3 md:p-6">
+            <CardHeader className="p-4">
                 <div className="flex justify-between items-start gap-2">
-                    <CardTitle className="text-lg md:text-xl font-bold">{job.title}</CardTitle>
+                    <CardTitle className="text-base font-bold">{job.title}</CardTitle>
                     {user && !isOwner && !isRecruiter && (
                          <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => onToggleFavourite(job.id, isFavourite)}
-                            className="text-muted-foreground hover:text-red-500"
+                            className="text-muted-foreground hover:text-red-500 h-7 w-7"
                             disabled={hasApplied}
                         >
-                            <Heart className={cn("h-6 w-6", isFavourite && "fill-red-500 text-red-500")} />
+                            <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
                         </Button>
                     )}
                      {isOwner && (
-                        <Button asChild variant="ghost" size="icon" disabled={hasApplied}>
+                        <Button asChild variant="ghost" size="icon" disabled={hasApplied} className="h-7 w-7">
                             <Link href={`/jobs/${job.id}/edit`}>
-                                <Pencil className="h-5 w-5" />
+                                <Pencil className="h-4 w-4" />
                             </Link>
                         </Button>
                     )}
                 </div>
-                <div className="flex flex-col text-sm text-muted-foreground gap-1 pt-1">
+                <div className="flex flex-col text-xs text-muted-foreground gap-1 pt-1">
                     <div className="flex items-center gap-2">
-                        <Building className="h-4 w-4" /> {job.companyName}
+                        <Building className="h-3 w-3" /> {job.companyName}
                     </div>
-                    <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {job.location}</div>
-                    {salaryDisplay && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
+                    <div className="flex items-center gap-2"><MapPin className="h-3 w-3" /> {job.location}</div>
+                    {salaryDisplay && <div className="flex items-center gap-2"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>}
                 </div>
             </CardHeader>
-            <CardContent className="flex-grow p-3 md:p-6">
-                <div className="flex flex-wrap gap-2">
+            <CardContent className="flex-grow p-4 pt-0">
+                <div className="flex flex-wrap gap-1">
                     <Badge variant="secondary">{job.jobType}</Badge>
                     <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
                 </div>
             </CardContent>
-            <CardFooter className="p-3 md:p-6">
+            <CardFooter className="p-4 pt-0">
                  {hasApplied ? (
-                    <Button className="w-full" disabled>Applied</Button>
+                    <Button className="w-full" disabled size="sm">Applied</Button>
                  ) : isRecruiter ? (
-                     <Button asChild variant="outline" className="w-full">
+                     <Button asChild variant="outline" className="w-full" size="sm">
                         <Link href={`/jobs/${job.id}/edit`}>View</Link>
                     </Button>
                  ) : (
-                    <Button asChild className="w-full">
+                    <Button asChild className="w-full" size="sm">
                         <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
                     </Button>
                  )}
@@ -144,9 +144,9 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
     };
 
     return (
-        <div ref={setNodeRef} className={cn("w-full md:w-72 flex-shrink-0", isOver && 'cursor-copy')}>
+        <div ref={setNodeRef} className={cn("w-full md:w-80 flex-shrink-0", isOver && 'cursor-copy')}>
             <Card className={cn(
-                "h-full transition-colors", 
+                "h-full transition-colors w-full", 
                 isOver && id === 'Closed' ? 'bg-destructive/20' : 
                 isOver ? 'bg-primary/10' : 
                 'bg-muted/40'

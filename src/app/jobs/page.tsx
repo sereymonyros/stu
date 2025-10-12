@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import { useMemo, useState, useEffect, Suspense } from 'react';
@@ -491,7 +492,7 @@ function JobsPageContent() {
                         )}
                         
                         {filteredAndSortedJobs.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                                 {filteredAndSortedJobs.map((job) => (
                                     <Board.Card 
                                         key={job.id} 
@@ -522,7 +523,7 @@ function JobsPageContent() {
 
                 {viewMode === 'board' && isRecruiter && (
                     <DndContext sensors={sensors} onDragEnd={handleJobDragEnd}>
-                        <ScrollArea className="flex-1">
+                        <ScrollArea className="flex-1 -mx-4 px-4">
                             <Board>
                                 {KANBAN_STAGES.map(stage => {
                                     const stageJobs = jobsByStatus[stage] || [];
