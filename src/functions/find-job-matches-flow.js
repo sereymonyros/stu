@@ -13,6 +13,7 @@ async function findJobMatches({ userId, searchId }) {
     let totalMatches = 0;
     
     // --- 1. Fetch recently posted jobs ---
+    // Look for jobs created in the last 24 hours. The cron job should run daily.
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     
     const recentJobsSnapshot = await firestore.collection('jobs')
@@ -52,9 +53,11 @@ async function findJobMatches({ userId, searchId }) {
 
       let savedSearchesSnapshot;
       if (searchId && userId) {
+          // If a specific searchId is provided for a user, only fetch that one.
           const singleSearchDoc = await firestore.collection('users').doc(user.id).collection('savedSearches').doc(searchId).get();
           savedSearchesSnapshot = singleSearchDoc.exists ? { docs: [singleSearchDoc], empty: false } : { docs: [], empty: true };
       } else {
+          // Otherwise, fetch all saved searches for the user.
           savedSearchesSnapshot = await firestore.collection('users').doc(user.id).collection('savedSearches').get();
       }
       
@@ -70,6 +73,7 @@ async function findJobMatches({ userId, searchId }) {
         for (const search of savedSearches) {
           let isMatch = true;
 
+          // Match search query (if exists)
           if (search.searchQuery) {
             const query = search.searchQuery.toLowerCase();
             const title = (job.title || '').toLowerCase();
@@ -79,6 +83,7 @@ async function findJobMatches({ userId, searchId }) {
             }
           }
 
+          // Match filters (if they exist)
           const filters = search.filters || {};
           if (isMatch && filters.companyNames?.length > 0 && !filters.companyNames.includes(job.companyName)) {
             isMatch = false;
