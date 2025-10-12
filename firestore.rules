@@ -2,300 +2,221 @@
  * @fileoverview Firestore Security Rules for the job board application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user-related data and
- * a public-read, owner-write model for listings and jobs. It secures data by
- * verifying user authentication and validating ownership before granting write
- * access. Schema validation is relaxed to facilitate rapid prototyping.
+ * This ruleset prioritizes user data protection and enforces strict ownership for user-related data, 
+ * while allowing public read access to job listings and company profiles. Data validation is relaxed 
+ * to facilitate rapid prototyping.
  *
  * Data Structure:
- * - /users/{userId}: User profile data, accessible only by the user.
- * - /users/{userId}/applications/{applicationId}: Job application references, accessible only by the user.
- * - /users/{userId}/favouriteJobs/{jobId}: Favorite job references, accessible only by the user.
- * - /users/{userId}/savedSearches/{searchId}: Saved job searches, accessible only by the user.
- * - /listings/{listingId}: Publicly readable listings, writable only by the owner (seller).
- * - /jobs/{jobId}: Publicly readable job postings, writable only by the owner (recruiter).
- * - /jobs/{jobId}/applications/{applicationId}: Job applications, only accessible to the job poster (recruiter) and applicant
- * - /chats/{chatId}: Chat sessions between users (buyer and seller), accessible to participants only.
- * - /chats/{chatId}/messages/{messageId}: Messages within a chat, accessible to participants only.
- * - /feedbacks/{feedbackId}: Publicly readable feedback, writable by any authenticated user.
- * - /companies/{companyId}: Publicly readable company profiles, no write access control implemented.
+ * - /users/{userId}: Stores public user profile information, accessible only by the user themselves.
+ * - /users/{userId}/applications/{applicationId}: Stores job application references for a specific user, accessible only by that user.
+ * - /users/{userId}/favouriteJobs/{jobId}: Stores favorite job references for a user, accessible only by that user.
+ * - /users/{userId}/savedSearches/{searchId}: Stores saved job searches for a user, accessible only by that user.
+ * - /listings/{listingId}: Stores item listings, publicly readable but only modifiable by the seller (owner).
+ * - /jobs/{jobId}: Stores job postings, publicly readable but only modifiable by the recruiter (owner).
+ * - /jobs/{jobId}/applications/{applicationId}: Stores applications for a specific job, readable and writable by the job poster (recruiter) and the applicant.
+ * - /chats/{chatId}: Stores chat sessions between buyers and sellers, accessible to participants only.
+ * - /chats/{chatId}/messages/{messageId}: Stores messages within a chat session, accessible to participants only.
+ * - /feedbacks/{feedbackId}: Stores user feedback, publicly readable, and writable only by the user submitting the feedback.
+ * - /companies/{companyId}: Stores company profiles, publicly readable and writable by authenticated users.
  *
  * Key Security Decisions:
- * - Users can only access their own data under their /users/{userId} path.
- * - Listings and Jobs are publicly readable, but only the owner can modify them.
- * - Listing and Job ownership is determined by the `sellerId` and `recruiterId` fields respectively.
- * - Feedback is publicly readable and writable by any authenticated user, `userId` is validated.
- * - Listing of user subcollections is only allowed by the owner.
- * - No write access control is implemented for company profiles.
+ * - User listing is disallowed to protect privacy.
+ * - Public read access is granted to job listings and company profiles for discoverability.
+ * - Strict ownership is enforced for user profiles and related subcollections.
+ * - Chat access is restricted to participants.
+ * - Data validation is minimized to essential ownership and relationship checks to allow for rapid prototyping.
  *
  * Denormalization for Authorization:
- * - Listings and Jobs include `sellerId` and `recruiterId` fields respectively, to enable owner-based write rules without additional reads.
+ * - Listings: Each listing has a `sellerId` field that's checked against `request.auth.uid` for write access.
+ * - Jobs: Each job has a `recruiterId` field that's checked against `request.auth.uid` for write access.
+ * - Chats: Each chat has `buyerId` and `sellerId` fields, and a `participants` array to simplify participant validation.
+ * - Job Applications: Each job application has `applicantId` and `jobId` fields.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the request is authenticated.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Authentication is required for protected resources.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the authenticated user ID matches the provided user ID.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Enforces user-based ownership.
-     */
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the authenticated user is the owner of the existing document.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Protects against modification of non-existent documents and enforces ownership.
-     */
-    function isExistingOwner(userId) {
-      return resource.data.uid == userId && resource != null;
-    }
-
-    /**
-     * @description Checks if the requesting user is a participant in a chat.
-     * @path N/A
-     */
-    function isChatParticipant(chatId) {
-        return resource.data.participants.hasAny([request.auth.uid]);
-    }
-
-    /**
-     * @description Rule set for user profiles.
+     * @description Secures user profile data, allowing only the user to read and write their own profile.
      * @path /users/{userId}
-     * @allow (create) User 'user123' can create their profile.
-     * @allow (get) User 'user123' can read their profile.
-     * @allow (update) User 'user123' can update their profile.
-     * @allow (delete) User 'user123' can delete their profile.
-     * @deny (create) User 'user456' cannot create a profile with userId 'user123'.
-     * @deny (get) User 'user456' cannot read user 'user123' profile.
-     * @deny (update) User 'user456' cannot update user 'user123' profile.
-     * @deny (delete) User 'user456' cannot delete user 'user123' profile.
-     * @principle Enforces document ownership for writes, restricts read access to owner only.
+     * @allow (create) - Authenticated user with UID 'user123' can create a profile at /users/user123 if request.auth.uid == 'user123'.
+     * @allow (get, update, delete) - Authenticated user with UID 'user123' can read/update/delete their profile at /users/user123.
+     * @deny (create) - Authenticated user with UID 'user456' cannot create a profile at /users/user123.
+     * @deny (get, update, delete) - Authenticated user with UID 'user456' cannot read/update/delete the profile at /users/user123.
+     * @principle Enforces document ownership for all operations on user profiles.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.uid == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.uid == resource.data.uid;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rule set for a user's job applications.
+     * @description Secures job application references stored under a user profile.
      * @path /users/{userId}/applications/{applicationId}
-     * @allow (create) User 'user123' can create an application reference.
-     * @allow (get) User 'user123' can read their application reference.
-     * @allow (list) User 'user123' can list their application references.
-     * @allow (update) User 'user123' can update their application reference.
-     * @allow (delete) User 'user123' can delete their application reference.
-     * @deny (create) User 'user456' cannot create an application reference for user 'user123'.
-     * @deny (get) User 'user456' cannot read user 'user123' application reference.
-     * @deny (list) User 'user456' cannot list user 'user123' application references.
-     * @deny (update) User 'user456' cannot update user 'user123' application reference.
-     * @deny (delete) User 'user456' cannot delete user 'user123' application reference.
-     * @principle Restricts access to a user's own data tree.
+     * @allow (create, get, list, update, delete) - Authenticated user with UID 'user123' can manage application references under /users/user123/applications/{applicationId}.
+     * @deny (create, get, list, update, delete) - Authenticated user with UID 'user456' cannot manage application references under /users/user123/applications/{applicationId}.
+     * @principle Restricts access to a user's own job application references.
      */
     match /users/{userId}/applications/{applicationId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow get, list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rule set for a user's favorite jobs.
+     * @description Secures favorite job references stored under a user profile.
      * @path /users/{userId}/favouriteJobs/{jobId}
-     * @allow (create) User 'user123' can create a favorite job reference.
-     * @allow (get) User 'user123' can read their favorite job reference.
-     * @allow (list) User 'user123' can list their favorite job references.
-     * @allow (update) User 'user123' can update their favorite job reference.
-     * @allow (delete) User 'user123' can delete their favorite job reference.
-     * @deny (create) User 'user456' cannot create a favorite job reference for user 'user123'.
-     * @deny (get) User 'user456' cannot read user 'user123' favorite job reference.
-     * @deny (list) User 'user456' cannot list user 'user123' favorite job references.
-     * @deny (update) User 'user456' cannot update user 'user123' favorite job reference.
-     * @deny (delete) User 'user456' cannot delete user 'user123' favorite job reference.
-     * @principle Restricts access to a user's own data tree.
+     * @allow (create, get, list, update, delete) - Authenticated user with UID 'user123' can manage favorite job references under /users/user123/favouriteJobs/{jobId}.
+     * @deny (create, get, list, update, delete) - Authenticated user with UID 'user456' cannot manage favorite job references under /users/user123/favouriteJobs/{jobId}.
+     * @principle Restricts access to a user's own favorite job references.
      */
     match /users/{userId}/favouriteJobs/{jobId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow get, list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rule set for a user's saved searches.
+     * @description Secures saved job searches stored under a user profile.
      * @path /users/{userId}/savedSearches/{searchId}
-     * @allow (create) User 'user123' can create a saved search.
-     * @allow (get) User 'user123' can read their saved search.
-     * @allow (list) User 'user123' can list their saved searches.
-     * @allow (update) User 'user123' can update their saved search.
-     * @allow (delete) User 'user123' can delete their saved search.
-     * @deny (create) User 'user456' cannot create a saved search for user 'user123'.
-     * @deny (get) User 'user456' cannot read user 'user123' saved search.
-     * @deny (list) User 'user456' cannot list user 'user123' saved searches.
-     * @deny (update) User 'user456' cannot update user 'user123' saved search.
-     * @deny (delete) User 'user456' cannot delete user 'user123' saved search.
-     * @principle Restricts access to a user's own data tree.
+     * @allow (create, get, list, update, delete) - Authenticated user with UID 'user123' can manage saved searches under /users/user123/savedSearches/{searchId}.
+     * @deny (create, get, list, update, delete) - Authenticated user with UID 'user456' cannot manage saved searches under /users/user123/savedSearches/{searchId}.
+     * @principle Restricts access to a user's own saved job searches.
      */
     match /users/{userId}/savedSearches/{searchId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow get, list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rule set for listings.
+     * @description Allows public read access to listings, but restricts creation, updates, and deletion to the seller.
      * @path /listings/{listingId}
-     * @allow (get) Any user can read any listing.
-     * @allow (list) Any user can list all listings.
-     * @allow (create) User 'user123' can create a listing with sellerId 'user123'.
-     * @allow (update) User 'user123' can update a listing where they are the seller.
-     * @allow (delete) User 'user123' can delete a listing where they are the seller.
-     * @deny (create) User 'user123' cannot create a listing with sellerId 'user456'.
-     * @deny (update) User 'user456' cannot update a listing where user 'user123' is the seller.
-     * @deny (delete) User 'user456' cannot delete a listing where user 'user123' is the seller.
-     * @principle Public read access with owner-only writes.
+     * @allow (get, list) - Any user can read listings.
+     * @allow (create) - Authenticated user with UID 'user123' can create a listing if request.resource.data.sellerId == 'user123'.
+     * @allow (update, delete) - Authenticated user with UID 'user123' can update/delete a listing if resource.data.sellerId == 'user123'.
+     * @deny (create) - Authenticated user with UID 'user456' cannot create a listing with sellerId 'user123'.
+     * @deny (update, delete) - Authenticated user with UID 'user456' cannot update/delete a listing with sellerId 'user123'.
+     * @principle Allows public read access with owner-only writes.
      */
     match /listings/{listingId} {
-      allow get: if true;
-      allow list: if true;
+      allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
-      allow update: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
-      allow delete: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
+      allow update: if isSignedIn() && isExistingOwner(resource.data.sellerId);
+      allow delete: if isSignedIn() && isExistingOwner(resource.data.sellerId);
     }
 
     /**
-     * @description Rule set for jobs.
+     * @description Allows public read access to jobs, but restricts creation, updates, and deletion to the recruiter.
      * @path /jobs/{jobId}
-     * @allow (get) Any user can read any job.
-     * @allow (list) Any user can list all jobs.
-     * @allow (create) User 'recruiter123' can create a job with recruiterId 'recruiter123'.
-     * @allow (update) User 'recruiter123' can update a job where they are the recruiter.
-     * @allow (delete) User 'recruiter123' can delete a job where they are the recruiter.
-     * @deny (create) User 'recruiter123' cannot create a job with recruiterId 'recruiter456'.
-     * @deny (update) User 'recruiter456' cannot update a job where user 'recruiter123' is the recruiter.
-     * @deny (delete) User 'recruiter456' cannot delete a job where user 'recruiter123' is the recruiter.
-     * @principle Public read access with owner-only writes.
+     * @allow (get, list) - Any user can read jobs.
+     * @allow (create) - Authenticated recruiter with UID 'recruiter123' can create a job if request.resource.data.recruiterId == 'recruiter123'.
+     * @allow (update, delete) - Authenticated recruiter with UID 'recruiter123' can update/delete a job if resource.data.recruiterId == 'recruiter123'.
+     * @deny (create) - Authenticated user with UID 'user456' cannot create a job with recruiterId 'recruiter123'.
+     * @deny (update, delete) - Authenticated user with UID 'user456' cannot update/delete a job with recruiterId 'recruiter123'.
+     * @principle Allows public read access with owner-only writes.
      */
     match /jobs/{jobId} {
-      allow get: if true;
-      allow list: if true;
+      allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.recruiterId == request.auth.uid;
-      allow update: if isSignedIn() && request.resource.data.recruiterId == request.auth.uid;
-      allow delete: if isSignedIn() && request.resource.data.recruiterId == request.auth.uid;
+      allow update: if isSignedIn() && isExistingOwner(resource.data.recruiterId);
+      allow delete: if isSignedIn() && isExistingOwner(resource.data.recruiterId);
     }
 
     /**
-     * @description Rule set for applications to a specific job.
+     * @description Secures job applications under a specific job posting, allowing access to both the recruiter and the applicant.
      * @path /jobs/{jobId}/applications/{applicationId}
-     * @allow (get) A recruiter or an applicant can read their application to the job.
-     * @allow (list) A recruiter or an applicant can list applications to the job.
-     * @allow (create) An applicant can create an application to the job.
-     * @allow (update) A recruiter or applicant can update an application to the job
-     * @allow (delete) A recruiter can delete an application to the job.
-     * @principle Shared access to the recruiter and applicant of each application.
+     * @allow (create) - Authenticated user can apply to a job.
+     * @allow (get, list) - Authenticated recruiter (job owner) or the applicant can read the application.
+     * @allow (update, delete) - Authenticated recruiter (job owner) or the applicant can update/delete the application.
+     * @deny (create) - Unauthenticated user cannot apply to a job.
+     * @principle Restricts access to job applications to the posting recruiter and the applicant.
      */
     match /jobs/{jobId}/applications/{applicationId} {
-        allow get: if isSignedIn() && (resource.data.applicantId == request.auth.uid || get(/databases/$(database)/documents/jobs/$(jobId)).data.recruiterId == request.auth.uid);
-        allow list: if isSignedIn() && get(/databases/$(database)/documents/jobs/$(jobId)).data.recruiterId == request.auth.uid;
-        allow create: if isSignedIn() && request.resource.data.applicantId == request.auth.uid;
-        allow update: if isSignedIn() && (resource.data.applicantId == request.auth.uid || get(/databases/$(database)/documents/jobs/$(jobId)).data.recruiterId == request.auth.uid);
-        allow delete: if isSignedIn() && get(/databases/$(database)/documents/jobs/$(jobId)).data.recruiterId == request.auth.uid;
+      allow get, list: if isSignedIn() && (isOwner(resource.data.applicantId) || get(/databases/$(database)/documents/jobs/$(jobId)).data.recruiterId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.applicantId == request.auth.uid;
+      allow update: if isSignedIn() && (isExistingOwner(resource.data.applicantId) || isExistingOwner(get(/databases/$(database)/documents/jobs/$(jobId)).data.recruiterId));
+      allow delete: if isSignedIn() && (isExistingOwner(resource.data.applicantId) || isExistingOwner(get(/databases/$(database)/documents/jobs/$(jobId)).data.recruiterId));
     }
 
     /**
-     * @description Rule set for chat sessions.
+     * @description Secures chat sessions, allowing access only to participants.
      * @path /chats/{chatId}
-     * @allow (get) A participant can read the chat.
-     * @allow (list) N/A
-     * @allow (create) A participant can create the chat if the buyerId is the signed in user
-     * @allow (update) A participant can update the chat.
-     * @allow (delete) N/A
-     * @principle Shared access to chat members (buyer and seller).
+     * @allow (get, list) - Authenticated user can read the chat if they are a participant.
+     * @allow (create) - Authenticated user can create a chat if they are a participant.
+     * @allow (update, delete) - Authenticated user can update/delete the chat if they are a participant.
+     * @deny (get, list) - Authenticated user cannot read the chat if they are not a participant.
+     * @principle Restricts access to chat sessions to participants only.
      */
     match /chats/{chatId} {
-        allow get: if isSignedIn() && resource.data.participants.hasAny([request.auth.uid]);
-        allow list: if false;
-        allow create: if isSignedIn() && request.resource.data.buyerId == request.auth.uid;
-        allow update: if isSignedIn() && resource.data.participants.hasAny([request.auth.uid]);
-        allow delete: if false;
+      allow get, list: if isSignedIn() && (resource.data.participants.hasAny([request.auth.uid]));
+      allow create: if isSignedIn() && (request.resource.data.participants.hasAny([request.auth.uid]));
+      allow update: if isSignedIn() && (resource != null) && (resource.data.participants.hasAny([request.auth.uid]));
+      allow delete: if isSignedIn() && (resource != null) && (resource.data.participants.hasAny([request.auth.uid]));
     }
 
     /**
-     * @description Rule set for messages within a chat.
+     * @description Secures messages within a chat session, allowing access only to participants.
      * @path /chats/{chatId}/messages/{messageId}
-     * @allow (get) A participant can read a message.
-     * @allow (list) A participant can list the messages
-     * @allow (create) A participant can create a message.
-     * @allow (update) N/A
-     * @allow (delete) N/A
-     * @principle Shared access to chat members (buyer and seller).
+     * @allow (get, list) - Authenticated user can read messages if they are a participant in the chat.
+     * @allow (create) - Authenticated user can create a message if they are a participant in the chat.
+     * @allow (update, delete) - No one is allowed to update or delete a message once created.
+     * @deny (get, list) - Authenticated user cannot read messages if they are not a participant in the chat.
+     * @deny (update, delete) - No one is allowed to update or delete a message once created.
+     * @principle Restricts access to messages to participants only and prevents modification of messages.
      */
     match /chats/{chatId}/messages/{messageId} {
-        allow get: if isSignedIn() && get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid]);
-        allow list: if isSignedIn() && get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid]);
-        allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid && get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid]);
-        allow update: if false;
-        allow delete: if false;
+      allow get, list: if isSignedIn() && get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid]);
+      allow create: if isSignedIn() && get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid]);
+      allow update, delete: if false;
     }
 
     /**
-     * @description Rule set for feedback.
+     * @description Allows public read access to feedback, but restricts creation to authenticated users only.
      * @path /feedbacks/{feedbackId}
-     * @allow (get) Any user can read any feedback.
-     * @allow (list) Any user can list all feedbacks.
-     * @allow (create) Any authenticated user can create feedback with their own user ID.
-     * @allow (update) N/A
-     * @allow (delete) N/A
-     * @principle Public read access with user-based feedback submission.
+     * @allow (get, list) - Any user can read feedback.
+     * @allow (create) - Authenticated user can submit feedback.
+     * @deny (update, delete) - No one can update or delete feedback.
+     * @principle Allows public read access with authenticated user-only writes.
      */
     match /feedbacks/{feedbackId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
     }
 
     /**
-     * @description Rule set for company profiles.
+     * @description Allows public read access to company profiles, and allows any authenticated user to create a company profile
      * @path /companies/{companyId}
-     * @allow (get) Any user can read any company profile.
-     * @allow (list) Any user can list all company profiles.
-     * @allow (create) if false; // TODO: Add owner validation if needed
-     * @allow update: if false; // TODO: Add owner validation if needed
-     * @allow delete: if false; // TODO: Add owner validation if needed
-     * @principle Public read access with no write access control implemented.
+     * @allow (get, list) - Any user can read company profiles.
+     * @allow (create) - Any authenticated user can create a company profile.
+     * @allow (update, delete) - Authenticated user can update/delete a company profile.
+     * @principle Allows public read access with authenticated user-only writes.
      */
     match /companies/{companyId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+      return isSignedIn() && isOwner(userId) && resource != null;
     }
   }
 }
