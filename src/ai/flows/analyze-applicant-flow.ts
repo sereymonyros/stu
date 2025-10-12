@@ -126,38 +126,52 @@ const analyzeApplicantFlow = ai.defineFlow(
     outputSchema: AnalyzeApplicantOutputSchema,
   },
   async (input) => {
-    try {
-        const { mimeType, base64Data } = parseDataUri(input.resumeDataUri);
+    const MAX_RETRIES = 3;
+    let attempt = 0;
+    let lastError: any;
 
-        let output;
+    while (attempt < MAX_RETRIES) {
+        try {
+            const { mimeType, base64Data } = parseDataUri(input.resumeDataUri);
 
-        // If it's a Word document, extract text first.
-        if (mimeType.includes('wordprocessingml') || mimeType.includes('msword')) {
-            const buffer = Buffer.from(base64Data, 'base64');
-            const { value: resumeText } = await mammoth.extractRawText({ buffer });
-            const textInput = {
-                jobTitle: input.jobTitle,
-                jobDescription: input.jobDescription,
-                resumeText: resumeText,
-            };
-            const response = await analyzeApplicantTextPrompt(textInput);
-            output = response.output;
-        } else {
-            // For other supported types (like PDF), send the file directly.
-            const response = await analyzeApplicantPrompt(input);
-            output = response.output;
+            let output;
+
+            // If it's a Word document, extract text first.
+            if (mimeType.includes('wordprocessingml') || mimeType.includes('msword')) {
+                const buffer = Buffer.from(base64Data, 'base64');
+                const { value: resumeText } = await mammoth.extractRawText({ buffer });
+                const textInput = {
+                    jobTitle: input.jobTitle,
+                    jobDescription: input.jobDescription,
+                    resumeText: resumeText,
+                };
+                const response = await analyzeApplicantTextPrompt(textInput);
+                output = response.output;
+            } else {
+                // For other supported types (like PDF), send the file directly.
+                const response = await analyzeApplicantPrompt(input);
+                output = response.output;
+            }
+
+            if (!output) {
+                throw new Error('The AI model did not return a valid analysis.');
+            }
+
+            return output; // Success, exit the loop
+
+        } catch (e: any) {
+            lastError = e;
+            attempt++;
+            console.warn(`Flow Attempt ${attempt}: Failed to analyze applicant. Retrying...`, e.message);
+            if (attempt < MAX_RETRIES) {
+                // Exponential backoff: wait 2s, then 4s
+                await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+            }
         }
-
-        if (!output) {
-            throw new Error('The AI model did not return a valid analysis.');
-        }
-
-        return output;
-
-    } catch (e: any) {
-        console.error('Flow Error: Failed to analyze applicant.', e);
-        // Re-throw a more user-friendly error
-        throw new Error(`Failed to analyze resume: ${e.message}`);
     }
+
+    // If all retries fail, throw the last error
+    console.error('Flow Error: Failed to analyze applicant after multiple retries.', lastError);
+    throw new Error(`Failed to analyze resume: ${lastError.message}`);
   }
 );
