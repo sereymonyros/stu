@@ -19,6 +19,7 @@ import { analyzeApplicant } from '@/ai/flows/analyze-applicant-flow';
 import type { AnalyzeApplicantOutput } from '@/ai/flows/analyze-applicant-schema';
 import { useToast } from '@/hooks/use-toast';
 import type { Timestamp } from 'firebase/firestore';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 
 // Helper function to convert a file URL to a Base64 data URI
 const urlToDataUri = async (url: string): Promise<string> => {
@@ -113,15 +114,13 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
         zIndex: isDragging ? 10 : 'auto',
     };
     
-    const [isAnalysisVisible, setIsAnalysisVisible] = useState(false);
     const [analysis, setAnalysis] = useState<AnalyzeApplicantOutput | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisError, setAnalysisError] = useState<string | null>(null);
 
     const handleGetAIAnalysis = async () => {
-        // If analysis is already available, just show it.
+        // If analysis is already available or there was a permanent error, don't re-fetch.
         if (analysis || analysisError) {
-            setIsAnalysisVisible(true);
             return;
         }
 
@@ -130,7 +129,6 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
             return;
         }
         
-        setIsAnalysisVisible(true);
         setIsAnalyzing(true);
         setAnalysisError(null);
 
@@ -175,7 +173,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
             <Card className={cn("mb-2 bg-card hover:bg-muted/50", isDragging ? "cursor-grabbing" : "cursor-grab")}>
-                <CardContent className="p-3" {...listeners}>
+                <div className="p-3" {...listeners}>
                     <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
                              <Avatar className="h-9 w-9">
@@ -197,24 +195,30 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                             </Button>
                          )}
                     </div>
-                     {isAnalysisVisible ? (
-                        <div>
-                             <Button variant="ghost" size="sm" onClick={() => setIsAnalysisVisible(false)} className="w-full justify-center mt-2 text-xs">
-                                <X className="mr-2 h-3 w-3" /> Hide Analysis
+                     <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={handleGetAIAnalysis} disabled={isAnalyzing} className="w-full mt-2 text-xs">
+                                {isAnalyzing ? (
+                                    <div className="animate-spin h-3 w-3 border-2 border-current border-t-transparent rounded-full mr-2" />
+                                ) : (
+                                    <Sparkles className="mr-2 h-3 w-3 text-yellow-500" />
+                                )}
+                                AI Review
                             </Button>
-                            <AIAnalysisDisplay analysis={isAnalyzing ? null : analysis} error={analysisError} />
-                        </div>
-                    ) : (
-                        <Button variant="outline" size="sm" onClick={handleGetAIAnalysis} disabled={isAnalyzing} className="w-full mt-2 text-xs">
-                             {isAnalyzing ? (
-                                <div className="animate-spin h-3 w-3 border-2 border-current border-t-transparent rounded-full mr-2" />
-                            ) : (
-                                <Sparkles className="mr-2 h-3 w-3 text-yellow-500" />
-                            )}
-                            AI Review
-                        </Button>
-                    )}
-                </CardContent>
+                        </SheetTrigger>
+                        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+                            <SheetHeader>
+                                <SheetTitle>AI Applicant Analysis</SheetTitle>
+                                <SheetDescription>
+                                    This is an AI-generated analysis of the applicant's resume against the job description.
+                                </SheetDescription>
+                            </SheetHeader>
+                            <div className="py-4">
+                                <AIAnalysisDisplay analysis={isAnalyzing ? null : analysis} error={analysisError} />
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+                </div>
             </Card>
         </div>
     );
@@ -270,3 +274,5 @@ Board.Column = Column;
 Board.Card = ApplicantCard;
 
 export { Board };
+
+    
