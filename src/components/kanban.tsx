@@ -20,7 +20,6 @@ import type { AnalyzeApplicantOutput } from '@/ai/flows/analyze-applicant-schema
 import { useToast } from '@/hooks/use-toast';
 import type { Timestamp } from 'firebase/firestore';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { getCachedAnalysis, setCachedAnalysis } from '@/lib/ai-cache';
 
 
 // Helper function to convert a file URL to a Base64 data URI
@@ -147,44 +146,27 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
     }, [isDialogOpen]);
 
     const handleGetAIAnalysis = async () => {
+        if (analysis) {
+            return;
+        }
+
         setIsLoadingAnalysis(true);
         setAnalysisError(null);
-        setAnalysis(null);
 
         try {
-            // Check cache first
-            const cached = await getCachedAnalysis(applicant.id);
-            if (cached) {
-                setAnalysis(cached);
-                setIsLoadingAnalysis(false);
-                return;
-            }
-
-            // If not in cache, and the pre-fetch is still running, we can just show loading
-            // The pre-fetch logic on the main page will eventually populate the cache.
-            // We can add a simple polling mechanism here.
-            const pollCache = async (retries = 5, delay = 2000) => {
-                for (let i = 0; i < retries; i++) {
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    const polledData = await getCachedAnalysis(applicant.id);
-                    if (polledData) {
-                        setAnalysis(polledData);
-                        setIsLoadingAnalysis(false);
-                        return;
-                    }
-                }
-                // If it's still not available after polling, show a message.
-                setAnalysisError("Analysis is taking longer than usual. It may still be processing in the background. Please try again in a moment.");
-                setIsLoadingAnalysis(false);
-            };
-
-            await pollCache();
-
+            const resumeDataUri = await urlToDataUri(applicant.resumeUrl);
+            const result = await analyzeApplicant({
+                jobTitle: jobDetails.title,
+                jobDescription: jobDetails.description,
+                resumeDataUri: resumeDataUri,
+            });
+            setAnalysis(result);
         } catch (error: any) {
             console.error("AI Analysis Failed:", error);
             const friendlyError = error.message || 'An unknown error occurred during analysis.';
             setAnalysisError(friendlyError);
             toast({ variant: 'destructive', title: 'Analysis Failed', description: friendlyError });
+        } finally {
             setIsLoadingAnalysis(false);
         }
     };
