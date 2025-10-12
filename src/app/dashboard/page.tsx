@@ -51,9 +51,11 @@ function JobCard({ job }: { job: any }) {
                 </div>
             </CardContent>
             <CardFooter>
-                 <Button asChild variant="outline">
-                    <Link href={`/jobs/${job.id}/applicants`}>View Applicants</Link>
-                </Button>
+                 {applicants && applicants.length > 0 && (
+                    <Button asChild variant="outline">
+                        <Link href={`/jobs/${job.id}/applicants`}>View Applicants</Link>
+                    </Button>
+                 )}
             </CardFooter>
         </Card>
     );
