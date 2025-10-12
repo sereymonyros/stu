@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Briefcase, Building, DollarSign, Edit, MapPin, Users, Heart, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -64,22 +64,22 @@ function JobCard({
 
     const cardContent = (
         <>
-            <CardHeader className="p-3">
+            <CardHeader className="p-3 pb-2">
                 <div className="flex justify-between items-start gap-2">
-                    <CardTitle className="text-sm font-bold">{job.title}</CardTitle>
+                    <CardTitle className="text-base font-bold">{job.title}</CardTitle>
                     {user && !isOwner && !isRecruiter && (
                          <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => onToggleFavourite(job.id, isFavourite)}
-                            className="text-muted-foreground hover:text-red-500 h-6 w-6"
+                            className="text-muted-foreground hover:text-red-500 h-8 w-8 -mt-1 -mr-1"
                             disabled={hasApplied}
                         >
-                            <Heart className={cn("h-4 w-4", isFavourite && "fill-red-500 text-red-500")} />
+                            <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
                         </Button>
                     )}
                      {isOwner && (
-                        <Button asChild variant="ghost" size="icon" disabled={hasApplied} className="h-6 w-6">
+                        <Button asChild variant="ghost" size="icon" disabled={hasApplied} className="h-8 w-8 -mt-1 -mr-1">
                             <Link href={`/jobs/${job.id}/edit`}>
                                 <Pencil className="h-4 w-4" />
                             </Link>
@@ -100,25 +100,25 @@ function JobCard({
                     )}
                 </div>
             </CardHeader>
-            <CardContent className="flex-grow p-3 pt-0">
-                <div className="flex flex-wrap gap-1">
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">{job.jobType}</Badge>
-                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5">{job.status}</Badge>
+            <CardContent className="flex-grow p-3 flex flex-col justify-end">
+                <div className="flex justify-between items-center">
+                    <div className="flex flex-wrap gap-1">
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">{job.jobType}</Badge>
+                        <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5">{job.status}</Badge>
+                    </div>
+                    {hasApplied ? (
+                        <Button disabled size="sm">Applied</Button>
+                    ) : isRecruiter ? (
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={`/jobs/${job.id}/edit`}>View</Link>
+                        </Button>
+                    ) : (
+                        <Button asChild size="sm">
+                            <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
+                        </Button>
+                    )}
                 </div>
             </CardContent>
-            <CardFooter className="p-3 pt-0">
-                 {hasApplied ? (
-                    <Button disabled size="sm">Applied</Button>
-                 ) : isRecruiter ? (
-                     <Button asChild variant="outline" size="sm">
-                        <Link href={`/jobs/${job.id}/edit`}>View</Link>
-                    </Button>
-                 ) : (
-                    <Button asChild size="sm">
-                        <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
-                    </Button>
-                 )}
-            </CardFooter>
         </>
     );
     
