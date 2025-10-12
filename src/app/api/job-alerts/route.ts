@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server';
 import { type NextRequest } from 'next/server'
 import { findJobMatches } from '@/ai/flows/find-job-matches-flow';
 
+// This export is necessary to exempt this route from the development environment's
+// default authentication, allowing the cron job to call it.
+export const auth = 'public';
+
 /**
  * This is a secure API endpoint designed to be triggered by a scheduled cron job.
  * It will trigger the flow to find job matches and send email alerts.
@@ -10,7 +14,7 @@ import { findJobMatches } from '@/ai/flows/find-job-matches-flow';
 export async function POST(request: NextRequest) {
   // 1. Secure the endpoint
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET}`) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
