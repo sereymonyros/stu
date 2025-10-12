@@ -215,7 +215,7 @@ export default function DashboardPage() {
         if (!firestore || !user || !shouldRunRoleQueries || isRecruiter) return null;
         return query(collection(firestore, `users/${user.uid}/applications`));
     }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
-    const { data: applications, refetch } = useCollection(applicationsQuery);
+    const { data: applications, refetch: refetchApplications } = useCollection(applicationsQuery);
 
     // Create a map of jobId to application data
     const applicationMap = useMemo(() => {
@@ -393,7 +393,7 @@ export default function DashboardPage() {
                                         job={job}
                                         application={applicationMap.get(job.id)}
                                         isFavourite={favouriteJobIdsSet.has(job.id)}
-                                        onWithdrawSuccess={() => refetch()}
+                                        onWithdrawSuccess={() => refetchApplications()}
                                     />
                                 ))}
                             </div>
