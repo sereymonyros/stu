@@ -344,10 +344,12 @@ export default function DashboardPage() {
                     <section>
                         <div className="flex justify-between items-center mb-4">
                              <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><Briefcase /> My Job Postings</h2>
-                             <Button onClick={handleFindMatches} disabled={isSendingAlerts}>
-                                <Send className="mr-2 h-4 w-4" />
-                                {isSendingAlerts ? 'Sending to All Users...' : 'Send Job Alerts to All'}
-                             </Button>
+                            {postedJobs && postedJobs.length > 0 && (
+                                <Button onClick={handleFindMatches} disabled={isSendingAlerts}>
+                                    <Send className="mr-2 h-4 w-4" />
+                                    {isSendingAlerts ? 'Sending to All Users...' : 'Send Job Alerts to All'}
+                                </Button>
+                            )}
                         </div>
                         {postedJobs && postedJobs.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
