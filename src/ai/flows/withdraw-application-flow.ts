@@ -9,6 +9,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { initializeFirebaseAdmin } from '@/firebase/server-init';
 import { sendEmail } from './send-email-flow';
+import { withdrawalNotificationTemplate } from '@/components/emails/withdrawal-notification-template';
 
 const WithdrawApplicationInputSchema = z.object({
   jobId: z.string().describe("The ID of the job from which to withdraw."),
@@ -44,17 +45,17 @@ const withdrawApplicationFlow = ai.defineFlow(
       const mainApplicationRef = jobRef.collection('applications').doc(userId);
       const userApplicationRef = firestore.collection('users').doc(userId).collection('applications').doc(jobId);
 
-      // --- 2. Fetch data needed for notification BEFORE deleting ---
+      // --- 2. Fetch all data needed for notification BEFORE any deletions ---
       const jobDoc = await jobRef.get();
-      const applicantDoc = await firestore.collection('users').doc(userId).get();
+      const applicantUserRecord = await auth.getUser(userId);
 
-      if (!jobDoc.exists || !applicantDoc.exists) {
+      if (!jobDoc.exists) {
         throw new Error("Job or applicant profile not found.");
       }
 
       const jobData = jobDoc.data()!;
-      const applicantData = applicantDoc.data()!;
       const recruiterId = jobData.recruiterId;
+      const applicantName = applicantUserRecord.displayName || 'An applicant';
 
       // --- 3. Use a batch write to delete both documents atomically ---
       const batch = firestore.batch();
@@ -63,19 +64,20 @@ const withdrawApplicationFlow = ai.defineFlow(
       await batch.commit();
 
       // --- 4. Send email notification to the recruiter (non-blocking) ---
+      // This is now safe because we fetched the data before the delete
       try {
         const recruiterUser = await auth.getUser(recruiterId);
         if (recruiterUser.email) {
+          const emailBody = withdrawalNotificationTemplate({
+            recruiterName: recruiterUser.displayName || 'Recruiter',
+            applicantName: applicantName,
+            jobTitle: jobData.title,
+          });
+
           await sendEmail({
             to: recruiterUser.email,
             subject: `Application Withdrawn for ${jobData.title}`,
-            htmlBody: `
-              <h1>Application Withdrawn</h1>
-              <p>Hi ${recruiterUser.displayName || 'Recruiter'},</p>
-              <p>Please be advised that <strong>${applicantData.displayName}</strong> has withdrawn their application for the position of <strong>${jobData.title}</strong>.</p>
-              <p>No further action is required.</p>
-              <p><em>The Cambodia Hub Team</em></p>
-            `,
+            htmlBody: emailBody,
           });
         }
       } catch (emailError: any) {
