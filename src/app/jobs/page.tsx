@@ -8,7 +8,6 @@ import { collection, doc, setDoc, deleteDoc, serverTimestamp, query } from 'fire
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -364,198 +363,195 @@ function JobsPageContent() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-1 p-4 md:p-6 lg:p-8">
-                <div className="container mx-auto">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                        <div className="flex-1">
-                            <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
-                            {isRecruiter && viewMode === 'board' && (
-                                <p className="text-muted-foreground mt-1">Manage the status of your job postings.</p>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                           {isRecruiter && jobs.length > 0 && (
-                                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
-                                    <ToggleGroupItem value="card" aria-label="Card view"><List /></ToggleGroupItem>
-                                    <ToggleGroupItem value="board" aria-label="Board view"><LayoutGrid /></ToggleGroupItem>
-                                </ToggleGroup>
-                            )}
-                            {isRecruiter && (
-                                <Button asChild>
-                                    <Link href="/jobs/new">Post a New Job</Link>
-                                </Button>
-                            )}
-                        </div>
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
+            <div className="container mx-auto">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <div className="flex-1">
+                        <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
+                        {isRecruiter && viewMode === 'board' && (
+                            <p className="text-muted-foreground mt-1">Manage the status of your job postings.</p>
+                        )}
                     </div>
-                    
-                    {viewMode === 'card' && (
-                        <>
-                             {jobs.length > 0 && (
-                                <Card className="p-4 mb-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                                        <div className="relative md:col-span-2 lg:col-span-3">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                            <Input 
-                                                type="search"
-                                                placeholder="Search by title or description..."
-                                                className="pl-10 h-10"
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {user && !isRecruiter && hasActiveFilters && (
-                                                <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="outline">
-                                                            <Star className="mr-2 h-4 w-4" /> Save Search
-                                                        </Button>
-                                                    </DialogTrigger>
-                                                    <DialogContent className="sm:max-w-[425px]">
-                                                        <DialogHeader>
-                                                            <DialogTitle>Save Job Search</DialogTitle>
-                                                            <DialogDescription>
-                                                                Name this search to save it to your dashboard for later.
-                                                            </DialogDescription>
-                                                        </DialogHeader>
-                                                        <div className="grid gap-4 py-4">
-                                                            <div className="grid grid-cols-4 items-center gap-4">
-                                                                <Label htmlFor="search-name" className="text-right">
-                                                                    Name
-                                                                </Label>
-                                                                <Input
-                                                                    id="search-name"
-                                                                    value={savedSearchName}
-                                                                    onChange={(e) => setSavedSearchName(e.target.value)}
-                                                                    className="col-span-3"
-                                                                    placeholder="e.g., 'React Jobs in PP'"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <DialogFooter>
-                                                            <Button type="button" variant="secondary" onClick={() => setIsSaveDialogOpen(false)}>Cancel</Button>
-                                                            <Button type="submit" onClick={handleSaveSearch} disabled={isSaving || !savedSearchName.trim()}>
-                                                                {isSaving ? 'Saving...' : 'Save'}
-                                                            </Button>
-                                                        </DialogFooter>
-                                                    </DialogContent>
-                                                </Dialog>
-                                            )}
-                                            {hasActiveFilters && (
-                                                <Button variant="ghost" onClick={clearAllFilters}>
-                                                    <FilterX className="mr-2 h-4 w-4" />
-                                                    Clear
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <Separator className="mb-4" />
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
-                                        <FilterGroup title="Company" options={companyNames} selected={selectedCompanies} onToggle={(val) => toggleFilter(setSelectedCompanies, val)} />
-                                        <FilterGroup title="Location" options={locations} selected={selectedLocations} onToggle={(val) => toggleFilter(setSelectedLocations, val)} />
-                                        <FilterGroup title="Job Type" options={jobTypes} selected={selectedJobTypes} onToggle={(val) => toggleFilter(setSelectedJobTypes, val)} />
-                                        
-                                        <div>
-                                            <h3 className="text-sm font-semibold mb-2">Salary Range</h3>
-                                            <Slider
-                                                value={salaryRange}
-                                                onValueChange={setSalaryRange}
-                                                max={maxSalary}
-                                                step={1000}
-                                                className="my-4"
-                                            />
-                                            <div className="flex justify-between text-xs text-muted-foreground">
-                                                <span>${salaryRange[0].toLocaleString()}</span>
-                                                <span>${salaryRange[1].toLocaleString()}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {user && !isRecruiter && (
-                                        <div className="mt-4">
-                                            <Toggle
-                                                size="sm"
-                                                variant="outline"
-                                                pressed={showFavoritesOnly}
-                                                onPressedChange={setShowFavoritesOnly}
-                                                className="h-10 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                                            >
-                                                <Heart className="mr-2 h-4 w-4" />
-                                                Show My Favourites Only
-                                            </Toggle>
-                                        </div>
-                                    )}
-                                </Card>
-                            )}
-                            
-                            {filteredAndSortedJobs.length > 0 && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {filteredAndSortedJobs.map((job) => (
-                                        <Board.Card 
-                                            key={job.id} 
-                                            job={job}
-                                            isFavourite={favouriteJobIds.has(job.id)}
-                                            onToggleFavourite={handleToggleFavourite}
-                                            hasApplied={appliedJobIds.has(job.id)}
-                                            isRecruiter={isRecruiter}
-                                            isDraggable={false}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-
-                            {(!jobs || filteredAndSortedJobs.length === 0) && (
-                                <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
-                                    <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
-                                    <div className="text-center">
-                                        <h2 className="text-2xl font-semibold tracking-tight">{hasActiveFilters ? 'No Matching Jobs' : 'No jobs posted yet'}</h2>
-                                        <p className="text-muted-foreground mt-2">
-                                            {hasActiveFilters ? 'Try adjusting your filters.' : 'Check back soon for new opportunities!'}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </>
-                    )}
-
-                    {viewMode === 'board' && isRecruiter && (
-                         <div className="flex-1 flex flex-col overflow-x-auto">
-                            <DndContext sensors={sensors} onDragEnd={handleJobDragEnd}>
-                                <Board>
-                                    {KANBAN_STAGES.map(stage => {
-                                        const stageJobs = jobsByStatus[stage] || [];
-                                        return (
-                                            <Board.Column
-                                                key={stage}
-                                                id={stage}
-                                                title={stage}
-                                                jobs={stageJobs}
-                                                isLoading={!jobs} // Kanban uses its own loading prop
-                                            >
-                                                {stageJobs.map((job: any) => (
-                                                    <Board.Card
-                                                        key={job.id}
-                                                        job={job}
-                                                        isFavourite={false}
-                                                        onToggleFavourite={() => {}}
-                                                        hasApplied={false}
-                                                        isRecruiter={true}
-                                                        isDraggable={true}
-                                                    />
-                                                ))}
-                                            </Board.Column>
-                                        );
-                                    })}
-                                </Board>
-                            </DndContext>
-                         </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                       {isRecruiter && jobs.length > 0 && (
+                            <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
+                                <ToggleGroupItem value="card" aria-label="Card view"><List /></ToggleGroupItem>
+                                <ToggleGroupItem value="board" aria-label="Board view"><LayoutGrid /></ToggleGroupItem>
+                            </ToggleGroup>
+                        )}
+                        {isRecruiter && (
+                            <Button asChild>
+                                <Link href="/jobs/new">Post a New Job</Link>
+                            </Button>
+                        )}
+                    </div>
                 </div>
-            </main>
-        </div>
+                
+                {viewMode === 'card' && (
+                    <>
+                         {jobs.length > 0 && (
+                            <Card className="p-4 mb-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                    <div className="relative md:col-span-2 lg:col-span-3">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                        <Input 
+                                            type="search"
+                                            placeholder="Search by title or description..."
+                                            className="pl-10 h-10"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {user && !isRecruiter && hasActiveFilters && (
+                                            <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+                                                <DialogTrigger asChild>
+                                                    <Button variant="outline">
+                                                        <Star className="mr-2 h-4 w-4" /> Save Search
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="sm:max-w-[425px]">
+                                                    <DialogHeader>
+                                                        <DialogTitle>Save Job Search</DialogTitle>
+                                                        <DialogDescription>
+                                                            Name this search to save it to your dashboard for later.
+                                                        </DialogDescription>
+                                                    </DialogHeader>
+                                                    <div className="grid gap-4 py-4">
+                                                        <div className="grid grid-cols-4 items-center gap-4">
+                                                            <Label htmlFor="search-name" className="text-right">
+                                                                Name
+                                                            </Label>
+                                                            <Input
+                                                                id="search-name"
+                                                                value={savedSearchName}
+                                                                onChange={(e) => setSavedSearchName(e.target.value)}
+                                                                className="col-span-3"
+                                                                placeholder="e.g., 'React Jobs in PP'"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <DialogFooter>
+                                                        <Button type="button" variant="secondary" onClick={() => setIsSaveDialogOpen(false)}>Cancel</Button>
+                                                        <Button type="submit" onClick={handleSaveSearch} disabled={isSaving || !savedSearchName.trim()}>
+                                                            {isSaving ? 'Saving...' : 'Save'}
+                                                        </Button>
+                                                    </DialogFooter>
+                                                </DialogContent>
+                                            </Dialog>
+                                        )}
+                                        {hasActiveFilters && (
+                                            <Button variant="ghost" onClick={clearAllFilters}>
+                                                <FilterX className="mr-2 h-4 w-4" />
+                                                Clear
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <Separator className="mb-4" />
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+                                    <FilterGroup title="Company" options={companyNames} selected={selectedCompanies} onToggle={(val) => toggleFilter(setSelectedCompanies, val)} />
+                                    <FilterGroup title="Location" options={locations} selected={selectedLocations} onToggle={(val) => toggleFilter(setSelectedLocations, val)} />
+                                    <FilterGroup title="Job Type" options={jobTypes} selected={selectedJobTypes} onToggle={(val) => toggleFilter(setSelectedJobTypes, val)} />
+                                    
+                                    <div>
+                                        <h3 className="text-sm font-semibold mb-2">Salary Range</h3>
+                                        <Slider
+                                            value={salaryRange}
+                                            onValueChange={setSalaryRange}
+                                            max={maxSalary}
+                                            step={1000}
+                                            className="my-4"
+                                        />
+                                        <div className="flex justify-between text-xs text-muted-foreground">
+                                            <span>${salaryRange[0].toLocaleString()}</span>
+                                            <span>${salaryRange[1].toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {user && !isRecruiter && (
+                                    <div className="mt-4">
+                                        <Toggle
+                                            size="sm"
+                                            variant="outline"
+                                            pressed={showFavoritesOnly}
+                                            onPressedChange={setShowFavoritesOnly}
+                                            className="h-10 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                        >
+                                            <Heart className="mr-2 h-4 w-4" />
+                                            Show My Favourites Only
+                                        </Toggle>
+                                    </div>
+                                )}
+                            </Card>
+                        )}
+                        
+                        {filteredAndSortedJobs.length > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {filteredAndSortedJobs.map((job) => (
+                                    <Board.Card 
+                                        key={job.id} 
+                                        job={job}
+                                        isFavourite={favouriteJobIds.has(job.id)}
+                                        onToggleFavourite={handleToggleFavourite}
+                                        hasApplied={appliedJobIds.has(job.id)}
+                                        isRecruiter={isRecruiter}
+                                        isDraggable={false}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {(!jobs || filteredAndSortedJobs.length === 0) && (
+                            <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
+                                <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
+                                <div className="text-center">
+                                    <h2 className="text-2xl font-semibold tracking-tight">{hasActiveFilters ? 'No Matching Jobs' : 'No jobs posted yet'}</h2>
+                                    <p className="text-muted-foreground mt-2">
+                                        {hasActiveFilters ? 'Try adjusting your filters.' : 'Check back soon for new opportunities!'}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {viewMode === 'board' && isRecruiter && (
+                     <div className="flex-1 flex flex-col overflow-x-auto">
+                        <DndContext sensors={sensors} onDragEnd={handleJobDragEnd}>
+                            <Board>
+                                {KANBAN_STAGES.map(stage => {
+                                    const stageJobs = jobsByStatus[stage] || [];
+                                    return (
+                                        <Board.Column
+                                            key={stage}
+                                            id={stage}
+                                            title={stage}
+                                            jobs={stageJobs}
+                                            isLoading={!jobs} // Kanban uses its own loading prop
+                                        >
+                                            {stageJobs.map((job: any) => (
+                                                <Board.Card
+                                                    key={job.id}
+                                                    job={job}
+                                                    isFavourite={false}
+                                                    onToggleFavourite={() => {}}
+                                                    hasApplied={false}
+                                                    isRecruiter={true}
+                                                    isDraggable={true}
+                                                />
+                                            ))}
+                                        </Board.Column>
+                                    );
+                                })}
+                            </Board>
+                        </DndContext>
+                     </div>
+                )}
+            </div>
+        </main>
     );
 }
 
@@ -566,5 +562,3 @@ export default function JobsPage() {
         </Suspense>
     )
 }
-
-    
