@@ -10,13 +10,14 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Briefcase, ClipboardList, FileText, Users, Heart, User, Search, Trash2 } from 'lucide-react';
+import { Briefcase, ClipboardList, FileText, Users, Heart, User, Search, Trash2, MailCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { findJobMatches } from '@/ai/flows/find-job-matches-flow';
 
 
 function JobCard({ job }: { job: any }) {
@@ -156,6 +157,7 @@ export default function DashboardPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [isDeletingSearch, setIsDeletingSearch] = useState(false);
+    const [isSendingAlerts, setIsSendingAlerts] = useState(false);
 
     useEffect(() => {
         if (!user) {
@@ -243,7 +245,7 @@ export default function DashboardPage() {
     }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
     const { data: savedSearches } = useCollection(savedSearchesQuery);
 
-    // --- Saved Search Handlers ---
+    // --- Handlers ---
     const handleExecuteSearch = (savedSearch: any) => {
         const params = new URLSearchParams();
         if (savedSearch.searchQuery) {
@@ -274,6 +276,22 @@ export default function DashboardPage() {
             setIsDeletingSearch(false);
         }
     };
+    
+    const handleSendJobAlerts = async () => {
+        setIsSendingAlerts(true);
+        toast({ title: "Starting Job Alert Process", description: "This may take a moment..." });
+        try {
+            const result = await findJobMatches();
+            toast({
+                title: "Job Alert Process Complete",
+                description: `Sent ${result.emailsSent} emails for ${result.matchedJobs} matched jobs to ${result.processedUsers} users.`,
+            });
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Job Alert Failed", description: error.message });
+        } finally {
+            setIsSendingAlerts(false);
+        }
+    }
 
     if (!user) {
         // The useEffect hook handles redirection, so we can return null here.
@@ -288,6 +306,7 @@ export default function DashboardPage() {
                 </div>
 
                 {isRecruiter && (
+                    <>
                     <section>
                         <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Briefcase /> My Job Postings</h2>
                         {postedJobs && postedJobs.length > 0 ? (
@@ -303,6 +322,22 @@ export default function DashboardPage() {
                             </div>
                         )}
                     </section>
+                    <Separator />
+                    <section>
+                        <h2 className="text-2xl font-semibold tracking-tight mb-4">Admin Actions</h2>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Job Alert System</CardTitle>
+                                <CardDescription>Manually trigger the job alert system to find matches for new jobs and email users.</CardDescription>
+                            </CardHeader>
+                            <CardFooter>
+                                <Button onClick={handleSendJobAlerts} disabled={isSendingAlerts}>
+                                    {isSendingAlerts ? 'Processing...' : <><MailCheck className="mr-2 h-4 w-4" /> Run Job Alerts</>}
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    </section>
+                    </>
                 )}
 
                 {!isRecruiter && (
