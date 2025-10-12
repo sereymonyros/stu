@@ -34,6 +34,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Progress } from '@/components/ui/progress';
 import { verifyHumanFace } from '@/ai/flows/verify-human-face-flow';
+import { uploadResume } from '@/ai/flows/upload-resume-flow';
 
 // Helper function to convert a File to a Base64 data URI
 const toBase64 = (file: File): Promise<string> =>
@@ -216,7 +217,15 @@ export default function ProfilePage() {
       let resumeUrl = userProfile?.resumeUrl;
       const resumeFile = values.resume?.[0];
       if (resumeFile) {
-        resumeUrl = await uploadFileWithProgress(resumeFile, `resumes/${auth.currentUser.uid}/${resumeFile.name}`);
+        setUploadProgress(0); // Show progress bar for resume
+        const fileDataUri = await toBase64(resumeFile);
+        const result = await uploadResume({
+            fileDataUri,
+            fileName: resumeFile.name,
+            userId: auth.currentUser.uid,
+        });
+        resumeUrl = result.downloadUrl;
+        setUploadProgress(100); // Mark as complete
       }
 
       await updateProfile(auth.currentUser, {
@@ -399,7 +408,7 @@ export default function ProfilePage() {
                                   </Label>
                                 </div>
                               </FormControl>
-                              <FormDescription>Upload your resume to apply for jobs faster.</FormDescription>
+                              <FormDescription>Upload your resume to apply for jobs faster. Non-PDF files will be converted automatically.</FormDescription>
                               <FormMessage />
                           </FormItem>
                       )}/>
