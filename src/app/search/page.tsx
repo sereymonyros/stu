@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useSearchParams } from 'next/navigation';
@@ -77,7 +78,11 @@ function SearchResults() {
 }
 
 
-export default function SearchPage() {
+export default function SearchPage({
+  searchParams,
+}: {
+  searchParams: { q: string };
+}) {
   return (
     <Suspense fallback={<div className="min-h-screen w-full flex items-center justify-center"><p>Loading...</p></div>}>
       <SearchResults />

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useRef, useEffect } from "react";
@@ -40,8 +41,11 @@ export function SearchBox({ searchAction, className }: { searchAction: (formData
   const query = searchParams.get('q');
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    // Only focus if there is no query, otherwise it's annoying on the results page
+    if (!query) {
+      inputRef.current?.focus();
+    }
+  }, [query]);
 
   const handleSearch = async (formData: FormData) => {
     if (user) {

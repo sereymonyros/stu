@@ -2,6 +2,7 @@
 
 
 
+
 'use client';
 
 import { useMemo, useState, useEffect, Suspense } from 'react';
@@ -12,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Input } from '@/components/ui/input';
@@ -59,12 +60,11 @@ const FilterGroup = ({ title, options, selected, onToggle }: { title: string; op
     );
 };
 
-function JobsPageContent() {
+function JobsPageContent({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
     const firestore = useFirestore();
     const { user } = useUser(); // isUserLoading is handled by Suspense
     const router = useRouter();
     const { toast } = useToast();
-    const searchParams = useSearchParams();
     
     // --- View State ---
     const [viewMode, setViewMode] = useState<'card' | 'board'>('card');
@@ -111,13 +111,22 @@ function JobsPageContent() {
 
     const favouriteJobIds = useMemo(() => new Set(favouriteJobs?.map(fav => fav.jobId)), [favouriteJobs]);
     const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
+    
+    const getSearchParam = (key: string, fallback: any = '') => {
+        const value = searchParams[key];
+        return Array.isArray(value) ? value[0] : value || fallback;
+    }
+    const getSearchParamAll = (key: string) => {
+        const value = searchParams[key];
+        return Array.isArray(value) ? value : (value ? [value] : []);
+    }
 
     // --- Search & Filter State ---
-    const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-    const [selectedCompanies, setSelectedCompanies] = useState<string[]>(searchParams.getAll('company') || []);
-    const [selectedLocations, setSelectedLocations] = useState<string[]>(searchParams.getAll('location') || []);
-    const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>(searchParams.getAll('jobType') || []);
-    const [showFavoritesOnly, setShowFavoritesOnly] = useState(searchParams.get('favorites') === 'true');
+    const [searchQuery, setSearchQuery] = useState(getSearchParam('q'));
+    const [selectedCompanies, setSelectedCompanies] = useState<string[]>(getSearchParamAll('company'));
+    const [selectedLocations, setSelectedLocations] = useState<string[]>(getSearchParamAll('location'));
+    const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>(getSearchParamAll('jobType'));
+    const [showFavoritesOnly, setShowFavoritesOnly] = useState(getSearchParam('favorites') === 'true');
     const [salaryRange, setSalaryRange] = useState<[number, number]>([0, maxSalary]);
 
     // --- Dialog State ---
@@ -127,8 +136,8 @@ function JobsPageContent() {
     
     // Initialize salary range from URL params or default
     useEffect(() => {
-        const min = searchParams.get('salaryMin');
-        const max = searchParams.get('salaryMax');
+        const min = getSearchParam('salaryMin');
+        const max = getSearchParam('salaryMax');
         const initialMin = min ? parseInt(min, 10) : 0;
         const initialMax = max ? parseInt(max, 10) : maxSalary;
         setSalaryRange([initialMin, initialMax]);
@@ -143,13 +152,16 @@ function JobsPageContent() {
         selectedJobTypes.forEach(t => params.append('jobType', t));
         if (showFavoritesOnly) params.set('favorites', 'true');
         
-        if (salaryRange[0] > 0 || salaryRange[1] < maxSalary) {
+        if (salaryRange[0] > 0) {
             params.set('salaryMin', salaryRange[0].toString());
-            params.set('salaryMax', salaryRange[1].toString());
+        }
+        if (salaryRange[1] < maxSalary) {
+             params.set('salaryMax', salaryRange[1].toString());
         }
         
-        router.replace(`/jobs?${params.toString()}`);
-    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, router, maxSalary]);
+        // Using window.history.replaceState to avoid re-triggering Suspense boundary
+        window.history.replaceState(null, '', `/jobs?${params.toString()}`);
+    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary]);
 
     // --- Toggle Handlers ---
     const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
@@ -559,10 +571,14 @@ function JobsPageContent() {
     );
 }
 
-export default function JobsPage() {
+export default function JobsPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
     return (
         <Suspense fallback={<JobsLoading />}>
-            <JobsPageContent />
+            <JobsPageContent searchParams={searchParams} />
         </Suspense>
     )
 }
