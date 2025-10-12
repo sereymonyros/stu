@@ -246,7 +246,7 @@ export default function ProfilePage() {
         dataToUpdate.resumeUrl = resumeUrl;
       }
       
-      await updateDoc(userProfileRef, dataToUpdate).catch(serverError => {
+      updateDoc(userProfileRef, dataToUpdate).catch(serverError => {
         errorEmitter.emit(
           'permission-error',
           new FirestorePermissionError({
@@ -378,8 +378,8 @@ export default function ProfilePage() {
                       <FormField control={form.control} name="resume" render={({ field }) => (
                           <FormItem className="w-full">
                               <FormLabel>Resume</FormLabel>
-                                {userProfile.resumeUrl && !form.getValues("resume")?.[0] && (
-                                  <div className="flex items-center gap-3 p-2 rounded-md border bg-muted/50 mb-4">
+                                {userProfile.resumeUrl && !form.watch("resume")?.[0] && (
+                                  <div className="flex items-center gap-3 p-3 rounded-md border bg-muted/50 mb-4">
                                       <FileText className="h-6 w-6 text-muted-foreground" />
                                       <a href={userProfile.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline flex-1 truncate">
                                           {getFileName(userProfile.resumeUrl)}
@@ -392,7 +392,7 @@ export default function ProfilePage() {
                                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                           <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
                                           <p className="mb-1 text-sm text-muted-foreground">
-                                            <span className="font-semibold">{userProfile.resumeUrl ? 'Upload a new file' : 'Click to upload'}</span> or drag and drop
+                                            <span className="font-semibold">{userProfile.resumeUrl ? 'Upload new resume' : 'Click to upload'}</span> or drag and drop
                                           </p>
                                           <p className="text-xs text-muted-foreground">PDF, DOC, or DOCX (MAX. 5MB)</p>
                                       </div>
@@ -400,7 +400,7 @@ export default function ProfilePage() {
                                         id="resume-upload"
                                         type="file" 
                                         className="hidden"
-                                        accept=".pdf,.doc,.docx"
+                                        accept=".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                         disabled={isSubmitting}
                                         ref={resumeInputRef}
                                         onChange={(e) => field.onChange(e.target.files)}
@@ -439,3 +439,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
