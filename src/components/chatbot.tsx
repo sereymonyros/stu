@@ -32,16 +32,11 @@ export function Chatbot() {
     setInput('');
     setIsLoading(true);
     
-    // Use a streaming-friendly way to update the bot's response
     const botMessageId = (Date.now() + 1).toString();
     setMessages(prev => [...prev, { id: botMessageId, text: <div className="animate-pulse h-4 w-12 bg-muted-foreground/50 rounded-md" />, sender: 'bot' }]);
 
     try {
-      // The guideUser flow is not implemented yet, so we'll simulate a response.
-      // This will be replaced with the actual AI call.
-      const response = await new Promise<{ answer: string }>(resolve => 
-        setTimeout(() => resolve({ answer: `This is a simulated response to: **"${input}"**. The real AI flow is not connected yet.` }), 1500)
-      );
+      const response = await guideUser({ query: input });
       
       const htmlAnswer = await marked.parse(response.answer);
       const botMessageNode = <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: htmlAnswer }} />;
