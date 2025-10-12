@@ -44,7 +44,7 @@ function SearchResults() {
 
   return (
     <div className="flex flex-col items-center w-full min-h-screen bg-background text-foreground">
-      <main className="w-full mt-4 flex-1 container mx-auto">
+      <main className="w-full mt-4 flex-1 p-4 md:p-6 lg:p-8">
         <div className="max-w-xl mx-auto mb-8">
             <SearchBox searchAction={search} />
         </div>

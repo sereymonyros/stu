@@ -208,7 +208,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
     return (
         <div className="flex flex-col h-[calc(100vh_-_var(--header-height,65px))] md:h-screen">
-            <main className="flex-1 flex flex-col container mx-auto p-4 md:p-6 lg:p-8">
+            <main className="flex-1 flex flex-col p-4 md:p-6 lg:p-8">
                  <div className="mb-6">
                     <Button variant="ghost" size="sm" className="mb-4" asChild>
                         <Link href="/dashboard"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
@@ -231,7 +231,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                     )}
                 </div>
                  <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                    <div className="flex-1 overflow-y-auto md:overflow-x-auto">
+                    <ScrollArea className="flex-1">
                         <Board>
                             {KANBAN_STAGES.map(stage => {
                                 const stageApplicants = applicantsByStatus[stage] || [];
@@ -254,7 +254,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                                 )
                             })}
                         </Board>
-                    </div>
+                    </ScrollArea>
                 </DndContext>
             </main>
         </div>

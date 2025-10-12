@@ -74,8 +74,8 @@ export default function ChatsPage() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-                <div className="max-w-4xl mx-auto">
+            <main className="flex-1 p-4 md:p-6 lg:p-8">
+                <div className="max-w-4xl">
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-2xl">

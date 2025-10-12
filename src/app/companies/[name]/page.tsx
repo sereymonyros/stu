@@ -86,7 +86,7 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
+            <main className="flex-1 p-4 md:p-6 lg:p-8">
                 <div className="mb-6">
                     <Button variant="ghost" size="sm" className="mb-4" asChild>
                         <Link href="/jobs"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Job Board</Link>
@@ -146,7 +146,7 @@ export default function CompanyPage({ params }: { params: Promise<{ name: string
     const { name } = use(params);
     return (
         <Suspense fallback={
-          <div className="space-y-8 container mx-auto p-4 md:p-6 lg:p-8">
+          <div className="space-y-8 p-4 md:p-6 lg:p-8">
             <Card>
                 <CardHeader className="flex flex-col md:flex-row items-center gap-6">
                     <Skeleton className="h-24 w-24 rounded-lg" />

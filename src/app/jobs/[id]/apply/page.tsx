@@ -289,7 +289,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
   if (!job) {
     return (
       <div className="flex flex-col min-h-screen">
-        <main className="flex-1 container mx-auto p-4 md:p:6 lg:p-8 text-center">
+        <main className="flex-1 p-4 md:p:6 lg:p-8 text-center">
             <h2 className="text-2xl font-semibold">Job not found</h2>
             <p className="text-muted-foreground mt-2">This job may no longer be available.</p>
             <Button asChild className="mt-4"><Link href="/jobs">Back to Jobs</Link></Button>
@@ -300,7 +300,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <div className="flex flex-col min-h-screen">
-      <main className="flex-1 container mx-auto p-4 md:p:6 lg:p-8">
+      <main className="flex-1 p-4 md:p:6 lg:p-8">
         <div>
             <Card className="max-w-2xl mx-auto">
             <CardHeader>
