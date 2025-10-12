@@ -67,6 +67,10 @@ function JobCard({ job }: { job: any }) {
 
 function AppliedJobCard({ job, application, isFavourite, onWithdrawSuccess }: { job: any, application: any, isFavourite: boolean, onWithdrawSuccess: () => void }) {
 
+    if (!application) {
+        return null;
+    }
+
     const statusColors: { [key: string]: string } = {
         submitted: 'bg-blue-500 hover:bg-blue-600',
         reviewed: 'bg-yellow-500 hover:bg-yellow-600 text-black',
