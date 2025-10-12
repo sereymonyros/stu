@@ -23,7 +23,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -210,7 +209,7 @@ function JobsPageContent() {
         const searchData = {
             id: newSearchDocRef.id,
             name: savedSearchName,
-            searchQuery: searchQuery,
+            searchQuery: searchQuery || '',
             filters: {
                 companyNames: selectedCompanies,
                 locations: selectedLocations,
@@ -565,5 +564,7 @@ export default function JobsPage() {
         </Suspense>
     )
 }
+
+    
 
     
