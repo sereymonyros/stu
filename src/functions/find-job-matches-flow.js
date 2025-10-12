@@ -18,11 +18,11 @@ async function findJobMatches({ userId, searchId }) {
     
     const recentJobsSnapshot = await firestore.collection('jobs')
       .where('createdAt', '>=', oneDayAgo)
+      .where('status', '==', 'Available') // Only consider available jobs
       .get();
     
     const recentJobs = recentJobsSnapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(job => job && job.status === 'Available');
+      .map(doc => ({ id: doc.id, ...doc.data() }));
 
     if (recentJobs.length === 0) {
         console.log("No new 'Available' jobs posted in the last 24 hours. Exiting.");
@@ -53,11 +53,9 @@ async function findJobMatches({ userId, searchId }) {
 
       let savedSearchesSnapshot;
       if (searchId && userId) {
-          // If a specific searchId is provided for a user, only fetch that one.
           const singleSearchDoc = await firestore.collection('users').doc(user.id).collection('savedSearches').doc(searchId).get();
           savedSearchesSnapshot = singleSearchDoc.exists ? { docs: [singleSearchDoc], empty: false } : { docs: [], empty: true };
       } else {
-          // Otherwise, fetch all saved searches for the user.
           savedSearchesSnapshot = await firestore.collection('users').doc(user.id).collection('savedSearches').get();
       }
       
@@ -73,7 +71,6 @@ async function findJobMatches({ userId, searchId }) {
         for (const search of savedSearches) {
           let isMatch = true;
 
-          // Match search query (if exists)
           if (search.searchQuery) {
             const query = search.searchQuery.toLowerCase();
             const title = (job.title || '').toLowerCase();
@@ -83,7 +80,6 @@ async function findJobMatches({ userId, searchId }) {
             }
           }
 
-          // Match filters (if they exist)
           const filters = search.filters || {};
           if (isMatch && filters.companyNames?.length > 0 && !filters.companyNames.includes(job.companyName)) {
             isMatch = false;

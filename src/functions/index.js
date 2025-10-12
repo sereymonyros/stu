@@ -16,7 +16,7 @@ exports.dailyjobalerts = onSchedule('every 24 hours', async (event) => {
   console.log("Scheduled job alert function triggered:", event);
   
   try {
-    // We call our existing AI flow to do all the work.
+    // We call our existing logic to do all the work.
     const result = await findJobMatches({});
     console.log(
       `Job alert process finished successfully. Processed ${result.processedUsers} users, found ${result.matchedJobs} matches, and sent ${result.emailsSent} emails.`

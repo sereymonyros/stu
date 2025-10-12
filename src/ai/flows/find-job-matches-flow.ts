@@ -48,11 +48,11 @@ const findJobMatchesFlow = ai.defineFlow(
     
     const recentJobsSnapshot = await firestore.collection('jobs')
       .where('createdAt', '>=', oneDayAgo)
+      .where('status', '==', 'Available') // Only find jobs that are 'Available'
       .get();
     
     const recentJobs = recentJobsSnapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(job => job && job.status === 'Available');
+      .map(doc => ({ id: doc.id, ...doc.data() }));
 
     if (recentJobs.length === 0) {
         console.log("No new 'Available' jobs posted in the last 24 hours. Exiting.");
