@@ -135,19 +135,11 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
     
     const [analysis, setAnalysis] = useState<AnalyzeApplicantOutput | null>(null);
     const [analysisError, setAnalysisError] = useState<string | null>(null);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
 
-    // This effect will run when the dialog opens
-    useEffect(() => {
-        if (isDialogOpen) {
-            handleGetAIAnalysis();
-        }
-    }, [isDialogOpen]);
-
     const handleGetAIAnalysis = async () => {
-        if (analysis) {
-            return;
+        if (analysis || analysisError) {
+            return; // Don't re-fetch if we already have a result or an error
         }
 
         setIsLoadingAnalysis(true);
@@ -216,7 +208,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                             </Button>
                          )}
                     </div>
-                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                     <Dialog onOpenChange={(open) => open && handleGetAIAnalysis()}>
                         <DialogTrigger asChild>
                             <Button variant="outline" size="sm" className="w-full mt-2 text-xs">
                                 <Sparkles className="mr-2 h-3 w-3 text-yellow-500" />
