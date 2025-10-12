@@ -9,7 +9,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { FileText, Sparkles, ThumbsDown, ThumbsUp, X, Lightbulb } from 'lucide-react';
+import { FileText, Sparkles, ThumbsDown, ThumbsUp, X, Lightbulb, TrendingUp } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
@@ -108,6 +108,19 @@ function AIAnalysisDisplay({ analysis, error, isLoading }: { analysis: AnalyzeAp
                 </Card>
             </div>
             
+            {analysis.performanceIndicators && analysis.performanceIndicators.length > 0 && (
+                <Card className="bg-muted/50 p-4">
+                    <CardHeader className="p-0">
+                        <CardTitle className="text-base mb-2 flex items-center gap-2"><TrendingUp className="h-4 w-4 text-blue-500" /> Performance Indicators</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <ul className="list-disc pl-5 text-sm space-y-1 text-muted-foreground">
+                            {analysis.performanceIndicators.map((p, i) => <li key={i}>{p}</li>)}
+                        </ul>
+                    </CardContent>
+                </Card>
+            )}
+
             <Card className="bg-muted/50 p-4">
                 <CardHeader className="p-0">
                     <CardTitle className="text-base mb-2 flex items-center gap-2"><Lightbulb className="h-4 w-4 text-yellow-500" /> Suggested Interview Questions</CardTitle>

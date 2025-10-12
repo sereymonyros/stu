@@ -65,6 +65,8 @@ const analyzeApplicantPrompt = ai.definePrompt({
   5.  **Summary:** Write a one-paragraph summary of the candidate's profile and their overall fit for the role. This should be a high-level overview to help the recruiter quickly understand the candidate's potential.
   
   6.  **Suggested Interview Questions:** Based on the strengths and gaps you identified, create a list of 3-5 insightful and targeted interview questions to ask the candidate. These questions should help a recruiter validate experience and probe into potential weaknesses.
+  
+  7.  **Performance Indicators:** Analyze the candidate's career trajectory from their resume. Identify patterns that suggest high performance, such as rapid promotions, consistent project leadership, or quantifiable achievements. Create a bulleted list of these indicators (e.g., "Promoted from Junior to Senior Developer in under 2 years," "Consistently highlights measurable outcomes like 'increased performance by 30%'").
 
   Provide your response ONLY in the requested JSON format.
   `,
@@ -109,6 +111,8 @@ const analyzeApplicantTextPrompt = ai.definePrompt({
     4.  **Summary:** Write a one-paragraph summary of the candidate's profile and their overall fit for the role. This should be a high-level overview to help the recruiter quickly understand the candidate's potential.
 
     5.  **Suggested Interview Questions:** Based on the strengths and gaps you identified, create a list of 3-5 insightful and targeted interview questions to ask the candidate. These questions should help a recruiter validate experience and probe into potential weaknesses.
+
+    6.  **Performance Indicators:** Analyze the candidate's career trajectory from their resume. Identify patterns that suggest high performance, such as rapid promotions, consistent project leadership, or quantifiable achievements. Create a bulleted list of these indicators (e.g., "Promoted from Junior to Senior Developer in under 2 years," "Consistently highlights measurable outcomes like 'increased performance by 30%'").
 
     Provide your response ONLY in the requested JSON format.
     `,

@@ -16,5 +16,6 @@ export const AnalyzeApplicantOutputSchema = z.object({
   gaps: z.array(z.string()).describe('A list of requirements from the job description that appear to be missing from the resume.'),
   summary: z.string().describe('A one-paragraph summary of the candidate and their overall fit for the role.'),
   suggestedInterviewQuestions: z.array(z.string()).describe("A list of 3-5 suggested interview questions to ask the candidate based on their resume and the job description."),
+  performanceIndicators: z.array(z.string()).describe("A list of indicators from the resume that suggest high performance, such as rapid promotions, project leadership, or quantifiable achievements."),
 });
 export type AnalyzeApplicantOutput = z.infer<typeof AnalyzeApplicantOutputSchema>;
