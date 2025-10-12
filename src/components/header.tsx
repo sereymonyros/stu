@@ -10,7 +10,7 @@ import { EmailVerificationBanner } from './EmailVerificationBanner';
 export function Header() {
   return (
     <>
-      <header className="w-full flex items-center justify-between p-4 border-b bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/70 sticky top-0 z-40">
+      <header className="w-full flex items-center justify-between p-4 border-b sticky top-0 z-40 bg-background">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2 text-2xl font-bold">
             <Slack className="h-8 w-8" />
