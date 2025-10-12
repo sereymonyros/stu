@@ -215,6 +215,8 @@ function JobsPageContent() {
                 companyNames: selectedCompanies,
                 locations: selectedLocations,
                 jobTypes: selectedJobTypes,
+                salaryMin: salaryRange[0] > 0 ? salaryRange[0] : null,
+                salaryMax: salaryRange[1] < maxSalary ? salaryRange[1] : null,
             },
             createdAt: serverTimestamp(),
         };

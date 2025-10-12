@@ -121,7 +121,7 @@ function FavouriteJobCard({ job }: { job: any }) {
 
 function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting }: { savedSearch: any, onExecute: (search: any) => void, onDelete: (searchId: string) => void, isDeleting: boolean }) {
     const { name, searchQuery, filters = {} } = savedSearch;
-    const filterCount = (filters.companyNames?.length || 0) + (filters.locations?.length || 0) + (filters.jobTypes?.length || 0);
+    const filterCount = (filters.companyNames?.length || 0) + (filters.locations?.length || 0) + (filters.jobTypes?.length || 0) + (filters.salaryMin || filters.salaryMax ? 1 : 0);
 
     return (
         <Card className="flex flex-col justify-between">
@@ -252,6 +252,8 @@ export default function DashboardPage() {
         savedSearch.filters?.companyNames?.forEach((c: string) => params.append('company', c));
         savedSearch.filters?.locations?.forEach((l: string) => params.append('location', l));
         savedSearch.filters?.jobTypes?.forEach((t: string) => params.append('jobType', t));
+        if (savedSearch.filters?.salaryMin) params.set('salaryMin', savedSearch.filters.salaryMin);
+        if (savedSearch.filters?.salaryMax) params.set('salaryMax', savedSearch.filters.salaryMax);
         router.push(`/jobs?${params.toString()}`);
     };
 
