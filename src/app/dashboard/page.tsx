@@ -30,17 +30,17 @@ function JobCard({ job }: { job: any }) {
     const { data: applicants, isLoading } = useCollection(applicantsQuery);
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-xl">{job.title}</CardTitle>
+        <Card className="flex flex-col h-full">
+            <CardHeader className="p-4">
+                <CardTitle className="text-lg">{job.title}</CardTitle>
                 <p className="text-sm text-muted-foreground">{job.companyName} - {job.location}</p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 flex-grow">
                 <div className="flex items-center gap-2">
                     {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
-                    {job.status && <Badge variant={job.status === 'Sold' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
+                    {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
                      {isLoading ? (
-                        <Skeleton className="h-6 w-16 rounded-full" />
+                        <Skeleton className="h-6 w-20 rounded-full" />
                     ) : applicants && applicants.length > 0 ? (
                         <Badge variant="outline" className="flex items-center gap-1">
                            {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
@@ -49,10 +49,15 @@ function JobCard({ job }: { job: any }) {
                     ) : null}
                 </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="p-4">
                  {applicants && applicants.length > 0 && (
-                    <Button asChild variant="outline">
+                    <Button asChild variant="outline" className="w-full">
                         <Link href={`/jobs/${job.id}/applicants`}>View Applicants</Link>
+                    </Button>
+                 )}
+                 {applicants && applicants.length === 0 && (
+                     <Button asChild variant="secondary" className="w-full">
+                        <Link href={`/jobs/${job.id}/edit`}>Edit Job</Link>
                     </Button>
                  )}
             </CardFooter>
@@ -71,11 +76,11 @@ function AppliedJobCard({ job, applicationStatus, isFavourite }: { job: any, app
     }
 
     return (
-        <Card>
-            <CardHeader>
+        <Card className="flex flex-col h-full">
+            <CardHeader className="p-4">
                 <div className="flex justify-between items-start">
                     <div>
-                        <CardTitle className="text-xl">{job.title}</CardTitle>
+                        <CardTitle className="text-lg">{job.title}</CardTitle>
                         <p className="text-sm text-muted-foreground">{job.companyName} - {job.location}</p>
                     </div>
                     {isFavourite && (
@@ -83,14 +88,14 @@ function AppliedJobCard({ job, applicationStatus, isFavourite }: { job: any, app
                     )}
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 flex-grow">
                  <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-muted-foreground">Status:</span>
                     <Badge className={cn("capitalize text-white", statusColors[applicationStatus] || 'bg-gray-500')}>{applicationStatus}</Badge>
                 </div>
             </CardContent>
-            <CardFooter>
-                 <Button asChild variant="outline">
+            <CardFooter className="p-4">
+                 <Button asChild variant="outline" className="w-full">
                     <Link href={`/jobs/${job.id}/apply`}>View Job</Link>
                 </Button>
             </CardFooter>
@@ -100,19 +105,19 @@ function AppliedJobCard({ job, applicationStatus, isFavourite }: { job: any, app
 
 function FavouriteJobCard({ job }: { job: any }) {
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-xl">{job.title}</CardTitle>
+        <Card className="flex flex-col h-full">
+            <CardHeader className="p-4">
+                <CardTitle className="text-lg">{job.title}</CardTitle>
                 <p className="text-sm text-muted-foreground">{job.companyName} - {job.location}</p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 flex-grow">
                  <div className="flex items-center gap-2">
                     {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
-                    {job.status && <Badge variant={job.status === 'Sold' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
+                    {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
                 </div>
             </CardContent>
-            <CardFooter>
-                 <Button asChild variant="outline">
+            <CardFooter className="p-4">
+                 <Button asChild variant="outline" className="w-full">
                     <Link href={`/jobs/${job.id}/apply`}>View Job</Link>
                 </Button>
             </CardFooter>
@@ -125,31 +130,32 @@ function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting, onNotif
     const filterCount = (filters.companyNames?.length || 0) + (filters.locations?.length || 0) + (filters.jobTypes?.length || 0) + (filters.salaryMin || filters.salaryMax ? 1 : 0);
 
     return (
-        <Card className="flex flex-col justify-between">
-            <CardHeader>
-                <CardTitle className="text-lg">{name}</CardTitle>
-                 {searchQuery && <CardDescription>Query: "{searchQuery}"</CardDescription>}
+        <Card className="flex flex-col h-full">
+            <CardHeader className="p-4">
+                <CardTitle className="text-base font-semibold truncate">{name}</CardTitle>
+                 {searchQuery && <CardDescription className="text-xs truncate">Query: "{searchQuery}"</CardDescription>}
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 flex-grow">
                 <div className="flex flex-wrap gap-2">
                     {filterCount > 0 ? (
-                        <Badge variant="secondary">{filterCount} {filterCount === 1 ? 'Filter' : 'Filters'} Applied</Badge>
+                        <Badge variant="secondary">{filterCount} {filterCount === 1 ? 'Filter' : 'Filters'}</Badge>
                     ) : (
                          <Badge variant="outline">No Filters</Badge>
                     )}
                 </div>
             </CardContent>
-            <CardFooter className="flex justify-between items-center">
+            <CardFooter className="p-4 flex justify-between items-center bg-muted/50">
                 <div className="flex gap-2">
-                    <Button onClick={() => onExecute(savedSearch)} size="sm">
+                    <Button onClick={() => onExecute(savedSearch)} size="sm" variant="outline" className="h-8">
                         <Search className="mr-2 h-4 w-4" /> Run
                     </Button>
-                    <Button onClick={() => onNotify(savedSearch.id)} size="sm" variant="outline" disabled={isNotifying}>
-                        <BellDot className="mr-2 h-4 w-4" /> Notify Me Now
+                    <Button onClick={() => onNotify(savedSearch.id)} size="sm" variant="outline" className="h-8" disabled={isNotifying}>
+                        <BellDot className="mr-2 h-4 w-4" /> Notify
                     </Button>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => onDelete(savedSearch.id)} disabled={isDeleting}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onDelete(savedSearch.id)} disabled={isDeleting}>
                      <Trash2 className="h-4 w-4" />
+                     <span className="sr-only">Delete search</span>
                 </Button>
             </CardFooter>
         </Card>
@@ -347,7 +353,7 @@ export default function DashboardPage() {
                              </Button>
                         </div>
                         {postedJobs && postedJobs.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {postedJobs.map(job => <JobCard key={job.id} job={job} />)}
                             </div>
                         ) : (
@@ -366,7 +372,7 @@ export default function DashboardPage() {
                      <section>
                         <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><FileText /> My Job Applications</h2>
                         {appliedJobs && appliedJobs.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {appliedJobs.map(job => (
                                     <AppliedJobCard
                                         key={job.id}
@@ -392,7 +398,7 @@ export default function DashboardPage() {
                         <section>
                             <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Heart /> My Favorite Jobs</h2>
                              {favouriteJobs.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {favouriteJobs.map(job => <FavouriteJobCard key={job.id} job={job} />)}
                                 </div>
                             ) : (
@@ -414,7 +420,7 @@ export default function DashboardPage() {
                         <section>
                             <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Search /> My Saved Searches</h2>
                              <CardDescription className="mb-4">Get instant email notifications for your saved searches.</CardDescription>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {savedSearches.map(search => (
                                     <SavedSearchCard
                                         key={search.id}
