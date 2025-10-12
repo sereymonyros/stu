@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -209,7 +208,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
             <Card className={cn("mb-2 bg-card hover:bg-muted/50", isDragging ? "cursor-grabbing" : "cursor-grab")}>
-                <div className="p-3" {...listeners}>
+                <div className="p-2 md:p-3" {...listeners}>
                     <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
                              <Avatar className="h-9 w-9">
@@ -274,15 +273,19 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
     };
 
     return (
-        <div ref={setNodeRef} className={cn("w-72 flex-shrink-0", isOver && 'cursor-copy')}>
-            <Card className={cn("h-full transition-colors", isOver ? 'bg-primary/10' : 'bg-muted/40')}>
+        <div ref={setNodeRef} className={cn("w-full md:w-72 flex-shrink-0", isOver && 'cursor-copy')}>
+            <Card className={cn(
+                "h-full transition-colors", 
+                isOver ? 'bg-primary/10' : 
+                'bg-muted/40'
+            )}>
                 <CardHeader className={cn("p-3 border-b-4", titleColors[id] || 'border-gray-500')}>
                     <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
                         <span>{title}</span>
                         <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{applicants.length}</span>
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 min-h-[200px] overflow-y-auto">
+                <div className="p-2 min-h-[150px] md:min-h-[200px] overflow-y-auto">
                      {isLoading ? (
                         <div className="space-y-2">
                              <Skeleton className="h-20 w-full" />
@@ -293,7 +296,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
                             {children}
                         </SortableContext>
                     )}
-                </CardContent>
+                </div>
             </Card>
         </div>
     );
@@ -301,7 +304,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
 
 function Board({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex-1 flex gap-4 pb-4">
+        <div className="flex-1 flex flex-col md:flex-row gap-4 pb-4 md:overflow-x-auto">
             {children}
         </div>
     );
@@ -311,5 +314,3 @@ Board.Column = Column;
 Board.Card = ApplicantCard;
 
 export { Board };
-
-    

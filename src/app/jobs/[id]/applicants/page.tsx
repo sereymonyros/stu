@@ -124,6 +124,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
     const sensors = useSensors(
         useSensor(PointerSensor, {
           activationConstraint: {
+            // Require the mouse to move by 8 pixels before activating the drag
             distance: 8,
           },
         })
@@ -206,7 +207,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
     const KANBAN_STAGES = ["submitted", "reviewed", "offered", "accepted", "rejected"] as const;
 
     return (
-        <div className="flex flex-col h-screen">
+        <div className="flex flex-col h-[calc(100vh_-_var(--header-height,65px))] md:h-screen">
             <main className="flex-1 flex flex-col container mx-auto p-4 md:p-6 lg:p-8">
                  <div className="mb-6">
                     <Button variant="ghost" size="sm" className="mb-4" asChild>
@@ -215,10 +216,10 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                      {job ? (
                         <div>
                             <div className="flex items-center gap-4">
-                                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2"><Briefcase className="h-7 w-7" /> {job.title}</h1>
-                                {job.status && <Badge variant={job.status === 'Sold' ? 'destructive' : 'default'} className="capitalize text-base">{job.status}</Badge>}
+                                <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2"><Briefcase className="h-6 w-6 md:h-7 md:w-7" /> {job.title}</h1>
+                                {job.status && <Badge variant={job.status === 'Sold' ? 'destructive' : 'default'} className="capitalize text-sm md:text-base">{job.status}</Badge>}
                             </div>
-                            <p className="text-muted-foreground">{job.companyName} - {job.location}</p>
+                            <p className="text-muted-foreground text-sm md:text-base">{job.companyName} - {job.location}</p>
                         </div>
                     ) : !applications ? (
                          <div className="space-y-2">
@@ -229,8 +230,8 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                          <h1 className="text-3xl font-bold tracking-tight">Job not found</h1>
                     )}
                 </div>
-                <ScrollArea className="w-full whitespace-nowrap">
-                    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                 <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                    <div className="flex-1 overflow-y-auto md:overflow-x-auto">
                         <Board>
                             {KANBAN_STAGES.map(stage => {
                                 const stageApplicants = applicantsByStatus[stage] || [];
@@ -253,8 +254,8 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                                 )
                             })}
                         </Board>
-                    </DndContext>
-                </ScrollArea>
+                    </div>
+                </DndContext>
             </main>
         </div>
     );

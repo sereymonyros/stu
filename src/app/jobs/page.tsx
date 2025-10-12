@@ -522,8 +522,8 @@ function JobsPageContent() {
                     )}
 
                     {viewMode === 'board' && isRecruiter && (
-                        <ScrollArea className="w-full whitespace-nowrap">
-                            <DndContext sensors={sensors} onDragEnd={handleJobDragEnd}>
+                        <DndContext sensors={sensors} onDragEnd={handleJobDragEnd}>
+                            <div className="flex-1 overflow-y-auto md:overflow-x-auto">
                                 <Board>
                                     {KANBAN_STAGES.map(stage => {
                                         const stageJobs = jobsByStatus[stage] || [];
@@ -550,8 +550,8 @@ function JobsPageContent() {
                                         );
                                     })}
                                 </Board>
-                            </DndContext>
-                        </ScrollArea>
+                            </div>
+                        </DndContext>
                     )}
                 </div>
             </main>
@@ -566,9 +566,3 @@ export default function JobsPage() {
         </Suspense>
     )
 }
-
-    
-
-    
-
-    

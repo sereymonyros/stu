@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react"
@@ -65,9 +64,9 @@ function JobCard({
 
     const cardContent = (
         <>
-            <CardHeader>
+            <CardHeader className="p-3 md:p-6">
                 <div className="flex justify-between items-start gap-2">
-                    <CardTitle className="text-xl font-bold">{job.title}</CardTitle>
+                    <CardTitle className="text-lg md:text-xl font-bold">{job.title}</CardTitle>
                     {user && !isOwner && !isRecruiter && (
                          <Button
                             variant="ghost"
@@ -95,13 +94,13 @@ function JobCard({
                     {salaryDisplay && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                 </div>
             </CardHeader>
-            <CardContent className="flex-grow">
+            <CardContent className="flex-grow p-3 md:p-6">
                 <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">{job.jobType}</Badge>
                     <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
                 </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="p-3 md:p-6">
                  {hasApplied ? (
                     <Button className="w-full" disabled>Applied</Button>
                  ) : isRecruiter ? (
@@ -145,7 +144,7 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
     };
 
     return (
-        <div ref={setNodeRef} className={cn("w-72 flex-shrink-0", isOver && 'cursor-copy')}>
+        <div ref={setNodeRef} className={cn("w-full md:w-72 flex-shrink-0", isOver && 'cursor-copy')}>
             <Card className={cn(
                 "h-full transition-colors", 
                 isOver && id === 'Closed' ? 'bg-destructive/20' : 
@@ -158,7 +157,7 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
                         <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{jobs.length}</span>
                     </CardTitle>
                 </CardHeader>
-                <div className="p-2 min-h-[200px] overflow-y-auto">
+                <div className="p-2 min-h-[150px] md:min-h-[200px] overflow-y-auto">
                      {isLoading ? (
                         <div className="space-y-2">
                              <Skeleton className="h-24 w-full" />
@@ -177,7 +176,7 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
 
 function Board({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex-1 flex gap-4 pb-4">
+        <div className="flex-1 flex flex-col md:flex-row gap-4 pb-4 md:overflow-x-auto">
             {children}
         </div>
     );
