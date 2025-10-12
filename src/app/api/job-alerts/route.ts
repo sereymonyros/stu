@@ -11,7 +11,7 @@ export const auth = 'public';
  * This is a secure API endpoint designed to be triggered by a scheduled cron job.
  * It will trigger the flow to find job matches and send email alerts.
  */
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   // 1. Secure the endpoint
   const authHeader = request.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET}`) {
