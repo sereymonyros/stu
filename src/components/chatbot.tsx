@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -34,6 +35,13 @@ export function Chatbot() {
     
     const botMessageId = (Date.now() + 1).toString();
     setMessages(prev => [...prev, { id: botMessageId, text: <div className="animate-pulse h-4 w-12 bg-muted-foreground/50 rounded-md" />, sender: 'bot' }]);
+
+    // Check for offline status before making the API call
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        setMessages(prev => prev.map(msg => msg.id === botMessageId ? { ...msg, text: <span className="text-destructive">You appear to be offline. Please check your connection.</span> } : msg));
+        setIsLoading(false);
+        return;
+    }
 
     try {
       const response = await guideUser({ query: input });
