@@ -53,8 +53,11 @@ const updateResumeOnApplicationsFlow = ai.defineFlow(
 
       // For each application reference, update the corresponding document in the 'jobs' collection
       for (const userAppDoc of userApplicationsSnapshot.docs) {
-        const { jobId } = userAppDoc.data();
+        // The document ID of the user's application reference is the jobId.
+        const jobId = userAppDoc.id;
+        
         if (jobId) {
+          // The application document under the job is stored with the applicant's UID as the ID.
           const mainApplicationRef = firestore.collection('jobs').doc(jobId).collection('applications').doc(userId);
           batch.update(mainApplicationRef, { resumeUrl: newResumeUrl });
           updatedCount++;
