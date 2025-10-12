@@ -19,7 +19,8 @@ import { analyzeApplicant } from '@/ai/flows/analyze-applicant-flow';
 import type { AnalyzeApplicantOutput } from '@/ai/flows/analyze-applicant-schema';
 import { useToast } from '@/hooks/use-toast';
 import type { Timestamp } from 'firebase/firestore';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+
 
 // Helper function to convert a file URL to a Base64 data URI
 const urlToDataUri = async (url: string): Promise<string> => {
@@ -195,8 +196,8 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                             </Button>
                          )}
                     </div>
-                     <Sheet>
-                        <SheetTrigger asChild>
+                     <Dialog>
+                        <DialogTrigger asChild>
                             <Button variant="outline" size="sm" onClick={handleGetAIAnalysis} disabled={isAnalyzing} className="w-full mt-2 text-xs">
                                 {isAnalyzing ? (
                                     <div className="animate-spin h-3 w-3 border-2 border-current border-t-transparent rounded-full mr-2" />
@@ -205,19 +206,19 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                                 )}
                                 AI Review
                             </Button>
-                        </SheetTrigger>
-                        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-                            <SheetHeader>
-                                <SheetTitle>AI Applicant Analysis</SheetTitle>
-                                <SheetDescription>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                                <DialogTitle>AI Applicant Analysis</DialogTitle>
+                                <DialogDescription>
                                     This is an AI-generated analysis of the applicant's resume against the job description.
-                                </SheetDescription>
-                            </SheetHeader>
+                                </DialogDescription>
+                            </DialogHeader>
                             <div className="py-4">
                                 <AIAnalysisDisplay analysis={isAnalyzing ? null : analysis} error={analysisError} />
                             </div>
-                        </SheetContent>
-                    </Sheet>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </Card>
         </div>
