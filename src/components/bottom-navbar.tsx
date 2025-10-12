@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { useUser } from "@/firebase";
 
 const navItems = [
-    { href: "/listings", icon: Store, label: "For Sale" },
     { href: "/jobs", icon: Briefcase, label: "Jobs" },
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
 ]
@@ -23,7 +22,7 @@ export function BottomNavbar() {
 
     return (
         <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background border-t z-50">
-            <div className="grid h-full grid-cols-3 max-w-lg mx-auto font-medium">
+            <div className="grid h-full grid-cols-2 max-w-lg mx-auto font-medium">
                 {navItems.map((item) => {
                     const isActive = pathname.startsWith(item.href);
                     return (
