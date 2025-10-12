@@ -86,12 +86,18 @@ function JobCard({
                         </Button>
                     )}
                 </div>
-                <div className="flex flex-col text-xs text-muted-foreground gap-1 pt-1">
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-row flex-wrap items-center text-xs text-muted-foreground gap-x-2 gap-y-1 pt-1">
+                    <div className="flex items-center gap-1.5">
                         <Building className="h-3 w-3" /> {job.companyName}
                     </div>
-                    <div className="flex items-center gap-2"><MapPin className="h-3 w-3" /> {job.location}</div>
-                    {salaryDisplay && <div className="flex items-center gap-2"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>}
+                    <span className="text-muted-foreground/50">|</span>
+                    <div className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /> {job.location}</div>
+                    {salaryDisplay && (
+                        <>
+                            <span className="text-muted-foreground/50 hidden sm:inline">|</span>
+                            <div className="flex items-center gap-1.5"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>
+                        </>
+                    )}
                 </div>
             </CardHeader>
             <CardContent className="flex-grow p-3 pt-0">
