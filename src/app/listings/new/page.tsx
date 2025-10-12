@@ -21,7 +21,6 @@ import { useAuth, useFirestore } from '@/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { Header } from '@/components/header';
 import { useEffect, useState } from 'react';
 import { getAuth as getFirebaseAuth, onAuthStateChanged } from 'firebase/auth';
 import Image from 'next/image';
@@ -172,7 +171,6 @@ export default function NewListingPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>

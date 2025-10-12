@@ -8,6 +8,9 @@ import { type FirebaseApp } from 'firebase/app';
 import { type Auth } from 'firebase/auth';
 import { type Firestore } from 'firebase/firestore';
 import { type FirebaseStorage } from 'firebase/storage';
+import { Header } from '@/components/header';
+import { Toaster } from '@/components/ui/toaster';
+
 
 interface FirebaseClientProviderProps {
   children: ReactNode;
@@ -44,7 +47,9 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       firestore={firebaseServices.firestore}
       storage={firebaseServices.storage}
     >
+      <Header />
       {children}
+      <Toaster />
     </FirebaseProvider>
   );
 }

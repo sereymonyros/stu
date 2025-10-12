@@ -5,7 +5,6 @@ import { useMemo, useEffect, useState, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { doc, collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,7 +51,7 @@ function Message({ message, isOwnMessage, otherUser }: { message: any; isOwnMess
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: chatId } = use(params);
     const firestore = useFirestore();
-    const { user, isUserLoading } = useUser();
+    const { user } = useUser();
     const router = useRouter();
     const { toast } = useToast();
 
@@ -60,7 +59,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     const [isSending, setIsSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [otherUser, setOtherUser] = useState<GetPublicProfileOutput | null>(null);
-    const [isOtherUserLoading, setIsOtherUserLoading] = useState(true);
 
     const finalChatId = Array.isArray(chatId) ? chatId[0] : chatId;
 
@@ -74,8 +72,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         return collection(chatRef, 'messages');
     }, [chatRef]);
 
-    const { data: chat, isLoading: isChatLoading } = useDoc(chatRef);
-    const { data: messages, isLoading: areMessagesLoading } = useCollection(messagesQuery);
+    const { data: chat } = useDoc(chatRef);
+    const { data: messages } = useCollection(messagesQuery);
 
     const otherUserId = useMemo(() => {
         if (!chat || !user) return null;
@@ -84,30 +82,27 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
     useEffect(() => {
         if (!otherUserId) {
-            setIsOtherUserLoading(false);
             return;
         };
 
-        setIsOtherUserLoading(true);
         getPublicProfile({ userId: otherUserId })
             .then(profile => setOtherUser(profile))
             .catch(err => {
                 console.error("Failed to fetch other user profile:", err);
                 toast({ variant: 'destructive', title: 'Error', description: 'Could not load user information.' });
             })
-            .finally(() => setIsOtherUserLoading(false));
 
     }, [otherUserId, toast]);
 
     useEffect(() => {
-        if (!isUserLoading && !user) {
+        if (!user) {
             router.replace('/login');
         }
-        if (!isChatLoading && chat && user && !chat.participants.includes(user.uid)) {
+        if (chat && user && !chat.participants.includes(user.uid)) {
             toast({ variant: "destructive", title: "Unauthorized", description: "You are not a participant in this chat." });
             router.replace('/chat');
         }
-    }, [user, isUserLoading, chat, isChatLoading, router, toast]);
+    }, [user, chat, router, toast]);
 
     // Scroll to the bottom when new messages arrive
     useEffect(() => {
@@ -172,41 +167,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
     const otherUserName = otherUser?.displayName || "User";
 
-    if (isUserLoading || isChatLoading || isOtherUserLoading) {
-      return (
-         <div className="flex flex-col h-screen">
-            <Header />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="p-4 border-b">
-                     <Skeleton className="h-9 w-48" />
-                    <div className="mt-2">
-                        <div className="flex items-center gap-3">
-                            <Skeleton className="h-10 w-10 rounded-full" />
-                            <div className="space-y-1.5">
-                                <Skeleton className="h-5 w-32" />
-                                <Skeleton className="h-4 w-48" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                 <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-                    <div className="space-y-4">
-                        <Skeleton className="h-16 w-3/4 self-start" />
-                        <Skeleton className="h-12 w-1/2 self-end ml-auto" />
-                        <Skeleton className="h-20 w-2/3 self-start" />
-                    </div>
-                </div>
-                 <div className="p-4 border-t bg-background">
-                    <Skeleton className="h-10 w-full" />
-                </div>
-            </div>
-        </div>
-      )
-    }
-
     return (
-        <div className="flex flex-col h-screen">
-            <Header />
+        <div className="flex flex-col h-[calc(100vh_-_var(--header-height,65px))]">
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="p-4 border-b">
                      <Button variant="ghost" size="sm" asChild>
@@ -248,7 +210,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         />
                     ))}
                     <div ref={messagesEndRef} />
-                     {areMessagesLoading && (
+                     {!messages && (
                         <div className="space-y-4">
                             <Skeleton className="h-16 w-3/4 self-start" />
                             <Skeleton className="h-12 w-1/2 self-end" />
@@ -263,10 +225,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                             placeholder="Type a message..."
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
-                            disabled={isSending || isChatLoading || areMessagesLoading || isUserLoading}
+                            disabled={isSending || !chat || !messages || !user}
                             autoComplete="off"
                         />
-                        <Button type="submit" size="icon" disabled={isSending || isChatLoading || areMessagesLoading || isUserLoading || !newMessage.trim()}>
+                        <Button type="submit" size="icon" disabled={isSending || !chat || !messages || !user || !newMessage.trim()}>
                             {isSending ? <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full" /> : <Send />}
                         </Button>
                     </form>

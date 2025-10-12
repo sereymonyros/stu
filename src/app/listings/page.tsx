@@ -8,7 +8,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Header } from '@/components/header';
 import { useMemo, useState } from 'react';
 import { Pencil, MessageSquare, Store } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -29,7 +28,7 @@ export default function ListingsPage() {
     return collection(firestore, 'listings');
   }, [firestore]);
 
-  const { data: listings, isLoading } = useCollection(listingsCollection);
+  const { data: listings } = useCollection(listingsCollection);
 
   const handleContactSeller = async (listing: any) => {
     if (!user) {
@@ -92,38 +91,8 @@ export default function ListingsPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-        <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-1 p-4 md:p-6 lg:p-8">
-                <div className="container mx-auto">
-                    <div className="flex justify-between items-center mb-6">
-                        <Skeleton className="h-10 w-48" />
-                        <Skeleton className="h-10 w-32" />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {Array.from({ length: 8 }).map((_, i) => (
-                        <Card key={i}>
-                            <CardHeader>
-                            <Skeleton className="aspect-square w-full" />
-                            </CardHeader>
-                            <CardContent>
-                            <Skeleton className="h-6 w-3/4 mb-2" />
-                            <Skeleton className="h-4 w-1/2" />
-                            </CardContent>
-                        </Card>
-                        ))}
-                    </div>
-                </div>
-            </main>
-        </div>
-    )
-  }
-
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-1 p-4 md:p-6 lg:p-8">
         <div className="container mx-auto">
           <div className="flex justify-between items-center mb-6">

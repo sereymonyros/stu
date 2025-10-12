@@ -21,7 +21,6 @@ import { useUser, useDoc, useFirestore } from '@/firebase';
 import { addDoc, collection, serverTimestamp, doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { Header } from '@/components/header';
 import { useState, useMemo, useEffect } from 'react';
 import {
   Select,
@@ -56,7 +55,7 @@ const jobSchema = z.object({
 
 export default function NewJobPage() {
   const firestore = useFirestore();
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,7 +65,7 @@ export default function NewJobPage() {
     return doc(firestore, 'users', user.uid);
   }, [firestore, user]);
 
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+  const { data: userProfile } = useDoc(userProfileRef);
 
   const form = useForm<z.infer<typeof jobSchema>>({
     resolver: zodResolver(jobSchema),
@@ -82,9 +81,6 @@ export default function NewJobPage() {
   });
 
   useEffect(() => {
-    if (isUserLoading || isProfileLoading) {
-      return;
-    }
     if (!user) {
       router.replace('/login');
       return;
@@ -93,7 +89,7 @@ export default function NewJobPage() {
       toast({ variant: "destructive", title: "Unauthorized", description: "You must be a recruiter to post jobs." });
       router.replace('/jobs');
     }
-  }, [user, userProfile, isUserLoading, isProfileLoading, router, toast]);
+  }, [user, userProfile, router, toast]);
 
   const onSubmit = (values: z.infer<typeof jobSchema>) => {
     setIsSubmitting(true);
@@ -134,43 +130,11 @@ export default function NewJobPage() {
     router.push('/jobs');
   };
 
-  if (isUserLoading || isProfileLoading) {
-    return (
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle>Post a New Job</CardTitle>
-                 <CardDescription>
-                    Fill in the details to find the perfect candidate.
-                  </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                    <div className="space-y-2">
-                        <div className="h-4 w-24 bg-muted rounded-md" />
-                        <div className="h-10 w-full bg-muted rounded-md" />
-                    </div>
-                    <div className="space-y-2">
-                        <div className="h-4 w-24 bg-muted rounded-md" />
-                        <div className="h-10 w-full bg-muted rounded-md" />
-                    </div>
-                    <div className="h-10 w-full bg-muted rounded-md" />
-                </div>
-              </CardContent>
-            </Card>
-          </main>
-        </div>
-    )
-  }
-
   const isAuthorized = userProfile?.userType === 'recruiter';
   const profileComplete = isAuthorized && !!userProfile?.photoURL;
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
         {isAuthorized ? (
             <Card className="max-w-2xl mx-auto">

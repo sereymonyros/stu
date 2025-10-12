@@ -7,7 +7,6 @@ import { useDoc, useFirestore, useUser } from '@/firebase';
 import { doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -49,7 +48,7 @@ const toBase64 = (file: File): Promise<string> =>
 export default function ApplyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: jobId } = use(params);
   const firestore = useFirestore();
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,16 +73,16 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
     return doc(firestore, `users/${user.uid}/applications`, jobId);
   }, [firestore, user, jobId]);
 
-  const { data: job, isLoading: isJobLoading } = useDoc(jobRef);
-  const { data: userProfile, isLoading: isProfileLoading, refetch: refetchUserProfile } = useDoc(userProfileRef);
-  const { data: application, isLoading: isApplicationLoading } = useDoc(userApplicationRef);
+  const { data: job } = useDoc(jobRef);
+  const { data: userProfile, refetch: refetchUserProfile } = useDoc(userProfileRef);
+  const { data: application } = useDoc(userApplicationRef);
 
   const hasApplied = !!application;
   const profileComplete = !!userProfile?.photoURL && !!userProfile?.resumeUrl;
 
   // --- Effects ---
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    if (!user) {
       router.replace('/login');
     }
     // Redirect if user is not a standard user
@@ -91,7 +90,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
         toast({ variant: 'destructive', title: 'Recruiters cannot apply for jobs.' });
         router.replace('/jobs');
     }
-  }, [user, isUserLoading, userProfile, router, toast]);
+  }, [user, userProfile, router, toast]);
 
   const sendConfirmationEmails = async () => {
     if (!user || !userProfile || !job) return;
@@ -287,41 +286,9 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
-
-  if (isJobLoading || isProfileLoading || isApplicationLoading) {
-    return (
-        <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-1 container mx-auto p-4 md:p:6 lg:p-8">
-                <Card className="max-w-2xl mx-auto">
-                <CardHeader>
-                    <Skeleton className="h-9 w-36 mb-4" />
-                    <Skeleton className="h-8 w-3/4" />
-                    <Skeleton className="h-5 w-full" />
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                        <Skeleton className="h-5 w-24" />
-                        <Skeleton className="h-6 w-48" />
-                    </div>
-                     <div className="space-y-2">
-                        <Skeleton className="h-5 w-24" />
-                        <Skeleton className="h-12 w-full" />
-                    </div>
-                </CardContent>
-                <CardFooter>
-                    <Skeleton className="h-10 w-full" />
-                </CardFooter>
-                </Card>
-            </main>
-        </div>
-    )
-  }
-
   if (!job) {
     return (
       <div className="flex flex-col min-h-screen">
-        <Header />
         <main className="flex-1 container mx-auto p-4 md:p:6 lg:p-8 text-center">
             <h2 className="text-2xl font-semibold">Job not found</h2>
             <p className="text-muted-foreground mt-2">This job may no longer be available.</p>
@@ -333,7 +300,6 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-1 container mx-auto p-4 md:p:6 lg:p-8">
         <div>
             <Card className="max-w-2xl mx-auto">

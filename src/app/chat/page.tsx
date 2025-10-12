@@ -4,7 +4,6 @@
 import { useMemo, useEffect } from 'react';
 import { useCollection, useFirestore, useUser } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
@@ -42,14 +41,14 @@ function ChatListItem({ chat }: { chat: any }) {
 
 export default function ChatsPage() {
     const firestore = useFirestore();
-    const { user, isUserLoading } = useUser();
+    const { user } = useUser();
     const router = useRouter();
 
     useEffect(() => {
-        if (!isUserLoading && !user) {
+        if (!user) {
             router.replace('/login');
         }
-    }, [user, isUserLoading, router]);
+    }, [user, router]);
 
     const chatsQuery = useMemo(() => {
         if (!firestore || !user) return null;
@@ -57,7 +56,7 @@ export default function ChatsPage() {
         return query(collection(firestore, 'chats'), where('participants', 'array-contains', user.uid));
     }, [firestore, user]);
 
-    const { data: chats, isLoading } = useCollection(chatsQuery);
+    const { data: chats } = useCollection(chatsQuery);
 
     // Sort chats by last update time
     const sortedChats = useMemo(() => {
@@ -69,37 +68,12 @@ export default function ChatsPage() {
         });
     }, [chats]);
 
-    if (isUserLoading) {
-        return (
-            <div className="flex flex-col min-h-screen">
-                <Header />
-                <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-                    <div className="max-w-4xl mx-auto">
-                        <Card>
-                            <CardHeader>
-                                <Skeleton className="h-8 w-64" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    <Skeleton className="h-20 w-full" />
-                                    <Skeleton className="h-20 w-full" />
-                                    <Skeleton className="h-20 w-full" />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </main>
-            </div>
-        )
-    }
-
     if (!user) {
         return null;
     }
 
     return (
         <div className="flex flex-col min-h-screen">
-            <Header />
             <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
                 <div className="max-w-4xl mx-auto">
                     <Card>

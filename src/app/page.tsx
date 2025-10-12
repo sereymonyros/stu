@@ -3,7 +3,6 @@ import Image from "next/image";
 import { search } from "@/app/actions";
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { SearchBox } from "@/components/search-box";
-import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -12,7 +11,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="relative flex-1 flex flex-col items-center justify-center overflow-hidden p-4 text-center">
         {heroImage && (
           <Image

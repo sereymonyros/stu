@@ -7,7 +7,6 @@ import { collection, query, where } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Heart, Briefcase, Building, MapPin, DollarSign, Pencil, ArrowLeft } from 'lucide-react';
@@ -68,17 +67,14 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
     const { toast } = useToast();
 
     const [company, setCompany] = useState<GetCompanyByNameOutput | null>(null);
-    const [isCompanyLoading, setIsCompanyLoading] = useState(true);
 
     useEffect(() => {
-      setIsCompanyLoading(true);
       getCompanyByName({ companyName })
         .then(setCompany)
         .catch(err => {
             console.error("Failed to fetch company profile:", err);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load company information.' });
         })
-        .finally(() => setIsCompanyLoading(false));
     }, [companyName, toast]);
 
     // Fetch jobs for this company (this can remain client-side as it should be public)
@@ -86,40 +82,10 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
         if (!firestore) return null;
         return query(collection(firestore, 'jobs'), where('companyName', '==', companyName));
     }, [firestore, companyName]);
-    const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
-
-
-    if (isCompanyLoading || areJobsLoading) {
-      return (
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-            <div className="mb-6">
-                <Skeleton className="h-9 w-44 mb-4" />
-            </div>
-            <Card className="mb-8">
-                <CardHeader className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
-                   <Skeleton className="h-24 w-24 rounded-lg" />
-                   <div className="flex-1 space-y-2">
-                        <Skeleton className="h-8 w-64" />
-                        <Skeleton className="h-5 w-full" />
-                   </div>
-                </CardHeader>
-            </Card>
-            <Skeleton className="h-8 w-48 mb-4" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Skeleton className="h-64 w-full" />
-                <Skeleton className="h-64 w-full" />
-                <Skeleton className="h-64 w-full" />
-            </div>
-          </main>
-        </div>
-      )
-    }
+    const { data: jobs } = useCollection(jobsQuery);
 
     return (
         <div className="flex flex-col min-h-screen">
-            <Header />
             <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
                 <div className="mb-6">
                     <Button variant="ghost" size="sm" className="mb-4" asChild>

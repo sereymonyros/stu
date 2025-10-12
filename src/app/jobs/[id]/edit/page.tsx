@@ -21,7 +21,6 @@ import { useUser, useDoc, useFirestore } from '@/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { Header } from '@/components/header';
 import { useEffect, useMemo, useState, use } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
@@ -57,7 +56,7 @@ const jobSchema = z.object({
 export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: jobId } = use(params);
   const firestore = useFirestore();
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,7 +68,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     return doc(firestore, 'jobs', finalJobId);
   }, [firestore, finalJobId]);
 
-  const { data: job, isLoading: isJobLoading } = useDoc(jobRef);
+  const { data: job } = useDoc(jobRef);
 
   const form = useForm<z.infer<typeof jobSchema>>({
     resolver: zodResolver(jobSchema),
@@ -101,7 +100,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   }, [job, form]);
 
   useEffect(() => {
-    if (isUserLoading || isJobLoading) return;
+    if (!job) return;
     if (!user) {
       router.replace('/login');
       return;
@@ -114,7 +113,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
       });
       router.replace(`/jobs`);
     }
-  }, [user, isUserLoading, job, isJobLoading, router, toast]);
+  }, [user, job, router, toast]);
 
 
   const onSubmit = (values: z.infer<typeof jobSchema>) => {
@@ -151,57 +150,8 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     router.push(`/jobs`);
   };
 
-  if (isJobLoading) {
-      return (
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <Skeleton className="h-8 w-48" />
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-                 <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                   <div className="space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-40 w-full" />
-                </div>
-                <Skeleton className="h-10 w-full" />
-              </CardContent>
-            </Card>
-          </main>
-        </div>
-      )
-  }
-
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
         {job ? (
             <Card className="max-w-2xl mx-auto">

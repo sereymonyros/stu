@@ -7,7 +7,6 @@ import { collection, query, where, doc, deleteDoc } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
@@ -153,29 +152,29 @@ function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting }: { sav
 
 export default function DashboardPage() {
     const firestore = useFirestore();
-    const { user, isUserLoading } = useUser();
+    const { user } = useUser();
     const router = useRouter();
     const { toast } = useToast();
     const [isDeletingSearch, setIsDeletingSearch] = useState(false);
 
     useEffect(() => {
-        if (!isUserLoading && !user) {
+        if (!user) {
             router.replace('/login');
         }
-    }, [user, isUserLoading, router]);
+    }, [user, router]);
 
     // --- User Profile ---
     const userProfileRef = useMemo(() => {
         if (!firestore || !user) return null;
         return doc(firestore, 'users', user.uid);
     }, [firestore, user]);
-    const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+    const { data: userProfile } = useDoc(userProfileRef);
 
     // --- Data Queries ---
     const isRecruiter = userProfile?.userType === 'recruiter';
 
     // This state gates all dependent queries, preventing race conditions.
-    const shouldRunRoleQueries = !isUserLoading && userProfile;
+    const shouldRunRoleQueries = userProfile;
 
     // For Recruiters: Fetch jobs they created
     const postedJobsQuery = useMemo(() => {
@@ -281,7 +280,6 @@ export default function DashboardPage() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <Header />
             <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>

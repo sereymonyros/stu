@@ -21,7 +21,6 @@ import { useAuth, useFirestore, useUser } from '@/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { Header } from '@/components/header';
 import { useEffect, useState } from 'react';
 import { Star, UploadCloud } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -56,7 +55,7 @@ const toBase64 = (file: File): Promise<string> =>
 export default function FeedbackPage() {
   const firestore = useFirestore();
   const auth = useAuth();
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,10 +71,10 @@ export default function FeedbackPage() {
   });
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    if (!user) {
       router.replace('/login');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, router]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -155,7 +154,6 @@ export default function FeedbackPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>

@@ -22,7 +22,6 @@ import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref, deleteObject } from "firebase/storage";
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { Header } from '@/components/header';
 import { useEffect, useMemo, useState, use } from 'react';
 import Link from 'next/link';
 import {
@@ -66,7 +65,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
   const { id: listingId } = use(params);
   const firestore = useFirestore();
   const auth = useAuth();
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,7 +77,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
     return doc(firestore, 'listings', finalListingId);
   }, [firestore, finalListingId]);
 
-  const { data: listing, isLoading: isListingLoading } = useDoc(listingRef);
+  const { data: listing } = useDoc(listingRef);
 
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
@@ -106,7 +105,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
   }, [listing, form]);
 
   useEffect(() => {
-    if (isUserLoading || isListingLoading) return;
+    if (!listing) return;
     if (!user) {
       router.replace('/login');
       return;
@@ -119,7 +118,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
       });
       router.replace(`/listings`);
     }
-  }, [user, isUserLoading, listing, isListingLoading, router, toast]);
+  }, [user, listing, router, toast]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -250,30 +249,8 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-
-  if (isListingLoading) {
-      return (
-         <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-               <Card className="max-w-2xl mx-auto">
-                <CardHeader><Skeleton className="h-8 w-48" /></CardHeader>
-                <CardContent className="space-y-8">
-                    <div className="space-y-2"><Skeleton className="h-4 w-16" /><Skeleton className="h-10 w-full" /></div>
-                    <div className="space-y-2"><Skeleton className="h-4 w-16" /><Skeleton className="h-20 w-full" /></div>
-                    <div className="space-y-2"><Skeleton className="h-4 w-16" /><Skeleton className="h-10 w-full" /></div>
-                    <div className="space-y-2"><Skeleton className="h-4 w-16" /><div className="grid grid-cols-4 gap-4"><Skeleton className="aspect-square w-full" /><Skeleton className="aspect-square w-full" /></div></div>
-                    <Skeleton className="h-10 w-full" />
-                </CardContent>
-                </Card>
-          </main>
-        </div>
-      )
-  }
-
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
         {listing ? (
             <Card className="max-w-2xl mx-auto">

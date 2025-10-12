@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useSearchParams } from 'next/navigation';
@@ -6,7 +7,6 @@ import { searchCambodia } from '@/ai/flows/search-flow';
 import { SearchBox } from '@/components/search-box';
 import { search } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Header } from '@/components/header';
 
 function SearchResults() {
   const searchParams = useSearchParams();
@@ -44,7 +44,6 @@ function SearchResults() {
 
   return (
     <div className="flex flex-col items-center w-full min-h-screen bg-background text-foreground">
-      <Header />
       <main className="w-full mt-4 flex-1 container mx-auto">
         <div className="max-w-xl mx-auto mb-8">
             <SearchBox searchAction={search} />

@@ -5,7 +5,6 @@ import { useMemo, useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { doc, collection, query } from 'firebase/firestore';
-import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Briefcase } from 'lucide-react';
@@ -19,7 +18,7 @@ import { updateApplicationStatus } from '@/ai/flows/update-application-status-fl
 export default function ApplicantsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: jobId } = use(params);
     const firestore = useFirestore();
-    const { user, isUserLoading } = useUser();
+    const { user } = useUser();
     const router = useRouter();
     const { toast } = useToast();
 
@@ -30,17 +29,16 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         return doc(firestore, 'jobs', finalJobId);
     }, [firestore, finalJobId]);
 
-    const { data: job, isLoading: isJobLoading, refetch: refetchJob } = useDoc(jobRef);
+    const { data: job, refetch: refetchJob } = useDoc(jobRef);
 
     const applicantsQuery = useMemo(() => {
         if (!firestore || !finalJobId) return null;
         return query(collection(firestore, `jobs/${finalJobId}/applications`));
     }, [firestore, finalJobId]);
 
-    const { data: applications, isLoading: areApplicationsLoading, refetch: refetchApplications } = useCollection(applicantsQuery);
+    const { data: applications, refetch: refetchApplications } = useCollection(applicantsQuery);
 
      useEffect(() => {
-        if (isUserLoading || isJobLoading) return;
         if (!user) {
             router.replace('/login');
             return;
@@ -49,7 +47,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
             toast({ variant: "destructive", title: "Unauthorized", description: "You are not authorized to view applicants for this job." });
             router.replace('/jobs');
         }
-    }, [user, isUserLoading, job, isJobLoading, router, toast]);
+    }, [user, job, router, toast]);
 
     const [applicantsByStatus, setApplicantsByStatus] = useState<Record<string, any[]>>({});
 
@@ -150,13 +148,10 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         }
     };
 
-    const isLoading = isJobLoading || areApplicationsLoading || isUserLoading;
-
     const KANBAN_STAGES = ["submitted", "reviewed", "offered", "accepted", "rejected"] as const;
 
     return (
         <div className="flex flex-col h-screen">
-            <Header />
             <main className="flex-1 flex flex-col container mx-auto p-4 md:p-6 lg:p-8 overflow-x-auto">
                  <div className="mb-6">
                     <Button variant="ghost" size="sm" className="mb-4" asChild>
@@ -170,7 +165,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                             </div>
                             <p className="text-muted-foreground">{job.companyName} - {job.location}</p>
                         </div>
-                    ) : isLoading ? (
+                    ) : !applications ? (
                          <div className="space-y-2">
                             <Skeleton className="h-8 w-1/2" />
                             <Skeleton className="h-5 w-1/3" />
@@ -190,7 +185,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                                     id={stage}
                                     title={stage}
                                     applicants={stageApplicants}
-                                    isLoading={isLoading}
+                                    isLoading={!applications}
                                 >
                                     {stageApplicants.map((app: any) => (
                                         <Board.Card
