@@ -343,7 +343,7 @@ export default function DashboardPage() {
                 {isRecruiter && (
                     <section>
                         <div className="flex justify-between items-center mb-4">
-                             <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><Briefcase /> My Job Postings</h2>
+                             <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><Briefcase /> </h2>
                             {postedJobs && postedJobs.length > 0 && (
                                 <Button onClick={handleFindMatches} disabled={isSendingAlerts}>
                                     <Send className="mr-2 h-4 w-4" />
