@@ -32,6 +32,7 @@ import { Board } from '@/components/job-kanban';
 import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import JobsLoading from './loading';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const FilterGroup = ({ title, options, selected, onToggle }: { title: string; options: string[]; selected: string[]; onToggle: (option: string) => void; }) => {
     if (!options || options.length === 0) return null;
@@ -521,7 +522,7 @@ function JobsPageContent() {
                     )}
 
                     {viewMode === 'board' && isRecruiter && (
-                         <div className="flex-1 flex flex-col overflow-x-auto">
+                        <ScrollArea className="w-full whitespace-nowrap">
                             <DndContext sensors={sensors} onDragEnd={handleJobDragEnd}>
                                 <Board>
                                     {KANBAN_STAGES.map(stage => {
@@ -550,7 +551,7 @@ function JobsPageContent() {
                                     })}
                                 </Board>
                             </DndContext>
-                         </div>
+                        </ScrollArea>
                     )}
                 </div>
             </main>

@@ -16,6 +16,7 @@ import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } f
 import { updateApplicationStatus } from '@/ai/flows/update-application-status-flow';
 import { analyzeApplicant } from '@/ai/flows/analyze-applicant-flow';
 import { getCachedAnalysis, setCachedAnalysis } from '@/lib/ai-cache';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Helper function to convert a file URL to a Base64 data URI
 const urlToDataUri = async (url: string): Promise<string> => {
@@ -206,7 +207,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
     return (
         <div className="flex flex-col h-screen">
-            <main className="flex-1 flex flex-col container mx-auto p-4 md:p-6 lg:p-8 overflow-x-auto">
+            <main className="flex-1 flex flex-col container mx-auto p-4 md:p-6 lg:p-8">
                  <div className="mb-6">
                     <Button variant="ghost" size="sm" className="mb-4" asChild>
                         <Link href="/dashboard"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
@@ -228,31 +229,32 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                          <h1 className="text-3xl font-bold tracking-tight">Job not found</h1>
                     )}
                 </div>
-
-                <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                    <Board>
-                        {KANBAN_STAGES.map(stage => {
-                            const stageApplicants = applicantsByStatus[stage] || [];
-                            return (
-                                <Board.Column
-                                    key={stage}
-                                    id={stage}
-                                    title={stage}
-                                    applicants={stageApplicants}
-                                    isLoading={!applications}
-                                >
-                                    {stageApplicants.map((app: any) => (
-                                        <Board.Card
-                                          key={app.id}
-                                          applicant={app}
-                                          jobDetails={job}
-                                        />
-                                    ))}
-                                </Board.Column>
-                            )
-                        })}
-                    </Board>
-                </DndContext>
+                <ScrollArea className="w-full whitespace-nowrap">
+                    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                        <Board>
+                            {KANBAN_STAGES.map(stage => {
+                                const stageApplicants = applicantsByStatus[stage] || [];
+                                return (
+                                    <Board.Column
+                                        key={stage}
+                                        id={stage}
+                                        title={stage}
+                                        applicants={stageApplicants}
+                                        isLoading={!applications}
+                                    >
+                                        {stageApplicants.map((app: any) => (
+                                            <Board.Card
+                                              key={app.id}
+                                              applicant={app}
+                                              jobDetails={job}
+                                            />
+                                        ))}
+                                    </Board.Column>
+                                )
+                            })}
+                        </Board>
+                    </DndContext>
+                </ScrollArea>
             </main>
         </div>
     );
