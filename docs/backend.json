@@ -115,71 +115,6 @@
         "status"
       ]
     },
-    "Chat": {
-      "title": "Chat",
-      "description": "A conversation between two users about a listing.",
-      "type": "object",
-      "properties": {
-        "listingId": {
-          "type": "string"
-        },
-        "listingTitle": {
-          "type": "string",
-          "description": "The title of the listing being discussed, denormalized for easy display."
-        },
-        "buyerId": {
-          "type": "string"
-        },
-        "sellerId": {
-          "type": "string"
-        },
-        "participants": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "An array containing the UIDs of both the buyer and the seller for easy querying."
-        },
-        "lastMessage": {
-          "type": "string",
-          "description": "The last message sent in the chat for preview purposes."
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "listingId",
-        "listingTitle",
-        "buyerId",
-        "sellerId",
-        "participants",
-        "updatedAt"
-      ]
-    },
-    "Message": {
-      "title": "Message",
-      "description": "A single message within a chat.",
-      "type": "object",
-      "properties": {
-        "senderId": {
-          "type": "string"
-        },
-        "text": {
-          "type": "string"
-        },
-        "timestamp": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "senderId",
-        "text",
-        "timestamp"
-      ]
-    },
     "Job": {
       "title": "Job",
       "description": "Represents a job posting.",
@@ -503,18 +438,6 @@
         "$ref": "#/entities/Application"
       },
       "description": "Sub-collection for applications to a specific job."
-    },
-    "/chats/{chatId}": {
-      "schema": {
-        "$ref": "#/entities/Chat"
-      },
-      "description": "Collection of all chat sessions."
-    },
-    "/chats/{chatId}/messages/{messageId}": {
-      "schema": {
-        "$ref": "#/entities/Message"
-      },
-      "description": "Sub-collection for messages within a specific chat."
     },
     "/feedbacks/{feedbackId}": {
       "schema": {

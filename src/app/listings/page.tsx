@@ -2,26 +2,19 @@
 'use client';
 
 import { useCollection, useFirestore, useUser } from '@/firebase';
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { useMemo, useState } from 'react';
-import { Pencil, MessageSquare, Store } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
+import { useMemo } from 'react';
+import { Pencil, Store } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function ListingsPage() {
   const firestore = useFirestore();
   const { user } = useUser();
-  const router = useRouter();
-  const { toast } = useToast();
-  const [contactingSellerId, setContactingSellerId] = useState<string | null>(null);
 
   const listingsCollection = useMemo(() => {
     if (!firestore) return null;
@@ -29,67 +22,6 @@ export default function ListingsPage() {
   }, [firestore]);
 
   const { data: listings } = useCollection(listingsCollection);
-
-  const handleContactSeller = async (listing: any) => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    if (user.uid === listing.sellerId) {
-        toast({ title: "This is your own listing." });
-        return;
-    }
-
-    setContactingSellerId(listing.id);
-    try {
-      const chatsRef = collection(firestore, 'chats');
-      // Secure and Corrected Query:
-      // 1. Filter chats where the current user is a participant. This satisfies security rules.
-      const userChatsQuery = query(chatsRef, where('participants', 'array-contains', user.uid));
-      const userChatsSnapshot = await getDocs(userChatsQuery);
-
-      // 2. From this smaller, secure result set, find the one for the specific listing.
-      const existingChat = userChatsSnapshot.docs.find(doc =>
-        doc.data().listingId === listing.id &&
-        doc.data().participants.includes(listing.sellerId)
-      );
-
-      if (existingChat) {
-        router.push(`/chat/${existingChat.id}`);
-      } else {
-        const newChatData = {
-          listingId: listing.id,
-          listingTitle: listing.title,
-          buyerId: user.uid,
-          sellerId: listing.sellerId,
-          participants: [user.uid, listing.sellerId],
-          lastMessage: `Inquiring about: ${listing.title}`,
-          updatedAt: serverTimestamp(),
-        };
-
-        const newChatRef = await addDoc(chatsRef, newChatData).catch(serverError => {
-            errorEmitter.emit(
-              'permission-error',
-              new FirestorePermissionError({
-                path: chatsRef.path,
-                operation: 'create',
-                requestResourceData: newChatData,
-              })
-            );
-            throw serverError; // rethrow to be caught by outer try/catch
-        });
-        router.push(`/chat/${newChatRef.id}`);
-      }
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to start chat',
-        description: error.message || 'There was a problem starting the chat.',
-      });
-    } finally {
-        setContactingSellerId(null);
-    }
-  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -105,7 +37,6 @@ export default function ListingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {listings.map((listing) => {
               const isOwner = user && user.uid === listing.sellerId;
-              const isContacting = contactingSellerId === listing.id;
 
               return (
                 <Card key={listing.id} className="overflow-hidden h-full flex flex-col transition-all duration-200 hover:shadow-xl hover:-translate-y-1">
@@ -163,23 +94,13 @@ export default function ListingsPage() {
                       )}
                     </div>
 
-                    {user && (
+                    {user && isOwner && (
                       <div className="flex gap-2">
-                        {isOwner ? (
                           <Button asChild variant="ghost" size="icon" title="Edit listing">
                             <Link href={`/listings/${listing.id}/edit`}>
                               <Pencil className="h-5 w-5" />
                             </Link>
                           </Button>
-                        ) : (
-                          <Button variant="ghost" size="icon" onClick={() => handleContactSeller(listing)} disabled={isContacting} title="Contact seller">
-                            {isContacting ? (
-                              <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full" role="status" />
-                            ) : (
-                              <MessageSquare className="h-5 w-5" />
-                            )}
-                          </Button>
-                        )}
                       </div>
                     )}
                   </CardFooter>
