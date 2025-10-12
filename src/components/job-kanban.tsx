@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Briefcase, Building, DollarSign, Edit, MapPin, Users, Heart, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,7 @@ import { Badge } from './ui/badge';
 import Link from 'next/link';
 import { useUser } from '@/firebase';
 
-function JobCard({ 
+export function JobCard({ 
     job, 
     isFavourite, 
     onToggleFavourite, 
@@ -100,8 +100,8 @@ function JobCard({
                     )}
                 </div>
             </CardHeader>
-            <CardContent className="flex-grow p-3 flex flex-col justify-end">
-                <div className="flex justify-between items-center">
+            <CardContent className="flex-grow p-3 pt-0 flex flex-col justify-end">
+                 <div className="flex justify-between items-center">
                     <div className="flex flex-wrap gap-1">
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">{job.jobType}</Badge>
                         <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5">{job.status}</Badge>

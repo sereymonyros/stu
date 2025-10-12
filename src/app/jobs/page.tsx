@@ -1,14 +1,15 @@
+
 'use client';
 
 import { useMemo, useState, useEffect, Suspense } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { collection, doc, setDoc, deleteDoc, serverTimestamp, query } from 'firebase/firestore';
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Input } from '@/components/ui/input';
@@ -26,11 +27,15 @@ import {
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
-import { Board } from '@/components/job-kanban';
+import { Board, JobCard } from '@/components/job-kanban';
 import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import JobsLoading from './loading';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Building, DollarSign, MapPin, Pencil } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const FilterGroup = ({ title, options, selected, onToggle }: { title: string; options: string[]; selected: string[]; onToggle: (option: string) => void; }) => {
     if (!options || options.length === 0) return null;
@@ -55,14 +60,89 @@ const FilterGroup = ({ title, options, selected, onToggle }: { title: string; op
     );
 };
 
-function JobsPageContent({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; isRecruiter: boolean; }) {
+    const { user } = useUser();
+    const isOwner = user && user.uid === job.recruiterId;
+
+    const salaryDisplay = useMemo(() => {
+        if (job.salaryMin && job.salaryMax) {
+            return `$${job.salaryMin.toLocaleString()} - $${job.salaryMax.toLocaleString()}`;
+        }
+        if (job.salaryMin) {
+            return `From $${job.salaryMin.toLocaleString()}`;
+        }
+        if (job.salaryMax) {
+            return `Up to $${job.salaryMax.toLocaleString()}`;
+        }
+        return null;
+    }, [job.salaryMin, job.salaryMax]);
+    
+    return (
+        <Card className="hover:shadow-md transition-shadow duration-200 w-full">
+            <div className="p-4 flex flex-col sm:flex-row items-start gap-4 relative">
+
+                <div className="absolute top-2 left-2 flex items-center gap-2">
+                    {user && !isOwner && !isRecruiter && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onToggleFavourite(job.id, isFavourite)}
+                            className="text-muted-foreground hover:text-red-500 h-8 w-8"
+                            disabled={hasApplied}
+                            aria-label="Toggle Favourite"
+                        >
+                            <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
+                        </Button>
+                    )}
+                </div>
+
+                <div className="absolute top-2 right-2 flex items-center gap-2">
+                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm">{job.jobType}</Badge>
+                     <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm">{job.status}</Badge>
+                </div>
+
+
+                <Avatar className="h-12 w-12 hidden sm:flex">
+                    <AvatarImage src={job.companyLogoUrl || `https://picsum.photos/seed/${job.companyName}/100`} />
+                    <AvatarFallback>{job.companyName?.charAt(0)}</AvatarFallback>
+                </Avatar>
+
+                <div className="flex-1 w-full sm:w-auto pt-8 sm:pt-0">
+                    <Link href={`/jobs/${job.id}/apply`} className="font-semibold text-lg hover:text-primary leading-tight">{job.title}</Link>
+                    <div className="flex flex-col sm:flex-row sm:items-center text-sm text-muted-foreground gap-x-3 gap-y-1 mt-1">
+                        <div className="flex items-center gap-1.5"><Building className="h-4 w-4" /> {job.companyName}</div>
+                        <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {job.location}</div>
+                        {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
+                    </div>
+                </div>
+
+                <div className="w-full sm:w-auto flex justify-end items-center sm:self-center ml-auto">
+                    {hasApplied ? (
+                        <Button disabled size="sm">Applied</Button>
+                    ) : isRecruiter ? (
+                        <Button asChild variant="outline" size="sm">
+                           <Link href={`/jobs/${job.id}/edit`}>View</Link>
+                        </Button>
+                    ) : (
+                        <Button asChild size="sm">
+                            <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
+                        </Button>
+                    )}
+                </div>
+            </div>
+        </Card>
+    );
+}
+
+function JobsPageContent() {
     const firestore = useFirestore();
-    const { user } = useUser(); // isUserLoading is handled by Suspense
+    const { user } = useUser();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
     
     // --- View State ---
-    const [viewMode, setViewMode] = useState<'card' | 'board'>('card');
+    const [viewMode, setViewMode] = useState<'card' | 'list' |'board'>('card');
     
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
@@ -107,21 +187,12 @@ function JobsPageContent({ searchParams }: { searchParams: { [key: string]: stri
     const favouriteJobIds = useMemo(() => new Set(favouriteJobs?.map(fav => fav.jobId)), [favouriteJobs]);
     const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
     
-    const getSearchParam = (key: string, fallback: any = '') => {
-        const value = searchParams[key];
-        return Array.isArray(value) ? value[0] : value || fallback;
-    }
-    const getSearchParamAll = (key: string) => {
-        const value = searchParams[key];
-        return Array.isArray(value) ? value : (value ? [value] : []);
-    }
-
     // --- Search & Filter State ---
-    const [searchQuery, setSearchQuery] = useState(getSearchParam('q'));
-    const [selectedCompanies, setSelectedCompanies] = useState<string[]>(getSearchParamAll('company'));
-    const [selectedLocations, setSelectedLocations] = useState<string[]>(getSearchParamAll('location'));
-    const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>(getSearchParamAll('jobType'));
-    const [showFavoritesOnly, setShowFavoritesOnly] = useState(getSearchParam('favorites') === 'true');
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+    const [selectedCompanies, setSelectedCompanies] = useState<string[]>(searchParams.getAll('company'));
+    const [selectedLocations, setSelectedLocations] = useState<string[]>(searchParams.getAll('location'));
+    const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>(searchParams.getAll('jobType'));
+    const [showFavoritesOnly, setShowFavoritesOnly] = useState(searchParams.get('favorites') === 'true');
     const [salaryRange, setSalaryRange] = useState<[number, number]>([0, maxSalary]);
 
     // --- Dialog State ---
@@ -131,8 +202,8 @@ function JobsPageContent({ searchParams }: { searchParams: { [key: string]: stri
     
     // Initialize salary range from URL params or default
     useEffect(() => {
-        const min = getSearchParam('salaryMin');
-        const max = getSearchParam('salaryMax');
+        const min = searchParams.get('salaryMin');
+        const max = searchParams.get('salaryMax');
         const initialMin = min ? parseInt(min, 10) : 0;
         const initialMax = max ? parseInt(max, 10) : maxSalary;
         setSalaryRange([initialMin, initialMax]);
@@ -140,23 +211,27 @@ function JobsPageContent({ searchParams }: { searchParams: { [key: string]: stri
 
     // Update URL when filters change
     useEffect(() => {
-        const params = new URLSearchParams();
-        if (searchQuery) params.set('q', searchQuery);
+        const params = new URLSearchParams(searchParams.toString());
+        
+        // Handle single value params
+        if (searchQuery) params.set('q', searchQuery); else params.delete('q');
+        if (showFavoritesOnly) params.set('favorites', 'true'); else params.delete('favorites');
+        if (salaryRange[0] > 0) params.set('salaryMin', salaryRange[0].toString()); else params.delete('salaryMin');
+        if (salaryRange[1] < maxSalary) params.set('salaryMax', salaryRange[1].toString()); else params.delete('salaryMax');
+        
+        // Handle multi-value params
+        params.delete('company');
         selectedCompanies.forEach(c => params.append('company', c));
+
+        params.delete('location');
         selectedLocations.forEach(l => params.append('location', l));
+        
+        params.delete('jobType');
         selectedJobTypes.forEach(t => params.append('jobType', t));
-        if (showFavoritesOnly) params.set('favorites', 'true');
         
-        if (salaryRange[0] > 0) {
-            params.set('salaryMin', salaryRange[0].toString());
-        }
-        if (salaryRange[1] < maxSalary) {
-             params.set('salaryMax', salaryRange[1].toString());
-        }
-        
-        // Using window.history.replaceState to avoid re-triggering Suspense boundary
-        window.history.replaceState(null, '', `/jobs?${params.toString()}`);
-    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary]);
+        // Using router.replace to avoid re-triggering Suspense boundary and adding to history
+        router.replace(`/jobs?${params.toString()}`);
+    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, router, searchParams]);
 
     // --- Toggle Handlers ---
     const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
@@ -373,6 +448,55 @@ function JobsPageContent({ searchParams }: { searchParams: { [key: string]: stri
         return <JobsLoading />;
     }
 
+    const renderJobs = () => {
+        if (filteredAndSortedJobs.length === 0) {
+            return (
+                 <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
+                    <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <div className="text-center">
+                        <h2 className="text-2xl font-semibold tracking-tight">{hasActiveFilters ? 'No Matching Jobs' : 'No jobs posted yet'}</h2>
+                        <p className="text-muted-foreground mt-2">
+                            {hasActiveFilters ? 'Try adjusting your filters.' : 'Check back soon for new opportunities!'}
+                        </p>
+                    </div>
+                </div>
+            )
+        }
+
+        if (viewMode === 'list') {
+            return (
+                <div className="grid grid-cols-1 gap-4">
+                    {filteredAndSortedJobs.map((job) => (
+                        <JobListItem 
+                            key={job.id} 
+                            job={job}
+                            isFavourite={favouriteJobIds.has(job.id)}
+                            onToggleFavourite={handleToggleFavourite}
+                            hasApplied={appliedJobIds.has(job.id)}
+                            isRecruiter={isRecruiter ?? false}
+                        />
+                    ))}
+                </div>
+            )
+        }
+
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                {filteredAndSortedJobs.map((job) => (
+                    <JobCard 
+                        key={job.id} 
+                        job={job}
+                        isFavourite={favouriteJobIds.has(job.id)}
+                        onToggleFavourite={handleToggleFavourite}
+                        hasApplied={appliedJobIds.has(job.id)}
+                        isRecruiter={isRecruiter ?? false}
+                        isDraggable={false}
+                    />
+                ))}
+            </div>
+        )
+    }
+
     return (
         <div className="flex flex-col min-h-screen">
             <main className="flex-1 p-4 md:p-6 lg:p-8">
@@ -384,10 +508,11 @@ function JobsPageContent({ searchParams }: { searchParams: { [key: string]: stri
                         )}
                     </div>
                     <div className="flex items-center gap-2">
-                       {isRecruiter && jobs.length > 0 && (
+                       {(isRecruiter || jobs.length > 0) && (
                             <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
-                                <ToggleGroupItem value="card" aria-label="Card view"><List /></ToggleGroupItem>
-                                <ToggleGroupItem value="board" aria-label="Board view"><LayoutGrid /></ToggleGroupItem>
+                                <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
+                                <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
+                                {isRecruiter && <ToggleGroupItem value="board" aria-label="Board view" className="hidden lg:inline-flex">Board</ToggleGroupItem>}
                             </ToggleGroup>
                         )}
                         {isRecruiter && (
@@ -398,7 +523,7 @@ function JobsPageContent({ searchParams }: { searchParams: { [key: string]: stri
                     </div>
                 </div>
                 
-                {viewMode === 'card' && (
+                {viewMode !== 'board' && (
                     <>
                          {jobs.length > 0 && (
                             <Card className="p-4 mb-6">
@@ -499,31 +624,7 @@ function JobsPageContent({ searchParams }: { searchParams: { [key: string]: stri
                             </Card>
                         )}
                         
-                        <div className="grid grid-cols-1 gap-4">
-                            {filteredAndSortedJobs.length > 0 ? (
-                                filteredAndSortedJobs.map((job) => (
-                                <Board.Card 
-                                    key={job.id} 
-                                    job={job}
-                                    isFavourite={favouriteJobIds.has(job.id)}
-                                    onToggleFavourite={handleToggleFavourite}
-                                    hasApplied={appliedJobIds.has(job.id)}
-                                    isRecruiter={isRecruiter}
-                                    isDraggable={false}
-                                />
-                                ))
-                            ) : (
-                                <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
-                                <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
-                                <div className="text-center">
-                                    <h2 className="text-2xl font-semibold tracking-tight">{hasActiveFilters ? 'No Matching Jobs' : 'No jobs posted yet'}</h2>
-                                    <p className="text-muted-foreground mt-2">
-                                        {hasActiveFilters ? 'Try adjusting your filters.' : 'Check back soon for new opportunities!'}
-                                    </p>
-                                </div>
-                                </div>
-                            )}
-                        </div>
+                        {renderJobs()}
                     </>
                 )}
 
@@ -542,7 +643,7 @@ function JobsPageContent({ searchParams }: { searchParams: { [key: string]: stri
                                             isLoading={!jobs} // Kanban uses its own loading prop
                                         >
                                             {stageJobs.map((job: any) => (
-                                                <Board.Card
+                                                <JobCard
                                                     key={job.id}
                                                     job={job}
                                                     isFavourite={false}
@@ -564,16 +665,10 @@ function JobsPageContent({ searchParams }: { searchParams: { [key: string]: stri
     );
 }
 
-export default function JobsPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
+export default function JobsPage() {
     return (
         <Suspense fallback={<JobsLoading />}>
-            <JobsPageContent searchParams={searchParams} />
+            <JobsPageContent />
         </Suspense>
     )
 }
-
-    
