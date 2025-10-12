@@ -20,16 +20,15 @@ import type { AnalyzeApplicantOutput } from '@/ai/flows/analyze-applicant-schema
 import { useToast } from '@/hooks/use-toast';
 import type { Timestamp } from 'firebase/firestore';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { getCachedAnalysis, setCachedAnalysis } from '@/lib/ai-cache';
 
 
 // Helper function to convert a file URL to a Base64 data URI
 const urlToDataUri = async (url: string): Promise<string> => {
-    // This proxy might be needed if you face CORS issues in development or production.
-    // const proxyUrl = '/api/image-proxy?url='; 
-    // const response = await fetch(proxyUrl + encodeURIComponent(url));
+    // This can be adapted with a proxy if CORS issues arise.
     const response = await fetch(url);
     if (!response.ok) {
-        throw new Error(`Failed to fetch file: ${response.statusText}`);
+        throw new Error(`Failed to fetch file for AI analysis: ${response.statusText}`);
     }
     const blob = await response.blob();
     return new Promise((resolve, reject) => {
@@ -40,7 +39,7 @@ const urlToDataUri = async (url: string): Promise<string> => {
     });
 };
 
-function AIAnalysisDisplay({ analysis, error, isLoading }: { analysis: AnalyzeApplicantOutput | null, error: string | null, isLoading: boolean }) {
+function AIAnalysisDisplay({ analysis, error, isLoading, onRetry }: { analysis: AnalyzeApplicantOutput | null, error: string | null, isLoading: boolean, onRetry: () => void }) {
     if (isLoading) {
        return (
             <div className="flex flex-col items-center justify-center p-4">
@@ -55,14 +54,16 @@ function AIAnalysisDisplay({ analysis, error, isLoading }: { analysis: AnalyzeAp
             <Alert variant="destructive">
                 <AlertTitle>Analysis Failed</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
+                <Button onClick={onRetry} variant="secondary" className="mt-4">Retry Analysis</Button>
             </Alert>
         )
     }
 
     if (!analysis) {
         return (
-             <div className="text-center p-4">
+             <div className="text-center p-4 space-y-3">
                 <p className="text-muted-foreground">Analysis is not yet available.</p>
+                <Button onClick={onRetry}>Start Analysis</Button>
              </div>
         )
     }
@@ -146,14 +147,22 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
         zIndex: isDragging ? 10 : 'auto',
     };
     
-    const [analysis, setAnalysis] = useState<AnalyzeApplicantOutput | null>(null);
+    // State is now managed inside the card
+    const [analysis, setAnalysis] = useState<AnalyzeApplicantOutput | null>(() => getCachedAnalysis(applicant.id));
     const [analysisError, setAnalysisError] = useState<string | null>(null);
     const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
 
+    // This function is called when the dialog opens or when "Retry" is clicked.
     const handleGetAIAnalysis = async () => {
-        if (analysis || analysisError) {
-            return; // Don't re-fetch if we already have a result or an error
+        // Always check cache first.
+        const cached = getCachedAnalysis(applicant.id);
+        if (cached) {
+            setAnalysis(cached);
+            return;
         }
+
+        // If not cached, and not already loading, then fetch.
+        if (isLoadingAnalysis) return;
 
         setIsLoadingAnalysis(true);
         setAnalysisError(null);
@@ -166,6 +175,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                 resumeDataUri: resumeDataUri,
             });
             setAnalysis(result);
+            setCachedAnalysis(applicant.id, result); // Save to cache on success
         } catch (error: any) {
             console.error("AI Analysis Failed:", error);
             const friendlyError = error.message || 'An unknown error occurred during analysis.';
@@ -221,7 +231,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                             </Button>
                          )}
                     </div>
-                     <Dialog onOpenChange={(open) => open && handleGetAIAnalysis()}>
+                     <Dialog onOpenChange={(open) => { if (open) handleGetAIAnalysis() }}>
                         <DialogTrigger asChild>
                             <Button variant="outline" size="sm" className="w-full mt-2 text-xs">
                                 <Sparkles className="mr-2 h-3 w-3 text-yellow-500" />
@@ -236,7 +246,12 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="py-4">
-                                <AIAnalysisDisplay analysis={analysis} error={analysisError} isLoading={isLoadingAnalysis}/>
+                                <AIAnalysisDisplay 
+                                  analysis={analysis} 
+                                  error={analysisError} 
+                                  isLoading={isLoadingAnalysis}
+                                  onRetry={handleGetAIAnalysis}
+                                />
                             </div>
                         </DialogContent>
                     </Dialog>

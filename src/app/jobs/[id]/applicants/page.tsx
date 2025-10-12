@@ -14,6 +14,25 @@ import { useToast } from '@/hooks/use-toast';
 import { Board } from '@/components/kanban';
 import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
 import { updateApplicationStatus } from '@/ai/flows/update-application-status-flow';
+import { analyzeApplicant } from '@/ai/flows/analyze-applicant-flow';
+import { getCachedAnalysis, setCachedAnalysis } from '@/lib/ai-cache';
+
+// Helper function to convert a file URL to a Base64 data URI
+const urlToDataUri = async (url: string): Promise<string> => {
+    // This can be adapted with a proxy if CORS issues arise.
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch file for AI analysis: ${response.statusText}`);
+    }
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+};
+
 
 export default function ApplicantsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: jobId } = use(params);
@@ -48,6 +67,41 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
             router.replace('/jobs');
         }
     }, [user, job, router, toast]);
+
+    // --- AI Analysis Pre-fetching ---
+    useEffect(() => {
+        if (job && applications && applications.length > 0) {
+            console.log(`Found ${applications.length} applicants. Checking for cached analysis...`);
+            applications.forEach(async (app) => {
+                try {
+                    // Check if analysis is already in the cache
+                    const cached = getCachedAnalysis(app.id);
+                    if (cached) {
+                        console.log(`Analysis for ${app.applicantName} found in cache.`);
+                        return;
+                    }
+
+                    console.log(`No cache for ${app.applicantName}. Fetching analysis...`);
+                    // If not in cache, fetch it
+                    const resumeDataUri = await urlToDataUri(app.resumeUrl);
+                    const analysisResult = await analyzeApplicant({
+                        jobTitle: job.title,
+                        jobDescription: job.description,
+                        resumeDataUri: resumeDataUri,
+                    });
+                    
+                    // Store the result in the cache
+                    setCachedAnalysis(app.id, analysisResult);
+                    console.log(`Analysis for ${app.applicantName} fetched and cached.`);
+
+                } catch (error: any) {
+                     // We log the error but don't show a toast to avoid spamming the UI
+                     console.error(`Failed to pre-fetch analysis for ${app.applicantName}:`, error.message);
+                }
+            });
+        }
+    }, [applications, job]);
+    
 
     const [applicantsByStatus, setApplicantsByStatus] = useState<Record<string, any[]>>({});
 
