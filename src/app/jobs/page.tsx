@@ -80,7 +80,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     return (
         <Card className="hover:shadow-md transition-shadow duration-200 w-full">
             <div className="p-4 flex flex-col sm:flex-row items-start gap-4 relative">
-                <div className="absolute top-2 left-2 flex items-center gap-2">
+                 <div className="absolute top-2 left-2 flex items-center gap-2">
                     {user && !isOwner && !isRecruiter && (
                         <Button
                             variant="ghost"
@@ -94,7 +94,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         </Button>
                     )}
                 </div>
-                <div className="absolute top-2 right-2 flex items-center gap-2">
+                 <div className="absolute top-2 right-2 flex items-center gap-2">
                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm">{job.jobType}</Badge>
                      <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm">{job.status}</Badge>
                 </div>
@@ -105,7 +105,9 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                 <div className="flex-1 w-full sm:w-auto pt-8 sm:pt-0">
                     <Link href={`/jobs/${job.id}/apply`} className="font-semibold text-lg hover:text-primary leading-tight">{job.title}</Link>
                     <div className="flex flex-col sm:flex-row sm:items-center text-sm text-muted-foreground gap-x-3 gap-y-1 mt-1">
-                        <div className="flex items-center gap-1.5"><Building className="h-4 w-4" /> {job.companyName}</div>
+                        <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="flex items-center gap-1.5 hover:text-primary hover:underline">
+                            <Building className="h-4 w-4" /> {job.companyName}
+                        </Link>
                         <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {job.location}</div>
                         {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                     </div>
@@ -114,9 +116,13 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     {hasApplied ? (
                         <Button disabled size="sm">Applied</Button>
                     ) : isRecruiter ? (
-                        <Button asChild variant="outline" size="sm">
-                           <Link href={`/jobs/${job.id}/edit`}>View</Link>
-                        </Button>
+                        isOwner ? (
+                            <Button asChild variant="outline" size="sm">
+                               <Link href={`/jobs/${job.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Edit</Link>
+                            </Button>
+                        ) : (
+                             <Button disabled variant="outline" size="sm">View</Button>
+                        )
                     ) : (
                         <Button asChild size="sm">
                             <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
@@ -136,7 +142,7 @@ function JobsPageContent() {
     const { toast } = useToast();
     
     // --- View State ---
-    const [viewMode, setViewMode] = useState<'card' | 'list' |'board'>('card');
+    const [viewMode, setViewMode] = useState<'card' | 'list' |'board'>('list');
     
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
@@ -496,8 +502,8 @@ function JobsPageContent() {
                     <div className="flex items-center gap-2">
                        {(isRecruiter || jobs.length > 0) && (
                             <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
-                                <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
                                 <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
+                                <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
                                 {isRecruiter && <ToggleGroupItem value="board" aria-label="Board view" className="hidden lg:inline-flex">Board</ToggleGroupItem>}
                             </ToggleGroup>
                         )}
