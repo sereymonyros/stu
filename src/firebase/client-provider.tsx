@@ -50,9 +50,9 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
     >
       <div className="relative flex flex-col min-h-screen">
         <Header />
-        <main className="flex-1 pb-16 md:pb-0">
+        <div className="flex-1 flex flex-col">
           {children}
-        </main>
+        </div>
         <BottomNavbar />
         <Toaster />
       </div>
