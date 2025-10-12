@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth, useFirestore, useUser, useDoc } from '@/firebase';
-import { doc, updateDoc, writeBatch, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
@@ -35,6 +35,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { Progress } from '@/components/ui/progress';
 import { verifyHumanFace } from '@/ai/flows/verify-human-face-flow';
 import { uploadResume } from '@/ai/flows/upload-resume-flow';
+import { updateResumeOnApplications } from '@/ai/flows/update-resume-on-applications-flow';
 
 // Helper function to convert a File to a Base64 data URI
 const toBase64 = (file: File): Promise<string> =>
@@ -185,43 +186,6 @@ export default function ProfilePage() {
     });
 };
 
-  const updateApplicationsWithNewResume = async (newResumeUrl: string) => {
-    if (!user || !firestore) return;
-
-    // Find all applications for the current user
-    const userApplicationsQuery = query(
-      collection(firestore, `users/${user.uid}/applications`),
-      where('status', 'in', ['submitted', 'reviewed'])
-    );
-    const userApplicationsSnapshot = await getDocs(userApplicationsQuery);
-    
-    if (userApplicationsSnapshot.empty) {
-      return; // No applications to update
-    }
-
-    const batch = writeBatch(firestore);
-    let updatedCount = 0;
-
-    for (const userAppDoc of userApplicationsSnapshot.docs) {
-      const { jobId } = userAppDoc.data();
-      if (jobId) {
-        // Path to the application document under the job
-        const mainApplicationRef = doc(firestore, 'jobs', jobId, 'applications', user.uid);
-        batch.update(mainApplicationRef, { resumeUrl: newResumeUrl });
-        updatedCount++;
-      }
-    }
-
-    if (updatedCount > 0) {
-      await batch.commit();
-      toast({
-        title: "Applications Updated",
-        description: `Your new resume has been updated on ${updatedCount} active job application(s).`
-      });
-    }
-  };
-
-
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     setIsSubmitting(true);
     setVerificationMessage(null); // Clear verification message on submit
@@ -263,8 +227,19 @@ export default function ProfilePage() {
         resumeUrl = result.downloadUrl;
         setUploadProgress(100); // Mark as complete
 
-        // After successfully getting the new URL, update applications
-        await updateApplicationsWithNewResume(resumeUrl);
+        // After successfully getting the new URL, trigger the secure server-side flow
+        if (resumeUrl) {
+          const { updatedCount } = await updateResumeOnApplications({
+              userId: auth.currentUser.uid,
+              newResumeUrl: resumeUrl,
+          });
+          if (updatedCount > 0) {
+            toast({
+              title: "Applications Updated",
+              description: `Your new resume has been updated on ${updatedCount} active job application(s).`
+            });
+          }
+        }
       }
 
       await updateProfile(auth.currentUser, {
