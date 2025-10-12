@@ -4,7 +4,7 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { collection, query, where, doc, deleteDoc } from 'firebase/firestore';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -30,37 +30,36 @@ function JobCard({ job }: { job: any }) {
     const { data: applicants, isLoading } = useCollection(applicantsQuery);
 
     return (
-        <Card className="flex flex-col h-full">
-            <CardHeader className="p-4">
-                <CardTitle className="text-lg">{job.title}</CardTitle>
-                <p className="text-sm text-muted-foreground">{job.companyName} - {job.location}</p>
-            </CardHeader>
-            <CardContent className="p-4 flex-grow">
-                <div className="flex items-center gap-2">
-                    {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
-                    {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
-                     {isLoading ? (
+        <Card>
+            <CardContent className="p-4 flex flex-col justify-between h-full">
+                <div className="flex-grow">
+                    <h3 className="font-semibold text-base truncate">{job.title}</h3>
+                    <p className="text-sm text-muted-foreground mb-2">{job.companyName} - {job.location}</p>
+                    <div className="flex items-center gap-2 mb-3">
+                        {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
+                        {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
+                    </div>
+                </div>
+                <div className="flex justify-between items-center">
+                    {isLoading ? (
                         <Skeleton className="h-6 w-20 rounded-full" />
                     ) : applicants && applicants.length > 0 ? (
                         <Badge variant="outline" className="flex items-center gap-1">
                            {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
                            {applicants.length} {applicants.length === 1 ? 'Applicant' : 'Applicants'}
                         </Badge>
-                    ) : null}
+                    ) : (
+                        <span className="text-xs text-muted-foreground">No applicants yet</span>
+                    )}
+                    <Button asChild variant="outline" size="sm">
+                        {applicants && applicants.length > 0 ? (
+                             <Link href={`/jobs/${job.id}/applicants`}>View Applicants</Link>
+                        ) : (
+                             <Link href={`/jobs/${job.id}/edit`}>Edit Job</Link>
+                        )}
+                    </Button>
                 </div>
             </CardContent>
-            <CardFooter className="p-4">
-                 {applicants && applicants.length > 0 && (
-                    <Button asChild variant="outline" className="w-full">
-                        <Link href={`/jobs/${job.id}/applicants`}>View Applicants</Link>
-                    </Button>
-                 )}
-                 {applicants && applicants.length === 0 && (
-                     <Button asChild variant="secondary" className="w-full">
-                        <Link href={`/jobs/${job.id}/edit`}>Edit Job</Link>
-                    </Button>
-                 )}
-            </CardFooter>
         </Card>
     );
 }
@@ -76,51 +75,49 @@ function AppliedJobCard({ job, applicationStatus, isFavourite }: { job: any, app
     }
 
     return (
-        <Card className="flex flex-col h-full">
-            <CardHeader className="p-4">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <CardTitle className="text-lg">{job.title}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{job.companyName} - {job.location}</p>
+        <Card>
+            <CardContent className="p-4 flex flex-col justify-between h-full">
+                <div className="flex-grow">
+                    <div className="flex justify-between items-start">
+                        <h3 className="font-semibold text-base truncate pr-2">{job.title}</h3>
+                        {isFavourite && (
+                            <Heart className="h-5 w-5 flex-shrink-0 fill-red-500 text-red-500" title="Favorite Job" />
+                        )}
                     </div>
-                    {isFavourite && (
-                        <Heart className="h-5 w-5 fill-red-500 text-red-500" title="Favorite Job" />
-                    )}
+                    <p className="text-sm text-muted-foreground mb-3">{job.companyName} - {job.location}</p>
                 </div>
-            </CardHeader>
-            <CardContent className="p-4 flex-grow">
-                 <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-muted-foreground">Status:</span>
-                    <Badge className={cn("capitalize text-white", statusColors[applicationStatus] || 'bg-gray-500')}>{applicationStatus}</Badge>
+                 <div className="flex justify-between items-center">
+                     <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-muted-foreground">Status:</span>
+                        <Badge className={cn("capitalize text-white", statusColors[applicationStatus] || 'bg-gray-500')}>{applicationStatus}</Badge>
+                    </div>
+                    <Button asChild variant="outline" size="sm">
+                       <Link href={`/jobs/${job.id}/apply`}>View Job</Link>
+                   </Button>
                 </div>
             </CardContent>
-            <CardFooter className="p-4">
-                 <Button asChild variant="outline" className="w-full">
-                    <Link href={`/jobs/${job.id}/apply`}>View Job</Link>
-                </Button>
-            </CardFooter>
         </Card>
     );
 }
 
 function FavouriteJobCard({ job }: { job: any }) {
     return (
-        <Card className="flex flex-col h-full">
-            <CardHeader className="p-4">
-                <CardTitle className="text-lg">{job.title}</CardTitle>
-                <p className="text-sm text-muted-foreground">{job.companyName} - {job.location}</p>
-            </CardHeader>
-            <CardContent className="p-4 flex-grow">
-                 <div className="flex items-center gap-2">
-                    {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
-                    {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
+         <Card>
+            <CardContent className="p-4 flex flex-col justify-between h-full">
+                <div className="flex-grow">
+                    <h3 className="font-semibold text-base truncate">{job.title}</h3>
+                    <p className="text-sm text-muted-foreground mb-2">{job.companyName} - {job.location}</p>
+                    <div className="flex items-center gap-2 mb-3">
+                       {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
+                       {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
+                   </div>
+                </div>
+                <div className="flex justify-end">
+                    <Button asChild variant="outline" size="sm">
+                       <Link href={`/jobs/${job.id}/apply`}>View Job</Link>
+                   </Button>
                 </div>
             </CardContent>
-            <CardFooter className="p-4">
-                 <Button asChild variant="outline" className="w-full">
-                    <Link href={`/jobs/${job.id}/apply`}>View Job</Link>
-                </Button>
-            </CardFooter>
         </Card>
     );
 }
@@ -130,34 +127,34 @@ function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting, onNotif
     const filterCount = (filters.companyNames?.length || 0) + (filters.locations?.length || 0) + (filters.jobTypes?.length || 0) + (filters.salaryMin || filters.salaryMax ? 1 : 0);
 
     return (
-        <Card className="flex flex-col h-full">
-            <CardHeader className="p-4">
-                <CardTitle className="text-base font-semibold truncate">{name}</CardTitle>
-                 {searchQuery && <CardDescription className="text-xs truncate">Query: "{searchQuery}"</CardDescription>}
-            </CardHeader>
-            <CardContent className="p-4 flex-grow">
-                <div className="flex flex-wrap gap-2">
-                    {filterCount > 0 ? (
-                        <Badge variant="secondary">{filterCount} {filterCount === 1 ? 'Filter' : 'Filters'}</Badge>
-                    ) : (
-                         <Badge variant="outline">No Filters</Badge>
-                    )}
+        <Card>
+             <CardContent className="p-4 flex flex-col justify-between h-full">
+                <div className="flex-grow">
+                     <h3 className="font-semibold text-base truncate">{name}</h3>
+                     {searchQuery && <p className="text-xs text-muted-foreground truncate mb-2">Query: "{searchQuery}"</p>}
+                     <div className="mb-3">
+                         {filterCount > 0 ? (
+                            <Badge variant="secondary">{filterCount} {filterCount === 1 ? 'Filter' : 'Filters'}</Badge>
+                        ) : (
+                             <Badge variant="outline">No Filters</Badge>
+                        )}
+                     </div>
+                </div>
+                <div className="flex justify-between items-center">
+                    <div className="flex gap-2">
+                        <Button onClick={() => onExecute(savedSearch)} size="sm" variant="outline" className="h-8 px-2">
+                            <Search className="mr-1.5 h-4 w-4" /> Run
+                        </Button>
+                        <Button onClick={() => onNotify(savedSearch.id)} size="sm" variant="outline" className="h-8 px-2" disabled={isNotifying}>
+                            <BellDot className="mr-1.5 h-4 w-4" /> Notify
+                        </Button>
+                    </div>
+                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onDelete(savedSearch.id)} disabled={isDeleting}>
+                         <Trash2 className="h-4 w-4" />
+                         <span className="sr-only">Delete search</span>
+                    </Button>
                 </div>
             </CardContent>
-            <CardFooter className="p-4 flex justify-between items-center bg-muted/50">
-                <div className="flex gap-2">
-                    <Button onClick={() => onExecute(savedSearch)} size="sm" variant="outline" className="h-8">
-                        <Search className="mr-2 h-4 w-4" /> Run
-                    </Button>
-                    <Button onClick={() => onNotify(savedSearch.id)} size="sm" variant="outline" className="h-8" disabled={isNotifying}>
-                        <BellDot className="mr-2 h-4 w-4" /> Notify
-                    </Button>
-                </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onDelete(savedSearch.id)} disabled={isDeleting}>
-                     <Trash2 className="h-4 w-4" />
-                     <span className="sr-only">Delete search</span>
-                </Button>
-            </CardFooter>
         </Card>
     )
 }
