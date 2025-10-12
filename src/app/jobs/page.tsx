@@ -210,7 +210,7 @@ function JobsPageContent() {
         const searchData = {
             id: newSearchDocRef.id,
             name: savedSearchName,
-            searchQuery: searchQuery || '',
+            searchQuery: savedSearchName.toLowerCase() || '',
             filters: {
                 companyNames: selectedCompanies,
                 locations: selectedLocations,
