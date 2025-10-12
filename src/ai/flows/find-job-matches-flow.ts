@@ -117,10 +117,10 @@ const findJobMatchesFlow = ai.defineFlow(
         totalMatches += userMatchedJobs.length;
         try {
           await sendEmail({
-            to: user.email,
+            to: user.email as string,
             subject: `New Job Alert: ${userMatchedJobs.length} new opportunity matches!`,
             htmlBody: jobAlertTemplate({
-              userName: user.displayName || 'Job Seeker',
+              userName: (user.displayName as string) || 'Job Seeker',
               matchedJobs: userMatchedJobs,
             }),
           });
