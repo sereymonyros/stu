@@ -80,7 +80,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
 
   const hasApplied = !!application;
   const profileComplete = !!userProfile?.photoURL && !!userProfile?.resumeUrl;
-  const canWithdraw = hasApplied && (application.status === 'submitted' || application.status === 'reviewed');
+  const canWithdraw = hasApplied && (!application.status || application.status === 'submitted' || application.status === 'reviewed');
 
   // --- Effects ---
   useEffect(() => {
