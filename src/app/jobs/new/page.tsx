@@ -134,7 +134,38 @@ export default function NewJobPage() {
     router.push('/jobs');
   };
 
-  const isAuthorized = !isUserLoading && !isProfileLoading && userProfile?.userType === 'recruiter';
+  if (isUserLoading || isProfileLoading) {
+    return (
+        <div className="flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
+            <Card className="max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle>Post a New Job</CardTitle>
+                 <CardDescription>
+                    Fill in the details to find the perfect candidate.
+                  </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                    <div className="space-y-2">
+                        <div className="h-4 w-24 bg-muted rounded-md" />
+                        <div className="h-10 w-full bg-muted rounded-md" />
+                    </div>
+                    <div className="space-y-2">
+                        <div className="h-4 w-24 bg-muted rounded-md" />
+                        <div className="h-10 w-full bg-muted rounded-md" />
+                    </div>
+                    <div className="h-10 w-full bg-muted rounded-md" />
+                </div>
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+    )
+  }
+
+  const isAuthorized = userProfile?.userType === 'recruiter';
   const profileComplete = isAuthorized && !!userProfile?.photoURL;
 
   return (
@@ -176,7 +207,7 @@ export default function NewJobPage() {
                             <FormField control={form.control} name="jobType" render={({ field }) => (
                             <FormItem><FormLabel>Job Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select employment type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Full-time">Full-time</SelectItem><SelectItem value="Part-time">Part-time</SelectItem><SelectItem value="Contract">Contract</SelectItem><SelectItem value="Internship">Internship</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                             )} />
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField control={form.control} name="salaryMin" render={({ field }) => (
                                 <FormItem><FormLabel>Minimum Salary (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50000" {...field} /></FormControl><FormMessage /></FormItem>

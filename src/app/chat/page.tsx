@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useEffect } from 'react';
@@ -57,7 +58,7 @@ export default function ChatsPage() {
     }, [firestore, user]);
 
     const { data: chats, isLoading } = useCollection(chatsQuery);
-    
+
     // Sort chats by last update time
     const sortedChats = useMemo(() => {
         if (!chats) return [];
@@ -67,6 +68,30 @@ export default function ChatsPage() {
             return dateB - dateA;
         });
     }, [chats]);
+
+    if (isUserLoading) {
+        return (
+            <div className="flex flex-col min-h-screen">
+                <Header />
+                <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
+                    <div className="max-w-4xl mx-auto">
+                        <Card>
+                            <CardHeader>
+                                <Skeleton className="h-8 w-64" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    <Skeleton className="h-20 w-full" />
+                                    <Skeleton className="h-20 w-full" />
+                                    <Skeleton className="h-20 w-full" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </main>
+            </div>
+        )
+    }
 
     if (!user) {
         return null;
@@ -84,26 +109,17 @@ export default function ChatsPage() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {isLoading && (
-                                <div className="space-y-4">
-                                    <Skeleton className="h-20 w-full" />
-                                    <Skeleton className="h-20 w-full" />
-                                    <Skeleton className="h-20 w-full" />
-                                </div>
-                            )}
-                            {!isLoading && sortedChats && sortedChats.length > 0 ? (
+                            {sortedChats && sortedChats.length > 0 ? (
                                 <div className="space-y-4">
                                     {sortedChats.map(chat => <ChatListItem key={chat.id} chat={chat} />)}
                                 </div>
                             ) : (
-                                !isLoading && (
-                                    <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
-                                        <Inbox className="mx-auto h-12 w-12 text-muted-foreground" />
-                                        <h3 className="text-xl font-semibold">No conversations yet</h3>
-                                        <p className="text-muted-foreground">Contact a seller on a listing to start a conversation.</p>
-                                        <Button asChild><Link href="/listings">Browse Listings</Link></Button>
-                                    </div>
-                                )
+                                <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
+                                    <Inbox className="mx-auto h-12 w-12 text-muted-foreground" />
+                                    <h3 className="text-xl font-semibold">No conversations yet</h3>
+                                    <p className="text-muted-foreground">Contact a seller on a listing to start a conversation.</p>
+                                    <Button asChild><Link href="/listings">Browse Listings</Link></Button>
+                                </div>
                             )}
                         </CardContent>
                     </Card>

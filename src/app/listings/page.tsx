@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useUser } from '@/firebase';
@@ -28,7 +29,7 @@ export default function ListingsPage() {
     return collection(firestore, 'listings');
   }, [firestore]);
 
-  const { data: listings } = useCollection(listingsCollection);
+  const { data: listings, isLoading } = useCollection(listingsCollection);
 
   const handleContactSeller = async (listing: any) => {
     if (!user) {
@@ -47,10 +48,10 @@ export default function ListingsPage() {
       // 1. Filter chats where the current user is a participant. This satisfies security rules.
       const userChatsQuery = query(chatsRef, where('participants', 'array-contains', user.uid));
       const userChatsSnapshot = await getDocs(userChatsQuery);
-      
+
       // 2. From this smaller, secure result set, find the one for the specific listing.
-      const existingChat = userChatsSnapshot.docs.find(doc => 
-        doc.data().listingId === listing.id && 
+      const existingChat = userChatsSnapshot.docs.find(doc =>
+        doc.data().listingId === listing.id &&
         doc.data().participants.includes(listing.sellerId)
       );
 
@@ -91,6 +92,35 @@ export default function ListingsPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+        <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-1 p-4 md:p-6 lg:p-8">
+                <div className="container mx-auto">
+                    <div className="flex justify-between items-center mb-6">
+                        <Skeleton className="h-10 w-48" />
+                        <Skeleton className="h-10 w-32" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                        <Card key={i}>
+                            <CardHeader>
+                            <Skeleton className="aspect-square w-full" />
+                            </CardHeader>
+                            <CardContent>
+                            <Skeleton className="h-6 w-3/4 mb-2" />
+                            <Skeleton className="h-4 w-1/2" />
+                            </CardContent>
+                        </Card>
+                        ))}
+                    </div>
+                </div>
+            </main>
+        </div>
+    )
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -103,7 +133,7 @@ export default function ListingsPage() {
             </Button>
           </div>
 
-          {listings && (
+          {listings && listings.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {listings.map((listing) => {
                 const isOwner = user && user.uid === listing.sellerId;
@@ -164,7 +194,7 @@ export default function ListingsPage() {
                           <p className="text-xl font-bold text-primary">${listing.price}</p>
                         )}
                       </div>
-                      
+
                       {user && (
                         <div className="flex gap-2">
                           {isOwner ? (
@@ -189,9 +219,7 @@ export default function ListingsPage() {
                 )
               })}
             </div>
-          )}
-
-          {(!listings) && (
+          ) : (
              <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
                 <Store className="mx-auto h-12 w-12 text-muted-foreground" />
                 <div className="text-center">

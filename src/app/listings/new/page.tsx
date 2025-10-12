@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -16,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth, useFirestore } from '@/firebase'; 
+import { useAuth, useFirestore } from '@/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -60,7 +61,7 @@ export default function NewListingPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  
+
   const form = useForm<z.infer<typeof listingSchema>>({
     resolver: zodResolver(listingSchema),
     defaultValues: {
@@ -79,7 +80,7 @@ export default function NewListingPage() {
     });
     return () => unsubscribe();
   }, [router]);
-  
+
   useEffect(() => {
     return () => {
       imagePreviews.forEach(url => URL.revokeObjectURL(url));
@@ -88,7 +89,7 @@ export default function NewListingPage() {
 
   const onSubmit = async (values: z.infer<typeof listingSchema>) => {
     setIsLoading(true);
-    
+
     if (!auth.currentUser) {
         toast({
             variant: "destructive",
@@ -99,7 +100,7 @@ export default function NewListingPage() {
         return;
     }
     const user = auth.currentUser;
-    
+
     try {
       const imageFiles = Array.from(values.images);
 
@@ -125,7 +126,7 @@ export default function NewListingPage() {
         imageUrls: imageUrls,
         status: 'Available',
       };
-      
+
       addDoc(listingsCollection, listingData).catch(serverError => {
         errorEmitter.emit(
           'permission-error',
@@ -136,14 +137,14 @@ export default function NewListingPage() {
           })
         );
       });
-      
+
       toast({
         title: "Listing created!",
         description: "Your item has been successfully listed.",
       });
 
       form.reset();
-      setImagePreviews([]); 
+      setImagePreviews([]);
       router.push(`/listings`);
 
     } catch (error: any) {
@@ -241,12 +242,12 @@ export default function NewListingPage() {
                                     </p>
                                     <p className="text-xs text-muted-foreground">PNG, JPG or WEBP (MAX. 5MB)</p>
                                 </div>
-                                <Input 
+                                <Input
                                   id="images-upload"
-                                  type="file" 
+                                  type="file"
                                   multiple
                                   className="hidden"
-                                  accept="image/*" 
+                                  accept="image/*"
                                   disabled={isLoading}
                                   onChange={(e) => {
                                     field.onChange(e.target.files);

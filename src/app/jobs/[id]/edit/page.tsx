@@ -61,7 +61,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const finalJobId = Array.isArray(jobId) ? jobId[0] : jobId;
 
   const jobRef = useMemo(() => {
@@ -70,7 +70,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   }, [firestore, finalJobId]);
 
   const { data: job, isLoading: isJobLoading } = useDoc(jobRef);
-  
+
   const form = useForm<z.infer<typeof jobSchema>>({
     resolver: zodResolver(jobSchema),
     defaultValues: {
@@ -123,7 +123,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         setIsSubmitting(false);
         return;
     }
-    
+
     const dataToUpdate = {
       ...values,
       salaryMin: values.salaryMin || null,
@@ -142,7 +142,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           })
         );
       });
-      
+
     toast({
       title: "Job updated!",
       description: "Your job posting has been successfully updated.",
@@ -150,6 +150,54 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
 
     router.push(`/jobs`);
   };
+
+  if (isJobLoading) {
+      return (
+        <div className="flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
+            <Card className="max-w-2xl mx-auto">
+              <CardHeader>
+                <Skeleton className="h-8 w-48" />
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                 <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                   <div className="space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-40 w-full" />
+                </div>
+                <Skeleton className="h-10 w-full" />
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+      )
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -176,7 +224,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                    <FormField control={form.control} name="status" render={({ field }) => (
                     <FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select job status" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Available">Available</SelectItem><SelectItem value="Pending">Pending</SelectItem><SelectItem value="Sold">Sold</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                   )} />
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField control={form.control} name="salaryMin" render={({ field }) => (
                         <FormItem><FormLabel>Minimum Salary (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50000" {...field} /></FormControl><FormMessage /></FormItem>
@@ -198,13 +246,11 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
             </CardContent>
             </Card>
         ) : (
-          !isJobLoading && (
             <div className="text-center py-20">
                 <h2 className="text-2xl font-semibold">Job not found</h2>
                 <p className="text-muted-foreground mt-2">This job posting may have been removed or the link is incorrect.</p>
                 <Button asChild className="mt-6"><Link href="/jobs">Back to Jobs</Link></Button>
             </div>
-          )
         )}
       </main>
     </div>

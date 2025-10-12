@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useEffect, useState, useRef, use } from 'react';
@@ -57,7 +56,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
   const [isUploadingResume, setIsUploadingResume] = useState(false);
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
-  
+
   // --- Data Fetching ---
   const jobRef = useMemo(() => {
     if (!firestore || !jobId) return null;
@@ -78,7 +77,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
   const { data: job, isLoading: isJobLoading } = useDoc(jobRef);
   const { data: userProfile, isLoading: isProfileLoading, refetch: refetchUserProfile } = useDoc(userProfileRef);
   const { data: application, isLoading: isApplicationLoading } = useDoc(userApplicationRef);
-  
+
   const hasApplied = !!application;
   const profileComplete = !!userProfile?.photoURL && !!userProfile?.resumeUrl;
 
@@ -93,7 +92,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
         router.replace('/jobs');
     }
   }, [user, isUserLoading, userProfile, router, toast]);
-  
+
   const sendConfirmationEmails = async () => {
     if (!user || !userProfile || !job) return;
 
@@ -218,7 +217,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
           throw permissionError;
         })
       ]);
-      
+
       // Show success dialog and then send emails
       setIsSuccessDialogOpen(true);
       await sendConfirmationEmails();
@@ -235,7 +234,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
   const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user || !userProfileRef) return;
-    
+
     // Validate file
     if (file.size > MAX_FILE_SIZE) {
         toast({ variant: 'destructive', title: 'File too large', description: 'Max resume size is 5MB.'});
@@ -247,7 +246,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
     }
 
     setIsUploadingResume(true);
-    
+
     try {
         const fileDataUri = await toBase64(file);
         const uploadResult = await uploadFile({
@@ -260,7 +259,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
         await updateDoc(userProfileRef, { resumeUrl: uploadResult.downloadUrl });
 
         toast({ title: 'Resume uploaded!', description: 'Your resume has been successfully saved.'});
-        
+
         // Manually trigger a re-fetch of the user profile data
         refetchUserProfile();
 
@@ -287,6 +286,37 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
       return "resume-file";
     }
   };
+
+
+  if (isJobLoading || isProfileLoading || isApplicationLoading) {
+    return (
+        <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-1 container mx-auto p-4 md:p:6 lg:p-8">
+                <Card className="max-w-2xl mx-auto">
+                <CardHeader>
+                    <Skeleton className="h-9 w-36 mb-4" />
+                    <Skeleton className="h-8 w-3/4" />
+                    <Skeleton className="h-5 w-full" />
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-24" />
+                        <Skeleton className="h-6 w-48" />
+                    </div>
+                     <div className="space-y-2">
+                        <Skeleton className="h-5 w-24" />
+                        <Skeleton className="h-12 w-full" />
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Skeleton className="h-10 w-full" />
+                </CardFooter>
+                </Card>
+            </main>
+        </div>
+    )
+  }
 
   if (!job) {
     return (
@@ -395,7 +425,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
                 <CardFooter>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button 
+                      <Button
                           className="w-full"
                           disabled={isSubmitting || !profileComplete || job.status === 'Sold' || isUploadingResume}
                       >

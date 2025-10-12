@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useEffect, useState, use } from 'react';
@@ -25,19 +24,19 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
     const { toast } = useToast();
 
     const finalJobId = Array.isArray(jobId) ? jobId[0] : jobId;
-    
+
     const jobRef = useMemo(() => {
         if (!firestore || !finalJobId) return null;
         return doc(firestore, 'jobs', finalJobId);
     }, [firestore, finalJobId]);
 
     const { data: job, isLoading: isJobLoading, refetch: refetchJob } = useDoc(jobRef);
-    
+
     const applicantsQuery = useMemo(() => {
         if (!firestore || !finalJobId) return null;
         return query(collection(firestore, `jobs/${finalJobId}/applications`));
     }, [firestore, finalJobId]);
-    
+
     const { data: applications, isLoading: areApplicationsLoading, refetch: refetchApplications } = useCollection(applicantsQuery);
 
      useEffect(() => {
@@ -68,7 +67,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         }
     }, [applications]);
 
-    
+
     const sensors = useSensors(
         useSensor(PointerSensor, {
           activationConstraint: {
@@ -79,12 +78,12 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
-        
+
         if (!over) return;
-        
+
         const applicationId = active.id as string;
         const newStatus = over.id as string;
-        
+
         let oldStatus: string | undefined;
         let movedApplicant: any;
 
@@ -97,7 +96,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                 break;
             }
         }
-        
+
         if (!oldStatus || !movedApplicant || oldStatus === newStatus) {
             return;
         }
@@ -154,7 +153,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
     const isLoading = isJobLoading || areApplicationsLoading || isUserLoading;
 
     const KANBAN_STAGES = ["submitted", "reviewed", "offered", "accepted", "rejected"] as const;
-    
+
     return (
         <div className="flex flex-col h-screen">
             <Header />
@@ -186,15 +185,15 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                         {KANBAN_STAGES.map(stage => {
                             const stageApplicants = applicantsByStatus[stage] || [];
                             return (
-                                <Board.Column 
+                                <Board.Column
                                     key={stage}
-                                    id={stage} 
+                                    id={stage}
                                     title={stage}
                                     applicants={stageApplicants}
                                     isLoading={isLoading}
                                 >
                                     {stageApplicants.map((app: any) => (
-                                        <Board.Card 
+                                        <Board.Card
                                           key={app.id}
                                           applicant={app}
                                           jobDetails={job}

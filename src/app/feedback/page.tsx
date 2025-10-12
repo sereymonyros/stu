@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, Controller } from 'react-hook-form';
@@ -75,7 +76,7 @@ export default function FeedbackPage() {
       router.replace('/login');
     }
   }, [user, isUserLoading, router]);
-  
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -226,11 +227,11 @@ export default function FeedbackPage() {
                                     </p>
                                     <p className="text-xs text-muted-foreground">PNG, JPG, or WEBP (MAX. 5MB)</p>
                                 </div>
-                                <Input 
+                                <Input
                                   id="image-upload"
-                                  type="file" 
+                                  type="file"
                                   className="hidden"
-                                  accept="image/*" 
+                                  accept="image/*"
                                   disabled={isSubmitting}
                                   onChange={(e) => {
                                     field.onChange(e.target.files);
@@ -252,7 +253,7 @@ export default function FeedbackPage() {
                         <Image src={imagePreview} alt="Image preview" fill className="rounded-md object-contain" />
                       </div>
                   )}
-                
+
                 <Button type="submit" disabled={isSubmitting} className="w-full">
                   {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
                 </Button>

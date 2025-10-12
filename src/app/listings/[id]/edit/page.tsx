@@ -38,6 +38,7 @@ import { uploadFile } from '@/ai/flows/upload-file-flow';
 import { ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const listingSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters long.' }),
@@ -69,7 +70,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const finalListingId = Array.isArray(listingId) ? listingId[0] : listingId;
 
   const listingRef = useMemo(() => {
@@ -81,7 +82,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
 
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
-  
+
   const form = useForm<z.infer<typeof listingSchema>>({
     resolver: zodResolver(listingSchema),
     defaultValues: {
@@ -141,10 +142,10 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
             const imageRef = ref(storage, imageUrlToRemove);
             await deleteObject(imageRef);
         }
-      
+
         const updatedImageUrls = existingImageUrls.filter((url) => url !== imageUrlToRemove);
         setExistingImageUrls(updatedImageUrls);
-      
+
         if (listingRef) {
           updateDoc(listingRef, { imageUrls: updatedImageUrls }).catch(serverError => {
             errorEmitter.emit(
@@ -185,13 +186,13 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
         return;
     }
     const user = auth.currentUser;
-    
+
     try {
       const updatedImageUrls = [...existingImageUrls];
 
       if (values.images && values.images.length > 0) {
         const imageFiles = Array.from(values.images);
-        
+
         const uploadPromises = imageFiles.map(async file => {
             const fileDataUri = await toBase64(file);
             const result = await uploadFile({
@@ -204,7 +205,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
         const newImageUrls = await Promise.all(uploadPromises);
         updatedImageUrls.push(...newImageUrls);
       }
-      
+
       if (updatedImageUrls.length === 0) {
           toast({ variant: 'destructive', title: 'An item must have at least one image.'});
           setIsSubmitting(false);
@@ -230,7 +231,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
           })
         );
       });
-      
+
       toast({
         title: "Listing updated!",
         description: "Your item has been successfully updated.",
@@ -248,6 +249,27 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
         setIsSubmitting(false);
     }
   };
+
+
+  if (isListingLoading) {
+      return (
+         <div className="flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
+               <Card className="max-w-2xl mx-auto">
+                <CardHeader><Skeleton className="h-8 w-48" /></CardHeader>
+                <CardContent className="space-y-8">
+                    <div className="space-y-2"><Skeleton className="h-4 w-16" /><Skeleton className="h-10 w-full" /></div>
+                    <div className="space-y-2"><Skeleton className="h-4 w-16" /><Skeleton className="h-20 w-full" /></div>
+                    <div className="space-y-2"><Skeleton className="h-4 w-16" /><Skeleton className="h-10 w-full" /></div>
+                    <div className="space-y-2"><Skeleton className="h-4 w-16" /><div className="grid grid-cols-4 gap-4"><Skeleton className="aspect-square w-full" /><Skeleton className="aspect-square w-full" /></div></div>
+                    <Skeleton className="h-10 w-full" />
+                </CardContent>
+                </Card>
+          </main>
+        </div>
+      )
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -319,13 +341,11 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
             </CardContent>
             </Card>
         ) : (
-          !isListingLoading && (
             <div className="text-center py-20">
                 <h2 className="text-2xl font-semibold">Listing not found</h2>
                 <p className="text-muted-foreground mt-2">This listing may have been removed or the link is incorrect.</p>
                 <Button asChild className="mt-6"><Link href="/listings">Back to Listings</Link></Button>
             </div>
-          )
         )}
       </main>
     </div>

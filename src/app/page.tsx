@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import { search } from "@/app/actions";
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -34,7 +35,7 @@ export default function Home() {
               Your personal AI guide to the Kingdom of Wonder. Explore, buy, sell, and find jobs.
             </p>
           </div>
-          
+
           <div className="w-full max-w-xl px-4">
             <SearchBox searchAction={search} />
           </div>

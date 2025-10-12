@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
@@ -174,7 +173,7 @@ export default function DashboardPage() {
 
     // --- Data Queries ---
     const isRecruiter = userProfile?.userType === 'recruiter';
-    
+
     // This state gates all dependent queries, preventing race conditions.
     const shouldRunRoleQueries = !isUserLoading && userProfile;
 
@@ -183,15 +182,15 @@ export default function DashboardPage() {
         if (!firestore || !user || !shouldRunRoleQueries || !isRecruiter) return null;
         return query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid));
     }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
-    const { data: postedJobs, isLoading: isPostedJobsLoading } = useCollection(postedJobsQuery);
+    const { data: postedJobs } = useCollection(postedJobsQuery);
 
     // For Standard Users: Fetch their applications (which now include status)
     const applicationsQuery = useMemo(() => {
         if (!firestore || !user || !shouldRunRoleQueries || isRecruiter) return null;
         return query(collection(firestore, `users/${user.uid}/applications`));
     }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
-    const { data: applications, isLoading: areApplicationsLoading } = useCollection(applicationsQuery);
-    
+    const { data: applications } = useCollection(applicationsQuery);
+
     // Create a map of jobId to application status
     const applicationStatusMap = useMemo(() => {
         if (!applications) return new Map();
@@ -204,24 +203,24 @@ export default function DashboardPage() {
 
     // For Standard Users: Fetch the details of the jobs they applied for
     const appliedJobsQuery = useMemo(() => {
-        if (areApplicationsLoading || !applications || appliedJobIds.length === 0) {
+        if (!applications || appliedJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
-    }, [firestore, areApplicationsLoading, applications, appliedJobIds]);
-    const { data: appliedJobs, isLoading: areAppliedJobsLoading } = useCollection(appliedJobsQuery);
-    
+    }, [firestore, applications, appliedJobIds]);
+    const { data: appliedJobs } = useCollection(appliedJobsQuery);
+
     // For Standard Users: Fetch their favorite jobs
     const favouriteJobsQuery = useMemo(() => {
         if (!firestore || !user || !shouldRunRoleQueries || isRecruiter) return null;
         return query(collection(firestore, `users/${user.uid}/favouriteJobs`));
     }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
-    const { data: favouriteJobsRefs, isLoading: areFavouritesLoading } = useCollection(favouriteJobsQuery);
+    const { data: favouriteJobsRefs } = useCollection(favouriteJobsQuery);
 
     const favouriteJobIds = useMemo(() => {
         return favouriteJobsRefs ? favouriteJobsRefs.map(fav => fav.jobId).filter(id => !!id) : [];
     }, [favouriteJobsRefs]);
-    
+
     const favouriteJobIdsSet = useMemo(() => new Set(favouriteJobIds), [favouriteJobIds]);
 
     // Filter out favorite jobs that the user has already applied for
@@ -231,19 +230,19 @@ export default function DashboardPage() {
 
 
     const favouriteJobsDetailsQuery = useMemo(() => {
-        if (areFavouritesLoading || !favouriteJobsRefs || filteredFavouriteJobIds.length === 0) {
+        if (!favouriteJobsRefs || filteredFavouriteJobIds.length === 0) {
             return null;
         }
         return query(collection(firestore, 'jobs'), where('__name__', 'in', filteredFavouriteJobIds));
-    }, [firestore, areFavouritesLoading, favouriteJobsRefs, filteredFavouriteJobIds]);
-    const { data: favouriteJobs, isLoading: areFavouriteJobsDetailsLoading } = useCollection(favouriteJobsDetailsQuery);
+    }, [firestore, favouriteJobsRefs, filteredFavouriteJobIds]);
+    const { data: favouriteJobs } = useCollection(favouriteJobsDetailsQuery);
 
     // For Standard Users: Fetch their saved searches
     const savedSearchesQuery = useMemo(() => {
         if (!firestore || !user || !shouldRunRoleQueries || isRecruiter) return null;
         return query(collection(firestore, `users/${user.uid}/savedSearches`));
     }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
-    const { data: savedSearches, isLoading: areSavedSearchesLoading } = useCollection(savedSearchesQuery);
+    const { data: savedSearches } = useCollection(savedSearchesQuery);
 
     // --- Saved Search Handlers ---
     const handleExecuteSearch = (savedSearch: any) => {
@@ -275,10 +274,6 @@ export default function DashboardPage() {
         }
     };
 
-
-    // --- Loading and Rendering Logic ---
-    const isStandardUserDashboardLoading = areApplicationsLoading || areAppliedJobsLoading || areFavouritesLoading || areFavouriteJobsDetailsLoading || areSavedSearchesLoading;
-
     if (!user) {
         // The useEffect hook handles redirection, so we can return null here.
         return null;
@@ -295,11 +290,7 @@ export default function DashboardPage() {
                 {isRecruiter && (
                     <section>
                         <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Briefcase /> My Job Postings</h2>
-                        {isPostedJobsLoading ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
-                            </div>
-                        ) : postedJobs && postedJobs.length > 0 ? (
+                        {postedJobs && postedJobs.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {postedJobs.map(job => <JobCard key={job.id} job={job} />)}
                             </div>
@@ -318,16 +309,12 @@ export default function DashboardPage() {
                     <>
                      <section>
                         <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><FileText /> My Job Applications</h2>
-                        {isStandardUserDashboardLoading ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
-                            </div>
-                        ) : appliedJobs && appliedJobs.length > 0 ? (
+                        {appliedJobs && appliedJobs.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {appliedJobs.map(job => (
-                                    <AppliedJobCard 
-                                        key={job.id} 
-                                        job={job} 
+                                    <AppliedJobCard
+                                        key={job.id}
+                                        job={job}
                                         applicationStatus={applicationStatusMap.get(job.id) || 'submitted'}
                                         isFavourite={favouriteJobIdsSet.has(job.id)}
                                     />
@@ -342,17 +329,13 @@ export default function DashboardPage() {
                             </div>
                         )}
                     </section>
-                    
-                    {!isStandardUserDashboardLoading && favouriteJobs && favouriteJobs.length > 0 && (
+
+                    {favouriteJobs && favouriteJobs.length > 0 && (
                         <>
                         <Separator />
                         <section>
                             <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Heart /> My Favorite Jobs</h2>
-                             {areFavouriteJobsDetailsLoading ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {Array.from({ length: favouriteJobs.length }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
-                                </div>
-                            ) : favouriteJobs.length > 0 ? (
+                             {favouriteJobs.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {favouriteJobs.map(job => <FavouriteJobCard key={job.id} job={job} />)}
                                 </div>
@@ -367,30 +350,24 @@ export default function DashboardPage() {
                         </section>
                         </>
                     )}
-                    
-                    
-                    {!isStandardUserDashboardLoading && savedSearches && savedSearches.length > 0 && (
+
+
+                    {savedSearches && savedSearches.length > 0 && (
                        <>
                         <Separator />
                         <section>
                             <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Search /> My Saved Searches</h2>
-                            {areSavedSearchesLoading ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {savedSearches.map(search => (
-                                        <SavedSearchCard
-                                            key={search.id}
-                                            savedSearch={search}
-                                            onExecute={handleExecuteSearch}
-                                            onDelete={handleDeleteSearch}
-                                            isDeleting={isDeletingSearch}
-                                        />
-                                    ))}
-                                </div>
-                            )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {savedSearches.map(search => (
+                                    <SavedSearchCard
+                                        key={search.id}
+                                        savedSearch={search}
+                                        onExecute={handleExecuteSearch}
+                                        onDelete={handleDeleteSearch}
+                                        isDeleting={isDeletingSearch}
+                                    />
+                                ))}
+                            </div>
                         </section>
                        </>
                     )}
