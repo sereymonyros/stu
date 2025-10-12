@@ -4,7 +4,7 @@
 import { useMemo, useState, useEffect, Suspense } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { collection, doc, setDoc, deleteDoc, serverTimestamp, query } from 'firebase/firestore';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List } from 'lucide-react';
@@ -114,7 +114,9 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                 </div>
                 <div className="w-full sm:w-auto flex justify-end items-center sm:self-center ml-auto">
                     {hasApplied ? (
-                        <Button disabled size="sm">Applied</Button>
+                        <Button asChild variant="outline" size="sm">
+                           <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
+                        </Button>
                     ) : isRecruiter ? (
                         isOwner ? (
                             <Button asChild variant="outline" size="sm">
@@ -664,3 +666,5 @@ export default function JobsPage() {
         </Suspense>
     )
 }
+
+    
