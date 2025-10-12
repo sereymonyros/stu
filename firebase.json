@@ -7,7 +7,6 @@
     "rules": "storage.rules"
   },
   "functions": {
-    "source": "src/functions",
-    "runtime": "nodejs20"
+    "source": "src/functions"
   }
 }
