@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useEffect, useState, use } from 'react';
@@ -75,8 +76,8 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
             console.log(`Found ${applications.length} applicants. Checking for cached analysis...`);
             applications.forEach(async (app) => {
                 try {
-                    // Check if analysis is already in the cache
-                    const cached = getCachedAnalysis(app.id);
+                    // Check if analysis is already in the cache with the correct resume URL
+                    const cached = getCachedAnalysis(app.id, app.resumeUrl);
                     if (cached) {
                         console.log(`Analysis for ${app.applicantName} found in cache.`);
                         return;
@@ -91,8 +92,8 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                         resumeDataUri: resumeDataUri,
                     });
                     
-                    // Store the result in the cache
-                    setCachedAnalysis(app.id, analysisResult);
+                    // Store the result in the cache with the resume URL
+                    setCachedAnalysis(app.id, app.resumeUrl, analysisResult);
                     console.log(`Analysis for ${app.applicantName} fetched and cached.`);
 
                 } catch (error: any) {

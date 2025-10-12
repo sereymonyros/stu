@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth, useFirestore, useUser, useDoc } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, writeBatch, collection, query, where, getDocs } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
@@ -185,6 +185,42 @@ export default function ProfilePage() {
     });
 };
 
+  const updateApplicationsWithNewResume = async (newResumeUrl: string) => {
+    if (!user || !firestore) return;
+
+    // Find all applications for the current user
+    const userApplicationsQuery = query(
+      collection(firestore, `users/${user.uid}/applications`),
+      where('status', 'in', ['submitted', 'reviewed'])
+    );
+    const userApplicationsSnapshot = await getDocs(userApplicationsQuery);
+    
+    if (userApplicationsSnapshot.empty) {
+      return; // No applications to update
+    }
+
+    const batch = writeBatch(firestore);
+    let updatedCount = 0;
+
+    for (const userAppDoc of userApplicationsSnapshot.docs) {
+      const { jobId } = userAppDoc.data();
+      if (jobId) {
+        // Path to the application document under the job
+        const mainApplicationRef = doc(firestore, 'jobs', jobId, 'applications', user.uid);
+        batch.update(mainApplicationRef, { resumeUrl: newResumeUrl });
+        updatedCount++;
+      }
+    }
+
+    if (updatedCount > 0) {
+      await batch.commit();
+      toast({
+        title: "Applications Updated",
+        description: `Your new resume has been updated on ${updatedCount} active job application(s).`
+      });
+    }
+  };
+
 
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     setIsSubmitting(true);
@@ -226,6 +262,9 @@ export default function ProfilePage() {
         });
         resumeUrl = result.downloadUrl;
         setUploadProgress(100); // Mark as complete
+
+        // After successfully getting the new URL, update applications
+        await updateApplicationsWithNewResume(resumeUrl);
       }
 
       await updateProfile(auth.currentUser, {
@@ -408,7 +447,7 @@ export default function ProfilePage() {
                                   </Label>
                                 </div>
                               </FormControl>
-                              <FormDescription>Upload your resume to apply for jobs faster. Non-PDF files will be converted automatically.</FormDescription>
+                              <FormDescription>Uploading a new resume will update it on all active job applications.</FormDescription>
                               <FormMessage />
                           </FormItem>
                       )}/>
@@ -439,4 +478,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

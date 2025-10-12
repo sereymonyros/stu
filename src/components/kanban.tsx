@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -147,14 +148,20 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
     };
     
     // State is now managed inside the card
-    const [analysis, setAnalysis] = useState<AnalyzeApplicantOutput | null>(() => getCachedAnalysis(applicant.id));
+    const [analysis, setAnalysis] = useState<AnalyzeApplicantOutput | null>(() => getCachedAnalysis(applicant.id, applicant.resumeUrl));
     const [analysisError, setAnalysisError] = useState<string | null>(null);
     const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+
+    // This effect ensures that if the resume URL changes (from a parent re-render), we check the cache again.
+    useEffect(() => {
+        setAnalysis(getCachedAnalysis(applicant.id, applicant.resumeUrl));
+    }, [applicant.id, applicant.resumeUrl]);
+
 
     // This function is called when the dialog opens or when "Retry" is clicked.
     const handleGetAIAnalysis = async () => {
         // Always check cache first.
-        const cached = getCachedAnalysis(applicant.id);
+        const cached = getCachedAnalysis(applicant.id, applicant.resumeUrl);
         if (cached) {
             setAnalysis(cached);
             return;
@@ -174,7 +181,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                 resumeDataUri: resumeDataUri,
             });
             setAnalysis(result);
-            setCachedAnalysis(applicant.id, result); // Save to cache on success
+            setCachedAnalysis(applicant.id, applicant.resumeUrl, result); // Save to cache on success
         } catch (error: any) {
             console.error("AI Analysis Failed:", error);
             const friendlyError = error.message || 'An unknown error occurred during analysis.';
