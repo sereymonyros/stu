@@ -63,6 +63,8 @@ const analyzeApplicantPrompt = ai.definePrompt({
   4.  **Gaps:** Create a bulleted list of key requirements from the job description that appear to be missing or are not clearly stated in the resume (e.g., "No mention of cloud infrastructure experience (AWS, Azure, GCP)," "The required PMP certification is not listed").
 
   5.  **Summary:** Write a one-paragraph summary of the candidate's profile and their overall fit for the role. This should be a high-level overview to help the recruiter quickly understand the candidate's potential.
+  
+  6.  **Suggested Interview Questions:** Based on the strengths and gaps you identified, create a list of 3-5 insightful and targeted interview questions to ask the candidate. These questions should help a recruiter validate experience and probe into potential weaknesses.
 
   Provide your response ONLY in the requested JSON format.
   `,
@@ -105,6 +107,8 @@ const analyzeApplicantTextPrompt = ai.definePrompt({
     3.  **Gaps:** Create a bulleted list of key requirements from the job description that appear to be missing or are not clearly stated in the resume (e.g., "No mention of cloud infrastructure experience (AWS, Azure, GCP)," "The required PMP certification is not listed").
 
     4.  **Summary:** Write a one-paragraph summary of the candidate's profile and their overall fit for the role. This should be a high-level overview to help the recruiter quickly understand the candidate's potential.
+
+    5.  **Suggested Interview Questions:** Based on the strengths and gaps you identified, create a list of 3-5 insightful and targeted interview questions to ask the candidate. These questions should help a recruiter validate experience and probe into potential weaknesses.
 
     Provide your response ONLY in the requested JSON format.
     `,

@@ -15,5 +15,6 @@ export const AnalyzeApplicantOutputSchema = z.object({
   strengths: z.array(z.string()).describe('A list of key strengths and qualifications from the resume that align with the job.'),
   gaps: z.array(z.string()).describe('A list of requirements from the job description that appear to be missing from the resume.'),
   summary: z.string().describe('A one-paragraph summary of the candidate and their overall fit for the role.'),
+  suggestedInterviewQuestions: z.array(z.string()).describe("A list of 3-5 suggested interview questions to ask the candidate based on their resume and the job description."),
 });
 export type AnalyzeApplicantOutput = z.infer<typeof AnalyzeApplicantOutputSchema>;

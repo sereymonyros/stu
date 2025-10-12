@@ -2,14 +2,14 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { FileText, Sparkles, ThumbsDown, ThumbsUp, X } from 'lucide-react';
+import { FileText, Sparkles, ThumbsDown, ThumbsUp, X, Lightbulb } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
@@ -20,10 +20,14 @@ import type { AnalyzeApplicantOutput } from '@/ai/flows/analyze-applicant-schema
 import { useToast } from '@/hooks/use-toast';
 import type { Timestamp } from 'firebase/firestore';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { getCachedAnalysis, setCachedAnalysis } from '@/lib/ai-cache';
 
 
 // Helper function to convert a file URL to a Base64 data URI
 const urlToDataUri = async (url: string): Promise<string> => {
+    // This proxy might be needed if you face CORS issues in development or production.
+    // const proxyUrl = '/api/image-proxy?url='; 
+    // const response = await fetch(proxyUrl + encodeURIComponent(url));
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`Failed to fetch file: ${response.statusText}`);
@@ -37,7 +41,16 @@ const urlToDataUri = async (url: string): Promise<string> => {
     });
 };
 
-function AIAnalysisDisplay({ analysis, error }: { analysis: AnalyzeApplicantOutput | null, error: string | null }) {
+function AIAnalysisDisplay({ analysis, error, isLoading }: { analysis: AnalyzeApplicantOutput | null, error: string | null, isLoading: boolean }) {
+    if (isLoading) {
+       return (
+            <div className="flex flex-col items-center justify-center p-4">
+                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mb-4" />
+                <p className="text-muted-foreground">Analysis in progress...</p>
+            </div>
+        )
+    }
+    
     if (error) {
         return (
             <Alert variant="destructive">
@@ -49,59 +62,65 @@ function AIAnalysisDisplay({ analysis, error }: { analysis: AnalyzeApplicantOutp
 
     if (!analysis) {
         return (
-            <div className="space-y-4 p-4">
-                <Skeleton className="h-8 w-1/4" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-                <div className="flex gap-4 pt-4">
-                    <div className="w-1/2 space-y-2">
-                        <Skeleton className="h-5 w-20" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-full" />
-                    </div>
-                    <div className="w-1/2 space-y-2">
-                        <Skeleton className="h-5 w-20" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-full" />
-                    </div>
-                </div>
-            </div>
+             <div className="text-center p-4">
+                <p className="text-muted-foreground">Analysis is not yet available.</p>
+             </div>
         )
     }
 
     return (
-        <Card className="bg-muted/50 p-4 my-2">
-            <CardHeader className="p-2">
-                <CardTitle className="text-lg flex items-center justify-between">
-                    <span>AI Analysis</span>
-                     <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">Match Score:</span>
-                        <Progress value={analysis.matchScore} className="w-24 h-2" />
-                        <span className="text-sm font-bold">{analysis.matchScore}%</span>
-                    </div>
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="p-2 space-y-4">
-                <div>
-                    <h4 className="font-semibold text-sm mb-2">Summary</h4>
-                    <p className="text-xs text-muted-foreground">{analysis.summary}</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><ThumbsUp className="h-4 w-4 text-green-500" /> Strengths</h4>
-                        <ul className="list-disc pl-5 text-xs space-y-1 text-muted-foreground">
+        <div className="space-y-4">
+            <Card className="bg-muted/50 p-4">
+                <CardHeader className="p-2">
+                    <CardTitle className="text-lg flex items-center justify-between">
+                        <span>AI Summary</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">Match Score:</span>
+                            <Progress value={analysis.matchScore} className="w-24 h-2" />
+                            <span className="text-sm font-bold">{analysis.matchScore}%</span>
+                        </div>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-2 space-y-4">
+                    <p className="text-sm text-muted-foreground">{analysis.summary}</p>
+                </CardContent>
+            </Card>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="bg-muted/50 p-4">
+                    <CardHeader className="p-0">
+                         <CardTitle className="text-base mb-2 flex items-center gap-2"><ThumbsUp className="h-4 w-4 text-green-500" /> Strengths</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <ul className="list-disc pl-5 text-sm space-y-1 text-muted-foreground">
                             {analysis.strengths.map((s, i) => <li key={i}>{s}</li>)}
                         </ul>
-                    </div>
-                    <div>
-                        <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><ThumbsDown className="h-4 w-4 text-red-500" /> Gaps</h4>
-                        <ul className="list-disc pl-5 text-xs space-y-1 text-muted-foreground">
+                    </CardContent>
+                </Card>
+                 <Card className="bg-muted/50 p-4">
+                    <CardHeader className="p-0">
+                         <CardTitle className="text-base mb-2 flex items-center gap-2"><ThumbsDown className="h-4 w-4 text-red-500" /> Gaps</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                         <ul className="list-disc pl-5 text-sm space-y-1 text-muted-foreground">
                              {analysis.gaps.map((g, i) => <li key={i}>{g}</li>)}
-                        </ul>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+                         </ul>
+                    </CardContent>
+                </Card>
+            </div>
+            
+            <Card className="bg-muted/50 p-4">
+                <CardHeader className="p-0">
+                    <CardTitle className="text-base mb-2 flex items-center gap-2"><Lightbulb className="h-4 w-4 text-yellow-500" /> Suggested Interview Questions</CardTitle>
+                </CardHeader>
+                 <CardContent className="p-0">
+                     <ul className="list-decimal pl-5 text-sm space-y-2 text-muted-foreground">
+                         {analysis.suggestedInterviewQuestions.map((q, i) => <li key={i}>{q}</li>)}
+                     </ul>
+                </CardContent>
+            </Card>
+
+        </div>
     )
 }
 
@@ -116,38 +135,57 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
     };
     
     const [analysis, setAnalysis] = useState<AnalyzeApplicantOutput | null>(null);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisError, setAnalysisError] = useState<string | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+
+    // This effect will run when the dialog opens
+    useEffect(() => {
+        if (isDialogOpen) {
+            handleGetAIAnalysis();
+        }
+    }, [isDialogOpen]);
 
     const handleGetAIAnalysis = async () => {
-        // If analysis is already available or there was a permanent error, don't re-fetch.
-        if (analysis || analysisError) {
-            return;
-        }
-
-        if (!jobDetails || !applicant.resumeUrl) {
-            toast({ variant: 'destructive', title: 'Missing Information', description: 'Cannot perform analysis without a job description and a resume.'});
-            return;
-        }
-        
-        setIsAnalyzing(true);
+        setIsLoadingAnalysis(true);
         setAnalysisError(null);
+        setAnalysis(null);
 
         try {
-            const resumeDataUri = await urlToDataUri(applicant.resumeUrl);
-            const result = await analyzeApplicant({
-                jobTitle: jobDetails.title,
-                jobDescription: jobDetails.description || '',
-                resumeDataUri: resumeDataUri,
-            });
-            setAnalysis(result);
+            // Check cache first
+            const cached = await getCachedAnalysis(applicant.id);
+            if (cached) {
+                setAnalysis(cached);
+                setIsLoadingAnalysis(false);
+                return;
+            }
+
+            // If not in cache, and the pre-fetch is still running, we can just show loading
+            // The pre-fetch logic on the main page will eventually populate the cache.
+            // We can add a simple polling mechanism here.
+            const pollCache = async (retries = 5, delay = 2000) => {
+                for (let i = 0; i < retries; i++) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    const polledData = await getCachedAnalysis(applicant.id);
+                    if (polledData) {
+                        setAnalysis(polledData);
+                        setIsLoadingAnalysis(false);
+                        return;
+                    }
+                }
+                // If it's still not available after polling, show a message.
+                setAnalysisError("Analysis is taking longer than usual. It may still be processing in the background. Please try again in a moment.");
+                setIsLoadingAnalysis(false);
+            };
+
+            await pollCache();
+
         } catch (error: any) {
             console.error("AI Analysis Failed:", error);
             const friendlyError = error.message || 'An unknown error occurred during analysis.';
             setAnalysisError(friendlyError);
             toast({ variant: 'destructive', title: 'Analysis Failed', description: friendlyError });
-        } finally {
-            setIsAnalyzing(false);
+            setIsLoadingAnalysis(false);
         }
     };
         
@@ -196,18 +234,14 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                             </Button>
                          )}
                     </div>
-                     <Dialog>
+                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" onClick={handleGetAIAnalysis} disabled={isAnalyzing} className="w-full mt-2 text-xs">
-                                {isAnalyzing ? (
-                                    <div className="animate-spin h-3 w-3 border-2 border-current border-t-transparent rounded-full mr-2" />
-                                ) : (
-                                    <Sparkles className="mr-2 h-3 w-3 text-yellow-500" />
-                                )}
+                            <Button variant="outline" size="sm" className="w-full mt-2 text-xs">
+                                <Sparkles className="mr-2 h-3 w-3 text-yellow-500" />
                                 AI Review
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
+                        <DialogContent className="max-w-3xl">
                             <DialogHeader>
                                 <DialogTitle>AI Applicant Analysis</DialogTitle>
                                 <DialogDescription>
@@ -215,7 +249,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="py-4">
-                                <AIAnalysisDisplay analysis={isAnalyzing ? null : analysis} error={analysisError} />
+                                <AIAnalysisDisplay analysis={analysis} error={analysisError} isLoading={isLoadingAnalysis}/>
                             </div>
                         </DialogContent>
                     </Dialog>
