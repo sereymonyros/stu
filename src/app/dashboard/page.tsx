@@ -65,8 +65,7 @@ function JobCard({ job }: { job: any }) {
     );
 }
 
-function AppliedJobCard({ job, application, isFavourite, onWithdrawSuccess }: { job: any, application: any, isFavourite: boolean, onWithdrawSuccess: () => void }) {
-
+function AppliedJobCard({ job, application, isFavourite }: { job: any, application: any, isFavourite: boolean }) {
     if (!application) {
         return null;
     }
@@ -105,7 +104,6 @@ function AppliedJobCard({ job, application, isFavourite, onWithdrawSuccess }: { 
                         {canWithdraw && (
                             <WithdrawApplicationButton 
                                 jobId={job.id} 
-                                onWithdrawSuccess={onWithdrawSuccess}
                             />
                         )}
                    </div>
@@ -215,7 +213,7 @@ export default function DashboardPage() {
         if (!firestore || !user || !shouldRunRoleQueries || isRecruiter) return null;
         return query(collection(firestore, `users/${user.uid}/applications`));
     }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
-    const { data: applications, refetch } = useCollection(applicationsQuery);
+    const { data: applications } = useCollection(applicationsQuery);
 
     // Create a map of jobId to application data
     const applicationMap = useMemo(() => {
@@ -393,7 +391,6 @@ export default function DashboardPage() {
                                         job={job}
                                         application={applicationMap.get(job.id)}
                                         isFavourite={favouriteJobIdsSet.has(job.id)}
-                                        onWithdrawSuccess={() => refetch()}
                                     />
                                 ))}
                             </div>

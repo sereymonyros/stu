@@ -41,6 +41,7 @@ const withdrawApplicationFlow = ai.defineFlow(
 
     try {
       // --- 1. Define document references ---
+      debugger;
       const jobRef = firestore.collection('jobs').doc(jobId);
       const mainApplicationRef = jobRef.collection('applications').doc(userId);
       const userApplicationRef = firestore.collection('users').doc(userId).collection('applications').doc(jobId);

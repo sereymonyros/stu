@@ -18,15 +18,16 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { withdrawApplication } from "@/ai/flows/withdraw-application-flow";
 import { useUser } from "@/firebase";
+import { useRouter } from "next/navigation";
 
 interface WithdrawApplicationButtonProps {
     jobId: string;
-    onWithdrawSuccess: () => void;
 }
 
-export function WithdrawApplicationButton({ jobId, onWithdrawSuccess }: WithdrawApplicationButtonProps) {
+export function WithdrawApplicationButton({ jobId }: WithdrawApplicationButtonProps) {
     const { user } = useUser();
     const { toast } = useToast();
+    const router = useRouter();
     const [isWithdrawing, setIsWithdrawing] = useState(false);
 
     const handleWithdraw = async () => {
@@ -39,7 +40,8 @@ export function WithdrawApplicationButton({ jobId, onWithdrawSuccess }: Withdraw
         try {
             await withdrawApplication({ jobId, userId: user.uid });
             toast({ title: "Application Withdrawn", description: "You have successfully withdrawn your application." });
-            onWithdrawSuccess();
+            // Use router.refresh() to refetch server-side data
+            router.refresh();
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Withdrawal Failed', description: error.message });
         } finally {

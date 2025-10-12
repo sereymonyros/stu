@@ -76,7 +76,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
 
   const { data: job } = useDoc(jobRef);
   const { data: userProfile, refetch: refetchUserProfile } = useDoc(userProfileRef);
-  const { data: application, refetch } = useDoc(userApplicationRef);
+  const { data: application } = useDoc(userApplicationRef);
 
   const hasApplied = !!application;
   const profileComplete = !!userProfile?.photoURL && !!userProfile?.resumeUrl;
@@ -331,7 +331,6 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
                          {canWithdraw && (
                             <WithdrawApplicationButton 
                                 jobId={jobId} 
-                                onWithdrawSuccess={() => refetch()}
                             />
                          )}
                     </div>
