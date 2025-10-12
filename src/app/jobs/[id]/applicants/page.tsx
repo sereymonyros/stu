@@ -51,11 +51,15 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
     }, [firestore, finalJobId]);
 
     const { data: job, refetch: refetchJob } = useDoc(jobRef);
+    
+    // Authorization check before creating queries
+    const isAuthorized = job && user && job.recruiterId === user.uid;
 
     const applicantsQuery = useMemo(() => {
-        if (!firestore || !finalJobId) return null;
+        // Halt the query until Firestore is ready, we have a job ID, AND we've confirmed authorization
+        if (!firestore || !finalJobId || !isAuthorized) return null;
         return query(collection(firestore, `jobs/${finalJobId}/applications`));
-    }, [firestore, finalJobId]);
+    }, [firestore, finalJobId, isAuthorized]);
 
     const { data: applications, refetch: refetchApplications } = useCollection(applicantsQuery);
 
@@ -64,7 +68,8 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
             router.replace('/login');
             return;
         }
-        if (job && job.recruiterId !== user.uid) {
+        // This check runs when `job` data arrives. If the user is not the recruiter, redirect.
+        if (job && user && job.recruiterId !== user.uid) {
             toast({ variant: "destructive", title: "Unauthorized", description: "You are not authorized to view applicants for this job." });
             router.replace('/jobs');
         }
@@ -244,7 +249,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                                         id={stage}
                                         title={stage}
                                         applicants={stageApplicants}
-                                        isLoading={!applications}
+                                        isLoading={!applications && !job}
                                     >
                                         {stageApplicants.map((app: any) => (
                                             <Board.Card
