@@ -14,7 +14,7 @@ initializeFirebaseAdmin();
 
 // This is a Pub/Sub-triggered Cloud Function that will be deployed to Firebase.
 // It is configured to run on a schedule.
-export const dailyjobalerts = onSchedule('every 24 hours', async (event) => {
+export const dailyJobAlerts = onSchedule('every 24 hours', async (event) => {
   console.log("Scheduled job alert function triggered:", event);
   
   try {
