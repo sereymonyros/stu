@@ -1,12 +1,11 @@
+
 import { Card, CardHeader } from "@/components/ui/card"
-import { Header } from "@/components/header"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardLoading() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
+      <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-8">
         <div>
           <Skeleton className="h-10 w-1/3" />
         </div>
