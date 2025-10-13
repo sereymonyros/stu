@@ -60,7 +60,7 @@ export function BottomNavbar() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "inline-flex flex-col items-center justify-center px-5 hover:bg-muted group",
+                                "inline-flex flex-col items-center justify-center px-5",
                                 isActive ? "text-primary" : "text-muted-foreground"
                             )}
                         >

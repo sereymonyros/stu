@@ -10,7 +10,7 @@ import { Slack } from 'lucide-react';
 export function Header() {
   return (
     <>
-      <header className="w-full">
+      <header className="w-full px-4">
         <div className="container mx-auto flex h-16 items-center justify-between">
             <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2 text-2xl font-bold">
