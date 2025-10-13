@@ -67,14 +67,17 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
     const { toast } = useToast();
 
     const [company, setCompany] = useState<GetCompanyByNameOutput | null>(null);
+    const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
     useEffect(() => {
+      setIsLoadingProfile(true);
       getCompanyByName({ companyName })
         .then(setCompany)
         .catch(err => {
             console.error("Failed to fetch company profile:", err);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load company information.' });
         })
+        .finally(() => setIsLoadingProfile(false));
     }, [companyName, toast]);
 
     // Fetch jobs for this company (this can remain client-side as it should be public)
@@ -82,7 +85,7 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
         if (!firestore) return null;
         return query(collection(firestore, 'jobs'), where('companyName', '==', companyName));
     }, [firestore, companyName]);
-    const { data: jobs } = useCollection(jobsQuery);
+    const { data: jobs, isLoading: isLoadingJobs } = useCollection(jobsQuery);
     
     const availableJobs = useMemo(() => jobs?.filter(job => job.status === 'Available') || [], [jobs]);
 
@@ -95,7 +98,8 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
                     </Button>
                 </div>
 
-                {company && (
+                {/* Show detailed header if company profile exists */}
+                {company ? (
                      <Card className="mb-8 overflow-hidden">
                         <CardHeader className="flex flex-col md:flex-row items-center gap-6 p-6">
                            <Image
@@ -120,18 +124,25 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
                            </div>
                         </CardHeader>
                     </Card>
+                ) : (
+                    // Show simple header if no profile exists but jobs might.
+                    !isLoadingProfile && (
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold tracking-tight">{companyName}</h1>
+                        </div>
+                    )
                 )}
 
-                 {!company && (
-                    <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                        <Building className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <h2 className="mt-4 text-2xl font-semibold">Company Not Found</h2>
-                        <p className="mt-2 text-muted-foreground">The profile for "{companyName}" could not be found.</p>
+
+                {isLoadingJobs && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <Skeleton className="h-64 w-full" />
+                        <Skeleton className="h-64 w-full" />
+                        <Skeleton className="h-64 w-full" />
                     </div>
-                 )}
+                )}
 
-
-                {jobs && jobs.length > 0 && (
+                {!isLoadingJobs && jobs && jobs.length > 0 && (
                     <div>
                         <h2 className="text-2xl font-semibold tracking-tight mb-4">Current Openings</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -139,8 +150,8 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
                         </div>
                     </div>
                 )}
-
-                {jobs && jobs.length === 0 && company && (
+                
+                {!isLoadingJobs && (!jobs || jobs.length === 0) && (
                      <div className="text-center py-10 border-2 border-dashed rounded-lg">
                         <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
                         <h2 className="mt-4 text-xl font-semibold">No Current Openings</h2>
@@ -184,5 +195,6 @@ export default function CompanyPage({ params }: { params: Promise<{ name: string
         </Suspense>
     )
 }
+
 
     
