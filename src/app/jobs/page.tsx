@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState, useEffect, Suspense } from 'react';
@@ -61,9 +60,58 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     
     return (
         <Card className="hover:shadow-md transition-shadow duration-200 w-full">
-            <div className="p-4 flex flex-col sm:flex-row items-start gap-4">
-                 {user && !isOwner && !isRecruiter && (
-                    <div className="absolute top-3 right-3">
+            <div className="p-4 grid grid-cols-12 items-center gap-4">
+                
+                {/* Column 1: Company Info */}
+                <div className="col-span-12 sm:col-span-4 flex items-center gap-3">
+                    <Avatar className="h-12 w-12 hidden sm:flex">
+                        <AvatarImage src={job.companyLogoUrl || `https://picsum.photos/seed/${job.companyName}/100`} />
+                        <AvatarFallback>{job.companyName?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                        <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="font-semibold text-base hover:text-primary leading-tight line-clamp-1">{job.companyName}</Link>
+                        <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1">
+                           <MapPin className="h-4 w-4 flex-shrink-0" /> <span className="line-clamp-1">{job.location}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Column 2: Job Title and Salary */}
+                <div className="col-span-12 sm:col-span-4">
+                    <Link href={`/jobs/${job.id}/apply`} className="font-semibold text-base hover:text-primary leading-tight line-clamp-1">{job.title}</Link>
+                    {salaryDisplay && <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
+                </div>
+
+                {/* Column 3: Badges and Button */}
+                <div className="col-span-12 sm:col-span-4 flex sm:flex-col sm:items-end justify-between items-center gap-2">
+                    <div className="flex gap-2">
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.jobType}</Badge>
+                        <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.status}</Badge>
+                    </div>
+                    <div className="sm:mt-2">
+                        {hasApplied ? (
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
+                            </Button>
+                        ) : isRecruiter ? (
+                            isOwner ? (
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={`/jobs/${job.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Edit</Link>
+                                </Button>
+                            ) : (
+                                <Button disabled variant="outline" size="sm">View</Button>
+                            )
+                        ) : (
+                            <Button asChild size="sm">
+                                <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
+                            </Button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Favorite button for non-recruiters */}
+                {user && !isOwner && !isRecruiter && (
+                    <div className="absolute top-2 right-2">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -75,44 +123,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                             <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
                         </Button>
                     </div>
-                 )}
-                <Avatar className="h-12 w-12 hidden sm:flex">
-                    <AvatarImage src={job.companyLogoUrl || `https://picsum.photos/seed/${job.companyName}/100`} />
-                    <AvatarFallback>{job.companyName?.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Link href={`/jobs/${job.id}/apply`} className="font-semibold text-lg hover:text-primary leading-tight">{job.title}</Link>
-                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm">{job.jobType}</Badge>
-                         <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm">{job.status}</Badge>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center text-sm text-muted-foreground gap-x-3 gap-y-1 mt-1">
-                        <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="flex items-center gap-1.5 hover:text-primary hover:underline">
-                            <Building className="h-4 w-4" /> {job.companyName}
-                        </Link>
-                        <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {job.location}</div>
-                        {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
-                    </div>
-                </div>
-                <div className="w-full sm:w-auto flex justify-end items-center sm:self-center ml-auto pt-2 sm:pt-0">
-                    {hasApplied ? (
-                        <Button asChild variant="outline" size="sm">
-                           <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
-                        </Button>
-                    ) : isRecruiter ? (
-                        isOwner ? (
-                            <Button asChild variant="outline" size="sm">
-                               <Link href={`/jobs/${job.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Edit</Link>
-                            </Button>
-                        ) : (
-                             <Button disabled variant="outline" size="sm">View</Button>
-                        )
-                    ) : (
-                        <Button asChild size="sm">
-                            <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
-                        </Button>
-                    )}
-                </div>
+                )}
             </div>
         </Card>
     );
@@ -682,5 +693,3 @@ export default function JobsPage() {
         </Suspense>
     )
 }
-
-    
