@@ -568,8 +568,8 @@ function JobsPageContent() {
                                     <Separator />
                                     
                                     <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-                                        {user && !isRecruiter && (
-                                            <div>
+                                        <div className="flex items-center gap-2">
+                                            {user && !isRecruiter && (
                                                 <Toggle
                                                     size="sm"
                                                     variant="outline"
@@ -580,15 +580,15 @@ function JobsPageContent() {
                                                     <Heart className="mr-2 h-4 w-4" />
                                                     My Favourites
                                                 </Toggle>
-                                            </div>
-                                        )}
-                                        <div className="flex items-center gap-2">
+                                            )}
                                             {hasActiveFilters && (
                                                 <Button variant="ghost" onClick={clearAllFilters}>
                                                     <FilterX className="mr-2 h-4 w-4" />
-                                                    Reset All Filters
+                                                    Clear filters
                                                 </Button>
                                             )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
                                              {user && !isRecruiter && hasActiveFilters && (
                                                 <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
                                                     <DialogTrigger asChild>
