@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useState, useEffect, Suspense } from 'react';
@@ -60,11 +61,18 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     
     return (
         <Card className="hover:shadow-md transition-shadow duration-200 w-full">
-            <div className="p-4 grid grid-cols-12 items-center gap-4">
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-12 items-center gap-4 relative">
                 
+                {/* Mobile: Badges top right */}
+                 <div className="sm:hidden absolute top-4 right-4 flex gap-2">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.jobType}</Badge>
+                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.status}</Badge>
+                </div>
+
+
                 {/* Column 1: Company Info */}
                 <div className="col-span-12 sm:col-span-4 flex items-center gap-3">
-                    <Avatar className="h-12 w-12 hidden sm:flex">
+                    <Avatar className="h-12 w-12 flex">
                         <AvatarImage src={job.companyLogoUrl || `https://picsum.photos/seed/${job.companyName}/100`} />
                         <AvatarFallback>{job.companyName?.charAt(0)}</AvatarFallback>
                     </Avatar>
@@ -84,25 +92,25 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
 
                 {/* Column 3: Badges and Button */}
                 <div className="col-span-12 sm:col-span-4 flex sm:flex-col sm:items-end justify-between items-center gap-2">
-                    <div className="flex gap-2">
+                    <div className="hidden sm:flex gap-2">
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.jobType}</Badge>
                         <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.status}</Badge>
                     </div>
-                    <div className="sm:mt-2">
+                    <div className="sm:mt-2 w-full sm:w-auto">
                         {hasApplied ? (
-                            <Button asChild variant="outline" size="sm">
+                            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                                 <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
                             </Button>
                         ) : isRecruiter ? (
                             isOwner ? (
-                                <Button asChild variant="outline" size="sm">
+                                <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                                     <Link href={`/jobs/${job.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Edit</Link>
                                 </Button>
                             ) : (
-                                <Button disabled variant="outline" size="sm">View</Button>
+                                <Button disabled variant="outline" size="sm" className="w-full sm:w-auto">View</Button>
                             )
                         ) : (
-                            <Button asChild size="sm">
+                            <Button asChild size="sm" className="w-full sm:w-auto">
                                 <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
                             </Button>
                         )}
@@ -111,7 +119,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
 
                 {/* Favorite button for non-recruiters */}
                 {user && !isOwner && !isRecruiter && (
-                    <div className="absolute top-2 right-2">
+                    <div className="absolute top-2 left-2 sm:top-2 sm:right-2 sm:left-auto">
                         <Button
                             variant="ghost"
                             size="icon"
