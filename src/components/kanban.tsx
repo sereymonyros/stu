@@ -289,7 +289,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
             <div 
                 ref={setNodeRef} 
                 className={cn(
-                    "p-2 flex-1 rounded-b-lg transition-colors", 
+                    "min-h[125] p-2 flex-1 rounded-b-lg transition-colors", 
                     isOver ? 'bg-primary/10' : 'bg-muted/40'
                 )}
             >
