@@ -7,7 +7,7 @@ import { collection, doc, setDoc, deleteDoc, serverTimestamp, query } from 'fire
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter } from 'lucide-react';
+import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -41,27 +41,33 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
+import { MultiSelectOption, MultiSelect } from '@/components/ui/multi-select';
 
-const FilterGroup = ({ title, options, selected, onToggle }: { title: string; options: string[]; selected: string[]; onToggle: (option: string) => void; }) => {
+const FilterGroup = ({ title, options, selected, onToggle }: { title: string; options: MultiSelectOption[]; selected: string[]; onToggle: (optionValue: string) => void; }) => {
     if (!options || options.length === 0) return null;
+
+    const selectedLabels = options.filter(opt => selected.includes(opt.value)).map(opt => opt.label);
+
     return (
-        <div>
-            <h3 className="text-sm font-semibold mb-2">{title}</h3>
-            <div className="flex flex-wrap gap-2">
-                {options.map(option => (
-                    <Toggle
-                        key={option}
-                        size="sm"
-                        variant="outline"
-                        pressed={selected.includes(option)}
-                        onPressedChange={() => onToggle(option)}
-                        className="rounded-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                    >
-                        {option}
-                    </Toggle>
-                ))}
-            </div>
-        </div>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                    <span className="truncate pr-2">
+                        {selectedLabels.length > 0 ? `${title}: ${selectedLabels.join(', ')}` : `${title}`}
+                    </span>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
+                 <MultiSelect
+                    options={options}
+                    selectedValues={selected}
+                    onValueChange={onToggle}
+                    placeholder={`Search ${title.toLowerCase()}...`}
+                 />
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 };
 
@@ -170,8 +176,8 @@ function JobsPageContent() {
     const { data: applications } = useCollection(applicationsQuery);
 
     // --- Derived State ---
-    const { companyNames, locations, jobTypes, maxSalary } = useMemo(() => {
-        if (!jobs) return { companyNames: [], locations: [], jobTypes: [], maxSalary: 150000 };
+    const { companyOptions, locationOptions, jobTypeOptions, maxSalary } = useMemo(() => {
+        if (!jobs) return { companyOptions: [], locationOptions: [], jobTypeOptions: [], maxSalary: 150000 };
         const companies = new Set<string>();
         const locs = new Set<string>();
         const types = new Set<string>();
@@ -184,9 +190,9 @@ function JobsPageContent() {
         });
         const finalMaxSalary = maxSal > 0 ? Math.ceil(maxSal / 1000) * 1000 : 150000;
         return {
-            companyNames: Array.from(companies).sort(),
-            locations: Array.from(locs).sort(),
-            jobTypes: Array.from(types).sort(),
+            companyOptions: Array.from(companies).sort().map(c => ({ value: c, label: c })),
+            locationOptions: Array.from(locs).sort().map(l => ({ value: l, label: l })),
+            jobTypeOptions: Array.from(types).sort().map(t => ({ value: t, label: t })),
             maxSalary: finalMaxSalary,
         };
     }, [jobs]);
@@ -526,7 +532,7 @@ function JobsPageContent() {
                     <>
                         {jobs.length > 0 && (
                             <Card className="p-4 mb-6">
-                                <div className="grid gap-6">
+                                <div className="grid gap-4">
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                         <Input
@@ -538,10 +544,10 @@ function JobsPageContent() {
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-                                        <FilterGroup title="Company" options={companyNames} selected={selectedCompanies} onToggle={(val) => toggleFilter(setSelectedCompanies, val)} />
-                                        <FilterGroup title="Location" options={locations} selected={selectedLocations} onToggle={(val) => toggleFilter(setSelectedLocations, val)} />
-                                        <FilterGroup title="Job Type" options={jobTypes} selected={selectedJobTypes} onToggle={(val) => toggleFilter(setSelectedJobTypes, val)} />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-start">
+                                        <FilterGroup title="Company" options={companyOptions} selected={selectedCompanies} onToggle={(val) => toggleFilter(setSelectedCompanies, val)} />
+                                        <FilterGroup title="Location" options={locationOptions} selected={selectedLocations} onToggle={(val) => toggleFilter(setSelectedLocations, val)} />
+                                        <FilterGroup title="Job Type" options={jobTypeOptions} selected={selectedJobTypes} onToggle={(val) => toggleFilter(setSelectedJobTypes, val)} />
                                         
                                         <div>
                                             <h3 className="text-sm font-semibold mb-2">Salary Range</h3>
