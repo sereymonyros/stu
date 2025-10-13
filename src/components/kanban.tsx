@@ -222,7 +222,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                                 <AvatarFallback>{applicant.applicantName?.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div>
-                                <p className="font-semibold text-sm leading-tight">{applicant.applicantName}</p>
+                                <p className="font-semibold text-sm leading-tight select-none">{applicant.applicantName}</p>
                                 {appliedAtDate && (
                                     <p className="text-xs text-muted-foreground leading-tight hidden">Applied {formatDistanceToNow(appliedAtDate, { addSuffix: true })}</p>
                                 )}
@@ -291,7 +291,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
                         <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{applicants.length}</span>
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 flex-1">
+                <CardContent className="p-6">
                      {isLoading ? (
                         <div className="space-y-2">
                              <Skeleton className="h-20 w-full" />
