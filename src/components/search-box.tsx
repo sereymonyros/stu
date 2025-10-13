@@ -40,13 +40,6 @@ export function SearchBox({ searchAction, className }: { searchAction: (formData
   const searchParams = useSearchParams();
   const query = searchParams.get('q');
 
-  useEffect(() => {
-    // Only focus if there is no query, otherwise it's annoying on the results page
-    if (!query) {
-      inputRef.current?.focus();
-    }
-  }, [query]);
-
   const handleSearch = async (formData: FormData) => {
     if (user) {
       formData.append('userId', user.uid);
