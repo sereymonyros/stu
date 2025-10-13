@@ -11,16 +11,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuGroup,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { LogOut, User as UserIcon, MessageSquareHeart, LayoutDashboard, Moon, Sun } from 'lucide-react';
+import { LogOut, User as UserIcon, MessageSquareHeart, LayoutDashboard, Moon, Sun, Settings, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { doc } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { useTheme } from 'next-themes';
+import { useChatbot } from './chatbot-provider';
 
 export function UserAuthButton() {
   const { user, isUserLoading } = useUser();
@@ -28,6 +33,7 @@ export function UserAuthButton() {
   const firestore = useFirestore();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const { setOpen } = useChatbot();
 
   const userProfileRef = useMemo(() => {
     if (!firestore || !user) return null;
@@ -83,16 +89,30 @@ export function UserAuthButton() {
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-           <DropdownMenuItem asChild>
-            <Link href="/feedback">
-              <MessageSquareHeart className="mr-2 h-4 w-4" />
-              <span>Feedback</span>
-            </Link>
-          </DropdownMenuItem>
-           <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-            {theme === 'dark' ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-            <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-          </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onClick={() => setOpen(true)}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <span>Ask AI Helper</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/feedback">
+                    <MessageSquareHeart className="mr-2 h-4 w-4" />
+                    <span>Feedback</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+                  {theme === 'dark' ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                  <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />

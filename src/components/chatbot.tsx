@@ -14,6 +14,7 @@ import { useUser, useDoc, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { JobResultCard } from './job-result-card';
+import { useChatbot } from './chatbot-provider';
 
 interface Message {
   id: string;
@@ -22,7 +23,7 @@ interface Message {
 }
 
 export function Chatbot() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, setOpen } = useChatbot();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +49,7 @@ export function Chatbot() {
             <div className="space-y-2">
                 <p className="font-medium">I found {content.length} job(s) for you:</p>
                 {content.map(job => (
-                   <JobResultCard key={job.id} job={job} onLinkClick={() => setIsOpen(false)}/>
+                   <JobResultCard key={job.id} job={job} onLinkClick={() => setOpen(false)}/>
                 ))}
             </div>
         )
@@ -112,14 +113,7 @@ export function Chatbot() {
   const fallbackText = userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : user?.email ? user.email.charAt(0).toUpperCase() : 'U';
 
   return (
-    <>
-      <Button
-        className="fixed bottom-20 right-6 h-16 w-16 rounded-full shadow-lg z-50"
-        onClick={() => setIsOpen(true)}
-      >
-        <MessageSquare className="h-8 w-8" />
-      </Button>
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <Sheet open={isOpen} onOpenChange={setOpen}>
         <SheetContent className="flex flex-col p-0">
           <SheetHeader className="p-4 border-b">
             <SheetTitle>Cambodia Hub Helper</SheetTitle>
@@ -163,6 +157,5 @@ export function Chatbot() {
           </div>
         </SheetContent>
       </Sheet>
-    </>
   );
 }
