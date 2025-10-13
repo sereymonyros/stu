@@ -54,7 +54,7 @@ export function BottomNavbar() {
 
     return (
         <div className={cn(
-            "md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-sm border-t z-50 transition-transform duration-300 ease-in-out",
+            "md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-sm z-50 transition-transform duration-300 ease-in-out",
             isVisible ? "translate-y-0" : "translate-y-full"
         )}>
             <div className="grid h-full grid-cols-2 max-w-lg mx-auto font-medium">
