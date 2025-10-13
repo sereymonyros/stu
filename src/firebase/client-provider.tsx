@@ -51,7 +51,8 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
     >
       <div className="relative flex flex-col h-screen">
         <Header />
-        <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+        {/* The main content area now uses calc() to subtract the header (65px) and bottom nav (64px) heights */}
+        <main className="overflow-y-auto md:h-full" style={{ height: 'calc(100vh - 65px - 64px)'}}>
           <div className="container mx-auto w-full">
             {children}
           </div>
