@@ -8,7 +8,7 @@ export default function Home() {
   const heroImage = PlaceHolderImages.find(p => p.id === 'cambodia-hero');
 
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col flex-1 h-[calc(100vh-80px)]">
       <div className="relative flex-grow flex flex-col items-center justify-center overflow-hidden p-4 text-center">
         {heroImage && (
           <Image
