@@ -10,6 +10,8 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { initializeFirebaseAdmin } from '@/firebase/server-init';
 import { FieldValue } from 'firebase-admin/firestore';
+import type { UserRecord } from 'firebase-admin/auth';
+
 
 const SeedDatabaseOutputSchema = z.object({
   message: z.string(),
@@ -41,7 +43,7 @@ const seedDatabaseFlow = ai.defineFlow(
     let jobsCreated = 0;
     let specialJobsCreated = 0;
 
-    const recruiters = [];
+    const recruiters: UserRecord[] = [];
 
     try {
       // 1. Create 10 Recruiter Users
@@ -49,7 +51,6 @@ const seedDatabaseFlow = ai.defineFlow(
         const email = `recruiter${i}@example.com`;
         const displayName = `Recruiter ${i}`;
         try {
-            // Check if user exists before creating
             const user = await auth.getUserByEmail(email);
             recruiters.push(user);
         } catch (error: any) {
@@ -126,7 +127,6 @@ const seedDatabaseFlow = ai.defineFlow(
           recruiterDisplayName: recruiter.displayName,
           createdAt: FieldValue.serverTimestamp(),
         };
-        // Use a unique ID based on the title to prevent duplicates on re-runs
         const jobRef = firestore.collection('jobs').doc(jobTitles[i].replace(/\s+/g, '-').toLowerCase());
         const jobDoc = await jobRef.get();
         if (!jobDoc.exists) {
@@ -135,49 +135,63 @@ const seedDatabaseFlow = ai.defineFlow(
         }
       }
 
-      // 4. Create 10 specific jobs for sereymonyros@gmail.com
+      // 4. Create or get special user and create 10 specific jobs for them
       const specialUserEmail = 'sereymonyros@gmail.com';
+      let specialUser: UserRecord;
       try {
-        const specialUser = await auth.getUserByEmail(specialUserEmail);
-
-        const specialJobTitles = [
-            'Lead Blockchain Developer', 'AI/ML Engineer', 'Senior Cloud Architect', 'Mobile Development Lead (React Native)',
-            'Cybersecurity Analyst', 'Head of Digital Marketing', 'E-commerce Manager', 'Chief Technology Officer (CTO)',
-            'Principal UI/UX Designer', 'Director of Engineering'
-        ];
-        const specialCompanies = [
-            'CryptoCambodia', 'AI Solutions Khmer', 'Mekong Cloud Services', 'Angkor App Development', 'CyberGuardians',
-            'Digital Pagoda', 'KhmerCart', 'Startup Hub PP', 'Banyan UX', 'FutureTech Cambodia'
-        ];
-
-        for (let i = 0; i < 10; i++) {
-             const jobData = {
-                title: specialJobTitles[i],
-                companyName: specialCompanies[i],
-                location: locations[i % locations.length],
-                jobType: jobTypes[i % jobTypes.length],
-                status: 'Available',
-                description: `An exciting new role for a ${specialJobTitles[i]} at ${specialCompanies[i]}.`,
-                salaryMin: 90000 + (i * 10000),
-                salaryMax: 120000 + (i * 10000),
-                recruiterId: specialUser.uid,
-                recruiterDisplayName: specialUser.displayName,
-                createdAt: FieldValue.serverTimestamp(),
-            };
-            const jobRef = firestore.collection('jobs').doc(specialJobTitles[i].replace(/[\s/]+/g, '-').toLowerCase());
-            const jobDoc = await jobRef.get();
-            if (!jobDoc.exists) {
-                await jobRef.set(jobData);
-                specialJobsCreated++;
-            }
-        }
+        specialUser = await auth.getUserByEmail(specialUserEmail);
       } catch (error: any) {
         if (error.code === 'auth/user-not-found') {
-          console.log(`Special user ${specialUserEmail} not found, skipping special job creation.`);
+          console.log(`Special user ${specialUserEmail} not found, creating them now...`);
+          specialUser = await auth.createUser({
+            email: specialUserEmail,
+            password: 'password',
+            displayName: 'Sereymony Ros',
+          });
+          await firestore.collection('users').doc(specialUser.uid).set({
+            uid: specialUser.uid,
+            displayName: 'Sereymony Ros',
+            email: specialUserEmail,
+            address: '1 Special Ave, Phnom Penh',
+            phone: '555-555-5555',
+            userType: 'recruiter',
+            photoURL: `https://i.pravatar.cc/150?u=${specialUserEmail}`
+          });
         } else {
           throw error;
         }
       }
+
+      const specialJobTitles = [
+          'Lead Blockchain Developer', 'AI/ML Engineer', 'Senior Cloud Architect', 'Mobile Development Lead (React Native)',
+          'Cybersecurity Analyst', 'Head of Digital Marketing', 'E-commerce Manager', 'Chief Technology Officer (CTO)',
+          'Principal UI/UX Designer', 'Director of Engineering'
+      ];
+      const specialCompanies = [
+          'CryptoCambodia', 'AI Solutions Khmer', 'Mekong Cloud Services', 'Angkor App Development', 'CyberGuardians',
+          'Digital Pagoda', 'KhmerCart', 'Startup Hub PP', 'Banyan UX', 'FutureTech Cambodia'
+      ];
+
+      for (let i = 0; i < 10; i++) {
+          const jobTitleWithSuffix = `${specialJobTitles[i]} #${Math.floor(Math.random() * 1000)}`;
+          const jobData = {
+              title: jobTitleWithSuffix,
+              companyName: specialCompanies[i],
+              location: locations[i % locations.length],
+              jobType: jobTypes[i % jobTypes.length],
+              status: 'Available',
+              description: `An exciting new role for a ${specialJobTitles[i]} at ${specialCompanies[i]}.`,
+              salaryMin: 90000 + (i * 10000),
+              salaryMax: 120000 + (i * 10000),
+              recruiterId: specialUser.uid,
+              recruiterDisplayName: specialUser.displayName,
+              createdAt: FieldValue.serverTimestamp(),
+          };
+          // Using addDoc for guaranteed unique IDs for special jobs.
+          await firestore.collection('jobs').add(jobData);
+          specialJobsCreated++;
+      }
+
 
       const message = `Database seeding complete. Already existing data was skipped.`;
       return { message, recruitersCreated, standardUsersCreated, jobsCreated, specialJobsCreated };

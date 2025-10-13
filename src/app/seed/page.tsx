@@ -70,10 +70,12 @@ export default function SeedPage() {
               </CardHeader>
               <CardContent className="p-0 text-sm space-y-1">
                  <p><strong>Message:</strong> {result.message}</p>
-                 <p><strong>Recruiters Created:</strong> {result.recruitersCreated}</p>
-                 <p><strong>Standard Users Created:</strong> {result.standardUsersCreated}</p>
-                 <p><strong>Jobs Created:</strong> {result.jobsCreated}</p>
-                 <p><strong>Special Jobs Created:</strong> {result.specialJobsCreated} (for sereymonyros@gmail.com)</p>
+                 <ul className="list-disc list-inside space-y-1 pl-2">
+                    <li><strong>Recruiters Created:</strong> {result.recruitersCreated}</li>
+                    <li><strong>Standard Users Created:</strong> {result.standardUsersCreated}</li>
+                    <li><strong>Jobs Created:</strong> {result.jobsCreated}</li>
+                    <li><strong>Special Jobs Created:</strong> {result.specialJobsCreated} (for sereymonyros@gmail.com)</li>
+                 </ul>
               </CardContent>
             </Card>
           )}
