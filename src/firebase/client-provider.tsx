@@ -52,7 +52,9 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       <div className="relative flex flex-col min-h-screen">
         <Header />
         <div className="flex-1 flex flex-col">
-          {children}
+          <main className="container mx-auto flex-1 w-full max-w-7xl">
+            {children}
+          </main>
         </div>
         <Chatbot />
         <BottomNavbar />
