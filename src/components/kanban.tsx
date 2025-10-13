@@ -279,17 +279,20 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
     };
 
     return (
-        <Card ref={setNodeRef} className={cn(
-            "w-full md:w-80 flex-shrink-0 flex flex-col transition-colors", 
-            isOver ? 'bg-primary/10' : 'bg-muted/40'
-        )}>
-            <CardHeader className={cn("p-3 border-b-4", titleColors[id] || 'border-gray-500')}>
-                <CardTitle className="text-base font-semibold capitalize flex justify-between items-center select-none">
+        <div className="w-full md:w-80 flex-shrink-0 flex flex-col">
+            <CardHeader className={cn("p-3 border-b-4 select-none", titleColors[id] || 'border-gray-500')}>
+                <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
                     <span>{title}</span>
                     <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{applicants.length}</span>
                 </CardTitle>
             </CardHeader>
-            <CardContent className="p-2 flex-1 min-h-[125px]">
+            <div 
+                ref={setNodeRef} 
+                className={cn(
+                    "p-2 flex-1 rounded-b-lg transition-colors", 
+                    isOver ? 'bg-primary/10' : 'bg-muted/40'
+                )}
+            >
                  {isLoading ? (
                     <div className="space-y-2">
                          <Skeleton className="h-20 w-full" />
@@ -300,14 +303,14 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
                         {children}
                     </SortableContext>
                 )}
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }
 
 function Board({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex flex-wrap gap-4 pb-4 overflow-x-auto">
+        <div className="flex flex-wrap gap-4 pb-4 justify-center">
             {children}
         </div>
     );
