@@ -291,7 +291,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
                         <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{applicants.length}</span>
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 flex-1 overflow-y-auto min-h-[100px]">
+                <CardContent className="p-6 flex-1">
                      {isLoading ? (
                         <div className="space-y-2">
                              <Skeleton className="h-20 w-full" />
