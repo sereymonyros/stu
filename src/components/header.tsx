@@ -22,7 +22,7 @@ const AngkorWatIcon = () => (
 export function Header() {
   return (
     <>
-      <header className="w-full border-b">
+      <header className="w-full">
         <div className="container mx-auto flex h-16 items-center justify-between">
             <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2 text-2xl font-bold">
