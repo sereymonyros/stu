@@ -66,7 +66,7 @@ export function JobCard({
         <>
             <CardHeader className="p-3 pb-2">
                 <div className="flex justify-between items-start gap-2">
-                    <CardTitle className="text-base font-bold">{job.title}</CardTitle>
+                    <CardTitle className="text-base font-bold select-none">{job.title}</CardTitle>
                     {user && !isOwner && !isRecruiter && (
                          <Button
                             variant="ghost"
