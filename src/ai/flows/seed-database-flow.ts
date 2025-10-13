@@ -22,7 +22,8 @@ export type SeedDatabaseOutput = z.infer<typeof SeedDatabaseOutputSchema>;
 const SeedDatabaseInputSchema = z.object({});
 
 export async function seedDatabase(): Promise<SeedDatabaseOutput> {
-  return seedDatabaseFlow();
+  // Pass an empty object to satisfy the flow's input schema.
+  return seedDatabaseFlow({});
 }
 
 const seedDatabaseFlow = ai.defineFlow(
@@ -46,7 +47,6 @@ const seedDatabaseFlow = ai.defineFlow(
         const displayName = `Recruiter ${i}`;
         try {
             // Check if user exists before creating
-            await auth.getUserByEmail(email);
             const user = await auth.getUserByEmail(email);
             recruiters.push(user);
         } catch (error: any) {
