@@ -14,7 +14,6 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Input } from '@/components/ui/input';
 import { Toggle } from '@/components/ui/toggle';
-import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
   DialogContent,
@@ -31,7 +30,6 @@ import { Board, JobCard } from '@/components/job-kanban';
 import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import JobsLoading from './loading';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building, DollarSign, MapPin, Pencil } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -41,35 +39,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import { MultiSelectOption, MultiSelect } from '@/components/ui/multi-select';
-
-const FilterGroup = ({ title, options, selected, onToggle }: { title: string; options: MultiSelectOption[]; selected: string[]; onToggle: (optionValue: string) => void; }) => {
-    if (!options || options.length === 0) return null;
-
-    const selectedLabels = options.filter(opt => selected.includes(opt.value)).map(opt => opt.label);
-
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                    <span className="truncate pr-2">
-                        {selectedLabels.length > 0 ? `${title}: ${selectedLabels.join(', ')}` : `${title}`}
-                    </span>
-                    <ChevronDown className="h-4 w-4 opacity-50" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
-                 <MultiSelect
-                    options={options}
-                    selectedValues={selected}
-                    onValueChange={onToggle}
-                    placeholder={`Search ${title.toLowerCase()}...`}
-                 />
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-};
 
 function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; isRecruiter: boolean; }) {
     const { user } = useUser();
@@ -300,7 +270,7 @@ function JobsPageContent() {
         const searchData = {
             id: newSearchDocRef.id,
             name: savedSearchName,
-            searchQuery: savedSearchName.toLowerCase() || '',
+            searchQuery: searchQuery || '',
             filters: {
                 companyNames: selectedCompanies,
                 locations: selectedLocations,
@@ -531,9 +501,9 @@ function JobsPageContent() {
                 {viewMode !== 'board' && (
                     <>
                         {jobs.length > 0 && (
-                            <Card className="p-4 mb-6">
-                                <div className="grid gap-4">
-                                    <div className="relative">
+                            <Collapsible className="mb-6">
+                                <div className="flex items-center justify-between gap-4 mb-4">
+                                     <div className="relative flex-1">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                         <Input
                                             type="search"
@@ -543,91 +513,126 @@ function JobsPageContent() {
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                         />
                                     </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-start">
-                                        <FilterGroup title="Company" options={companyOptions} selected={selectedCompanies} onToggle={(val) => toggleFilter(setSelectedCompanies, val)} />
-                                        <FilterGroup title="Location" options={locationOptions} selected={selectedLocations} onToggle={(val) => toggleFilter(setSelectedLocations, val)} />
-                                        <FilterGroup title="Job Type" options={jobTypeOptions} selected={selectedJobTypes} onToggle={(val) => toggleFilter(setSelectedJobTypes, val)} />
-                                        
-                                        <div>
-                                            <h3 className="text-sm font-semibold mb-2">Salary Range</h3>
-                                            <Slider
-                                                value={salaryRange}
-                                                onValueChange={setSalaryRange}
-                                                max={maxSalary}
-                                                step={1000}
-                                                className="my-4"
-                                            />
-                                            <div className="flex justify-between text-xs text-muted-foreground">
-                                                <span>${salaryRange[0].toLocaleString()}</span>
-                                                <span>${salaryRange[1].toLocaleString()}</span>
+                                    <CollapsibleTrigger asChild>
+                                        <Button variant="outline" className="h-10">
+                                            <Filter className="mr-2 h-4 w-4" />
+                                            Filters
+                                            <ChevronDown className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    </CollapsibleTrigger>
+                                </div>
+                                <CollapsibleContent>
+                                    <Card className="p-4">
+                                        <div className="grid gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label>Company</Label>
+                                                    <MultiSelect
+                                                        options={companyOptions}
+                                                        selectedValues={selectedCompanies}
+                                                        onValueChange={(val) => toggleFilter(setSelectedCompanies, val)}
+                                                        placeholder="Filter companies..."
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Location</Label>
+                                                     <MultiSelect
+                                                        options={locationOptions}
+                                                        selectedValues={selectedLocations}
+                                                        onValueChange={(val) => toggleFilter(setSelectedLocations, val)}
+                                                        placeholder="Filter locations..."
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Job Type</Label>
+                                                     <MultiSelect
+                                                        options={jobTypeOptions}
+                                                        selectedValues={selectedJobTypes}
+                                                        onValueChange={(val) => toggleFilter(setSelectedJobTypes, val)}
+                                                        placeholder="Filter job types..."
+                                                    />
+                                                </div>
+                                            </div>
+                                             <div className="space-y-2">
+                                                <Label>Salary Range</Label>
+                                                <Slider
+                                                    value={salaryRange}
+                                                    onValueChange={setSalaryRange}
+                                                    max={maxSalary}
+                                                    step={1000}
+                                                    className="my-4"
+                                                />
+                                                <div className="flex justify-between text-xs text-muted-foreground">
+                                                    <span>${salaryRange[0].toLocaleString()}</span>
+                                                    <span>${salaryRange[1].toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex flex-col sm:flex-row justify-between items-center gap-2 pt-2">
+                                                <div className="flex items-center gap-2">
+                                                    {user && !isRecruiter && (
+                                                        <Toggle
+                                                            size="sm"
+                                                            variant="outline"
+                                                            pressed={showFavoritesOnly}
+                                                            onPressedChange={setShowFavoritesOnly}
+                                                            className="h-9 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                                        >
+                                                            <Heart className="mr-2 h-4 w-4" />
+                                                            My Favourites
+                                                        </Toggle>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    {hasActiveFilters && (
+                                                        <Button variant="ghost" onClick={clearAllFilters}>
+                                                            <FilterX className="mr-2 h-4 w-4" />
+                                                            Clear filters
+                                                        </Button>
+                                                    )}
+                                                     {user && !isRecruiter && hasActiveFilters && (
+                                                        <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+                                                            <DialogTrigger asChild>
+                                                                <Button>
+                                                                    <Star className="mr-2 h-4 w-4" /> Save Search
+                                                                </Button>
+                                                            </DialogTrigger>
+                                                            <DialogContent className="sm:max-w-[425px]">
+                                                                <DialogHeader>
+                                                                    <DialogTitle>Save Job Search</DialogTitle>
+                                                                    <DialogDescription>
+                                                                        Name this search to save it to your dashboard for later.
+                                                                    </DialogDescription>
+                                                                </DialogHeader>
+                                                                <div className="grid gap-4 py-4">
+                                                                    <div className="grid grid-cols-4 items-center gap-4">
+                                                                        <Label htmlFor="search-name" className="text-right">
+                                                                            Name
+                                                                        </Label>
+                                                                        <Input
+                                                                            id="search-name"
+                                                                            value={savedSearchName}
+                                                                            onChange={(e) => setSavedSearchName(e.target.value)}
+                                                                            className="col-span-3"
+                                                                            placeholder="e.g., 'React Jobs in PP'"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <DialogFooter>
+                                                                    <Button type="button" variant="secondary" onClick={() => setIsSaveDialogOpen(false)}>Cancel</Button>
+                                                                    <Button type="submit" onClick={handleSaveSearch} disabled={isSaving || !savedSearchName.trim()}>
+                                                                        {isSaving ? 'Saving...' : 'Save'}
+                                                                    </Button>
+                                                                </DialogFooter>
+                                                            </DialogContent>
+                                                        </Dialog>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    
-                                    <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-                                        <div className="flex items-center gap-2">
-                                            {user && !isRecruiter && (
-                                                <Toggle
-                                                    size="sm"
-                                                    variant="outline"
-                                                    pressed={showFavoritesOnly}
-                                                    onPressedChange={setShowFavoritesOnly}
-                                                    className="h-9 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                                                >
-                                                    <Heart className="mr-2 h-4 w-4" />
-                                                    My Favourites
-                                                </Toggle>
-                                            )}
-                                            {hasActiveFilters && (
-                                                <Button variant="ghost" onClick={clearAllFilters}>
-                                                    <FilterX className="mr-2 h-4 w-4" />
-                                                    Clear filters
-                                                </Button>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                             {user && !isRecruiter && hasActiveFilters && (
-                                                <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
-                                                    <DialogTrigger asChild>
-                                                        <Button>
-                                                            <Star className="mr-2 h-4 w-4" /> Save Search
-                                                        </Button>
-                                                    </DialogTrigger>
-                                                    <DialogContent className="sm:max-w-[425px]">
-                                                        <DialogHeader>
-                                                            <DialogTitle>Save Job Search</DialogTitle>
-                                                            <DialogDescription>
-                                                                Name this search to save it to your dashboard for later.
-                                                            </DialogDescription>
-                                                        </DialogHeader>
-                                                        <div className="grid gap-4 py-4">
-                                                            <div className="grid grid-cols-4 items-center gap-4">
-                                                                <Label htmlFor="search-name" className="text-right">
-                                                                    Name
-                                                                </Label>
-                                                                <Input
-                                                                    id="search-name"
-                                                                    value={savedSearchName}
-                                                                    onChange={(e) => setSavedSearchName(e.target.value)}
-                                                                    className="col-span-3"
-                                                                    placeholder="e.g., 'React Jobs in PP'"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <DialogFooter>
-                                                            <Button type="button" variant="secondary" onClick={() => setIsSaveDialogOpen(false)}>Cancel</Button>
-                                                            <Button type="submit" onClick={handleSaveSearch} disabled={isSaving || !savedSearchName.trim()}>
-                                                                {isSaving ? 'Saving...' : 'Save'}
-                                                            </Button>
-                                                        </DialogFooter>
-                                                    </DialogContent>
-                                                </Dialog>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </Card>
+                                    </Card>
+                                </CollapsibleContent>
+                            </Collapsible>
                         )}
                         
                         {renderJobs()}
@@ -676,5 +681,3 @@ export default function JobsPage() {
         </Suspense>
     )
 }
-
-    

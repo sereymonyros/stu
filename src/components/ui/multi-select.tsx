@@ -44,42 +44,76 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
         };
         
         return (
-            <div className="p-1">
-                <Command className="w-full">
-                    <CommandInput placeholder={placeholder} />
-                    <CommandList>
-                        <CommandEmpty>No results found.</CommandEmpty>
-                        <CommandGroup>
-                            {options.map((option) => {
-                                const isSelected = selectedValues.includes(option.value);
-                                return (
-                                    <CommandItem
-                                        key={option.value}
-                                        onSelect={() => onValueChange(option.value)}
-                                        style={{ pointerEvents: "auto", opacity: 1 }}
-                                        className="cursor-pointer"
-                                    >
-                                        <div
-                                            className={cn(
-                                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                                                isSelected
-                                                    ? "bg-primary text-primary-foreground"
-                                                    : "opacity-50 [&_svg]:invisible"
-                                            )}
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                    <Button
+                        ref={ref}
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className={cn("w-full justify-between h-auto min-h-10", selectedValues.length > 0 ? 'h-auto' : 'h-10', className)}
+                        onClick={() => setOpen(!open)}
+                        {...props}
+                    >
+                         <div className="flex gap-1 flex-wrap">
+                            {selectedValues.length > 0 ? (
+                                options
+                                    .filter((option) => selectedValues.includes(option.value))
+                                    .map((option) => (
+                                        <Badge
+                                            variant="secondary"
+                                            key={option.value}
+                                            className="mr-1 mb-1"
+                                            onClick={(e) => handleUnselect(e, option.value)}
                                         >
-                                            <Check className={cn("h-4 w-4")} />
-                                        </div>
-                                        {option.icon && (
-                                            <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                                        )}
-                                        <span>{option.label}</span>
-                                    </CommandItem>
-                                );
-                            })}
-                        </CommandGroup>
-                    </CommandList>
-                </Command>
-            </div>
+                                            {option.label}
+                                            <X className="ml-1 h-3 w-3" />
+                                        </Badge>
+                                    ))
+                            ) : (
+                                <span className="text-muted-foreground">{placeholder}</span>
+                            )}
+                        </div>
+                        <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                    <Command>
+                        <CommandInput placeholder={placeholder} />
+                        <CommandList>
+                            <CommandEmpty>No results found.</CommandEmpty>
+                            <CommandGroup>
+                                {options.map((option) => {
+                                    const isSelected = selectedValues.includes(option.value);
+                                    return (
+                                        <CommandItem
+                                            key={option.value}
+                                            onSelect={() => onValueChange(option.value)}
+                                            style={{ pointerEvents: "auto", opacity: 1 }}
+                                            className="cursor-pointer"
+                                        >
+                                            <div
+                                                className={cn(
+                                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                                    isSelected
+                                                        ? "bg-primary text-primary-foreground"
+                                                        : "opacity-50 [&_svg]:invisible"
+                                                )}
+                                            >
+                                                <Check className={cn("h-4 w-4")} />
+                                            </div>
+                                            {option.icon && (
+                                                <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                                            )}
+                                            <span>{option.label}</span>
+                                        </CommandItem>
+                                    );
+                                })}
+                            </CommandGroup>
+                        </CommandList>
+                    </Command>
+                </PopoverContent>
+            </Popover>
         );
     }
 );
