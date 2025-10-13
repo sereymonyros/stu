@@ -207,8 +207,8 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                     return grouped;
                 }
                 return prev; // Fallback
-             });
-             toast({ variant: 'destructive', title: 'Update Failed', description: 'Please find the empty space.' });
+            });
+            toast({ variant: 'destructive', title: 'Update Failed', description: 'Please find the empty space.' });
         }
     };
 
