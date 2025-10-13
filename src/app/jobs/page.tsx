@@ -519,7 +519,7 @@ function JobsPageContent() {
                 </div>
                 
                 {viewMode !== 'board' && (
-                    <>
+                    <div className="pb-16 md:pb-0">
                         {jobs.length > 0 && (
                             <Collapsible className="mb-6">
                                 <div className="flex items-center justify-between gap-4 mb-4">
@@ -656,12 +656,12 @@ function JobsPageContent() {
                         )}
                         
                         {renderJobs()}
-                    </>
+                    </div>
                 )}
 
                 {viewMode === 'board' && isRecruiter && (
                     <DndContext sensors={sensors} onDragEnd={handleJobDragEnd}>
-                       <div className="flex justify-center flex-wrap gap-4">
+                       <div className="flex justify-center flex-wrap gap-4 pb-4">
                             {KANBAN_STAGES.map(stage => {
                                 const stageJobs = jobsByStatus[stage] || [];
                                 return (
