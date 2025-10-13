@@ -75,7 +75,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
 
   const { data: job } = useDoc(jobRef);
   const { data: userProfile, refetch: refetchUserProfile } = useDoc(userProfileRef);
-  const { data: application } = useDoc(userApplicationRef);
+  const { data: application, refetch: refetchApplication } = useDoc(userApplicationRef);
 
   const hasApplied = !!application;
   const profileComplete = !!userProfile?.photoURL && !!userProfile?.resumeUrl;
