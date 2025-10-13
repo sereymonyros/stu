@@ -382,7 +382,6 @@ export default function DashboardPage() {
                 {!isRecruiter && (
                     <>
                      <section>
-                        <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><FileText /> My Job Applications</h2>
                         {appliedJobs && appliedJobs.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {appliedJobs.map(job => (
