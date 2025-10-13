@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Briefcase, Building, MapPin, DollarSign, Pencil, ArrowLeft } from 'lucide-react';
+import { Briefcase, Building, MapPin, DollarSign, ArrowLeft, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -49,7 +49,7 @@ function JobCard({ job }: { job: any }) {
             <CardContent className="flex-grow">
                 <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">{job.jobType}</Badge>
-                    <Badge variant={job.status === 'Sold' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
+                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
                 </div>
             </CardContent>
             <CardFooter>
@@ -83,6 +83,8 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
         return query(collection(firestore, 'jobs'), where('companyName', '==', companyName));
     }, [firestore, companyName]);
     const { data: jobs } = useCollection(jobsQuery);
+    
+    const availableJobs = useMemo(() => jobs?.filter(job => job.status === 'Available') || [], [jobs]);
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -94,18 +96,27 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
                 </div>
 
                 {company && (
-                     <Card className="mb-8">
-                        <CardHeader className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
+                     <Card className="mb-8 overflow-hidden">
+                        <CardHeader className="flex flex-col md:flex-row items-center gap-6 p-6">
                            <Image
                              src={company.logoUrl || `https://picsum.photos/seed/${companyName}/200`}
                              alt={`${company.name} logo`}
-                             width={96}
-                             height={96}
-                             className="rounded-lg object-contain border p-1"
+                             width={100}
+                             height={100}
+                             className="rounded-lg object-contain border p-2"
                            />
-                           <div className="flex-1">
+                           <div className="flex-1 text-center md:text-left">
                                 <h1 className="text-3xl font-bold tracking-tight">{company.name}</h1>
+                                {company.website && (
+                                    <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary mt-1 inline-flex items-center gap-1">
+                                       <LinkIcon className="h-4 w-4" /> {company.website.replace(/^(https?:\/\/)?(www\.)?/, '')}
+                                    </a>
+                                )}
                                 {company.description && <p className="text-muted-foreground mt-2">{company.description}</p>}
+                           </div>
+                           <div className="flex-shrink-0 text-center">
+                                <div className="text-4xl font-bold text-primary">{availableJobs.length}</div>
+                                <div className="text-sm text-muted-foreground">Open Position{availableJobs.length !== 1 && 's'}</div>
                            </div>
                         </CardHeader>
                     </Card>
@@ -148,16 +159,20 @@ export default function CompanyPage({ params }: { params: Promise<{ name: string
         <Suspense fallback={
           <div className="space-y-8 p-4 md:p-6 lg:p-8">
             <Card>
-                <CardHeader className="flex flex-col md:flex-row items-center gap-6">
+                <CardHeader className="flex flex-col md:flex-row items-center gap-6 p-6">
                     <Skeleton className="h-24 w-24 rounded-lg" />
-                    <div className="space-y-2">
+                    <div className="space-y-2 flex-1">
                         <Skeleton className="h-8 w-64" />
-                        <Skeleton className="h-5 w-full" />
-                        <Skeleton className="h-5 w-4/5" />
+                        <Skeleton className="h-5 w-48" />
+                        <Skeleton className="h-5 w-full mt-2" />
+                    </div>
+                    <div className="flex-shrink-0">
+                        <Skeleton className="h-10 w-20" />
+                        <Skeleton className="h-4 w-20 mt-1" />
                     </div>
                 </CardHeader>
             </Card>
-            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-8 w-48 mb-4" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Skeleton className="h-64 w-full" />
                 <Skeleton className="h-64 w-full" />
@@ -169,3 +184,5 @@ export default function CompanyPage({ params }: { params: Promise<{ name: string
         </Suspense>
     )
 }
+
+    

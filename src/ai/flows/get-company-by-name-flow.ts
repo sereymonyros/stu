@@ -19,6 +19,7 @@ const GetCompanyByNameOutputSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   logoUrl: z.string().url().optional(),
+  website: z.string().url().optional(),
 }).nullable();
 export type GetCompanyByNameOutput = z.infer<typeof GetCompanyByNameOutputSchema>;
 
@@ -55,6 +56,7 @@ const getCompanyByNameFlow = ai.defineFlow(
         name: companyData.name,
         description: companyData.description,
         logoUrl: companyData.logoUrl,
+        website: companyData.website,
       };
 
     } catch (e: any) {
@@ -63,3 +65,5 @@ const getCompanyByNameFlow = ai.defineFlow(
     }
   }
 );
+
+    

@@ -209,6 +209,11 @@
           "type": "string",
           "format": "uri",
           "description": "A URL for the company's logo."
+        },
+        "website": {
+          "type": "string",
+          "format": "uri",
+          "description": "A URL for the company's official website."
         }
       },
       "required": [
@@ -453,3 +458,5 @@
     }
   }
 }
+
+    
