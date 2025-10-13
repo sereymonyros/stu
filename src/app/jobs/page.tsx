@@ -624,34 +624,32 @@ function JobsPageContent() {
 
                 {viewMode === 'board' && isRecruiter && (
                     <DndContext sensors={sensors} onDragEnd={handleJobDragEnd}>
-                        <ScrollArea className="w-full">
-                            <Board>
-                                {KANBAN_STAGES.map(stage => {
-                                    const stageJobs = jobsByStatus[stage] || [];
-                                    return (
-                                        <Board.Column
-                                            key={stage}
-                                            id={stage}
-                                            title={stage}
-                                            jobs={stageJobs}
-                                            isLoading={!jobs} // Kanban uses its own loading prop
-                                        >
-                                            {stageJobs.map((job: any) => (
-                                                <JobCard
-                                                    key={job.id}
-                                                    job={job}
-                                                    isFavourite={false}
-                                                    onToggleFavourite={() => {}}
-                                                    hasApplied={false}
-                                                    isRecruiter={true}
-                                                    isDraggable={true}
-                                                />
-                                            ))}
-                                        </Board.Column>
-                                    );
-                                })}
-                            </Board>
-                        </ScrollArea>
+                        <Board>
+                            {KANBAN_STAGES.map(stage => {
+                                const stageJobs = jobsByStatus[stage] || [];
+                                return (
+                                    <Board.Column
+                                        key={stage}
+                                        id={stage}
+                                        title={stage}
+                                        jobs={stageJobs}
+                                        isLoading={!jobs} // Kanban uses its own loading prop
+                                    >
+                                        {stageJobs.map((job: any) => (
+                                            <JobCard
+                                                key={job.id}
+                                                job={job}
+                                                isFavourite={false}
+                                                onToggleFavourite={() => {}}
+                                                hasApplied={false}
+                                                isRecruiter={true}
+                                                isDraggable={true}
+                                            />
+                                        ))}
+                                    </Board.Column>
+                                );
+                            })}
+                        </Board>
                     </DndContext>
                 )}
             </main>

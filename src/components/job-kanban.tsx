@@ -182,7 +182,7 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
 
 function Board({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex-1 flex flex-row gap-4 pb-4 overflow-x-auto">
+        <div className="flex flex-wrap justify-center gap-4 pb-4">
             {children}
         </div>
     );
