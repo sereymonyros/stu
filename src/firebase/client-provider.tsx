@@ -51,7 +51,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
     >
       <div className="relative flex flex-col h-screen">
         <Header />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
           <div className="container mx-auto w-full">
             {children}
           </div>
