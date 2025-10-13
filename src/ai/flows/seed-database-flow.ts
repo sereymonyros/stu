@@ -8,7 +8,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { initializeFirebaseAdmin } from '@/firebase/server-init';
-import { serverTimestamp } from 'firebase/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const SeedDatabaseOutputSchema = z.object({
   message: z.string(),
@@ -121,7 +121,7 @@ const seedDatabaseFlow = ai.defineFlow(
           salaryMax: 70000 + (i * 5000),
           recruiterId: recruiter.uid,
           recruiterDisplayName: recruiter.displayName,
-          createdAt: serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
         };
         // Use a unique ID based on the title to prevent duplicates on re-runs
         const jobRef = firestore.collection('jobs').doc(jobTitles[i].replace(/\s+/g, '-').toLowerCase());
