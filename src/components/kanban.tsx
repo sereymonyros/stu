@@ -4,7 +4,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useDroppable } from '@dnd-kit/core';
+import { useDroppable } from '@d-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -286,12 +286,12 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
                 'bg-muted/40'
             )}>
                 <CardHeader className={cn("p-3 border-b-4", titleColors[id] || 'border-gray-500')}>
-                    <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
+                    <CardTitle className="text-base font-semibold capitalize flex justify-between items-center select-none">
                         <span>{title}</span>
                         <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{applicants.length}</span>
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6">
+                <CardContent className="p-2">
                      {isLoading ? (
                         <div className="space-y-2">
                              <Skeleton className="h-20 w-full" />
