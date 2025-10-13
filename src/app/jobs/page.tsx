@@ -61,9 +61,9 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     
     return (
         <Card className="hover:shadow-md transition-shadow duration-200 w-full">
-            <div className="p-4 flex flex-col sm:flex-row items-start gap-4 relative">
-                 <div className="absolute top-2 left-2 flex items-center gap-2">
-                    {user && !isOwner && !isRecruiter && (
+            <div className="p-4 flex flex-col sm:flex-row items-start gap-4">
+                 {user && !isOwner && !isRecruiter && (
+                    <div className="absolute top-3 right-3">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -74,18 +74,18 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         >
                             <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
                         </Button>
-                    )}
-                </div>
-                 <div className="absolute top-2 right-2 flex items-center gap-2">
-                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm">{job.jobType}</Badge>
-                     <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm">{job.status}</Badge>
-                </div>
-                <Avatar className="h-12 w-12 hidden sm:flex mt-8 sm:mt-0">
+                    </div>
+                 )}
+                <Avatar className="h-12 w-12 hidden sm:flex">
                     <AvatarImage src={job.companyLogoUrl || `https://picsum.photos/seed/${job.companyName}/100`} />
                     <AvatarFallback>{job.companyName?.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div className="flex-1 w-full sm:w-auto pt-8 sm:pt-0">
-                    <Link href={`/jobs/${job.id}/apply`} className="font-semibold text-lg hover:text-primary leading-tight">{job.title}</Link>
+                <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Link href={`/jobs/${job.id}/apply`} className="font-semibold text-lg hover:text-primary leading-tight">{job.title}</Link>
+                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm">{job.jobType}</Badge>
+                         <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm">{job.status}</Badge>
+                    </div>
                     <div className="flex flex-col sm:flex-row sm:items-center text-sm text-muted-foreground gap-x-3 gap-y-1 mt-1">
                         <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="flex items-center gap-1.5 hover:text-primary hover:underline">
                             <Building className="h-4 w-4" /> {job.companyName}
@@ -94,7 +94,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                     </div>
                 </div>
-                <div className="w-full sm:w-auto flex justify-end items-center sm:self-center ml-auto">
+                <div className="w-full sm:w-auto flex justify-end items-center sm:self-center ml-auto pt-2 sm:pt-0">
                     {hasApplied ? (
                         <Button asChild variant="outline" size="sm">
                            <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
@@ -682,3 +682,5 @@ export default function JobsPage() {
         </Suspense>
     )
 }
+
+    
