@@ -6,10 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MessageSquare, Send, Bot, User } from 'lucide-react';
 import { guideUser } from '@/ai/flows/guide-user-flow';
 import { marked } from 'marked';
+import { useUser, useDoc, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { useMemo } from 'react';
 
 interface Message {
   id: string;
@@ -23,6 +26,16 @@ export function Chatbot() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const userProfileRef = useMemo(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
+
+  const { data: userProfile } = useDoc(userProfileRef);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +82,8 @@ export function Chatbot() {
     }
   }, [messages]);
 
+  const fallbackText = userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : user?.email ? user.email.charAt(0).toUpperCase() : 'U';
+
   return (
     <>
       <Button
@@ -96,8 +111,9 @@ export function Chatbot() {
                             {message.text}
                         </div>
                          {message.sender === 'user' && (
-                            <Avatar className="h-8 w-8 bg-muted text-muted-foreground">
-                                <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={userProfile?.photoURL || undefined} alt={userProfile?.displayName ?? 'User'} />
+                                <AvatarFallback>{fallbackText}</AvatarFallback>
                             </Avatar>
                         )}
                     </div>
@@ -111,9 +127,9 @@ export function Chatbot() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="How do I post a job?"
                 className="pr-12"
-                disabled={isLoading}
+                disabled={!user || isLoading}
               />
-              <Button type="submit" size="icon" className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8" disabled={isLoading}>
+              <Button type="submit" size="icon" className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8" disabled={!user || isLoading}>
                 <Send className="h-4 w-4" />
               </Button>
             </form>
