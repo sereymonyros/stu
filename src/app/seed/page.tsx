@@ -66,16 +66,16 @@ export default function SeedPage() {
           {result && (
             <Card className="bg-muted p-4">
               <CardHeader className="p-0 pb-2">
-                  <CardTitle className="text-base">Seeding Results</CardTitle>
+                <CardTitle className="text-base">Seeding Results</CardTitle>
               </CardHeader>
               <CardContent className="p-0 text-sm space-y-1">
-                 <p><strong>Message:</strong> {result.message}</p>
-                 <ul className="list-disc list-inside space-y-1 pl-2">
-                    <li><strong>Recruiters Created:</strong> {result.recruitersCreated}</li>
-                    <li><strong>Standard Users Created:</strong> {result.standardUsersCreated}</li>
-                    <li><strong>Jobs Created:</strong> {result.jobsCreated}</li>
-                    <li><strong>Special Jobs Created:</strong> {result.specialJobsCreated} (for sereymonyros@gmail.com)</li>
-                 </ul>
+                <p><strong>Message:</strong> {result.message}</p>
+                <ul className="list-disc list-inside space-y-1 pl-2">
+                  <li><strong>Recruiters Created:</strong> {result.recruitersCreated}</li>
+                  <li><strong>Standard Users Created:</strong> {result.standardUsersCreated}</li>
+                  <li><strong>Jobs Created:</strong> {result.jobsCreated}</li>
+                  <li><strong>Special Jobs Created:</strong> {result.specialJobsCreated} (for sereymonyros@gmail.com)</li>
+                </ul>
               </CardContent>
             </Card>
           )}
