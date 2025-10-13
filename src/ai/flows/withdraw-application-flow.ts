@@ -41,17 +41,19 @@ const withdrawApplicationFlow = ai.defineFlow(
 
     try {
       // --- 1. Define document references ---
-      debugger;
       const jobRef = firestore.collection('jobs').doc(jobId);
       const mainApplicationRef = jobRef.collection('applications').doc(userId);
       const userApplicationRef = firestore.collection('users').doc(userId).collection('applications').doc(jobId);
 
-      // --- 2. Fetch all data needed for notification and deletion ---
+      // --- 2. Fetch all data needed for notification and deletion FIRST ---
       const jobDoc = await jobRef.get();
       const applicantUserRecord = await auth.getUser(userId);
 
       if (!jobDoc.exists) {
         throw new Error("Job not found.");
+      }
+      if (!applicantUserRecord) {
+        throw new Error("Applicant not found.");
       }
 
       const jobData = jobDoc.data()!;
@@ -64,7 +66,7 @@ const withdrawApplicationFlow = ai.defineFlow(
           throw new Error(`Recruiter for job ${jobId} does not have a contact email.`);
       }
 
-      // --- 3. Send email notification to the recruiter FIRST ---
+      // --- 3. Send email notification to the recruiter ---
       const emailBody = withdrawalNotificationTemplate({
         recruiterName: recruiterUser.displayName || 'Recruiter',
         applicantName: applicantName,
