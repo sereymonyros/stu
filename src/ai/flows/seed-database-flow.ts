@@ -3,6 +3,7 @@
 /**
  * @fileOverview A flow to seed the Firestore database with test data.
  * It creates 10 recruiters, 10 standard users, and 10 job postings.
+ * It also includes logic to add 10 specific jobs for the user 'sereymonyros@gmail.com'.
  */
 
 import { ai } from '@/ai/genkit';
@@ -15,6 +16,7 @@ const SeedDatabaseOutputSchema = z.object({
   recruitersCreated: z.number(),
   standardUsersCreated: z.number(),
   jobsCreated: z.number(),
+  specialJobsCreated: z.number(),
 });
 export type SeedDatabaseOutput = z.infer<typeof SeedDatabaseOutputSchema>;
 
@@ -37,6 +39,7 @@ const seedDatabaseFlow = ai.defineFlow(
     let recruitersCreated = 0;
     let standardUsersCreated = 0;
     let jobsCreated = 0;
+    let specialJobsCreated = 0;
 
     const recruiters = [];
 
@@ -102,7 +105,7 @@ const seedDatabaseFlow = ai.defineFlow(
         }
       }
 
-      // 3. Create 10 Job Postings
+      // 3. Create 10 Job Postings for the new recruiters
       const jobTitles = ['Software Engineer', 'UX Designer', 'Product Manager', 'Data Scientist', 'Marketing Lead', 'DevOps Engineer', 'QA Tester', 'Frontend Developer', 'Backend Developer', 'Project Manager'];
       const companies = ['TechCorp', 'Innovate LLC', 'Data Solutions', 'Creative Minds', 'MarketBoost', 'CloudNine', 'BugFree Inc.', 'UI Masters', 'API World', 'TaskMasters'];
       const locations = ['Phnom Penh', 'Siem Reap', 'Battambang', 'Sihanoukville'];
@@ -132,8 +135,52 @@ const seedDatabaseFlow = ai.defineFlow(
         }
       }
 
+      // 4. Create 10 specific jobs for sereymonyros@gmail.com
+      const specialUserEmail = 'sereymonyros@gmail.com';
+      try {
+        const specialUser = await auth.getUserByEmail(specialUserEmail);
+
+        const specialJobTitles = [
+            'Lead Blockchain Developer', 'AI/ML Engineer', 'Senior Cloud Architect', 'Mobile Development Lead (React Native)',
+            'Cybersecurity Analyst', 'Head of Digital Marketing', 'E-commerce Manager', 'Chief Technology Officer (CTO)',
+            'Principal UI/UX Designer', 'Director of Engineering'
+        ];
+        const specialCompanies = [
+            'CryptoCambodia', 'AI Solutions Khmer', 'Mekong Cloud Services', 'Angkor App Development', 'CyberGuardians',
+            'Digital Pagoda', 'KhmerCart', 'Startup Hub PP', 'Banyan UX', 'FutureTech Cambodia'
+        ];
+
+        for (let i = 0; i < 10; i++) {
+             const jobData = {
+                title: specialJobTitles[i],
+                companyName: specialCompanies[i],
+                location: locations[i % locations.length],
+                jobType: jobTypes[i % jobTypes.length],
+                status: 'Available',
+                description: `An exciting new role for a ${specialJobTitles[i]} at ${specialCompanies[i]}.`,
+                salaryMin: 90000 + (i * 10000),
+                salaryMax: 120000 + (i * 10000),
+                recruiterId: specialUser.uid,
+                recruiterDisplayName: specialUser.displayName,
+                createdAt: FieldValue.serverTimestamp(),
+            };
+            const jobRef = firestore.collection('jobs').doc(specialJobTitles[i].replace(/[\s/]+/g, '-').toLowerCase());
+            const jobDoc = await jobRef.get();
+            if (!jobDoc.exists) {
+                await jobRef.set(jobData);
+                specialJobsCreated++;
+            }
+        }
+      } catch (error: any) {
+        if (error.code === 'auth/user-not-found') {
+          console.log(`Special user ${specialUserEmail} not found, skipping special job creation.`);
+        } else {
+          throw error;
+        }
+      }
+
       const message = `Database seeding complete. Already existing data was skipped.`;
-      return { message, recruitersCreated, standardUsersCreated, jobsCreated };
+      return { message, recruitersCreated, standardUsersCreated, jobsCreated, specialJobsCreated };
 
     } catch (error: any) {
       console.error('Error seeding database:', error);

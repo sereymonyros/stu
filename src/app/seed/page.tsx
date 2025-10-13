@@ -50,7 +50,7 @@ export default function SeedPage() {
             Database Seeder
           </CardTitle>
           <CardDescription>
-            Use this tool to populate your Firestore database with test data. It will create 10 recruiters, 10 standard users, and 10 job postings.
+            Use this tool to populate your Firestore database with test data. It will create test users, jobs, and add 10 specific jobs for 'sereymonyros@gmail.com'.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -73,6 +73,7 @@ export default function SeedPage() {
                  <p><strong>Recruiters Created:</strong> {result.recruitersCreated}</p>
                  <p><strong>Standard Users Created:</strong> {result.standardUsersCreated}</p>
                  <p><strong>Jobs Created:</strong> {result.jobsCreated}</p>
+                 <p><strong>Special Jobs Created:</strong> {result.specialJobsCreated} (for sereymonyros@gmail.com)</p>
               </CardContent>
             </Card>
           )}
