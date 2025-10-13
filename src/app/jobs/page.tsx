@@ -525,77 +525,68 @@ function JobsPageContent() {
                 {viewMode !== 'board' && (
                     <>
                         {jobs.length > 0 && (
-                            <Collapsible className="mb-6">
-                                <Card className="p-4">
-                                    <div className="flex flex-col md:flex-row gap-4">
-                                        <div className="relative flex-grow">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                            <Input
-                                                type="search"
-                                                placeholder="Search by title or description..."
-                                                className="pl-10 h-10 w-full"
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                            />
-                                        </div>
-                                        <CollapsibleTrigger asChild>
-                                            <Button variant="outline" className="w-full md:w-auto">
-                                                <Filter className="mr-2 h-4 w-4" />
-                                                Filters
-                                                {hasActiveFilters && <span className="ml-2 h-2 w-2 rounded-full bg-primary" />}
-                                            </Button>
-                                        </CollapsibleTrigger>
+                            <Card className="p-4 mb-6">
+                                <div className="grid gap-6">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                        <Input
+                                            type="search"
+                                            placeholder="Search by title or description..."
+                                            className="pl-10 h-10 w-full"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                        />
                                     </div>
-                                    <CollapsibleContent className="pt-4">
-                                        <Separator className="mb-4" />
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-                                            <FilterGroup title="Company" options={companyNames} selected={selectedCompanies} onToggle={(val) => toggleFilter(setSelectedCompanies, val)} />
-                                            <FilterGroup title="Location" options={locations} selected={selectedLocations} onToggle={(val) => toggleFilter(setSelectedLocations, val)} />
-                                            <FilterGroup title="Job Type" options={jobTypes} selected={selectedJobTypes} onToggle={(val) => toggleFilter(setSelectedJobTypes, val)} />
-                                            
-                                            <div>
-                                                <h3 className="text-sm font-semibold mb-2">Salary Range</h3>
-                                                <Slider
-                                                    value={salaryRange}
-                                                    onValueChange={setSalaryRange}
-                                                    max={maxSalary}
-                                                    step={1000}
-                                                    className="my-4"
-                                                />
-                                                <div className="flex justify-between text-xs text-muted-foreground">
-                                                    <span>${salaryRange[0].toLocaleString()}</span>
-                                                    <span>${salaryRange[1].toLocaleString()}</span>
-                                                </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+                                        <FilterGroup title="Company" options={companyNames} selected={selectedCompanies} onToggle={(val) => toggleFilter(setSelectedCompanies, val)} />
+                                        <FilterGroup title="Location" options={locations} selected={selectedLocations} onToggle={(val) => toggleFilter(setSelectedLocations, val)} />
+                                        <FilterGroup title="Job Type" options={jobTypes} selected={selectedJobTypes} onToggle={(val) => toggleFilter(setSelectedJobTypes, val)} />
+                                        
+                                        <div>
+                                            <h3 className="text-sm font-semibold mb-2">Salary Range</h3>
+                                            <Slider
+                                                value={salaryRange}
+                                                onValueChange={setSalaryRange}
+                                                max={maxSalary}
+                                                step={1000}
+                                                className="my-4"
+                                            />
+                                            <div className="flex justify-between text-xs text-muted-foreground">
+                                                <span>${salaryRange[0].toLocaleString()}</span>
+                                                <span>${salaryRange[1].toLocaleString()}</span>
                                             </div>
                                         </div>
+                                    </div>
+                                    
+                                    <Separator />
+                                    
+                                    <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
                                         {user && !isRecruiter && (
-                                            <div className="mt-4">
+                                            <div>
                                                 <Toggle
                                                     size="sm"
                                                     variant="outline"
                                                     pressed={showFavoritesOnly}
                                                     onPressedChange={setShowFavoritesOnly}
-                                                    className="h-10 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                                    className="h-9 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                                                 >
                                                     <Heart className="mr-2 h-4 w-4" />
-                                                    Show My Favourites Only
+                                                    My Favourites
                                                 </Toggle>
                                             </div>
                                         )}
-                                        
-                                        <Separator className="my-4" />
-                                        
-                                        <div className="flex justify-end gap-2">
+                                        <div className="flex items-center gap-2">
                                             {hasActiveFilters && (
                                                 <Button variant="ghost" onClick={clearAllFilters}>
                                                     <FilterX className="mr-2 h-4 w-4" />
-                                                    Reset
+                                                    Reset All Filters
                                                 </Button>
                                             )}
                                              {user && !isRecruiter && hasActiveFilters && (
                                                 <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
                                                     <DialogTrigger asChild>
-                                                        <Button variant="outline">
+                                                        <Button>
                                                             <Star className="mr-2 h-4 w-4" /> Save Search
                                                         </Button>
                                                     </DialogTrigger>
@@ -630,9 +621,9 @@ function JobsPageContent() {
                                                 </Dialog>
                                             )}
                                         </div>
-                                    </CollapsibleContent>
-                                </Card>
-                            </Collapsible>
+                                    </div>
+                                </div>
+                            </Card>
                         )}
                         
                         {renderJobs()}
@@ -641,33 +632,31 @@ function JobsPageContent() {
 
                 {viewMode === 'board' && isRecruiter && (
                     <DndContext sensors={sensors} onDragEnd={handleJobDragEnd}>
-                       <div className="flex justify-center">
-                            <Board>
-                                {KANBAN_STAGES.map(stage => {
-                                    const stageJobs = jobsByStatus[stage] || [];
-                                    return (
-                                        <Board.Column
-                                            key={stage}
-                                            id={stage}
-                                            title={stage}
-                                            jobs={stageJobs}
-                                            isLoading={!jobs} // Kanban uses its own loading prop
-                                        >
-                                            {stageJobs.map((job: any) => (
-                                                <JobCard
-                                                    key={job.id}
-                                                    job={job}
-                                                    isFavourite={false}
-                                                    onToggleFavourite={() => {}}
-                                                    hasApplied={false}
-                                                    isRecruiter={true}
-                                                    isDraggable={true}
-                                                />
-                                            ))}
-                                        </Board.Column>
-                                    );
-                                })}
-                            </Board>
+                       <div className="flex justify-center flex-wrap gap-4">
+                            {KANBAN_STAGES.map(stage => {
+                                const stageJobs = jobsByStatus[stage] || [];
+                                return (
+                                    <Board.Column
+                                        key={stage}
+                                        id={stage}
+                                        title={stage}
+                                        jobs={stageJobs}
+                                        isLoading={!jobs} // Kanban uses its own loading prop
+                                    >
+                                        {stageJobs.map((job: any) => (
+                                            <JobCard
+                                                key={job.id}
+                                                job={job}
+                                                isFavourite={false}
+                                                onToggleFavourite={() => {}}
+                                                hasApplied={false}
+                                                isRecruiter={true}
+                                                isDraggable={true}
+                                            />
+                                        ))}
+                                    </Board.Column>
+                                );
+                            })}
                         </div>
                     </DndContext>
                 )}
