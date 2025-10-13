@@ -19,3 +19,4 @@ import './flows/withdraw-application-flow';
 import './flows/guide-user-flow';
 import './flows/send-recruiter-email-flow';
 import './flows/seed-database-flow';
+import './flows/chat-flow';
