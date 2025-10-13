@@ -31,10 +31,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert } from '@/components/ui/alert';
 import { sendEmail } from '@/ai/flows/send-email-flow';
-import { getPublicProfile } from '@/ai/flows/get-public-profile-flow';
 import { applicantConfirmationTemplate } from '@/components/emails/applicant-confirmation-template';
-import { recruiterNotificationTemplate } from '@/components/emails/recruiter-notification-template';
 import { WithdrawApplicationButton } from '@/components/withdraw-application-button';
+import { sendRecruiterEmail } from '@/ai/flows/send-recruiter-email-flow';
 
 
 // Helper function to convert a File to a Base64 data URI
@@ -122,42 +121,23 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
       }
     }
 
-    // --- 2. Send email to recruiter ---
+    // --- 2. Send email to recruiter using the new server-side flow ---
     if (job.recruiterId && userProfile.displayName && user.email) {
-      try {
-        // Fetch the recruiter's public profile to get their email
-        const recruiterProfile = await getPublicProfile({ userId: job.recruiterId });
-
-        if (recruiterProfile && recruiterProfile.email) {
-            const htmlBody = recruiterNotificationTemplate({
-              recruiterName: recruiterProfile.displayName || 'Recruiter',
-              applicantName: userProfile.displayName,
-              jobTitle: job.title
+        try {
+            await sendRecruiterEmail({
+                recruiterId: job.recruiterId,
+                jobTitle: job.title,
+                applicantName: userProfile.displayName,
+                applicantEmail: user.email,
             });
-
-            await sendEmail({
-                to: recruiterProfile.email,
-                subject: `New Application for ${job.title}`,
-                htmlBody: htmlBody,
-                replyTo: user.email,
-            });
-        } else {
-            // This is a data-issue, not a system failure. Log it.
-            console.error(`Could not send recruiter notification. Recruiter profile or email not found for ID: ${job.recruiterId}`);
-            toast({
+        } catch (e: any) {
+             console.error('Failed to send recruiter notification email via flow', e);
+             toast({
                 variant: 'destructive',
                 title: 'Could not notify recruiter',
-                description: 'The recruiter\'s contact information could not be found.',
-            });
+                description: 'Your application was submitted, but there was an error sending the notification to the recruiter.',
+             });
         }
-      } catch (e: any) {
-        console.error('Failed to send recruiter notification email', e);
-        toast({
-          variant: 'destructive',
-          title: 'Could not notify recruiter',
-          description: 'The application was submitted, but there was an error sending the email notification to the recruiter.',
-        });
-      }
     }
   };
 

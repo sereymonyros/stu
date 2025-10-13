@@ -7,6 +7,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { initializeFirebaseAdmin } from '@/firebase/server-init';
 import { sendEmail } from './send-email-flow';
+import { recruiterNotificationTemplate } from '@/components/emails/recruiter-notification-template';
 
 const SendRecruiterEmailInputSchema = z.object({
   recruiterId: z.string().describe('The UID of the recruiter.'),
@@ -47,13 +48,11 @@ const sendRecruiterEmailFlow = ai.defineFlow(
       await sendEmail({
         to: recruiterEmail,
         subject: `New Application for ${input.jobTitle}`,
-        htmlBody: `
-          <h1>New Applicant</h1>
-          <p>Hi ${recruiterName},</p>
-          <p><strong>${input.applicantName}</strong> has applied for the position of <strong>${input.jobTitle}</strong>.</p>
-          <p>You can review their application and resume in your dashboard.</p>
-          <p><em>The Cambodia Hub Team</em></p>
-        `,
+        htmlBody: recruiterNotificationTemplate({
+            recruiterName: recruiterName,
+            applicantName: input.applicantName,
+            jobTitle: input.jobTitle
+        }),
         replyTo: input.applicantEmail,
       });
 

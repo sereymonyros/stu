@@ -16,3 +16,4 @@ import './flows/convert-to-pdf-flow';
 import './flows/update-resume-on-applications-flow';
 import './flows/withdraw-application-flow';
 import './flows/guide-user-flow';
+import './flows/send-recruiter-email-flow';
