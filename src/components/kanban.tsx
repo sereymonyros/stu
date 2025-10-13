@@ -224,7 +224,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                             <div>
                                 <p className="font-semibold text-sm leading-tight">{applicant.applicantName}</p>
                                 {appliedAtDate && (
-                                    <p className="text-xs text-muted-foreground leading-tight">Applied {formatDistanceToNow(appliedAtDate, { addSuffix: true })}</p>
+                                    <p className="text-xs text-muted-foreground leading-tight hidden">Applied {formatDistanceToNow(appliedAtDate, { addSuffix: true })}</p>
                                 )}
                             </div>
                         </div>
@@ -291,7 +291,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
                         <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{applicants.length}</span>
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 flex-1 overflow-y-auto min-h-[100px]">
+                <CardContent className="p-6 flex-1 overflow-y-auto min-h-[100px]">
                      {isLoading ? (
                         <div className="space-y-2">
                              <Skeleton className="h-20 w-full" />
@@ -310,7 +310,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
 
 function Board({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex flex-wrap md:flex-nowrap gap-4 pb-4">
+        <div className="flex flex-wrap gap-4 pb-4">
             {children}
         </div>
     );

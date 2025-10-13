@@ -50,7 +50,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       storage={firebaseServices.storage}
     >
       <div className="relative flex flex-col min-h-screen">
-        <div className="container mx-auto w-full max-w-7xl">
+        <div className="container mx-auto w-full">
           <Header />
           <main className="flex-1 w-full">
             {children}
