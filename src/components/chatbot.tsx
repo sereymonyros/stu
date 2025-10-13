@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageSquare, Send, Bot, User } from 'lucide-react';
+import { MessageSquare, Send, Sparkles, User } from 'lucide-react';
 import { guideUser } from '@/ai/flows/guide-user-flow';
 import { marked } from 'marked';
 import { useUser, useDoc, useFirestore } from '@/firebase';
@@ -104,7 +104,7 @@ export function Chatbot() {
                     <div key={message.id} className={`flex items-start gap-3 ${message.sender === 'user' ? 'justify-end' : ''}`}>
                         {message.sender === 'bot' && (
                             <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
-                                <AvatarFallback><Bot className="h-5 w-5" /></AvatarFallback>
+                                <AvatarFallback><Sparkles className="h-5 w-5" /></AvatarFallback>
                             </Avatar>
                         )}
                         <div className={`rounded-lg px-3 py-2 max-w-xs text-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
