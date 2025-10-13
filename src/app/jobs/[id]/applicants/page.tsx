@@ -208,7 +208,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                 }
                 return prev; // Fallback
              });
-             toast({ variant: 'destructive', title: 'Update Failed', description: error.message || 'Could not update applicant status.' });
+             toast({ variant: 'destructive', title: 'Update Failed', description: 'Please find the empty space.' });
         }
     };
 

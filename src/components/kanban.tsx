@@ -289,7 +289,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
                     <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{applicants.length}</span>
                 </CardTitle>
             </CardHeader>
-            <CardContent className="p-2 flex-1">
+            <CardContent className="p-2 flex-1 min-h-[125px]">
                  {isLoading ? (
                     <div className="space-y-2">
                          <Skeleton className="h-20 w-full" />
@@ -307,7 +307,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
 
 function Board({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex flex-nowrap gap-4 pb-4 overflow-x-auto">
+        <div className="flex flex-wrap gap-4 pb-4 overflow-x-auto">
             {children}
         </div>
     );
