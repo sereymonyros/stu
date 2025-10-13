@@ -73,11 +73,11 @@ const withdrawApplicationFlow = ai.defineFlow(
         jobTitle: jobData.title,
       });
 
-      await sendEmail({
-        to: recruiterUser.email,
-        subject: `Application Withdrawn for ${jobData.title}`,
-        htmlBody: emailBody,
-      });
+      // await sendEmail({
+      //   to: recruiterUser.email,
+      //   subject: `Application Withdrawn for ${jobData.title}`,
+      //   htmlBody: emailBody,
+      // });
 
       // --- 4. If email is successful, proceed with deletion ---
       const batch = firestore.batch();

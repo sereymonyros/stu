@@ -46,16 +46,16 @@ const sendRecruiterEmailFlow = ai.defineFlow(
       }
 
       // Step 3: Construct and send the email using the existing sendEmail flow
-      await sendEmail({
-        to: recruiterEmail,
-        subject: `New Application for ${input.jobTitle}`,
-        htmlBody: recruiterNotificationTemplate({
-            recruiterName: recruiterName,
-            applicantName: input.applicantName,
-            jobTitle: input.jobTitle
-        }),
-        replyTo: input.applicantEmail,
-      });
+      // await sendEmail({
+      //   to: recruiterEmail,
+      //   subject: `New Application for ${input.jobTitle}`,
+      //   htmlBody: recruiterNotificationTemplate({
+      //       recruiterName: recruiterName,
+      //       applicantName: input.applicantName,
+      //       jobTitle: input.jobTitle
+      //   }),
+      //   replyTo: input.applicantEmail,
+      // });
 
     } catch (e: any) {
       console.error(`Flow Error: Failed to send recruiter notification for user ${input.recruiterId}.`, e);

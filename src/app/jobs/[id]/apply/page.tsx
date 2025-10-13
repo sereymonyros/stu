@@ -105,11 +105,11 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
           companyName: job.companyName,
         });
 
-        await sendEmail({
-          to: user.email,
-          subject: `Your Application for ${job.title}`,
-          htmlBody,
-        });
+        // await sendEmail({
+        //   to: user.email,
+        //   subject: `Your Application for ${job.title}`,
+        //   htmlBody,
+        // });
       } catch (e) {
         console.error('Failed to send applicant confirmation email', e);
         // Non-critical, so we just toast. The application was still submitted.
@@ -124,12 +124,12 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
     // --- 2. Send email to recruiter using the new server-side flow ---
     if (job.recruiterId && userProfile.displayName && user.email) {
         try {
-            await sendRecruiterEmail({
-                recruiterId: job.recruiterId,
-                jobTitle: job.title,
-                applicantName: userProfile.displayName,
-                applicantEmail: user.email,
-            });
+            // await sendRecruiterEmail({
+            //     recruiterId: job.recruiterId,
+            //     jobTitle: job.title,
+            //     applicantName: userProfile.displayName,
+            //     applicantEmail: user.email,
+            // });
         } catch (e: any) {
              console.error('Failed to send recruiter notification email via flow', e);
              toast({
