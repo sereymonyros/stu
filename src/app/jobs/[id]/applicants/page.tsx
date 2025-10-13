@@ -166,12 +166,14 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
             const newBoardState = { ...prev };
             // Remove from old column
             if (newBoardState[oldStatus!]) {
-                newBoardState[oldStatus!] = newBoardState[oldStatus!].filter(app => app.id !== applicationId);
+                 newBoardState[oldStatus!] = newBoardState[oldStatus!].filter(app => app.id !== applicationId);
             }
-            // Add to new column
-            const newColumn = newBoardState[newStatus] || [];
-            newColumn.push({ ...movedApplicant, status: newStatus });
-            newBoardState[newStatus] = newColumn;
+             // Add to new column, but only if it's not already there
+            if (!newBoardState[newStatus]?.some(app => app.id === applicationId)) {
+                const newColumn = newBoardState[newStatus] || [];
+                newColumn.push({ ...movedApplicant, status: newStatus });
+                newBoardState[newStatus] = newColumn;
+            }
             return newBoardState;
         });
 
@@ -213,8 +215,8 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
     const KANBAN_STAGES = ["submitted", "reviewed", "offered", "accepted", "rejected"] as const;
 
     return (
-        <div className="flex flex-col h-full">
-            <div className="p-4 md:p-6 lg:p-8">
+        <div className="flex flex-col h-screen">
+             <div className="p-4 md:p-6 lg:p-8">
                  <div className="mb-6">
                     <Button variant="ghost" size="sm" className="mb-4" asChild>
                         <Link href="/dashboard"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
