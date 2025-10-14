@@ -99,7 +99,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
 
                 {/* Column 2: Job Title and Salary */}
                 <div className="col-span-12 sm:col-span-4">
-                    <Link href={`/jobs/${job.id}/apply`} className="font-semibold text-base hover:text-primary leading-tight line-clamp-1">{job.title}</Link>
+                    <div className="font-semibold text-base leading-tight line-clamp-1">{job.title}</div>
                     {salaryDisplay && <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                 </div>
 
