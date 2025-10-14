@@ -115,23 +115,20 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                     <div className="sm:mt-2 w-full sm:w-auto relative z-10">
                         {hasApplied ? (
-                            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                            <Button asChild variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
                                 <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
                             </Button>
                         ) : isOwner ? (
-                             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                            <Button asChild variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
                                 <Link href={destinationUrl}><Pencil className="mr-2 h-4 w-4"/>Edit</Link>
                             </Button>
                         ) : (
-                             <Button asChild size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                                <Link href={destinationUrl}>
-                                    {isRecruiter && !isOwner ? 'View' : 'View & Apply'}
-                                </Link>
+                            <Button asChild size="sm" variant="outline" onClick={(e) => e.stopPropagation()}>
+                                <Link href={isRecruiter ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`}>{isRecruiter ? 'View' : 'View & Apply'}</Link>
                             </Button>
                         )}
                     </div>
                 </div>
-
             </div>
         </Card>
     );
