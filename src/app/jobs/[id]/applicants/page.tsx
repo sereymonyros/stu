@@ -18,6 +18,7 @@ import { updateApplicationStatus } from '@/ai/flows/update-application-status-fl
 import { analyzeApplicant } from '@/ai/flows/analyze-applicant-flow';
 import { getCachedAnalysis, setCachedAnalysis } from '@/lib/ai-cache';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { BackButton } from '@/components/back-button';
 
 // Helper function to convert a file URL to a Base64 data URI
 const urlToDataUri = async (url: string): Promise<string> => {
@@ -234,9 +235,9 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         <div className="flex flex-col h-screen">
              <div className="p-4 md:p-6 lg:p-8">
                  <div className="mb-6">
-                    <Button variant="ghost" size="sm" className="mb-4" asChild>
-                        <Link href="/dashboard"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
-                    </Button>
+                    <div className="mb-4">
+                        <BackButton />
+                    </div>
                      {job ? (
                         <div>
                             <div className="flex items-center gap-4">

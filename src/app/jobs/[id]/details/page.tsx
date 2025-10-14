@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Building, MapPin, DollarSign, Briefcase, Calendar, Pencil } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { BackButton } from '@/components/back-button';
 
 function JobDetailsProfile({ jobId }: { jobId: string }) {
     const firestore = useFirestore();
@@ -70,18 +71,7 @@ function JobDetailsProfile({ jobId }: { jobId: string }) {
         <Card className="w-full max-w-3xl mx-auto rounded-3xl">
             <CardHeader>
                  <div className="flex justify-between items-start">
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="mb-4 w-fit -ml-2" asChild>
-                                    <Link href="/jobs" aria-label="Back to Jobs"><ArrowLeft className="h-4 w-4" /></Link>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Back to Jobs</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
+                    <BackButton />
                     {isOwner && (
                          <TooltipProvider>
                             <Tooltip>

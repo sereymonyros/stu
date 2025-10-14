@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { getCompanyByName } from '@/ai/flows/get-company-by-name-flow';
 import type { GetCompanyByNameOutput } from '@/ai/flows/get-company-by-name-flow';
+import { BackButton } from '@/components/back-button';
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
@@ -93,9 +94,9 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
         <div className="flex flex-col min-h-screen">
             <main className="flex-1 p-4 md:p-6 lg:p-8">
                 <div className="mb-6">
-                    <Button variant="ghost" size="sm" className="mb-4" asChild>
-                        <Link href="/jobs"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Job Board</Link>
-                    </Button>
+                    <div className="mb-4">
+                      <BackButton />
+                    </div>
                 </div>
 
                 {/* Show detailed header if company profile exists */}

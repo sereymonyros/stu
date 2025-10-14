@@ -34,6 +34,7 @@ import { sendEmail } from '@/ai/flows/send-email-flow';
 import { applicantConfirmationTemplate } from '@/components/emails/applicant-confirmation-template';
 import { WithdrawApplicationButton } from '@/components/withdraw-application-button';
 import { sendRecruiterEmail } from '@/ai/flows/send-recruiter-email-flow';
+import { BackButton } from '@/components/back-button';
 
 
 // Helper function to convert a File to a Base64 data URI
@@ -286,9 +287,9 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
         <div>
             <Card className="max-w-2xl mx-auto rounded-3xl">
             <CardHeader>
-                <Button variant="ghost" size="icon" className="mb-4 w-fit -ml-2" asChild>
-                    <Link href="/jobs" aria-label="Back to Jobs"><ArrowLeft className="h-4 w-4" /></Link>
-                </Button>
+                <div className="mb-4">
+                    <BackButton />
+                </div>
                 <CardTitle className="text-2xl">Apply for {job.title}</CardTitle>
                 <CardDescription>Review your information before submitting your application to <span className="font-semibold">{job.companyName}</span>.</CardDescription>
             </CardHeader>

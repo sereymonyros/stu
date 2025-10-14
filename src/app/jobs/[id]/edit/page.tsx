@@ -35,6 +35,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { ArrowLeft } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { BackButton } from '@/components/back-button';
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -160,18 +161,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle>Edit Job Posting</CardTitle>
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" asChild>
-                                    <Link href="/jobs" aria-label="Back to Jobs"><ArrowLeft className="h-4 w-4" /></Link>
-                                </Button>
-                            </TooltipTrigger>
-                             <TooltipContent>
-                                <p>Back to Jobs</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
+                    <BackButton />
                 </div>
             </CardHeader>
             <CardContent>
