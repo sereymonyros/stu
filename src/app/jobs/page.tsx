@@ -64,7 +64,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     }, [job.salaryMin, job.salaryMax]);
     
     return (
-        <Card className="hover:shadow-md transition-shadow duration-200 w-full relative group/item">
+        <Card className="hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-2xl">
             <Link href={destinationUrl} className="absolute inset-0 z-0">
                 <span className="sr-only">View job: {job.title}</span>
             </Link>
@@ -540,7 +540,7 @@ function JobsPageContent() {
                                     </CollapsibleTrigger>
                                 </div>
                                 <CollapsibleContent>
-                                    <Card className="p-4">
+                                    <Card className="p-4 rounded-2xl">
                                         <div className="grid gap-4">
                                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                                 <div className="space-y-2">

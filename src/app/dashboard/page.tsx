@@ -35,8 +35,8 @@ function JobCard({ job }: { job: any }) {
         : `/jobs/${job.id}/edit`;
 
     return (
-        <Link href={destinationUrl} className="block hover:shadow-lg transition-shadow duration-200 rounded-lg">
-            <Card className="h-full relative overflow-hidden">
+        <Link href={destinationUrl} className="block hover:shadow-lg transition-shadow duration-200 rounded-2xl">
+            <Card className="h-full relative overflow-hidden rounded-2xl">
                  {isLoading ? (
                     <Skeleton className="absolute top-0 right-0 h-8 w-12 rounded-bl-lg" />
                 ) : applicants && applicants.length > 0 ? (
@@ -81,7 +81,7 @@ function AppliedJobCard({ job, application, isFavourite }: { job: any, applicati
     const canWithdraw = application.status === 'submitted' || application.status === 'reviewed';
 
     return (
-        <Card>
+        <Card className="rounded-2xl">
             <CardContent className="p-4 flex flex-col justify-between h-full">
                 <div className="flex-grow">
                     <div className="flex justify-between items-start">
@@ -115,7 +115,7 @@ function AppliedJobCard({ job, application, isFavourite }: { job: any, applicati
 
 function FavouriteJobCard({ job }: { job: any }) {
     return (
-         <Card>
+         <Card className="rounded-2xl">
             <CardContent className="p-4 flex flex-col justify-between h-full">
                 <div className="flex-grow">
                     <h3 className="font-semibold text-base truncate">{job.title}</h3>
@@ -140,7 +140,7 @@ function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting, onNotif
     const filterCount = (filters.companyNames?.length || 0) + (filters.locations?.length || 0) + (filters.jobTypes?.length || 0) + (filters.salaryMin || filters.salaryMax ? 1 : 0);
 
     return (
-        <Card>
+        <Card className="rounded-2xl">
              <CardContent className="p-4 flex flex-col justify-between h-full">
                 <div className="flex-grow">
                      <h3 className="font-semibold text-base truncate">{name}</h3>

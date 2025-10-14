@@ -121,7 +121,7 @@ export function JobCard({
     const CardComponent = (
         <Card 
             className={cn(
-                "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
+                "flex flex-col h-full hover:shadow-lg transition-shadow duration-200 rounded-2xl",
                 isDraggable ? "mb-2 bg-card" : "",
                 hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
                 isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
@@ -158,7 +158,7 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
     return (
         <div ref={setNodeRef} className={cn("w-full sm:w-80 flex-shrink-0", isOver && 'cursor-copy')}>
             <Card className={cn(
-                "h-full transition-colors w-full", 
+                "h-full transition-colors w-full rounded-2xl", 
                 isOver && id === 'Closed' ? 'bg-destructive/20' : 
                 isOver ? 'bg-primary/10' : 
                 'bg-muted/40'
