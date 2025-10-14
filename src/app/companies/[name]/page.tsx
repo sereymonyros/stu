@@ -38,7 +38,7 @@ function JobCard({ job }: { job: any }) {
     }, [job.salaryMin, job.salaryMax]);
 
     return (
-        <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200 rounded-2xl">
+        <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200 rounded-3xl">
             <CardHeader>
                 <CardTitle className="text-xl font-bold">{job.title}</CardTitle>
                 <div className="flex flex-col text-sm text-muted-foreground gap-1 pt-1">
@@ -100,7 +100,7 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
 
                 {/* Show detailed header if company profile exists */}
                 {company ? (
-                     <Card className="mb-8 overflow-hidden rounded-2xl">
+                     <Card className="mb-8 overflow-hidden rounded-3xl">
                         <CardHeader className="flex flex-col md:flex-row items-center gap-6 p-6">
                            <Image
                              src={company.logoUrl || `https://picsum.photos/seed/${companyName}/200`}
