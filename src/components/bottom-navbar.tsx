@@ -91,7 +91,7 @@ export function BottomNavbar() {
                  <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-background border shadow-md"
+                    className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
                     onClick={(e) => { e.stopPropagation(); setTheme(theme === 'dark' ? 'light' : 'dark'); }}
                 >
                     <Sun className="h-3 w-3 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
