@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/collapsible"
 import { MultiSelectOption, MultiSelect } from '@/components/ui/multi-select';
 
-function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; isRecruiter: boolean; }) {
+function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter, router }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; isRecruiter: boolean; router: ReturnType<typeof useRouter> }) {
     const { user } = useUser();
     const isOwner = user && user.uid === job.recruiterId;
 
@@ -64,7 +64,6 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
             <Link href={`/jobs/${job.id}/apply`} className="absolute inset-0 z-0">
                 <span className="sr-only">View job: {job.title}</span>
             </Link>
-            {/* Favorite button for non-recruiters */}
             {user && !isOwner && !isRecruiter && (
                 <Button
                     variant="ghost"
@@ -79,21 +78,19 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
             )}
             <div className="p-4 grid grid-cols-12 items-center gap-4">
                 
-                {/* Mobile: Badges top right */}
                  <div className="sm:hidden absolute top-4 right-4 flex gap-2 z-10">
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.jobType}</Badge>
                     <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.status}</Badge>
                 </div>
 
 
-                {/* Column 1: Company Info */}
                 <div className="col-span-12 sm:col-span-4 flex items-center gap-3">
                     <Avatar className="h-12 w-12 flex">
                         <AvatarImage src={job.companyLogoUrl || `https://picsum.photos/seed/${job.companyName}/100`} />
                         <AvatarFallback>{job.companyName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                         <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="relative z-10 font-semibold text-base hover:text-primary leading-tight line-clamp-1" onClick={(e) => e.stopPropagation()}>
+                         <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="font-semibold text-base hover:text-primary leading-tight line-clamp-1 relative z-10" onClick={(e) => e.stopPropagation()}>
                            {job.companyName}
                          </Link>
                         <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1">
@@ -102,13 +99,11 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                 </div>
 
-                {/* Column 2: Job Title and Salary */}
                 <div className="col-span-12 sm:col-span-4">
                     <div className="font-semibold text-base leading-tight line-clamp-1">{job.title}</div>
                     {salaryDisplay && <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                 </div>
 
-                {/* Column 3: Badges and Button */}
                 <div className="col-span-12 sm:col-span-4 flex sm:flex-col sm:items-end justify-between items-center gap-2">
                     <div className="hidden sm:flex gap-2">
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.jobType}</Badge>
@@ -472,6 +467,7 @@ function JobsPageContent() {
                             onToggleFavourite={handleToggleFavourite}
                             hasApplied={appliedJobIds.has(job.id)}
                             isRecruiter={isRecruiter ?? false}
+                            router={router}
                         />
                     ))}
                 </div>
