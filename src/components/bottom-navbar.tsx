@@ -33,7 +33,7 @@ export function BottomNavbar() {
             }
             scrollTimeoutRef.current = setTimeout(() => {
                 setIsScrolling(false);
-            }, 150);
+            }, 1000);
         };
 
         mainContent.addEventListener("scroll", handleScroll, { passive: true });
