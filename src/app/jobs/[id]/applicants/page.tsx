@@ -143,7 +143,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
     const handleDragStart = (event: DragStartEvent) => {
         if (navigator.vibrate) {
-            navigator.vibrate(100);
+            navigator.vibrate(200);
         }
     };
 
@@ -152,7 +152,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
         const { active, over } = event;
 
         if (navigator.vibrate) {
-            navigator.vibrate(50);
+            navigator.vibrate(150);
         }
 
         if (!over) return;

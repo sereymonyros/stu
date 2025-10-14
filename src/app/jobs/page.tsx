@@ -107,22 +107,6 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                 <div className="col-span-12 sm:col-span-8 flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-4">
                     <div className="flex-1 min-w-0">
                         <div className="font-semibold text-base leading-tight line-clamp-1 flex-shrink min-w-0 sm:mb-1">
-                             <span className="sm:hidden">
-                                {isOwner && (
-                                     <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button asChild variant="ghost" size="icon" className="h-6 w-6 -ml-1 mr-1" onClick={(e) => {e.stopPropagation(); router.push(destinationUrl)}}>
-                                                    <Link href={destinationUrl}><Pencil className="h-3 w-3"/></Link>
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Edit Job</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                )}
-                            </span>
                             {job.title}
                         </div>
                         {salaryDisplay && <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
@@ -146,7 +130,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                              <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button asChild variant="ghost" size="icon" className="h-10 w-10 hidden sm:inline-flex" onClick={(e) => e.stopPropagation()}>
+                                        <Button asChild variant="ghost" size="icon" className="h-10 w-10" onClick={(e) => e.stopPropagation()}>
                                             <Link href={destinationUrl}><Pencil className="h-4 w-4"/></Link>
                                         </Button>
                                     </TooltipTrigger>
@@ -439,7 +423,7 @@ function JobsPageContent() {
 
     const handleJobDragStart = (event: DragStartEvent) => {
         if (navigator.vibrate) {
-            navigator.vibrate(100);
+            navigator.vibrate(200);
         }
     };
 
@@ -448,7 +432,7 @@ function JobsPageContent() {
         const { active, over } = event;
         
         if (navigator.vibrate) {
-            navigator.vibrate(50);
+            navigator.vibrate(150);
         }
 
         if (!over || !active) return;
