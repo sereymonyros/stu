@@ -109,9 +109,7 @@ export function JobCard({
                     {hasApplied ? (
                         <Button disabled size="sm">Applied</Button>
                     ) : isRecruiter ? (
-                        <Button asChild variant="outline" size="sm">
-                            <Link href={`/jobs/${job.id}/edit`}>View</Link>
-                        </Button>
+                        null
                     ) : (
                         <Button asChild size="sm">
                             <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
