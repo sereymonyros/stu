@@ -24,10 +24,10 @@ export default function Home() {
       {/* Overlay and Content container */}
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/70 p-4 text-center">
         <div className="flex flex-col items-center space-y-4">
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-foreground drop-shadow-md">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-primary-foreground drop-shadow-md">
             Cambodia Hub
           </h1>
-          <p className="max-w-xl text-lg text-foreground/90 sm:text-xl md:text-2xl drop-shadow">
+          <p className="max-w-xl text-lg text-primary-foreground/90 sm:text-xl md:text-2xl drop-shadow">
             Your personal AI guide to the Kingdom of Wonder. Explore, buy, sell, and find jobs.
           </p>
         </div>
