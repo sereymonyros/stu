@@ -69,95 +69,29 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
             <Link href={destinationUrl} className="absolute inset-0 z-0">
                 <span className="sr-only">View job: {job.title}</span>
             </Link>
-            {user && !isRecruiter && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
-                    className="absolute top-1 left-1 h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10 hover:bg-transparent"
-                    disabled={hasApplied}
-                    aria-label="Toggle Favourite"
-                >
-                    <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
-                </Button>
-            )}
-            <div className="p-4 grid grid-cols-12 items-center gap-4">
-                
-                 <div className="absolute top-4 right-4 flex gap-2 z-10">
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.jobType}</Badge>
-                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.status}</Badge>
-                </div>
+            
+            <div className="p-4 flex items-center gap-4">
+                <Avatar className="h-12 w-12 flex-shrink-0">
+                    <AvatarImage src={job.companyLogoUrl || `https://picsum.photos/seed/${job.companyName}/100`} />
+                    <AvatarFallback>{job.companyName?.charAt(0)}</AvatarFallback>
+                </Avatar>
 
-
-                <div className="col-span-12 sm:col-span-4 flex items-center gap-3">
-                    <Avatar className="h-12 w-12 flex">
-                        <AvatarImage src={job.companyLogoUrl || `https://picsum.photos/seed/${job.companyName}/100`} />
-                        <AvatarFallback>{job.companyName?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                         <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="font-semibold text-base hover:text-primary leading-tight line-clamp-1 relative z-10" onClick={(e) => e.stopPropagation()}>
+                <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-base leading-tight line-clamp-1">
+                        <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="hover:text-primary relative z-10" onClick={(e) => e.stopPropagation()}>
                            {job.companyName}
                          </Link>
-                        <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1">
-                           <MapPin className="h-4 w-4 flex-shrink-0" /> <span className="line-clamp-1">{job.location}</span>
-                        </div>
+                         <span className="font-normal text-muted-foreground"> - {job.title}</span>
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground gap-4 mt-1">
+                        <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="line-clamp-1">{job.location}</span></div>
+                        {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                     </div>
                 </div>
 
-                <div className="col-span-12 sm:col-span-8 flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-4">
-                    <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-base leading-tight line-clamp-1 flex-shrink min-w-0 sm:mb-1">
-                            {job.title}
-                        </div>
-                        {salaryDisplay && <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
-                    </div>
-
-                    <div className="flex-shrink-0 relative z-10 w-full sm:w-auto flex justify-end">
-                        {hasApplied ? (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button asChild variant="outline" size="icon" onClick={(e) => e.stopPropagation()}>
-                                            <Link href={`/jobs/${job.id}/apply`}><Eye className="h-4 w-4" /></Link>
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>View Application</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        ) : isOwner ? (
-                             <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button asChild variant="ghost" size="icon" className="h-10 w-10" onClick={(e) => e.stopPropagation()}>
-                                            <Link href={destinationUrl}><Pencil className="h-4 w-4"/></Link>
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Edit Job</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        ) : isRecruiter ? (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button asChild size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
-                                            <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>View Details</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        ) : (
-                             <Button asChild size="sm" variant="outline" onClick={(e) => e.stopPropagation()}>
-                                <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
-                            </Button>
-                        )}
-                    </div>
+                <div className="flex-shrink-0 flex flex-col items-end gap-1.5 z-10">
+                    <Badge variant="secondary" className="text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap">{job.jobType}</Badge>
+                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap">{job.status}</Badge>
                 </div>
             </div>
         </Card>
