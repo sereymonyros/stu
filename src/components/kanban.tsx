@@ -3,7 +3,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dixie-dregs/dnd-kit-utilities';
+import { CSS } from '@dnd-kit/utilities';
 import { useDroppable, DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -224,7 +224,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                             <div>
                                 <p className="font-semibold text-sm leading-tight select-none">{applicant.applicantName}</p>
                                 {appliedAtDate && (
-                                    <p className="text-xs text-muted-foreground leading-tight hidden">Applied {formatDistanceToNow(appliedAtDate, { addSuffix: true })}</p>
+                                    <p className="text-xs text-muted-foreground leading-tight">Applied {formatDistanceToNow(appliedAtDate, { addSuffix: true })}</p>
                                 )}
                             </div>
                         </div>
@@ -315,7 +315,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
 
 function Board({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex flex-wrap gap-4 pb-4 justify-center items-stretch">
+        <div className="flex flex-wrap justify-center gap-4 pb-4 items-stretch">
             {children}
         </div>
     );
