@@ -44,10 +44,11 @@ import { MultiSelectOption, MultiSelect } from '@/components/ui/multi-select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BackButton } from '@/components/back-button';
 
-function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter, router }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; isRecruiter: boolean; router: ReturnType<typeof useRouter> }) {
+function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter, router }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => Promise<void>; hasApplied: boolean; isRecruiter: boolean; router: ReturnType<typeof useRouter> }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const isOwner = user && user.uid === job.recruiterId;
+    const [isAnimating, setIsAnimating] = useState(false);
 
     const applicantsQuery = useMemo(() => {
         if (!firestore || !job.id || !isOwner) return null;
@@ -70,11 +71,25 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
         }
         return null;
     }, [job.salaryMin, job.salaryMax]);
+
+    const handleFavouriteClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!isFavourite) {
+            setIsAnimating(true);
+        }
+        onToggleFavourite(job.id, isFavourite);
+    };
     
     return (
         <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "bg-muted/50")}>
             
             <div className="p-4 flex items-center gap-4">
+                {isAnimating && (
+                    <Heart
+                        className="absolute top-4 left-5 h-5 w-5 text-red-500 fill-red-500 animate-fly-to-avatar z-20"
+                        onAnimationEnd={() => setIsAnimating(false)}
+                    />
+                )}
                 {user && !isOwner && !isRecruiter && (
                     <TooltipProvider>
                         <Tooltip>
@@ -82,7 +97,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={(e) => { e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
+                                    onClick={handleFavouriteClick}
                                     className="absolute top-1 left-1 h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10"
                                     disabled={hasApplied}
                                     aria-label="Toggle Favourite"
@@ -495,7 +510,6 @@ function JobsPageContent() {
             await updateJobStatus({ jobId, newStatus: newStatus as any });
         } catch (error: any) {
             console.error("Failed to update job status:", error);
-            toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update job status.' });
             
              setJobsByStatus((prev) => {
                  const revertedState = { ...prev };
