@@ -19,7 +19,7 @@ export default function Home() {
             priority
           />
         )}
-        <div className="absolute inset-0 bg-background/70 backdrop-blur-sm z-10" />
+        <div className="absolute inset-0 bg-background/70 z-10" />
 
         <div className="z-20 flex flex-col items-center justify-center h-full space-y-8 w-full p-4 text-center">
           <div className="flex flex-col items-center space-y-4">
