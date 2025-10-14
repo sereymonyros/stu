@@ -9,7 +9,21 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg bg-card text-card-foreground shadow-md dark:drop-shadow-[0_4px_3px_rgba(255,255,255,0.07)] dark:hover:drop-shadow-[0_10px_8px_rgba(255,255,255,0.04)]",
+      "rounded-2xl bg-card text-card-foreground shadow-xl transition-all duration-300",
+      
+      // === AGGRESSIVE SHINE REDESIGN ===
+      // 1. **Inner Shine/Border:** Use 'ring' for a sharp, visible light-catching edge.
+      //    We use a very low opacity white (white/50) for a clean highlight.
+      "dark:ring-1 dark:ring-white/5",
+
+      // 2. **Outer Glow/Shadow:** Use a custom box-shadow with higher opacity (0.1 to 0.2)
+      //    and a large spread/blur to create the 'lift' and 'halo' effect.
+      //    Using a pale blue/cyan gives it a modern "neon" feel.
+      "dark:shadow-[0_0px_20px_rgba(0,255,255,0.1)]", // Base glow (Pale Cyan)
+
+      // 3. **Hover Effect:** Intensify the glow on hover for a dramatic lift.
+      "dark:hover:shadow-[0_0px_30px_rgba(0,255,255,0.2)] dark:hover:scale-[1.01]",
+      
       className
     )}
     {...props}
