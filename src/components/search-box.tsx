@@ -40,6 +40,11 @@ export function SearchBox({ searchAction, className }: { searchAction: (formData
   const searchParams = useSearchParams();
   const query = searchParams.get('q');
 
+  useEffect(() => {
+    // Automatically focus the input when the component mounts
+    inputRef.current?.focus();
+  }, []);
+
   const handleSearch = async (formData: FormData) => {
     if (user) {
       formData.append('userId', user.uid);
