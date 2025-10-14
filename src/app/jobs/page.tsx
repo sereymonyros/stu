@@ -153,9 +153,16 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 </div>
                             </TooltipProvider>
                         ) : isRecruiter ? (
-                             <Button asChild variant="outline" size="sm">
-                                <Link href={destinationUrl}><Eye className="mr-2 h-4 w-4" /> View</Link>
-                            </Button>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+                                            <Link href={destinationUrl}><Eye className="h-4 w-4" /></Link>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>View</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         ) : (
                              <Button asChild variant="outline" size="sm">
                                 <Link href={destinationUrl}>{hasApplied ? 'View' : 'Apply'}</Link>
