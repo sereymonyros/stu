@@ -61,7 +61,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     
     return (
         <Card className="hover:shadow-md transition-shadow duration-200 w-full">
-            <div className="p-4 grid grid-cols-1 sm:grid-cols-12 items-center gap-4 relative">
+            <div className="p-4 grid grid-cols-12 items-center gap-4 relative">
                 
                 {/* Mobile: Badges top right */}
                  <div className="sm:hidden absolute top-4 right-4 flex gap-2">

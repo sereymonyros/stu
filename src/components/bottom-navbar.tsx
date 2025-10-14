@@ -1,23 +1,25 @@
-
 'use client';
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Briefcase } from "lucide-react";
+import { LayoutDashboard, Briefcase, User, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/firebase";
 import { useState, useEffect, useRef } from "react";
+import { useSettingsSheet } from "./settings-sheet";
 
 const navItems = [
     { href: "/jobs", icon: Briefcase, label: "Jobs" },
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-]
+    { href: "/profile", icon: User, label: "Profile" },
+];
 
 export function BottomNavbar() {
     const pathname = usePathname();
     const { user } = useUser();
     const [isScrolling, setIsScrolling] = useState(false);
     const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const { setOpen: setSettingsOpen } = useSettingsSheet();
 
     useEffect(() => {
         const mainContent = document.getElementById('main-content');
@@ -30,7 +32,7 @@ export function BottomNavbar() {
             }
             scrollTimeoutRef.current = setTimeout(() => {
                 setIsScrolling(false);
-            }, 150); // Adjust delay as needed
+            }, 150);
         };
 
         mainContent.addEventListener("scroll", handleScroll, { passive: true });
@@ -52,23 +54,37 @@ export function BottomNavbar() {
             "md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-sm z-50 transition-opacity duration-300 ease-in-out",
             isScrolling ? "opacity-50" : "opacity-100"
         )}>
-            <div className="grid h-full grid-cols-2 max-w-lg mx-auto font-medium">
+            <div className="grid h-full grid-cols-4 max-w-lg mx-auto font-medium">
                 {navItems.map((item) => {
                     const isActive = pathname.startsWith(item.href);
                     return (
                         <Link 
                             key={item.href}
                             href={item.href}
-                            className={cn(
-                                "inline-flex flex-col items-center justify-center px-5",
-                                isActive ? "text-primary" : "text-muted-foreground"
-                            )}
+                            className="inline-flex flex-col items-center justify-center px-5 relative"
                         >
-                            <item.icon className="w-5 h-5 mb-1" />
-                            <span className="text-xs font-medium">{item.label}</span>
+                            <div className={cn(
+                                "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200",
+                                isActive ? "bg-primary/10" : "text-muted-foreground"
+                            )}>
+                                <div className={cn(
+                                    "flex flex-col items-center justify-center p-2 rounded-full",
+                                    isActive ? "text-primary" : ""
+                                )}>
+                                    <item.icon className="w-5 h-5 mb-1" />
+                                    <span className="text-xs font-medium">{item.label}</span>
+                                </div>
+                            </div>
                         </Link>
                     )
                 })}
+                 <button
+                    onClick={() => setSettingsOpen(true)}
+                    className="inline-flex flex-col items-center justify-center px-5 text-muted-foreground"
+                >
+                    <Settings className="w-5 h-5 mb-1" />
+                    <span className="text-xs font-medium">Settings</span>
+                 </button>
             </div>
         </div>
     )
