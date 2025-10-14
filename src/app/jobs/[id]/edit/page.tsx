@@ -159,10 +159,10 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         {job ? (
             <Card className="max-w-2xl mx-auto rounded-3xl">
             <CardHeader>
-                <div className="flex justify-between items-center">
-                    <CardTitle>Edit Job Posting</CardTitle>
+                <div className="mb-4 -ml-2">
                     <BackButton />
                 </div>
+                <CardTitle>Edit Job Posting</CardTitle>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
