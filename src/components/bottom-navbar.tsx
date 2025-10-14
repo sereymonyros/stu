@@ -27,9 +27,6 @@ export function BottomNavbar() {
 
 
     useEffect(() => {
-        const mainContent = document.getElementById('main-content');
-        if (!mainContent) return;
-
         const handleScroll = () => {
             setIsScrolling(true);
             if (scrollTimeoutRef.current) {
@@ -40,10 +37,11 @@ export function BottomNavbar() {
             }, 1000);
         };
 
-        mainContent.addEventListener("scroll", handleScroll, { passive: true });
+        // Listen on the window object for global scroll events
+        window.addEventListener("scroll", handleScroll, { passive: true });
 
         return () => {
-            mainContent.removeEventListener("scroll", handleScroll);
+            window.removeEventListener("scroll", handleScroll);
             if (scrollTimeoutRef.current) {
                 clearTimeout(scrollTimeoutRef.current);
             }
