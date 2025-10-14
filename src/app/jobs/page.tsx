@@ -122,8 +122,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 <Link href={destinationUrl}><Pencil className="mr-2 h-4 w-4"/>Edit</Link>
                             </Button>
                         ) : (
-                             <Button asChild size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/apply`) }}>
-                                <Link href={`/jobs/${job.id}/apply`}>
+                             <Button asChild size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(isRecruiter && !isOwner ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`) }}>
+                                <Link href={isRecruiter && !isOwner ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`}>
                                     {isRecruiter && !isOwner ? 'View' : 'View & Apply'}
                                 </Link>
                             </Button>
