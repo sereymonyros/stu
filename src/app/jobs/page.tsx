@@ -60,19 +60,14 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     }, [job.salaryMin, job.salaryMax]);
     
     return (
-        <Link href={`/jobs/${job.id}/apply`} className="block w-full" onClick={(e) => {
-            // Prevent navigation if the click is on an inner button or link
-            if ((e.target as HTMLElement).closest('a, button')) {
-                e.preventDefault();
-            }
-        }}>
+        <Link href={`/jobs/${job.id}/apply`} className="block w-full">
         <Card className="hover:shadow-md transition-shadow duration-200 w-full relative">
             {/* Favorite button for non-recruiters */}
             {user && !isOwner && !isRecruiter && (
                 <Button
                     variant="ghost"
                     size="icon"
-                    onClick={(e) => { e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
                     className="absolute top-0 left-0 p-2 h-auto w-auto rounded-tl-lg text-muted-foreground hover:text-red-500"
                     disabled={hasApplied}
                     aria-label="Toggle Favourite"
