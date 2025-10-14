@@ -119,7 +119,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
 
                 {/* Favorite button for non-recruiters */}
                 {user && !isOwner && !isRecruiter && (
-                    <div className="absolute top-2 left-2 sm:top-2 sm:right-2 sm:left-auto">
+                    <div className="absolute top-2 left-2">
                         <Button
                             variant="ghost"
                             size="icon"
