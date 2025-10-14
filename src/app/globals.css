@@ -14,10 +14,10 @@ body {
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 221 83% 53%; /* Blue */
-    --primary-foreground: 0 0% 98%;
-    --secondary: 350 83% 53%; /* Red */
-    --secondary-foreground: 0 0% 98%;
+    --primary: 217 91% 60%; /* Light Blue */
+    --primary-foreground: 240 10% 3.9%;
+    --secondary: 0 84% 80%; /* Light Red */
+    --secondary-foreground: 240 10% 3.9%;
     --muted: 240 5% 96%;
     --muted-foreground: 240 4% 46%;
     --accent: 240 5% 96%;
@@ -49,10 +49,10 @@ body {
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 217 91% 60%; /* Blue */
-    --primary-foreground: 0 0% 98%;
-    --secondary: 350 91% 60%; /* Red */
-    --secondary-foreground: 0 0% 98%;
+    --primary: 217 91% 60%; /* Light Blue */
+    --primary-foreground: 240 10% 3.9%;
+    --secondary: 0 84% 80%; /* Light Red */
+    --secondary-foreground: 240 10% 3.9%;
     --muted: 240 4% 16%;
     --muted-foreground: 240 5% 65%;
     --accent: 240 4% 16%;
