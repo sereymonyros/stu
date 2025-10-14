@@ -52,7 +52,7 @@ export function BottomNavbar() {
 
     return (
         <div className={cn(
-            "md:hidden fixed bottom-4 left-0 right-0 flex justify-center z-50 transition-opacity duration-1000 ease-in-out",
+            "fixed bottom-4 left-0 right-0 flex justify-center z-50 transition-opacity duration-1000 ease-in-out",
             isScrolling ? "opacity-30" : "opacity-100"
         )}>
             <div className="w-4/5 bg-background/80 dark:bg-zinc-900/95 backdrop-blur-sm border rounded-full shadow-lg py-2.5">
