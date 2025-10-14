@@ -79,8 +79,8 @@ export function JobCard({
                         </Button>
                     )}
                      {isOwner && (
-                        <Button variant="ghost" size="icon" disabled={hasApplied} className="h-8 w-8 -mt-1 -mr-1 pointer-events-none">
-                            <Pencil className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" disabled={hasApplied} className="text-muted-foreground h-8 w-8 -mt-1 -mr-1 pointer-events-none">
+                           <Pencil className="h-4 w-4" />
                         </Button>
                     )}
                 </div>
@@ -104,8 +104,8 @@ export function JobCard({
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">{job.jobType}</Badge>
                         <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5">{job.status}</Badge>
                     </div>
-                    {isRecruiter ? null : (
-                         hasApplied ? (
+                     {isRecruiter ? null : (
+                        hasApplied ? (
                             <Button disabled size="sm">Applied</Button>
                         ) : (
                             <Button asChild size="sm">
@@ -118,23 +118,29 @@ export function JobCard({
         </>
     );
 
-    const CardWrapper = isOwner ? Link : 'div';
-    
+    const CardComponent = (
+        <Card 
+            className={cn(
+                "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
+                isDraggable ? "mb-2 bg-card" : "",
+                hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
+                isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
+            )}
+            {...(isDraggable ? listeners : {})}
+        >
+            {cardContent}
+        </Card>
+    );
+
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-            <CardWrapper href={isOwner ? `/jobs/${job.id}/edit` : ''} className="block">
-                <Card 
-                    className={cn(
-                        "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
-                        isDraggable ? "mb-2 bg-card" : "",
-                        hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
-                        isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
-                    )}
-                    {...(isDraggable ? listeners : {})}
-                >
-                {cardContent}
-                </Card>
-            </CardWrapper>
+             {isOwner ? (
+                <Link href={`/jobs/${job.id}/edit`} className="block">
+                    {CardComponent}
+                </Link>
+            ) : (
+                CardComponent
+            )}
         </div>
     )
 }
