@@ -117,8 +117,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                     </div>
                      <div className="mt-2 flex items-center gap-2">
-                        <Badge className="text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">{job.jobType}</Badge>
-                        <Badge className="capitalize text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">{job.status}</Badge>
+                        <Badge variant="secondary" className="capitalize">{job.jobType}</Badge>
+                        <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
                     </div>
                 </div>
 
@@ -133,7 +133,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                                 <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
                                             </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent><p>View Public Details</p></TooltipContent>
+                                        <TooltipContent><p>View</p></TooltipContent>
                                     </Tooltip>
                                     <Tooltip>
                                         <TooltipTrigger asChild>

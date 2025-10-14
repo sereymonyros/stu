@@ -84,7 +84,7 @@ function JobDetailsProfile({ jobId }: { jobId: string }) {
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>Edit Job</p>
+                                    <p>Edit</p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
