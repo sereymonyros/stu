@@ -112,8 +112,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                 </div>
 
                 <div className="flex-shrink-0 flex flex-col items-end gap-1.5 z-10">
-                    <Badge variant="outline" className="text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800/80">{job.jobType}</Badge>
-                    <Badge variant="outline" className="capitalize text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800/80">{job.status}</Badge>
+                    <Badge className="text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">{job.jobType}</Badge>
+                    <Badge className="capitalize text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">{job.status}</Badge>
                 </div>
             </div>
         </Card>
