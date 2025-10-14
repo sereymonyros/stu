@@ -63,14 +63,14 @@ export function BottomNavbar() {
                             <Link 
                                 key={item.href}
                                 href={item.href}
-                                className="inline-flex flex-col items-center justify-center px-5 relative"
+                                className="inline-flex flex-col items-center justify-center relative"
                             >
                                 <div className={cn(
                                     "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200",
                                     isActive ? "bg-primary/10 dark:bg-zinc-800" : "text-muted-foreground dark:text-zinc-400"
                                 )}>
                                     <div className={cn(
-                                        "flex flex-col items-center justify-center p-2 rounded-full",
+                                        "flex flex-col items-center justify-center px-5 py-2 rounded-full",
                                         isActive ? "text-primary dark:text-white" : ""
                                     )}>
                                         <item.icon className="w-5 h-5 mb-1" />
