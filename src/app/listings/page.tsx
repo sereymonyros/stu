@@ -39,7 +39,7 @@ export default function ListingsPage() {
               const isOwner = user && user.uid === listing.sellerId;
 
               return (
-                <Card key={listing.id} className="overflow-hidden h-full flex flex-col transition-all duration-200 hover:shadow-xl hover:-translate-y-1">
+                <Card key={listing.id} className="overflow-hidden h-full flex flex-col transition-all duration-200 hover:shadow-2xl">
                     <Carousel className="w-full relative">
                       <CarouselContent>
                         {listing.imageUrls && listing.imageUrls.length > 0 ? (
