@@ -60,15 +60,17 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     }, [job.salaryMin, job.salaryMax]);
     
     return (
-        <Link href={`/jobs/${job.id}/apply`} className="block w-full">
         <Card className="hover:shadow-md transition-shadow duration-200 w-full relative">
+            <Link href={`/jobs/${job.id}/apply`} className="absolute inset-0 z-0">
+                <span className="sr-only">View job: {job.title}</span>
+            </Link>
             {/* Favorite button for non-recruiters */}
             {user && !isOwner && !isRecruiter && (
                 <Button
                     variant="ghost"
                     size="icon"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
-                    className="absolute top-0 left-0 p-2 h-auto w-auto rounded-tl-lg text-muted-foreground hover:text-red-500"
+                    className="absolute top-0 left-0 p-2 h-auto w-auto rounded-tl-lg text-muted-foreground hover:text-red-500 z-10"
                     disabled={hasApplied}
                     aria-label="Toggle Favourite"
                 >
@@ -78,7 +80,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
             <div className="p-4 grid grid-cols-12 items-center gap-4">
                 
                 {/* Mobile: Badges top right */}
-                 <div className="sm:hidden absolute top-4 right-4 flex gap-2">
+                 <div className="sm:hidden absolute top-4 right-4 flex gap-2 z-10">
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.jobType}</Badge>
                     <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.status}</Badge>
                 </div>
@@ -91,7 +93,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         <AvatarFallback>{job.companyName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                         <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="font-semibold text-base hover:text-primary leading-tight line-clamp-1" onClick={(e) => e.stopPropagation()}>
+                         <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="relative z-10 font-semibold text-base hover:text-primary leading-tight line-clamp-1" onClick={(e) => e.stopPropagation()}>
                            {job.companyName}
                          </Link>
                         <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1">
@@ -112,21 +114,21 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.jobType}</Badge>
                         <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.status}</Badge>
                     </div>
-                    <div className="sm:mt-2 w-full sm:w-auto">
+                    <div className="sm:mt-2 w-full sm:w-auto relative z-10">
                         {hasApplied ? (
-                            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
+                            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/apply`) }}>
                                 <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
                             </Button>
                         ) : isRecruiter ? (
                             isOwner ? (
-                                <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
+                                <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/edit`) }}>
                                     <Link href={`/jobs/${job.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Edit</Link>
                                 </Button>
                             ) : (
                                 <Button disabled variant="outline" size="sm" className="w-full sm:w-auto">View</Button>
                             )
                         ) : (
-                            <Button asChild size="sm" className="w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
+                            <Button asChild size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/apply`) }}>
                                 <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
                             </Button>
                         )}
@@ -135,7 +137,6 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
 
             </div>
         </Card>
-        </Link>
     );
 }
 
