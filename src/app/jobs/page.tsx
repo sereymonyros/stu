@@ -8,7 +8,7 @@ import { collection, doc, setDoc, deleteDoc, serverTimestamp, query } from 'fire
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown } from 'lucide-react';
+import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -104,7 +104,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                 </div>
 
                 <div className="col-span-12 sm:col-span-4">
-                    <div className="flex items-center gap-2">
+                     <div className="flex items-center gap-2">
                         <div className="font-semibold text-base leading-tight line-clamp-1">{job.title}</div>
                         {isOwner && (
                             <Button asChild variant="ghost" size="icon" className="sm:hidden h-8 w-8 relative z-10" onClick={(e) => e.stopPropagation()}>
@@ -122,16 +122,20 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                     <div className="sm:mt-2 w-full sm:w-auto relative z-10">
                         {hasApplied ? (
-                            <Button asChild variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
-                                <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
+                            <Button asChild variant="outline" size="icon" onClick={(e) => e.stopPropagation()}>
+                                <Link href={`/jobs/${job.id}/apply`}><Eye className="h-4 w-4" /></Link>
                             </Button>
                         ) : isOwner ? (
                             <Button asChild variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={(e) => e.stopPropagation()}>
                                 <Link href={destinationUrl}><Pencil className="h-4 w-4"/></Link>
                             </Button>
+                        ) : isRecruiter ? (
+                            <Button asChild size="icon" variant="outline" onClick={(e) => e.stopPropagation()}>
+                                <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
+                            </Button>
                         ) : (
-                            <Button asChild size="sm" variant="outline" onClick={(e) => e.stopPropagation()}>
-                                <Link href={isRecruiter ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`}>{isRecruiter ? 'View' : 'View & Apply'}</Link>
+                             <Button asChild size="sm" variant="outline" onClick={(e) => e.stopPropagation()}>
+                                <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
                             </Button>
                         )}
                     </div>
