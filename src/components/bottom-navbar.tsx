@@ -55,7 +55,7 @@ export function BottomNavbar() {
             "fixed bottom-4 left-0 right-0 flex justify-center z-50 transition-opacity duration-1000 ease-in-out",
             isScrolling ? "opacity-30" : "opacity-100"
         )}>
-            <div className="w-4/5 bg-background/80 dark:bg-zinc-900/95 backdrop-blur-sm border rounded-full shadow-lg py-2.5">
+            <div className="w-4/5 bg-background/80 dark:bg-zinc-900/70 backdrop-blur-sm border rounded-full shadow-lg py-2.5">
                 <div className="flex h-full items-center justify-around max-w-lg mx-auto font-medium">
                     {navItems.map((item) => {
                         const isActive = pathname.startsWith(item.href);
