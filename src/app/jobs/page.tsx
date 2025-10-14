@@ -144,14 +144,6 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                     </Tooltip>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button asChild variant="outline" size="icon" className="h-9 w-9">
-                                                <Link href={`/jobs/${job.id}/edit`}><Pencil className="h-4 w-4" /></Link>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>Edit Job</p></TooltipContent>
-                                    </Tooltip>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
                                              <Button asChild variant="outline" size="icon" className="h-9 w-9">
                                                 <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
                                             </Button>

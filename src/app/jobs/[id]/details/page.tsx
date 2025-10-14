@@ -2,18 +2,19 @@
 'use client';
 
 import { useMemo, Suspense, use } from 'react';
-import { useDoc, useFirestore } from '@/firebase';
+import { useDoc, useFirestore, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Building, MapPin, DollarSign, Briefcase, Calendar } from 'lucide-react';
+import { ArrowLeft, Building, MapPin, DollarSign, Briefcase, Calendar, Pencil } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 function JobDetailsProfile({ jobId }: { jobId: string }) {
     const firestore = useFirestore();
+    const { user } = useUser();
 
     const jobRef = useMemo(() => {
         if (!firestore) return null;
@@ -21,6 +22,7 @@ function JobDetailsProfile({ jobId }: { jobId: string }) {
     }, [firestore, jobId]);
 
     const { data: job, isLoading } = useDoc(jobRef);
+    const isOwner = user && job && user.uid === job.recruiterId;
     
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
@@ -66,9 +68,19 @@ function JobDetailsProfile({ jobId }: { jobId: string }) {
     return (
         <Card className="w-full max-w-3xl mx-auto rounded-3xl">
             <CardHeader>
-                <Button variant="ghost" size="icon" className="mb-4 w-fit -ml-2" asChild>
-                    <Link href="/jobs" aria-label="Back to Jobs"><ArrowLeft className="h-4 w-4" /></Link>
-                </Button>
+                 <div className="flex justify-between items-start">
+                    <Button variant="ghost" size="icon" className="mb-4 w-fit -ml-2" asChild>
+                        <Link href="/jobs" aria-label="Back to Jobs"><ArrowLeft className="h-4 w-4" /></Link>
+                    </Button>
+                    {isOwner && (
+                         <Button asChild variant="outline">
+                            <Link href={`/jobs/${jobId}/edit`}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit Job
+                            </Link>
+                         </Button>
+                    )}
+                </div>
                 <CardTitle className="text-3xl font-bold">{job.title}</CardTitle>
                 <CardDescription className="text-lg">
                     at <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="font-semibold text-primary hover:underline">{job.companyName}</Link>
