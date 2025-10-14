@@ -3,7 +3,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { CSS } from '@dixie-dregs/dnd-kit-utilities';
 import { useDroppable, DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -287,7 +287,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
                 <CardHeader className={cn("p-3 border-b-4 select-none", titleColors[id] || 'border-gray-500')}>
                     <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
                         <span>{title}</span>
-                        <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{applicants.length}</span>
+                        <span className="text-sm font-normal bg-primary/10 text-primary rounded-full h-6 w-6 flex items-center justify-center">{applicants.length}</span>
                     </CardTitle>
                 </CardHeader>
                 <div 
