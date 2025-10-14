@@ -46,12 +46,9 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     const { user } = useUser();
     const isOwner = user && user.uid === job.recruiterId;
 
-    // This is the card's main link destination
     const destinationUrl = isOwner 
         ? `/jobs/${job.id}/edit` 
-        : isRecruiter 
-        ? `/jobs/${job.id}/details` 
-        : `/jobs/${job.id}/apply`;
+        : (isRecruiter ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`);
 
     const salaryDisplay = useMemo(() => {
         if (job.salaryMin && job.salaryMax) {
