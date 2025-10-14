@@ -52,7 +52,7 @@ function JobCard({ job }: { job: any }) {
                         ) : applicants && applicants.length > 0 ? (
                             <Badge variant="outline" className="flex items-center gap-1">
                                {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
-                               {applicants.length} {applicants.length === 1 ? 'Applicant' : 'Applicants'}
+                               {applicants.length}
                             </Badge>
                         ) : (
                             <span className="text-xs text-muted-foreground">No applicants yet</span>
