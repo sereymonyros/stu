@@ -74,11 +74,11 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     variant="ghost"
                     size="icon"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
-                    className="absolute top-2 left-2 p-2 h-auto w-auto rounded-full text-muted-foreground hover:text-red-500 z-10"
+                    className="absolute top-1 left-1 h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10 border border-transparent hover:border-red-500/50"
                     disabled={hasApplied}
                     aria-label="Toggle Favourite"
                 >
-                    <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
+                    <Heart className={cn("h-4 w-4", isFavourite && "fill-red-500 text-red-500")} />
                 </Button>
             )}
             <div className="p-4 grid grid-cols-12 items-center gap-4">
