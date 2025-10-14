@@ -279,31 +279,33 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
     };
 
     return (
-        <div className="w-full md:w-80 flex-shrink-0 flex flex-col">
-            <CardHeader className={cn("p-3 border-b-4 select-none", titleColors[id] || 'border-gray-500')}>
-                <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
-                    <span>{title}</span>
-                    <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{applicants.length}</span>
-                </CardTitle>
-            </CardHeader>
-            <div 
-                ref={setNodeRef} 
-                className={cn(
-                    "min-h[125] p-2 flex-1 rounded-b-lg transition-colors", 
-                    isOver ? 'bg-primary/10' : 'bg-muted/40'
-                )}
-            >
-                 {isLoading ? (
-                    <div className="space-y-2">
-                         <Skeleton className="h-20 w-full" />
-                         <Skeleton className="h-20 w-full" />
-                    </div>
-                ) : (
-                    <SortableContext items={applicantIds} strategy={verticalListSortingStrategy}>
-                        {children}
-                    </SortableContext>
-                )}
-            </div>
+        <div className="w-full md:w-80 flex-shrink-0 flex flex-col flex-1">
+            <Card className="h-full flex flex-col">
+                <CardHeader className={cn("p-3 border-b-4 select-none", titleColors[id] || 'border-gray-500')}>
+                    <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
+                        <span>{title}</span>
+                        <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{applicants.length}</span>
+                    </CardTitle>
+                </CardHeader>
+                <div 
+                    ref={setNodeRef} 
+                    className={cn(
+                        "p-2 flex-1 rounded-b-lg transition-colors min-h-[150px]",
+                        isOver ? 'bg-primary/10' : 'bg-muted/40'
+                    )}
+                >
+                     {isLoading ? (
+                        <div className="space-y-2">
+                             <Skeleton className="h-20 w-full" />
+                             <Skeleton className="h-20 w-full" />
+                        </div>
+                    ) : (
+                        <SortableContext items={applicantIds} strategy={verticalListSortingStrategy}>
+                            {children}
+                        </SortableContext>
+                    )}
+                </div>
+            </Card>
         </div>
     );
 }
