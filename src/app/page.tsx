@@ -27,7 +27,7 @@ export default function Home() {
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-foreground drop-shadow-md">
             Cambodia Hub
           </h1>
-          <p className="max-w-xl text-lg text-foreground/90 sm:text-xl md:text-2xl drop-shadow">
+          <p className="max-w-xl text-lg text-foreground/70 sm:text-xl md:text-2xl drop-shadow">
             Your personal AI guide to the Kingdom of Wonder. Explore, buy, sell, and find jobs.
           </p>
         </div>
