@@ -40,7 +40,7 @@ const jobSchema = z.object({
   companyName: z.string().min(2, 'Company name is required.'),
   location: z.string().min(2, 'Location is required.'),
   jobType: z.enum(['Full-time', 'Part-time', 'Contract', 'Internship']),
-  status: z.enum(['Available', 'Pending', 'Sold']),
+  status: z.enum(['Available', 'Offering', 'Closed']),
   description: z.string().optional(),
   salaryMin: z.coerce.number().optional(),
   salaryMax: z.coerce.number().optional(),
@@ -178,7 +178,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                     <FormItem><FormLabel>Job Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select employment type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Full-time">Full-time</SelectItem><SelectItem value="Part-time">Part-time</SelectItem><SelectItem value="Contract">Contract</SelectItem><SelectItem value="Internship">Internship</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                   )} />
                    <FormField control={form.control} name="status" render={({ field }) => (
-                    <FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select job status" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Available">Available</SelectItem><SelectItem value="Pending">Pending</SelectItem><SelectItem value="Sold">Sold</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select job status" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Available">Available</SelectItem><SelectItem value="Offering">Offering</SelectItem><SelectItem value="Closed">Closed</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                   )} />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
