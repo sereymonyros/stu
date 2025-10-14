@@ -74,7 +74,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     variant="ghost"
                     size="icon"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
-                    className="absolute top-1 left-1 h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10 border border-transparent hover:border-red-500/50 hover:bg-transparent"
+                    className="absolute top-1 left-1 h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10 hover:bg-transparent"
                     disabled={hasApplied}
                     aria-label="Toggle Favourite"
                 >
