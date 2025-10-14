@@ -64,7 +64,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     }, [job.salaryMin, job.salaryMax]);
     
     return (
-        <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "bg-muted/50 hover:shadow-none")}>
+        <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "bg-muted/50")}>
             <Link href={destinationUrl} className="absolute inset-0 z-0">
                 <span className="sr-only">View job: {job.title}</span>
             </Link>
@@ -104,7 +104,14 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                 </div>
 
                 <div className="col-span-12 sm:col-span-4">
-                    <div className="font-semibold text-base leading-tight line-clamp-1">{job.title}</div>
+                    <div className="flex items-center gap-2">
+                        <div className="font-semibold text-base leading-tight line-clamp-1">{job.title}</div>
+                        {isOwner && (
+                            <Button asChild variant="ghost" size="icon" className="sm:hidden h-8 w-8 relative z-10" onClick={(e) => e.stopPropagation()}>
+                                <Link href={destinationUrl}><Pencil className="h-4 w-4"/></Link>
+                            </Button>
+                        )}
+                    </div>
                     {salaryDisplay && <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                 </div>
 
@@ -119,7 +126,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
                             </Button>
                         ) : isOwner ? (
-                            <Button asChild variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                            <Button asChild variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={(e) => e.stopPropagation()}>
                                 <Link href={destinationUrl}><Pencil className="h-4 w-4"/></Link>
                             </Button>
                         ) : (
