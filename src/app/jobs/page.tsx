@@ -136,9 +136,18 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 </Tooltip>
                             </TooltipProvider>
                         ) : isOwner ? (
-                            <Button asChild variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={(e) => e.stopPropagation()}>
-                                <Link href={destinationUrl}><Pencil className="h-4 w-4"/></Link>
-                            </Button>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button asChild variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={(e) => e.stopPropagation()}>
+                                            <Link href={destinationUrl}><Pencil className="h-4 w-4"/></Link>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Edit Job</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         ) : isRecruiter ? (
                             <TooltipProvider>
                                 <Tooltip>
