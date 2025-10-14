@@ -43,12 +43,15 @@ import {
 import { MultiSelectOption, MultiSelect } from '@/components/ui/multi-select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BackButton } from '@/components/back-button';
+import { useAnimation } from '@/contexts/animation-context';
 
 function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter, router }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => Promise<void>; hasApplied: boolean; isRecruiter: boolean; router: ReturnType<typeof useRouter> }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const isOwner = user && user.uid === job.recruiterId;
     const [isAnimating, setIsAnimating] = useState(false);
+    const { triggerAvatarPop } = useAnimation();
+
 
     const applicantsQuery = useMemo(() => {
         if (!firestore || !job.id || !isOwner) return null;
@@ -76,6 +79,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
         e.stopPropagation();
         if (!isFavourite) {
             setIsAnimating(true);
+            triggerAvatarPop();
         }
         onToggleFavourite(job.id, isFavourite);
     };
@@ -86,7 +90,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
             <div className="p-4 flex items-center gap-4">
                 {isAnimating && (
                     <Heart
-                        className="absolute top-4 left-5 h-5 w-5 text-red-500 fill-red-500 animate-fly-to-avatar z-20"
+                        className="absolute top-4 left-5 h-5 w-5 text-red-500 fill-red-500 animate-fly-to-header z-20"
                         onAnimationEnd={() => setIsAnimating(false)}
                     />
                 )}
