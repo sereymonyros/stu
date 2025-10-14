@@ -105,10 +105,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                 </div>
 
                 <div className="col-span-12 sm:col-span-8 flex justify-between items-center">
-                     <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                           <div className="font-semibold text-base leading-tight line-clamp-1 flex-shrink min-w-0">{job.title}</div>
-                        </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-base leading-tight line-clamp-1 flex-shrink min-w-0">{job.title}</div>
                         {salaryDisplay && <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                     </div>
 
