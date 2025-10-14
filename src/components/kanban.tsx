@@ -280,7 +280,10 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
 
     return (
         <div className="w-full md:w-80 flex-shrink-0 flex flex-col flex-1">
-            <Card className="h-full flex flex-col">
+            <Card className={cn(
+                "h-full flex flex-col transition-colors",
+                isOver ? 'bg-primary/10' : 'bg-muted/40'
+            )}>
                 <CardHeader className={cn("p-3 border-b-4 select-none", titleColors[id] || 'border-gray-500')}>
                     <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
                         <span>{title}</span>
@@ -291,7 +294,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
                     ref={setNodeRef} 
                     className={cn(
                         "p-2 flex-1 rounded-b-lg transition-colors min-h-[150px]",
-                        isOver ? 'bg-primary/10 cursor-copy' : 'bg-muted/40'
+                        isOver && 'cursor-copy'
                     )}
                 >
                      {isLoading ? (
