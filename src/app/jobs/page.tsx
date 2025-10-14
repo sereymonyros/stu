@@ -123,7 +123,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                 </div>
 
                 <div className="flex-shrink-0 flex items-center gap-2 z-10">
-                    <div className="hidden sm:flex">
+                    <div className="flex items-center gap-1">
                         {isOwner ? (
                              <TooltipProvider>
                                 <div className="flex items-center gap-1">
