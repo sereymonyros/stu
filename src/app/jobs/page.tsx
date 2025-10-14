@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/collapsible"
 import { MultiSelectOption, MultiSelect } from '@/components/ui/multi-select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { BackButton } from '@/components/back-button';
 
 function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter, router }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; isRecruiter: boolean; router: ReturnType<typeof useRouter> }) {
     const { user } = useUser();
@@ -112,18 +113,18 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                          </Link>
                          <span className="font-normal text-muted-foreground"> - {job.title}</span>
                     </div>
-                    <div className="flex items-center text-sm text-muted-foreground gap-4 mt-1">
+                     <div className="flex items-center text-sm text-muted-foreground gap-4 mt-1">
                         <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="line-clamp-1">{job.location}</span></div>
                         {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                     </div>
                      <div className="mt-2 flex items-center gap-2">
-                        <Badge variant="secondary" className="capitalize">{job.jobType}</Badge>
+                        <Badge variant="secondary">{job.jobType}</Badge>
                         <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
                     </div>
                 </div>
 
-                <div className="flex-shrink-0 flex items-center gap-2 z-10">
-                    <div className="flex items-center gap-1">
+                <div className="flex-shrink-0 flex items-center gap-1 z-10">
+                   
                         {isOwner ? (
                              <TooltipProvider>
                                 <div className="flex items-center gap-1">
@@ -148,7 +149,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                                 </Link>
                                             </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent><p>View Applicants</p></TooltipContent>
+                                        <TooltipContent><p>{applicants?.length === 1 ? '1 Applicant' : `${applicants?.length || 0} Applicants`}</p></TooltipContent>
                                     </Tooltip>
                                 </div>
                             </TooltipProvider>
@@ -168,7 +169,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 <Link href={destinationUrl}>{hasApplied ? 'View' : 'Apply'}</Link>
                             </Button>
                         )}
-                    </div>
+                   
                 </div>
             </div>
         </Card>
