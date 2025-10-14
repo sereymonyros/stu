@@ -476,7 +476,6 @@ function JobsPageContent() {
         
         try {
             await updateJobStatus({ jobId, newStatus: newStatus as any });
-            toast({ title: 'Job Status Updated', description: `Job moved to ${newStatus}.` });
         } catch (error: any) {
             console.error("Failed to update job status:", error);
             toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update job status.' });

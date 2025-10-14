@@ -203,8 +203,6 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                 newStatus: newStatus as any,
              });
 
-            toast({ title: 'Status Updated', description: `Applicant status moved to ${newStatus}.` });
-
             if (newStatus === 'accepted') {
                 refetchJob();
             }
