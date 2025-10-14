@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -51,7 +52,7 @@ export function BottomNavbar() {
 
     return (
         <div className={cn(
-            "md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-sm z-50 transition-opacity duration-300 ease-in-out",
+            "md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/80 dark:bg-zinc-900/95 backdrop-blur-sm z-50 transition-opacity duration-300 ease-in-out border-t border-border/10",
             isScrolling ? "opacity-50" : "opacity-100"
         )}>
             <div className="grid h-full grid-cols-4 max-w-lg mx-auto font-medium">
@@ -65,11 +66,11 @@ export function BottomNavbar() {
                         >
                             <div className={cn(
                                 "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200",
-                                isActive ? "bg-primary/10" : "text-muted-foreground"
+                                isActive ? "bg-primary/10 dark:bg-zinc-800" : "text-muted-foreground dark:text-zinc-400"
                             )}>
                                 <div className={cn(
                                     "flex flex-col items-center justify-center p-2 rounded-full",
-                                    isActive ? "text-primary" : ""
+                                    isActive ? "text-primary dark:text-white" : ""
                                 )}>
                                     <item.icon className="w-5 h-5 mb-1" />
                                     <span className="text-xs font-medium">{item.label}</span>
@@ -80,7 +81,7 @@ export function BottomNavbar() {
                 })}
                  <button
                     onClick={() => setSettingsOpen(true)}
-                    className="inline-flex flex-col items-center justify-center px-5 text-muted-foreground"
+                    className="inline-flex flex-col items-center justify-center px-5 text-muted-foreground dark:text-zinc-400"
                 >
                     <Settings className="w-5 h-5 mb-1" />
                     <span className="text-xs font-medium">Settings</span>
