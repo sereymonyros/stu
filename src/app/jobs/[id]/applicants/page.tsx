@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Board } from '@/components/kanban';
-import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, type DragEndEvent, type DragStartEvent, useSensor, PointerSensor, TouchSensor, useSensors } from '@dnd-kit/core';
 import { updateApplicationStatus } from '@/ai/flows/update-application-status-flow';
 import { analyzeApplicant } from '@/ai/flows/analyze-applicant-flow';
 import { getCachedAnalysis, setCachedAnalysis } from '@/lib/ai-cache';
@@ -129,15 +129,31 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
-          activationConstraint: {
-            // Require the mouse to move by 8 pixels before activating the drag
-            distance: 8,
-          },
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 250,
+                tolerance: 5,
+            },
         })
     );
 
+    const handleDragStart = (event: DragStartEvent) => {
+        if (navigator.vibrate) {
+            navigator.vibrate(100);
+        }
+    };
+
+
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
+
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
 
         if (!over) return;
 
@@ -240,7 +256,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                 </div>
             </div>
              <div className="flex-1 px-4 md:px-6 lg:px-8 pb-4 flex flex-col min-h-0">
-                <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                     <ScrollArea className="w-full h-full" type="auto">
                         <Board>
                             {KANBAN_STAGES.map(stage => {

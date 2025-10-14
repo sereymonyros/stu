@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { DndContext, type DragEndEvent, useSensor, PointerSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, type DragEndEvent, type DragStartEvent, useSensor, PointerSensor, TouchSensor, useSensors } from '@dnd-kit/core';
 import { Board, JobCard } from '@/components/job-kanban';
 import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -78,7 +78,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     disabled={hasApplied}
                     aria-label="Toggle Favourite"
                 >
-                    <Heart className={cn("h-4 w-4", isFavourite && "fill-red-500 text-red-500")} />
+                    <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
                 </Button>
             )}
             <div className="p-4 grid grid-cols-12 items-center gap-4">
@@ -104,13 +104,31 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                 </div>
 
-                <div className="col-span-12 sm:col-span-8 flex justify-between items-center">
+                <div className="col-span-12 sm:col-span-8 flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-4">
                     <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-base leading-tight line-clamp-1 flex-shrink min-w-0">{job.title}</div>
+                        <div className="font-semibold text-base leading-tight line-clamp-1 flex-shrink min-w-0 sm:mb-1">
+                             <span className="sm:hidden">
+                                {isOwner && (
+                                     <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button asChild variant="ghost" size="icon" className="h-6 w-6 -ml-1 mr-1" onClick={(e) => {e.stopPropagation(); router.push(destinationUrl)}}>
+                                                    <Link href={destinationUrl}><Pencil className="h-3 w-3"/></Link>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Edit Job</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                            </span>
+                            {job.title}
+                        </div>
                         {salaryDisplay && <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                     </div>
 
-                    <div className="ml-4 flex-shrink-0 relative z-10">
+                    <div className="flex-shrink-0 relative z-10 w-full sm:w-auto flex justify-end">
                         {hasApplied ? (
                             <TooltipProvider>
                                 <Tooltip>
@@ -128,7 +146,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                              <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button asChild variant="ghost" size="icon" className="h-10 w-10" onClick={(e) => e.stopPropagation()}>
+                                        <Button asChild variant="ghost" size="icon" className="h-10 w-10 hidden sm:inline-flex" onClick={(e) => e.stopPropagation()}>
                                             <Link href={destinationUrl}><Pencil className="h-4 w-4"/></Link>
                                         </Button>
                                     </TooltipTrigger>
@@ -410,12 +428,29 @@ function JobsPageContent() {
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: { distance: 8 },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 250,
+                tolerance: 5,
+            },
         })
     );
+
+    const handleJobDragStart = (event: DragStartEvent) => {
+        if (navigator.vibrate) {
+            navigator.vibrate(100);
+        }
+    };
+
 
     const handleJobDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+
         if (!over || !active) return;
         
         const jobId = active.id as string;
@@ -686,7 +721,7 @@ function JobsPageContent() {
                 )}
 
                 {viewMode === 'board' && isRecruiter && (
-                    <DndContext sensors={sensors} onDragEnd={handleJobDragEnd}>
+                    <DndContext sensors={sensors} onDragStart={handleJobDragStart} onDragEnd={handleJobDragEnd}>
                        <div className="flex justify-center flex-wrap gap-4 pb-4">
                             {KANBAN_STAGES.map(stage => {
                                 const stageJobs = jobsByStatus[stage] || [];
