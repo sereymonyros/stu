@@ -60,8 +60,21 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     }, [job.salaryMin, job.salaryMax]);
     
     return (
-        <Card className="hover:shadow-md transition-shadow duration-200 w-full">
-            <div className="p-4 grid grid-cols-12 items-center gap-4 relative">
+        <Card className="hover:shadow-md transition-shadow duration-200 w-full relative">
+            {/* Favorite button for non-recruiters */}
+            {user && !isOwner && !isRecruiter && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onToggleFavourite(job.id, isFavourite)}
+                    className="absolute top-0 left-0 p-2 h-auto w-auto rounded-tl-lg text-muted-foreground hover:text-red-500"
+                    disabled={hasApplied}
+                    aria-label="Toggle Favourite"
+                >
+                    <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
+                </Button>
+            )}
+            <div className="p-4 grid grid-cols-12 items-center gap-4">
                 
                 {/* Mobile: Badges top right */}
                  <div className="sm:hidden absolute top-4 right-4 flex gap-2">
@@ -117,21 +130,6 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                 </div>
 
-                {/* Favorite button for non-recruiters */}
-                {user && !isOwner && !isRecruiter && (
-                    <div className="absolute top-2 left-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onToggleFavourite(job.id, isFavourite)}
-                            className="text-muted-foreground hover:text-red-500 h-8 w-8"
-                            disabled={hasApplied}
-                            aria-label="Toggle Favourite"
-                        >
-                            <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
-                        </Button>
-                    </div>
-                )}
             </div>
         </Card>
     );
@@ -493,7 +491,7 @@ function JobsPageContent() {
     }
 
     return (
-        <div className="flex flex-col h-screen">
+        <div className="flex flex-col min-h-screen">
             <main className="flex-1 p-4 md:p-6 lg:p-8">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <div className="flex-1">
