@@ -36,11 +36,11 @@ function JobCard({ job }: { job: any }) {
 
     return (
         <Link href={destinationUrl} className="block hover:shadow-lg transition-shadow duration-200 rounded-lg">
-            <Card className="h-full relative">
+            <Card className="h-full relative overflow-hidden">
                  {isLoading ? (
-                    <Skeleton className="absolute top-2 right-2 h-6 w-10 rounded-full" />
+                    <Skeleton className="absolute top-0 right-0 h-8 w-12 rounded-bl-lg" />
                 ) : applicants && applicants.length > 0 ? (
-                    <Badge variant="outline" className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                    <Badge variant="secondary" className="absolute top-0 right-0 flex items-center gap-1.5 z-10 px-3 py-1.5 rounded-bl-lg rounded-tr-lg text-sm">
                         {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
                         {applicants.length}
                     </Badge>
