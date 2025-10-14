@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Building, MapPin, DollarSign, Briefcase, Calendar, Pencil } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 function JobDetailsProfile({ jobId }: { jobId: string }) {
     const firestore = useFirestore();
@@ -73,12 +74,21 @@ function JobDetailsProfile({ jobId }: { jobId: string }) {
                         <Link href="/jobs" aria-label="Back to Jobs"><ArrowLeft className="h-4 w-4" /></Link>
                     </Button>
                     {isOwner && (
-                         <Button asChild variant="outline">
-                            <Link href={`/jobs/${jobId}/edit`}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit Job
-                            </Link>
-                         </Button>
+                         <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button asChild variant="outline" size="icon">
+                                        <Link href={`/jobs/${jobId}/edit`}>
+                                            <Pencil className="h-4 w-4" />
+                                            <span className="sr-only">Edit Job</span>
+                                        </Link>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Edit Job</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     )}
                 </div>
                 <CardTitle className="text-3xl font-bold">{job.title}</CardTitle>
