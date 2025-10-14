@@ -14,7 +14,6 @@ import { BottomNavbar } from '@/components/bottom-navbar';
 import { Chatbot } from '@/components/chatbot';
 import { ChatbotProvider } from '@/components/chatbot-provider';
 import { SettingsSheetProvider } from '@/components/settings-sheet';
-import { AnimationProvider } from '@/contexts/animation-context';
 
 
 interface FirebaseClientProviderProps {
@@ -52,7 +51,6 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       firestore={firebaseServices.firestore}
       storage={firebaseServices.storage}
     >
-      <AnimationProvider>
         <SettingsSheetProvider>
           <ChatbotProvider>
               <Header />
@@ -66,7 +64,6 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
               <Toaster />
           </ChatbotProvider>
         </SettingsSheetProvider>
-      </AnimationProvider>
     </FirebaseProvider>
   );
 }

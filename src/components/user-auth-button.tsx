@@ -24,7 +24,6 @@ import { useRouter } from 'next/navigation';
 import { doc } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { useChatbot } from './chatbot-provider';
-import { useAnimation } from '@/contexts/animation-context';
 import { cn } from '@/lib/utils';
 
 export function UserAuthButton() {
@@ -33,8 +32,6 @@ export function UserAuthButton() {
   const firestore = useFirestore();
   const router = useRouter();
   const { setOpen: setChatbotOpen } = useChatbot();
-  const { isAvatarPopping } = useAnimation();
-
 
   const userProfileRef = useMemo(() => {
     if (!firestore || !user) return null;
@@ -65,7 +62,7 @@ export function UserAuthButton() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-            <Avatar className={cn("h-10 w-10", isAvatarPopping && 'animate-avatar-pop')}>
+            <Avatar className="h-10 w-10">
               <AvatarImage src={userProfile?.photoURL || undefined} alt={userProfile?.displayName ?? 'User'} />
               <AvatarFallback>{fallbackText}</AvatarFallback>
             </Avatar>
