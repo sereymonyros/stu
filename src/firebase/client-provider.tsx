@@ -54,8 +54,8 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       <SettingsSheetProvider>
         <ChatbotProvider>
             <Header />
-            <div className="container relative flex h-screen flex-col mx-auto">
-              <main id="main-content" className="flex-1 overflow-y-auto pb-16 md:pb-0">
+            <div className="container relative flex flex-col mx-auto min-h-screen">
+              <main id="main-content" className="flex-1 pb-16 md:pb-0">
                 {children}
               </main>
               <BottomNavbar />
