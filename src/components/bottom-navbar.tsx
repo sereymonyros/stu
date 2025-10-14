@@ -52,8 +52,8 @@ export function BottomNavbar() {
 
     return (
         <div className={cn(
-            "md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/80 dark:bg-zinc-900/95 backdrop-blur-sm z-50 transition-opacity duration-3000 ease-in-out",
-            isScrolling ? "opacity-50" : "opacity-100"
+            "md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/80 dark:bg-zinc-900/95 backdrop-blur-sm z-50 transition-opacity duration-1000 ease-in-out",
+            isScrolling ? "opacity-30" : "opacity-100"
         )}>
             <div className="grid h-full grid-cols-4 max-w-lg mx-auto font-medium">
                 {navItems.map((item) => {

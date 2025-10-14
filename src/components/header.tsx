@@ -40,7 +40,7 @@ export function Header() {
   return (
     <>
       <header className={cn(
-        "sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm transition-opacity duration-300 ease-in-out",
+        "sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm transition-opacity duration-1000 ease-in-out",
         isScrolling ? "opacity-50" : "opacity-100"
       )}>
         <div className="container mx-auto flex h-16 items-center justify-between">
