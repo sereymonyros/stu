@@ -70,14 +70,23 @@ function JobDetailsProfile({ jobId }: { jobId: string }) {
         <Card className="w-full max-w-3xl mx-auto rounded-3xl">
             <CardHeader>
                  <div className="flex justify-between items-start">
-                    <Button variant="ghost" size="icon" className="mb-4 w-fit -ml-2" asChild>
-                        <Link href="/jobs" aria-label="Back to Jobs"><ArrowLeft className="h-4 w-4" /></Link>
-                    </Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="mb-4 w-fit -ml-2" asChild>
+                                    <Link href="/jobs" aria-label="Back to Jobs"><ArrowLeft className="h-4 w-4" /></Link>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Back to Jobs</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                     {isOwner && (
                          <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button asChild variant="outline" size="icon">
+                                    <Button asChild variant="ghost" size="icon">
                                         <Link href={`/jobs/${jobId}/edit`}>
                                             <Pencil className="h-4 w-4" />
                                             <span className="sr-only">Edit Job</span>
