@@ -119,7 +119,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
                             </Button>
                         ) : isOwner ? (
-                            <Button asChild variant="outline" size="icon" onClick={(e) => e.stopPropagation()}>
+                            <Button asChild variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
                                 <Link href={destinationUrl}><Pencil className="h-4 w-4"/></Link>
                             </Button>
                         ) : (
