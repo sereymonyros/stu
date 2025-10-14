@@ -57,10 +57,8 @@ function JobCard({ job }: { job: any }) {
                         ) : (
                             <span className="text-xs text-muted-foreground">No applicants yet</span>
                         )}
-                        <Button asChild variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
-                            <Link href={destinationUrl}>
-                                {applicants && applicants.length > 0 ? 'View Applicants' : 'Edit Job'}
-                            </Link>
+                        <Button variant="outline" size="sm" className="pointer-events-none">
+                           {applicants && applicants.length > 0 ? 'View Applicants' : 'Edit Job'}
                         </Button>
                     </div>
                 </CardContent>
