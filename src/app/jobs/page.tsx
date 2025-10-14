@@ -58,10 +58,12 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
         }
         return null;
     }, [job.salaryMin, job.salaryMax]);
+
+    const destinationUrl = isOwner ? `/jobs/${job.id}/edit` : `/jobs/${job.id}/apply`;
     
     return (
         <Card className="hover:shadow-md transition-shadow duration-200 w-full relative">
-            <Link href={`/jobs/${job.id}/apply`} className="absolute inset-0 z-0">
+            <Link href={destinationUrl} className="absolute inset-0 z-0">
                 <span className="sr-only">View job: {job.title}</span>
             </Link>
             {user && !isOwner && !isRecruiter && (
