@@ -79,10 +79,8 @@ export function JobCard({
                         </Button>
                     )}
                      {isOwner && (
-                        <Button asChild variant="ghost" size="icon" disabled={hasApplied} className="h-8 w-8 -mt-1 -mr-1" onClick={(e) => e.stopPropagation()}>
-                            <Link href={`/jobs/${job.id}/edit`}>
-                                <Pencil className="h-4 w-4" />
-                            </Link>
+                        <Button variant="ghost" size="icon" disabled={hasApplied} className="h-8 w-8 -mt-1 -mr-1 pointer-events-none">
+                            <Pencil className="h-4 w-4" />
                         </Button>
                     )}
                 </div>
