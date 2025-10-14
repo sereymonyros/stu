@@ -55,9 +55,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
 
     const { data: applicants } = useCollection(applicantsQuery);
 
-    const destinationUrl = isOwner 
-        ? (applicants && applicants.length > 0 ? `/jobs/${job.id}/applicants` : `/jobs/${job.id}/edit`)
-        : (isRecruiter ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`);
+    const destinationUrl = isRecruiter ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`;
 
     const salaryDisplay = useMemo(() => {
         if (job.salaryMin && job.salaryMax) {
@@ -120,26 +118,48 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                 </div>
 
-                <div className="flex-shrink-0 flex items-center gap-4 z-10">
+                <div className="flex-shrink-0 flex items-center gap-2 z-10">
                     <div className="flex flex-col items-end gap-1.5">
                         <Badge className="text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">{job.jobType}</Badge>
                         <Badge className="capitalize text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">{job.status}</Badge>
                     </div>
                     <div className="hidden sm:flex">
                         {isOwner ? (
-                             <Button asChild variant="outline" size="sm">
-                                <Link href={destinationUrl}>
-                                    {applicants && applicants.length > 0 ? (
-                                        <>
-                                            <Users className="mr-2 h-4 w-4" />
-                                            {applicants.length}
-                                        </>
-                                    ) : (
-                                        <Pencil className="mr-2 h-4 w-4" />
-                                    )}
-                                    {applicants && applicants.length > 0 ? 'View' : 'Edit'}
-                                </Link>
-                            </Button>
+                            <TooltipProvider>
+                                <div className="flex items-center gap-1">
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button asChild variant="outline" size="icon" className="h-9 w-9 relative">
+                                                <Link href={`/jobs/${job.id}/applicants`}>
+                                                    <Users className="h-4 w-4" />
+                                                    {applicants && applicants.length > 0 && (
+                                                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                                                            {applicants.length}
+                                                        </span>
+                                                    )}
+                                                </Link>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>View Applicants</p></TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button asChild variant="outline" size="icon" className="h-9 w-9">
+                                                <Link href={`/jobs/${job.id}/edit`}><Pencil className="h-4 w-4" /></Link>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>Edit Job</p></TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                             <Button asChild variant="outline" size="icon" className="h-9 w-9">
+                                                <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>View Public Details</p></TooltipContent>
+                                    </Tooltip>
+                                </div>
+                            </TooltipProvider>
                         ) : isRecruiter ? (
                              <Button asChild variant="outline" size="sm">
                                 <Link href={destinationUrl}><Eye className="mr-2 h-4 w-4" /> View</Link>
@@ -414,18 +434,18 @@ function JobsPageContent() {
     );
 
     const handleJobDragStart = (event: DragStartEvent) => {
-        if (navigator.vibrate) {
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
             navigator.vibrate(200);
         }
     };
 
 
     const handleJobDragEnd = async (event: DragEndEvent) => {
-        const { active, over } = event;
-        
-        if (navigator.vibrate) {
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
             navigator.vibrate(150);
         }
+        
+        const { active, over } = event;
 
         if (!over || !active) return;
         
