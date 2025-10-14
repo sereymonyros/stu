@@ -129,6 +129,14 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 <div className="flex items-center gap-1">
                                     <Tooltip>
                                         <TooltipTrigger asChild>
+                                             <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+                                                <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>View Public Details</p></TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
                                             <Button asChild variant="ghost" size="icon" className="h-9 w-9 relative">
                                                 <Link href={`/jobs/${job.id}/applicants`}>
                                                     <Users className="h-4 w-4" />
@@ -141,14 +149,6 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent><p>View Applicants</p></TooltipContent>
-                                    </Tooltip>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                             <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                                <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>View Public Details</p></TooltipContent>
                                     </Tooltip>
                                 </div>
                             </TooltipProvider>
