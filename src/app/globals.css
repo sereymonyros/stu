@@ -99,11 +99,11 @@
       }
       100% {
         transform: translate(50px, 40px) scale(3);
-        opacity: 0;
+        opacity: 1;
       }
     }
 
     .animate-fly-to-job-avatar {
-        animation: fly-to-job-avatar 0.7s ease-in-out forwards;
+        animation: fly-to-job-avatar 0.7s ease-in-out;
     }
 }

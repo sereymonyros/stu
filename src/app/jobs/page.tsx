@@ -48,7 +48,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     const { user } = useUser();
     const firestore = useFirestore();
     const isOwner = user && user.uid === job.recruiterId;
-    const [isAnimating, setIsAnimating] = useState(false);
+    const [justFavorited, setJustFavorited] = useState(false);
 
     const applicantsQuery = useMemo(() => {
         if (!firestore || !job.id || !isOwner) return null;
@@ -74,20 +74,31 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
 
     const handleFavouriteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!isFavourite) {
-            setIsAnimating(true);
-        }
         onToggleFavourite(job.id, isFavourite);
     };
+
+    useEffect(() => {
+        if (isFavourite) {
+          // If it is a favorite, we trigger the animation state
+          // but only if it wasn't already a favorite (to avoid re-animating on re-renders)
+          const timeoutId = setTimeout(() => setJustFavorited(true), 10);
+          return () => clearTimeout(timeoutId);
+        } else {
+          setJustFavorited(false);
+        }
+    }, [isFavourite]);
     
     return (
         <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "bg-muted/50")}>
             
             <div className="p-4 flex items-center gap-4">
-                {isAnimating && (
+                {isFavourite && (
                     <Heart
-                        className="absolute top-4 left-5 h-5 w-5 text-red-500 fill-red-500 animate-fly-to-job-avatar z-20"
-                        onAnimationEnd={() => setIsAnimating(false)}
+                        className={cn(
+                          'absolute top-4 left-5 h-5 w-5 text-red-500 fill-red-500 z-20',
+                           justFavorited && 'animate-fly-to-job-avatar animate-fill-forwards'
+                        )}
+                        onAnimationEnd={() => setJustFavorited(false)}
                     />
                 )}
                 {user && !isOwner && !isRecruiter && (
