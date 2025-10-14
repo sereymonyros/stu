@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/select';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { ArrowLeft } from 'lucide-react';
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -155,7 +156,12 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
       <main className="flex-1 p-4 md:p-6 lg:p-8">
         {job ? (
             <Card className="max-w-2xl mx-auto">
-            <CardHeader><CardTitle>Edit Job Posting</CardTitle></CardHeader>
+            <CardHeader>
+                <Button variant="ghost" size="sm" className="mb-4 w-fit -ml-2" asChild>
+                    <Link href="/jobs"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Jobs</Link>
+                </Button>
+                <CardTitle>Edit Job Posting</CardTitle>
+            </CardHeader>
             <CardContent>
                 <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
