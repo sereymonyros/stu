@@ -36,27 +36,25 @@ function JobCard({ job }: { job: any }) {
 
     return (
         <Link href={destinationUrl} className="block hover:shadow-lg transition-shadow duration-200 rounded-lg">
-            <Card className="h-full">
+            <Card className="h-full relative">
+                 {isLoading ? (
+                    <Skeleton className="absolute top-2 right-2 h-6 w-10 rounded-full" />
+                ) : applicants && applicants.length > 0 ? (
+                    <Badge variant="outline" className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                        {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
+                        {applicants.length}
+                    </Badge>
+                ) : null}
                 <CardContent className="p-4 flex flex-col justify-between h-full">
                     <div className="flex-grow">
-                        <h3 className="font-semibold text-base truncate">{job.title}</h3>
+                        <h3 className="font-semibold text-base truncate pr-8">{job.title}</h3>
                         <p className="text-sm text-muted-foreground mb-2">{job.companyName} - {job.location}</p>
                         <div className="flex items-center gap-2 mb-3">
                             {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
                             {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
                         </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                        {isLoading ? (
-                            <Skeleton className="h-6 w-20 rounded-full" />
-                        ) : applicants && applicants.length > 0 ? (
-                            <Badge variant="outline" className="flex items-center gap-1">
-                               {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
-                               {applicants.length}
-                            </Badge>
-                        ) : (
-                            <span className="text-xs text-muted-foreground">No applicants yet</span>
-                        )}
+                    <div className="flex justify-end items-center">
                         <Button variant="outline" size="sm" className="pointer-events-none">
                            {applicants && applicants.length > 0 ? 'View Applicants' : 'Edit Job'}
                         </Button>
