@@ -8,12 +8,16 @@ import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Building, DollarSign, Edit, MapPin, Users, Heart, Pencil } from 'lucide-react';
+import { Briefcase, Building, DollarSign, Edit, MapPin, Users, Heart, Pencil, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { Badge } from './ui/badge';
 import Link from 'next/link';
-import { useUser } from '@/firebase';
+import { useUser, useCollection } from '@/firebase';
+import { useFirestore } from '@/firebase';
+import { collection, query } from "firebase/firestore";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/tooltip";
+
 
 export function JobCard({ 
     job, 
@@ -32,6 +36,7 @@ export function JobCard({
 }) {
     const { user } = useUser();
     const isOwner = user && user.uid === job.recruiterId;
+    const firestore = useFirestore();
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
         id: job.id,
@@ -44,6 +49,12 @@ export function JobCard({
         transform: isDragging ? `${CSS.Transform.toString(transform)} scale(1.05)` : CSS.Transform.toString(transform),
         zIndex: isDragging ? 10 : 'auto',
     };
+
+    const applicantsQuery = useMemo(() => {
+        if (!firestore || !job.id || !isOwner) return null;
+        return query(collection(firestore, 'jobs', job.id, 'applications'));
+    }, [firestore, job.id, isOwner]);
+    const { data: applicants } = useCollection(applicantsQuery);
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
@@ -62,6 +73,8 @@ export function JobCard({
         return null;
     }, [job.salaryMin, job.salaryMax]);
 
+    const destinationUrl = isRecruiter ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`;
+
     const cardContent = (
         <>
             <CardHeader className="p-3 pb-2">
@@ -76,11 +89,6 @@ export function JobCard({
                             disabled={hasApplied}
                         >
                             <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
-                        </Button>
-                    )}
-                     {isOwner && (
-                        <Button variant="ghost" size="icon" disabled={hasApplied} className="text-muted-foreground h-8 w-8 -mt-1 -mr-1 pointer-events-none">
-                           <Pencil className="h-4 w-4" />
                         </Button>
                     )}
                 </div>
@@ -104,45 +112,74 @@ export function JobCard({
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">{job.jobType}</Badge>
                         <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5">{job.status}</Badge>
                     </div>
-                     {isRecruiter ? null : (
-                        hasApplied ? (
-                            <Button disabled size="sm">Applied</Button>
+                    {isOwner ? (
+                            <TooltipProvider>
+                                <div className="flex items-center gap-1">
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                             <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+                                                <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>View</p></TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button asChild variant="ghost" size="icon" className="h-9 w-9 relative">
+                                                <Link href={`/jobs/${job.id}/applicants`}>
+                                                    <Users className="h-4 w-4" />
+                                                    {applicants && applicants.length > 0 && (
+                                                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                                                            {applicants.length}
+                                                        </span>
+                                                    )}
+                                                </Link>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>{applicants?.length === 1 ? '1 Applicant' : `${applicants?.length || 0} Applicants`}</p></TooltipContent>
+                                    </Tooltip>
+                                </div>
+                            </TooltipProvider>
+                        ) : isRecruiter ? (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+                                            <Link href={destinationUrl}><Eye className="h-4 w-4" /></Link>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>View</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         ) : (
-                            <Button asChild size="sm">
-                                <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
-                            </Button>
-                        )
+                             hasApplied ? (
+                                <Button asChild variant="outline" size="sm"><Link href={`/jobs/${job.id}/apply`}>View</Link></Button>
+                            ) : (
+                                <Button asChild size="sm">
+                                    <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
+                                </Button>
+                            )
                     )}
                 </div>
             </CardContent>
         </>
     );
 
-    const CardComponent = (
-        <Card 
-            className={cn(
-                "flex flex-col h-full hover:shadow-lg transition-shadow duration-200 rounded-3xl",
-                isDraggable ? "mb-2 bg-card" : "",
-                hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
-                isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
-            )}
-            {...(isDraggable ? listeners : {})}
-        >
-            {cardContent}
-        </Card>
-    );
-
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-             {isOwner ? (
-                <Link href={`/jobs/${job.id}/edit`} className="block">
-                    {CardComponent}
-                </Link>
-            ) : (
-                CardComponent
-            )}
+            <Card 
+                className={cn(
+                    "flex flex-col h-full hover:shadow-lg transition-shadow duration-200 rounded-3xl",
+                    isDraggable ? "mb-2 bg-card" : "",
+                    hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
+                    isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
+                )}
+                {...(isDraggable ? listeners : {})}
+            >
+                {cardContent}
+            </Card>
         </div>
-    )
+    );
 }
 
 function Column({ id, title, children, jobs, isLoading }: { id: string, title: string, children: React.ReactNode, jobs: any[], isLoading: boolean }) {
