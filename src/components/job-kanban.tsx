@@ -160,7 +160,7 @@ function Column({ id, title, children, jobs, isLoading }: { id: string, title: s
                 <CardHeader className={cn("p-3 border-b-4", titleColors[id] || 'border-gray-500')}>
                     <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
                         <span>{title}</span>
-                        <span className="text-sm font-normal bg-primary/10 text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center">{jobs.length}</span>
+                        <span className="text-sm font-normal bg-primary/10 text-primary rounded-full h-6 w-6 flex items-center justify-center">{jobs.length}</span>
                     </CardTitle>
                 </CardHeader>
                 <div className="p-2 min-h-[150px] md:min-h-[200px] overflow-y-auto">
