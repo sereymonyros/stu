@@ -67,7 +67,7 @@ export function BottomNavbar() {
                             >
                                 <div className={cn(
                                     "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200",
-                                    isActive ? "bg-primary/10 dark:bg-zinc-800" : "text-muted-foreground dark:text-zinc-400"
+                                    isActive ? "bg-primary/10 dark:bg-white/10" : "text-muted-foreground dark:text-zinc-400"
                                 )}>
                                     <div className={cn(
                                         "flex flex-col items-center justify-center px-5 py-2 rounded-full",
