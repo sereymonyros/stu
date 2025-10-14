@@ -29,11 +29,6 @@ export function Header() {
                 <Slack className="h-8 w-8" />
                 <span className="hidden sm:inline-block">Cambodia Hub</span>
             </Link>
-            <nav className="hidden md:flex gap-4">
-                <Button variant="ghost" asChild>
-                <Link href="/jobs" className="header-link">Jobs</Link>
-                </Button>
-            </nav>
             </div>
             <UserAuthButton />
         </div>
