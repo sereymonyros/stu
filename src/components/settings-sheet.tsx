@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
@@ -40,7 +41,6 @@ export function useSettingsSheet() {
 // 4. The actual Sheet component
 export function SettingsSheet() {
   const { isOpen, setOpen } = useSettingsSheet();
-  const { theme, setTheme } = useTheme();
   const { setOpen: setChatbotOpen } = useChatbot();
 
   const handleAskAI = () => {
@@ -63,10 +63,6 @@ export function SettingsSheet() {
                  <Link href="/feedback" onClick={() => setOpen(false)}>
                     <MessageSquareHeart /> Give Feedback
                 </Link>
-              </Button>
-              <Button variant="outline" className="w-full justify-start gap-2" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-                  {theme === 'dark' ? <Sun /> : <Moon />}
-                  <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
               </Button>
           </div>
         </SheetContent>
