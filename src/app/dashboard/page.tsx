@@ -40,7 +40,7 @@ function JobCard({ job }: { job: any }) {
                  {isLoading ? (
                     <Skeleton className="absolute top-0 right-0 h-8 w-12 rounded-bl-lg" />
                 ) : applicants && applicants.length > 0 ? (
-                    <Badge variant="secondary" className="absolute top-0 right-0 flex items-center gap-1.5 z-10 px-3 py-1.5 rounded-bl-lg rounded-tr-lg text-sm">
+                    <Badge className="absolute top-0 right-0 flex items-center gap-1.5 z-10 px-3 py-1.5 rounded-bl-lg rounded-tr-lg text-sm bg-lime-500 text-black hover:bg-lime-600">
                         {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
                         {applicants.length}
                     </Badge>
