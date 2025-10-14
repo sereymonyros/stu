@@ -8,7 +8,7 @@ import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where } fro
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye, Pencil, Users, User } from 'lucide-react';
+import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye, Pencil, Users, User, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -165,9 +165,26 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 </Tooltip>
                             </TooltipProvider>
                         ) : (
-                             <Button asChild variant="outline" size="sm">
-                                <Link href={destinationUrl}>{hasApplied ? 'View' : 'Apply'}</Link>
-                            </Button>
+                            <>
+                            {hasApplied ? (
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={`/jobs/${job.id}/apply`}>View</Link>
+                                </Button>
+                            ) : (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button asChild variant="ghost" size="icon">
+                                                <Link href={destinationUrl}><Send /></Link>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Apply</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                            </>
                         )}
                    
                 </div>
