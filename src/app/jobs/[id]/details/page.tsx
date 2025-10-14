@@ -66,8 +66,8 @@ function JobDetailsProfile({ jobId }: { jobId: string }) {
     return (
         <Card className="w-full max-w-3xl mx-auto rounded-3xl">
             <CardHeader>
-                <Button variant="ghost" size="sm" className="mb-4 w-fit -ml-2" asChild>
-                    <Link href="/jobs"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Jobs</Link>
+                <Button variant="ghost" size="icon" className="mb-4 w-fit -ml-2" asChild>
+                    <Link href="/jobs" aria-label="Back to Jobs"><ArrowLeft className="h-4 w-4" /></Link>
                 </Button>
                 <CardTitle className="text-3xl font-bold">{job.title}</CardTitle>
                 <CardDescription className="text-lg">

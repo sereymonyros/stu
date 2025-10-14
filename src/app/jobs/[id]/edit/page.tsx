@@ -157,8 +157,8 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         {job ? (
             <Card className="max-w-2xl mx-auto rounded-3xl">
             <CardHeader>
-                <Button variant="ghost" size="sm" className="mb-4 w-fit -ml-2" asChild>
-                    <Link href="/jobs"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Jobs</Link>
+                <Button variant="ghost" size="icon" className="mb-4 w-fit -ml-2" asChild>
+                    <Link href="/jobs" aria-label="Back to Jobs"><ArrowLeft className="h-4 w-4" /></Link>
                 </Button>
                 <CardTitle>Edit Job Posting</CardTitle>
             </CardHeader>
