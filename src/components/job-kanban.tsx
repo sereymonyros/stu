@@ -79,7 +79,7 @@ export function JobCard({
                         </Button>
                     )}
                      {isOwner && (
-                        <Button asChild variant="ghost" size="icon" disabled={hasApplied} className="h-8 w-8 -mt-1 -mr-1">
+                        <Button asChild variant="ghost" size="icon" disabled={hasApplied} className="h-8 w-8 -mt-1 -mr-1" onClick={(e) => e.stopPropagation()}>
                             <Link href={`/jobs/${job.id}/edit`}>
                                 <Pencil className="h-4 w-4" />
                             </Link>
@@ -106,33 +106,37 @@ export function JobCard({
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">{job.jobType}</Badge>
                         <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5">{job.status}</Badge>
                     </div>
-                    {hasApplied ? (
-                        <Button disabled size="sm">Applied</Button>
-                    ) : isRecruiter ? (
-                        null
-                    ) : (
-                        <Button asChild size="sm">
-                            <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
-                        </Button>
+                    {isRecruiter ? null : (
+                         hasApplied ? (
+                            <Button disabled size="sm">Applied</Button>
+                        ) : (
+                            <Button asChild size="sm">
+                                <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
+                            </Button>
+                        )
                     )}
                 </div>
             </CardContent>
         </>
     );
+
+    const CardWrapper = isOwner ? Link : 'div';
     
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-            <Card 
-                className={cn(
-                    "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
-                    isDraggable ? "mb-2 bg-card" : "",
-                    hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
-                    isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
-                )}
-                {...(isDraggable ? listeners : {})}
-            >
-               {cardContent}
-            </Card>
+            <CardWrapper href={isOwner ? `/jobs/${job.id}/edit` : ''} className="block">
+                <Card 
+                    className={cn(
+                        "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
+                        isDraggable ? "mb-2 bg-card" : "",
+                        hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
+                        isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
+                    )}
+                    {...(isDraggable ? listeners : {})}
+                >
+                {cardContent}
+                </Card>
+            </CardWrapper>
         </div>
     )
 }
