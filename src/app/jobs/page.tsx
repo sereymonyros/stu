@@ -47,7 +47,11 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     const isOwner = user && user.uid === job.recruiterId;
 
     // This is the card's main link destination
-    const destinationUrl = isOwner ? `/jobs/${job.id}/edit` : `/jobs/${job.id}/apply`;
+    const destinationUrl = isOwner 
+        ? `/jobs/${job.id}/edit` 
+        : isRecruiter 
+        ? `/jobs/${job.id}/details` 
+        : `/jobs/${job.id}/apply`;
 
     const salaryDisplay = useMemo(() => {
         if (job.salaryMin && job.salaryMax) {
@@ -63,7 +67,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     }, [job.salaryMin, job.salaryMax]);
     
     return (
-        <Card className="hover:shadow-md transition-shadow duration-200 w-full relative">
+        <Card className="hover:shadow-md transition-shadow duration-200 w-full relative group/item">
             <Link href={destinationUrl} className="absolute inset-0 z-0">
                 <span className="sr-only">View job: {job.title}</span>
             </Link>
@@ -114,16 +118,16 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                     <div className="sm:mt-2 w-full sm:w-auto relative z-10">
                         {hasApplied ? (
-                            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/apply`) }}>
+                            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                                 <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
                             </Button>
                         ) : isOwner ? (
-                             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(destinationUrl) }}>
+                             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                                 <Link href={destinationUrl}><Pencil className="mr-2 h-4 w-4"/>Edit</Link>
                             </Button>
                         ) : (
-                             <Button asChild size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(isRecruiter && !isOwner ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`) }}>
-                                <Link href={isRecruiter && !isOwner ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`}>
+                             <Button asChild size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                                <Link href={destinationUrl}>
                                     {isRecruiter && !isOwner ? 'View' : 'View & Apply'}
                                 </Link>
                             </Button>
