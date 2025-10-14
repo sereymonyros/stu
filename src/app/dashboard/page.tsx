@@ -30,38 +30,42 @@ function JobCard({ job }: { job: any }) {
 
     const { data: applicants, isLoading } = useCollection(applicantsQuery);
 
+    const destinationUrl = applicants && applicants.length > 0
+        ? `/jobs/${job.id}/applicants`
+        : `/jobs/${job.id}/edit`;
+
     return (
-        <Card>
-            <CardContent className="p-4 flex flex-col justify-between h-full">
-                <div className="flex-grow">
-                    <h3 className="font-semibold text-base truncate">{job.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{job.companyName} - {job.location}</p>
-                    <div className="flex items-center gap-2 mb-3">
-                        {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
-                        {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
+        <Link href={destinationUrl} className="block hover:shadow-lg transition-shadow duration-200 rounded-lg">
+            <Card className="h-full">
+                <CardContent className="p-4 flex flex-col justify-between h-full">
+                    <div className="flex-grow">
+                        <h3 className="font-semibold text-base truncate">{job.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-2">{job.companyName} - {job.location}</p>
+                        <div className="flex items-center gap-2 mb-3">
+                            {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
+                            {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
+                        </div>
                     </div>
-                </div>
-                <div className="flex justify-between items-center">
-                    {isLoading ? (
-                        <Skeleton className="h-6 w-20 rounded-full" />
-                    ) : applicants && applicants.length > 0 ? (
-                        <Badge variant="outline" className="flex items-center gap-1">
-                           {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
-                           {applicants.length} {applicants.length === 1 ? 'Applicant' : 'Applicants'}
-                        </Badge>
-                    ) : (
-                        <span className="text-xs text-muted-foreground">No applicants yet</span>
-                    )}
-                    <Button asChild variant="outline" size="sm">
-                        {applicants && applicants.length > 0 ? (
-                             <Link href={`/jobs/${job.id}/applicants`}>View Applicants</Link>
+                    <div className="flex justify-between items-center">
+                        {isLoading ? (
+                            <Skeleton className="h-6 w-20 rounded-full" />
+                        ) : applicants && applicants.length > 0 ? (
+                            <Badge variant="outline" className="flex items-center gap-1">
+                               {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
+                               {applicants.length} {applicants.length === 1 ? 'Applicant' : 'Applicants'}
+                            </Badge>
                         ) : (
-                             <Link href={`/jobs/${job.id}/edit`}>Edit Job</Link>
+                            <span className="text-xs text-muted-foreground">No applicants yet</span>
                         )}
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
+                        <Button asChild variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
+                            <Link href={destinationUrl}>
+                                {applicants && applicants.length > 0 ? 'View Applicants' : 'Edit Job'}
+                            </Link>
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        </Link>
     );
 }
 
