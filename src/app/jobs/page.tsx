@@ -46,6 +46,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     const { user } = useUser();
     const isOwner = user && user.uid === job.recruiterId;
 
+    // This is the card's main link destination
     const destinationUrl = isOwner ? `/jobs/${job.id}/edit` : `/jobs/${job.id}/apply`;
 
     const salaryDisplay = useMemo(() => {
@@ -71,7 +72,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     variant="ghost"
                     size="icon"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
-                    className="absolute top-0 left-0 p-2 h-auto w-auto rounded-tl-lg text-muted-foreground hover:text-red-500 z-10"
+                    className="absolute top-2 left-2 p-2 h-auto w-auto rounded-full text-muted-foreground hover:text-red-500 z-10"
                     disabled={hasApplied}
                     aria-label="Toggle Favourite"
                 >
@@ -117,13 +118,13 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
                             </Button>
                         ) : isOwner ? (
-                             <Button asChild variant="outline" size="sm" className="w-full sm-w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/edit`) }}>
-                                <Link href={`/jobs/${job.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Edit</Link>
+                             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(destinationUrl) }}>
+                                <Link href={destinationUrl}><Pencil className="mr-2 h-4 w-4"/>Edit</Link>
                             </Button>
                         ) : (
-                            <Button asChild size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/apply`) }}>
+                             <Button asChild size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/apply`) }}>
                                 <Link href={`/jobs/${job.id}/apply`}>
-                                    {isRecruiter ? 'View' : 'View & Apply'}
+                                    {isRecruiter && !isOwner ? 'View' : 'View & Apply'}
                                 </Link>
                             </Button>
                         )}
