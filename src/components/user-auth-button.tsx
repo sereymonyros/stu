@@ -11,23 +11,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuGroup,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { LogOut, User as UserIcon, LayoutDashboard, Settings } from 'lucide-react';
+import { LogOut, User as UserIcon, LayoutDashboard, Settings, MessageSquare, MessageSquareHeart } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { doc } from 'firebase/firestore';
 import { useMemo } from 'react';
-import { useSettingsSheet } from './settings-sheet';
+import { useChatbot } from './chatbot-provider';
 
 export function UserAuthButton() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
-  const { setOpen: setSettingsOpen } = useSettingsSheet();
+  const { setOpen: setChatbotOpen } = useChatbot();
 
 
   const userProfileRef = useMemo(() => {
@@ -40,6 +43,10 @@ export function UserAuthButton() {
   const handleSignOut = async () => {
     await signOut(auth);
     router.push('/');
+  };
+
+  const handleAskAI = () => {
+    setChatbotOpen(true);
   };
 
   const isLoading = isUserLoading || isProfileLoading;
@@ -82,10 +89,24 @@ export function UserAuthButton() {
                 <span>Profile</span>
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setSettingsOpen(true)}>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
-            </DropdownMenuItem>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onClick={handleAskAI}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <span>Ask AI Helper</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/feedback">
+                    <MessageSquareHeart className="mr-2 h-4 w-4" />
+                    <span>Give Feedback</span>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
