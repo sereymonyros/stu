@@ -41,6 +41,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { MultiSelectOption, MultiSelect } from '@/components/ui/multi-select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter, router }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; isRecruiter: boolean; router: ReturnType<typeof useRouter> }) {
     const { user } = useUser();
@@ -122,17 +123,35 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                     <div className="sm:mt-2 w-full sm:w-auto relative z-10">
                         {hasApplied ? (
-                            <Button asChild variant="outline" size="icon" onClick={(e) => e.stopPropagation()}>
-                                <Link href={`/jobs/${job.id}/apply`}><Eye className="h-4 w-4" /></Link>
-                            </Button>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button asChild variant="outline" size="icon" onClick={(e) => e.stopPropagation()}>
+                                            <Link href={`/jobs/${job.id}/apply`}><Eye className="h-4 w-4" /></Link>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>View Application</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         ) : isOwner ? (
                             <Button asChild variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={(e) => e.stopPropagation()}>
                                 <Link href={destinationUrl}><Pencil className="h-4 w-4"/></Link>
                             </Button>
                         ) : isRecruiter ? (
-                            <Button asChild size="icon" variant="outline" onClick={(e) => e.stopPropagation()}>
-                                <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
-                            </Button>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button asChild size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
+                                            <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>View Details</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         ) : (
                              <Button asChild size="sm" variant="outline" onClick={(e) => e.stopPropagation()}>
                                 <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
