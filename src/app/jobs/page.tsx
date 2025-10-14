@@ -83,7 +83,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
             )}
             <div className="p-4 grid grid-cols-12 items-center gap-4">
                 
-                 <div className="sm:hidden absolute top-4 right-4 flex gap-2 z-10">
+                 <div className="absolute top-4 right-4 flex gap-2 z-10">
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.jobType}</Badge>
                     <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.status}</Badge>
                 </div>
@@ -104,24 +104,15 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                 </div>
 
-                <div className="col-span-12 sm:col-span-4">
-                     <div className="flex items-center gap-2">
-                        <div className="font-semibold text-base leading-tight line-clamp-1">{job.title}</div>
-                        {isOwner && (
-                            <Button asChild variant="ghost" size="icon" className="sm:hidden h-8 w-8 relative z-10" onClick={(e) => e.stopPropagation()}>
-                                <Link href={destinationUrl}><Pencil className="h-4 w-4"/></Link>
-                            </Button>
-                        )}
+                <div className="col-span-12 sm:col-span-8 flex justify-between items-center">
+                     <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                           <div className="font-semibold text-base leading-tight line-clamp-1 flex-shrink min-w-0">{job.title}</div>
+                        </div>
+                        {salaryDisplay && <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                     </div>
-                    {salaryDisplay && <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
-                </div>
 
-                <div className="col-span-12 sm:col-span-4 flex sm:flex-col sm:items-end justify-between items-center gap-2">
-                    <div className="hidden sm:flex gap-2">
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.jobType}</Badge>
-                        <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{job.status}</Badge>
-                    </div>
-                    <div className="sm:mt-2 w-full sm:w-auto relative z-10">
+                    <div className="ml-4 flex-shrink-0 relative z-10">
                         {hasApplied ? (
                             <TooltipProvider>
                                 <Tooltip>
@@ -136,10 +127,10 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 </Tooltip>
                             </TooltipProvider>
                         ) : isOwner ? (
-                            <TooltipProvider>
+                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button asChild variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={(e) => e.stopPropagation()}>
+                                        <Button asChild variant="ghost" size="icon" className="h-10 w-10" onClick={(e) => e.stopPropagation()}>
                                             <Link href={destinationUrl}><Pencil className="h-4 w-4"/></Link>
                                         </Button>
                                     </TooltipTrigger>
