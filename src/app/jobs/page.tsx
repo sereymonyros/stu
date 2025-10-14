@@ -82,7 +82,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                     variant="ghost"
                                     size="icon"
                                     onClick={(e) => { e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
-                                    className="absolute top-1 left-1 h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10 hover:bg-transparent"
+                                    className="absolute top-1 left-1 h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10"
                                     disabled={hasApplied}
                                     aria-label="Toggle Favourite"
                                 >
@@ -116,16 +116,16 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="line-clamp-1">{job.location}</span></div>
                         {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                     </div>
-                </div>
-
-                <div className="flex-shrink-0 flex items-center gap-2 z-10">
-                    <div className="flex flex-col items-end gap-1.5">
+                     <div className="mt-2 flex items-center gap-2">
                         <Badge className="text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">{job.jobType}</Badge>
                         <Badge className="capitalize text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">{job.status}</Badge>
                     </div>
+                </div>
+
+                <div className="flex-shrink-0 flex items-center gap-2 z-10">
                     <div className="hidden sm:flex">
                         {isOwner ? (
-                            <TooltipProvider>
+                             <TooltipProvider>
                                 <div className="flex items-center gap-1">
                                     <Tooltip>
                                         <TooltipTrigger asChild>
