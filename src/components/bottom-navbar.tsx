@@ -59,7 +59,7 @@ export function BottomNavbar() {
             "fixed bottom-4 left-0 right-0 flex justify-center z-50 transition-opacity duration-1000 ease-in-out",
             isScrolling ? "opacity-30" : "opacity-100"
         )}>
-            <div className="relative w-4/5">
+            <div className="relative w-4/5" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
                 <div className="bg-background/80 dark:bg-gradient-to-r from-black via-blue-900 to-black backdrop-blur-sm border rounded-full shadow-lg py-2.5">
                     <div className="flex h-full items-center justify-evenly max-w-lg mx-auto font-medium">
                         {navItems.map((item) => {
@@ -69,6 +69,7 @@ export function BottomNavbar() {
                                     key={item.href}
                                     href={item.href}
                                     className="inline-flex flex-col items-center justify-center relative"
+                                    onClick={(e) => e.stopPropagation()}
                                 >
                                     <div className={cn(
                                         "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200",
@@ -86,7 +87,7 @@ export function BottomNavbar() {
                             )
                         })}
                          <button
-                            onClick={() => setSettingsOpen(true)}
+                            onClick={(e) => { e.stopPropagation(); setSettingsOpen(true); }}
                             className="inline-flex flex-col items-center justify-center px-5 text-muted-foreground dark:text-zinc-400"
                         >
                             <Settings className="w-5 h-5 mb-1" />
@@ -98,7 +99,7 @@ export function BottomNavbar() {
                     variant="ghost"
                     size="icon"
                     className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-background border shadow-md"
-                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                    onClick={(e) => { e.stopPropagation(); setTheme(theme === 'dark' ? 'light' : 'dark'); }}
                 >
                     <Sun className="h-3 w-3 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                     <Moon className="absolute h-3 w-3 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
