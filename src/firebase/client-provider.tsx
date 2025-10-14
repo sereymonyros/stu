@@ -51,7 +51,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       storage={firebaseServices.storage}
     >
       <ChatbotProvider>
-        <div className="relative flex flex-col h-screen">
+        <div className="relative flex flex-col container h-screen mx-auto">
           <Header />
           <main id="main-content" className="flex-1 overflow-y-auto pb-16 md:pb-0">
             {children}
