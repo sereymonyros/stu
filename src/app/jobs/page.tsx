@@ -60,13 +60,19 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     }, [job.salaryMin, job.salaryMax]);
     
     return (
+        <Link href={`/jobs/${job.id}/apply`} className="block w-full" onClick={(e) => {
+            // Prevent navigation if the click is on an inner button or link
+            if ((e.target as HTMLElement).closest('a, button')) {
+                e.preventDefault();
+            }
+        }}>
         <Card className="hover:shadow-md transition-shadow duration-200 w-full relative">
             {/* Favorite button for non-recruiters */}
             {user && !isOwner && !isRecruiter && (
                 <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => onToggleFavourite(job.id, isFavourite)}
+                    onClick={(e) => { e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
                     className="absolute top-0 left-0 p-2 h-auto w-auto rounded-tl-lg text-muted-foreground hover:text-red-500"
                     disabled={hasApplied}
                     aria-label="Toggle Favourite"
@@ -90,7 +96,9 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         <AvatarFallback>{job.companyName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                        <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="font-semibold text-base hover:text-primary leading-tight line-clamp-1">{job.companyName}</Link>
+                         <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="font-semibold text-base hover:text-primary leading-tight line-clamp-1" onClick={(e) => e.stopPropagation()}>
+                           {job.companyName}
+                         </Link>
                         <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1">
                            <MapPin className="h-4 w-4 flex-shrink-0" /> <span className="line-clamp-1">{job.location}</span>
                         </div>
@@ -111,19 +119,19 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                     <div className="sm:mt-2 w-full sm:w-auto">
                         {hasApplied ? (
-                            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+                            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
                                 <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
                             </Button>
                         ) : isRecruiter ? (
                             isOwner ? (
-                                <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+                                <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
                                     <Link href={`/jobs/${job.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Edit</Link>
                                 </Button>
                             ) : (
                                 <Button disabled variant="outline" size="sm" className="w-full sm:w-auto">View</Button>
                             )
                         ) : (
-                            <Button asChild size="sm" className="w-full sm:w-auto">
+                            <Button asChild size="sm" className="w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
                                 <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
                             </Button>
                         )}
@@ -132,6 +140,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
 
             </div>
         </Card>
+        </Link>
     );
 }
 
