@@ -4,11 +4,11 @@
 
 import { useMemo, useState, useEffect, Suspense } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc, serverTimestamp, query } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye, Pencil } from 'lucide-react';
+import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye, Pencil, Users, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -45,10 +45,18 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter, router }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; hasApplied: boolean; isRecruiter: boolean; router: ReturnType<typeof useRouter> }) {
     const { user } = useUser();
+    const firestore = useFirestore();
     const isOwner = user && user.uid === job.recruiterId;
 
+    const applicantsQuery = useMemo(() => {
+        if (!firestore || !job.id || !isOwner) return null;
+        return query(collection(firestore, 'jobs', job.id, 'applications'));
+    }, [firestore, job.id, isOwner]);
+
+    const { data: applicants } = useCollection(applicantsQuery);
+
     const destinationUrl = isOwner 
-        ? `/jobs/${job.id}/edit` 
+        ? (applicants && applicants.length > 0 ? `/jobs/${job.id}/applicants` : `/jobs/${job.id}/edit`)
         : (isRecruiter ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`);
 
     const salaryDisplay = useMemo(() => {
@@ -66,33 +74,34 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     
     return (
         <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "bg-muted/50")}>
-             {user && !isOwner && !isRecruiter && (
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={(e) => { e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
-                                className="absolute top-1 left-1 h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10 hover:bg-transparent"
-                                disabled={hasApplied}
-                                aria-label="Toggle Favourite"
-                            >
-                                <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>{isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            )}
-
-            <Link href={destinationUrl} className="absolute inset-0 z-0">
-                <span className="sr-only">View job: {job.title}</span>
-            </Link>
             
             <div className="p-4 flex items-center gap-4">
+                {user && !isOwner && !isRecruiter && (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={(e) => { e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
+                                    className="absolute top-1 left-1 h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10 hover:bg-transparent"
+                                    disabled={hasApplied}
+                                    aria-label="Toggle Favourite"
+                                >
+                                    <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                )}
+
+                <Link href={destinationUrl} className="absolute inset-0 z-0">
+                    <span className="sr-only">View job: {job.title}</span>
+                </Link>
+
                 <Avatar className="h-12 w-12 flex-shrink-0">
                     <AvatarImage src={job.companyLogoUrl || `https://picsum.photos/seed/${job.companyName}/100`} />
                     <AvatarFallback>{job.companyName?.charAt(0)}</AvatarFallback>
@@ -111,9 +120,36 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                 </div>
 
-                <div className="flex-shrink-0 flex flex-col items-end gap-1.5 z-10">
-                    <Badge className="text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">{job.jobType}</Badge>
-                    <Badge className="capitalize text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">{job.status}</Badge>
+                <div className="flex-shrink-0 flex items-center gap-4 z-10">
+                    <div className="flex flex-col items-end gap-1.5">
+                        <Badge className="text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">{job.jobType}</Badge>
+                        <Badge className="capitalize text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">{job.status}</Badge>
+                    </div>
+                    <div className="hidden sm:flex">
+                        {isOwner ? (
+                             <Button asChild variant="outline" size="sm">
+                                <Link href={destinationUrl}>
+                                    {applicants && applicants.length > 0 ? (
+                                        <>
+                                            <Users className="mr-2 h-4 w-4" />
+                                            {applicants.length}
+                                        </>
+                                    ) : (
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                    )}
+                                    {applicants && applicants.length > 0 ? 'View' : 'Edit'}
+                                </Link>
+                            </Button>
+                        ) : isRecruiter ? (
+                             <Button asChild variant="outline" size="sm">
+                                <Link href={destinationUrl}><Eye className="mr-2 h-4 w-4" /> View</Link>
+                            </Button>
+                        ) : (
+                             <Button asChild variant="outline" size="sm">
+                                <Link href={destinationUrl}>{hasApplied ? 'View' : 'Apply'}</Link>
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </div>
         </Card>
