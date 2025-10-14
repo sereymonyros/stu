@@ -26,7 +26,7 @@ export default function Home() {
       </div>
 
       {/* Content container - sits on top of the background */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full space-y-8 w-full p-4 text-center">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen space-y-8 w-full p-4 text-center">
         <div className="flex flex-col items-center space-y-4">
            <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-foreground drop-shadow-md">
             Cambodia Hub
