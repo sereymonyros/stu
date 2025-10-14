@@ -13,6 +13,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { Chatbot } from '@/components/chatbot';
 import { ChatbotProvider } from '@/components/chatbot-provider';
+import { SettingsSheetProvider } from '@/components/settings-sheet';
 
 
 interface FirebaseClientProviderProps {
@@ -50,17 +51,19 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       firestore={firebaseServices.firestore}
       storage={firebaseServices.storage}
     >
-      <ChatbotProvider>
-          <div className="relative flex flex-col container h-screen mx-auto">
-            <Header />
-            <main id="main-content" className="flex-1 overflow-y-auto pb-16 md:pb-0">
-              {children}
-            </main>
-            <Chatbot />
-            <BottomNavbar />
-            <Toaster />
-          </div>
-      </ChatbotProvider>
+      <SettingsSheetProvider>
+        <ChatbotProvider>
+            <div className="relative flex flex-col container h-screen mx-auto">
+              <Header />
+              <main id="main-content" className="flex-1 overflow-y-auto pb-16 md:pb-0">
+                {children}
+              </main>
+              <Chatbot />
+              <BottomNavbar />
+              <Toaster />
+            </div>
+        </ChatbotProvider>
+      </SettingsSheetProvider>
     </FirebaseProvider>
   );
 }
