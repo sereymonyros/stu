@@ -8,8 +8,7 @@ export default function Home() {
   const heroImage = PlaceHolderImages.find(p => p.id === 'cambodia-hero');
 
   return (
-    <div className="flex flex-col flex-1 min-h-full h-full">
-      <div className="relative flex-grow flex flex-col items-center justify-center overflow-hidden p-4 text-center">
+    <>
         {heroImage && (
           <Image
             src={heroImage.imageUrl}
@@ -22,7 +21,7 @@ export default function Home() {
         )}
         <div className="absolute inset-0 bg-background/70 backdrop-blur-sm z-10" />
 
-        <div className="z-20 flex flex-col items-center space-y-8 w-full">
+        <div className="z-20 flex flex-col items-center justify-center h-full space-y-8 w-full p-4 text-center">
           <div className="flex flex-col items-center space-y-4">
              <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-foreground drop-shadow-md">
               Cambodia Hub
@@ -36,7 +35,6 @@ export default function Home() {
             <SearchBox searchAction={search} />
           </div>
         </div>
-      </div>
-    </div>
+    </>
   );
 }

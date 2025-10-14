@@ -8,40 +8,20 @@ import { EmailVerificationBanner } from './EmailVerificationBanner';
 import { Slack } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
 
 export function Header() {
-  const [isScrolling, setIsScrolling] = useState(false);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pathname = usePathname();
 
-  useEffect(() => {
-      const mainContent = document.getElementById('main-content');
-      if (!mainContent) return;
-
-      const handleScroll = () => {
-          setIsScrolling(true);
-          if (scrollTimeoutRef.current) {
-              clearTimeout(scrollTimeoutRef.current);
-          }
-          scrollTimeoutRef.current = setTimeout(() => {
-              setIsScrolling(false);
-          }, 150);
-      };
-
-      mainContent.addEventListener("scroll", handleScroll, { passive: true });
-
-      return () => {
-          mainContent.removeEventListener("scroll", handleScroll);
-          if (scrollTimeoutRef.current) {
-              clearTimeout(scrollTimeoutRef.current);
-          }
-      };
-  }, []);
+  // On the homepage, the header should be absolute to float over the hero image.
+  // On all other pages, it should be sticky.
+  const isHomePage = pathname === '/';
 
   return (
     <>
       <header className={cn(
-        "sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm transition-opacity duration-1000 ease-in-out",
-        isScrolling ? "opacity-50" : "opacity-100"
+        "top-0 z-50 w-full",
+        isHomePage ? 'absolute bg-transparent' : 'sticky bg-background/80 backdrop-blur-sm'
       )}>
         <div className="container mx-auto flex h-16 items-center justify-between">
             <div className="flex items-center gap-6">
