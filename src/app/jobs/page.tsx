@@ -8,7 +8,7 @@ import { collection, doc, setDoc, deleteDoc, serverTimestamp, query } from 'fire
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye } from 'lucide-react';
+import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -32,7 +32,7 @@ import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import JobsLoading from './loading';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, DollarSign, MapPin, Pencil } from 'lucide-react';
+import { Building, DollarSign, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
@@ -66,6 +66,28 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     
     return (
         <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "bg-muted/50")}>
+             {user && !isOwner && !isRecruiter && (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => { e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
+                                className="absolute top-1 left-1 h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10 hover:bg-transparent"
+                                disabled={hasApplied}
+                                aria-label="Toggle Favourite"
+                            >
+                                <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            )}
+
             <Link href={destinationUrl} className="absolute inset-0 z-0">
                 <span className="sr-only">View job: {job.title}</span>
             </Link>
@@ -90,8 +112,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                 </div>
 
                 <div className="flex-shrink-0 flex flex-col items-end gap-1.5 z-10">
-                    <Badge variant="secondary" className="text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap">{job.jobType}</Badge>
-                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap">{job.status}</Badge>
+                    <Badge variant="outline" className="text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800/80">{job.jobType}</Badge>
+                    <Badge variant="outline" className="capitalize text-[11px] px-2 py-0.5 rounded-md whitespace-nowrap bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800/80">{job.status}</Badge>
                 </div>
             </div>
         </Card>
