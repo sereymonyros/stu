@@ -14,18 +14,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { LogOut, User as UserIcon, LayoutDashboard } from 'lucide-react';
+import { LogOut, User as UserIcon, LayoutDashboard, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { doc } from 'firebase/firestore';
 import { useMemo } from 'react';
+import { useSettingsSheet } from './settings-sheet';
 
 export function UserAuthButton() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
+  const { setOpen: setSettingsOpen } = useSettingsSheet();
+
 
   const userProfileRef = useMemo(() => {
     if (!firestore || !user) return null;
@@ -78,6 +81,10 @@ export function UserAuthButton() {
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setSettingsOpen(true)}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />

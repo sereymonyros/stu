@@ -86,13 +86,6 @@ export function BottomNavbar() {
                                 </Link>
                             )
                         })}
-                         <button
-                            onClick={(e) => { e.stopPropagation(); setSettingsOpen(true); }}
-                            className="inline-flex flex-col items-center justify-center px-5 text-muted-foreground dark:text-zinc-400"
-                        >
-                            <Settings className="w-5 h-5 mb-1" />
-                            <span className="text-xs font-medium">Settings</span>
-                         </button>
                     </div>
                 </div>
                  <Button
