@@ -52,40 +52,42 @@ export function BottomNavbar() {
 
     return (
         <div className={cn(
-            "md:hidden fixed bottom-4 left-2 right-2 h-16 bg-background/80 dark:bg-zinc-900/95 backdrop-blur-sm z-50 transition-opacity duration-1000 ease-in-out border rounded-full shadow-lg",
+            "md:hidden fixed bottom-4 left-0 right-0 flex justify-center z-50 transition-opacity duration-1000 ease-in-out",
             isScrolling ? "opacity-30" : "opacity-100"
         )}>
-            <div className="grid h-full grid-cols-4 max-w-lg mx-auto font-medium">
-                {navItems.map((item) => {
-                    const isActive = pathname.startsWith(item.href);
-                    return (
-                        <Link 
-                            key={item.href}
-                            href={item.href}
-                            className="inline-flex flex-col items-center justify-center px-5 relative"
-                        >
-                            <div className={cn(
-                                "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200",
-                                isActive ? "bg-primary/10 dark:bg-zinc-800" : "text-muted-foreground dark:text-zinc-400"
-                            )}>
+            <div className="w-11/12 h-16 bg-background/80 dark:bg-zinc-900/95 backdrop-blur-sm border rounded-full shadow-lg">
+                <div className="grid h-full grid-cols-4 max-w-lg mx-auto font-medium">
+                    {navItems.map((item) => {
+                        const isActive = pathname.startsWith(item.href);
+                        return (
+                            <Link 
+                                key={item.href}
+                                href={item.href}
+                                className="inline-flex flex-col items-center justify-center px-5 relative"
+                            >
                                 <div className={cn(
-                                    "flex flex-col items-center justify-center p-2 rounded-full",
-                                    isActive ? "text-primary dark:text-white" : ""
+                                    "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200",
+                                    isActive ? "bg-primary/10 dark:bg-zinc-800" : "text-muted-foreground dark:text-zinc-400"
                                 )}>
-                                    <item.icon className="w-5 h-5 mb-1" />
-                                    <span className="text-xs font-medium">{item.label}</span>
+                                    <div className={cn(
+                                        "flex flex-col items-center justify-center p-2 rounded-full",
+                                        isActive ? "text-primary dark:text-white" : ""
+                                    )}>
+                                        <item.icon className="w-5 h-5 mb-1" />
+                                        <span className="text-xs font-medium">{item.label}</span>
+                                    </div>
                                 </div>
-                            </div>
-                        </Link>
-                    )
-                })}
-                 <button
-                    onClick={() => setSettingsOpen(true)}
-                    className="inline-flex flex-col items-center justify-center px-5 text-muted-foreground dark:text-zinc-400"
-                >
-                    <Settings className="w-5 h-5 mb-1" />
-                    <span className="text-xs font-medium">Settings</span>
-                 </button>
+                            </Link>
+                        )
+                    })}
+                     <button
+                        onClick={() => setSettingsOpen(true)}
+                        className="inline-flex flex-col items-center justify-center px-5 text-muted-foreground dark:text-zinc-400"
+                    >
+                        <Settings className="w-5 h-5 mb-1" />
+                        <span className="text-xs font-medium">Settings</span>
+                     </button>
+                </div>
             </div>
         </div>
     )
