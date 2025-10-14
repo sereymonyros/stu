@@ -46,7 +46,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     const { user } = useUser();
     const isOwner = user && user.uid === job.recruiterId;
 
-    const destinationUrl = isRecruiter ? `/jobs/${job.id}/edit` : `/jobs/${job.id}/apply`;
+    const destinationUrl = isOwner ? `/jobs/${job.id}/edit` : `/jobs/${job.id}/apply`;
 
     const salaryDisplay = useMemo(() => {
         if (job.salaryMin && job.salaryMax) {
@@ -116,8 +116,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/apply`) }}>
                                 <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
                             </Button>
-                        ) : isRecruiter ? (
-                            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/edit`) }}>
+                        ) : isOwner ? (
+                             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/edit`) }}>
                                 <Link href={`/jobs/${job.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Edit</Link>
                             </Button>
                         ) : (
