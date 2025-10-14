@@ -23,7 +23,7 @@ export function Header() {
         "top-0 z-50 w-full",
         isHomePage ? 'absolute bg-transparent' : 'sticky bg-background/80 backdrop-blur-sm'
       )}>
-        <div className="container mx-auto flex h-16 items-center justify-between">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
             <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2 text-2xl font-bold">
                 <Slack className="h-8 w-8" />
