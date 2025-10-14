@@ -55,7 +55,7 @@ function JobCard({ job }: { job: any }) {
                         </div>
                     </div>
                     <div className="flex justify-end items-center">
-                        <Button variant="outline" size="sm" className="pointer-events-none">
+                        <Button variant="outline" size="sm" className="pointer-events-none w-full">
                            {applicants && applicants.length > 0 ? 'View Applicants' : 'Edit Job'}
                         </Button>
                     </div>
