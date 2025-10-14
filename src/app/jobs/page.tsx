@@ -117,12 +117,14 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 <Link href={`/jobs/${job.id}/apply`}>View Application</Link>
                             </Button>
                         ) : isOwner ? (
-                             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/edit`) }}>
+                             <Button asChild variant="outline" size="sm" className="w-full sm-w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/edit`) }}>
                                 <Link href={`/jobs/${job.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Edit</Link>
                             </Button>
                         ) : (
                             <Button asChild size="sm" className="w-full sm:w-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/jobs/${job.id}/apply`) }}>
-                                <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
+                                <Link href={`/jobs/${job.id}/apply`}>
+                                    {isRecruiter ? 'View' : 'View & Apply'}
+                                </Link>
                             </Button>
                         )}
                     </div>
