@@ -64,7 +64,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     }, [job.salaryMin, job.salaryMax]);
     
     return (
-        <Card className="hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl">
+        <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "bg-muted/50 hover:shadow-none")}>
             <Link href={destinationUrl} className="absolute inset-0 z-0">
                 <span className="sr-only">View job: {job.title}</span>
             </Link>
