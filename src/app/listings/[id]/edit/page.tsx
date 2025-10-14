@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser, useDoc, useFirestore, useAuth } from '@/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { getStorage, ref, deleteObject } from "firebase/storage";
+import { getStorage, ref as storageRef, deleteObject } from "firebase/storage";
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useMemo, useState, use } from 'react';
@@ -253,7 +253,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
     <div className="flex flex-col min-h-screen">
       <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
         {listing ? (
-            <Card className="max-w-2xl mx-auto">
+            <Card className="max-w-2xl mx-auto rounded-3xl">
             <CardHeader><CardTitle>Edit Your Item</CardTitle></CardHeader>
             <CardContent>
                 <Form {...form}>

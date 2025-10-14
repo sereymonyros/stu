@@ -64,7 +64,7 @@ function JobDetailsProfile({ jobId }: { jobId: string }) {
     }
     
     return (
-        <Card className="w-full max-w-3xl mx-auto">
+        <Card className="w-full max-w-3xl mx-auto rounded-3xl">
             <CardHeader>
                 <Button variant="ghost" size="sm" className="mb-4 w-fit -ml-2" asChild>
                     <Link href="/jobs"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Jobs</Link>
@@ -103,7 +103,7 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
     return (
         <div className="flex flex-col min-h-screen">
             <main className="flex-1 p-4 md:p-6 lg:p-8">
-                <Suspense fallback={<Skeleton className="h-96 w-full max-w-3xl mx-auto" />}>
+                <Suspense fallback={<Skeleton className="h-96 w-full max-w-3xl mx-auto rounded-3xl" />}>
                     <JobDetailsProfile jobId={id} />
                 </Suspense>
             </main>

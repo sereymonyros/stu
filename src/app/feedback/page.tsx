@@ -155,7 +155,7 @@ export default function FeedbackPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1 p-4 md:p-6 lg:p-8">
-        <Card className="max-w-2xl mx-auto">
+        <Card className="max-w-2xl mx-auto rounded-3xl">
           <CardHeader>
             <CardTitle>Submit Feedback</CardTitle>
             <CardDescription>We value your opinion. Let us know how we can improve.</CardDescription>

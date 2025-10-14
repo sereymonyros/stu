@@ -137,7 +137,7 @@ export default function NewJobPage() {
     <div className="flex flex-col min-h-screen">
       <main className="flex-1 p-4 md:p-6 lg:p-8">
         {isAuthorized ? (
-            <Card className="max-w-2xl mx-auto">
+            <Card className="max-w-2xl mx-auto rounded-3xl">
             <CardHeader>
                 <CardTitle>Post a New Job</CardTitle>
                  {!profileComplete && (

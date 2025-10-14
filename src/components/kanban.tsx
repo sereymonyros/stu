@@ -69,7 +69,7 @@ function AIAnalysisDisplay({ analysis, error, isLoading, onRetry }: { analysis: 
 
     return (
         <div className="space-y-4">
-            <Card className="bg-muted/50 p-4">
+            <Card className="bg-muted/50 p-4 rounded-3xl">
                 <CardHeader className="p-2">
                     <CardTitle className="text-lg flex items-center justify-between">
                         <span>AI Summary</span>
@@ -86,7 +86,7 @@ function AIAnalysisDisplay({ analysis, error, isLoading, onRetry }: { analysis: 
             </Card>
 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className="bg-muted/50 p-4">
+                <Card className="bg-muted/50 p-4 rounded-3xl">
                     <CardHeader className="p-0">
                          <CardTitle className="text-base mb-2 flex items-center gap-2"><ThumbsUp className="h-4 w-4 text-green-500" /> Strengths</CardTitle>
                     </CardHeader>
@@ -96,7 +96,7 @@ function AIAnalysisDisplay({ analysis, error, isLoading, onRetry }: { analysis: 
                         </ul>
                     </CardContent>
                 </Card>
-                 <Card className="bg-muted/50 p-4">
+                 <Card className="bg-muted/50 p-4 rounded-3xl">
                     <CardHeader className="p-0">
                          <CardTitle className="text-base mb-2 flex items-center gap-2"><ThumbsDown className="h-4 w-4 text-red-500" /> Gaps</CardTitle>
                     </CardHeader>
@@ -109,7 +109,7 @@ function AIAnalysisDisplay({ analysis, error, isLoading, onRetry }: { analysis: 
             </div>
             
             {analysis.performanceIndicators && analysis.performanceIndicators.length > 0 && (
-                <Card className="bg-muted/50 p-4">
+                <Card className="bg-muted/50 p-4 rounded-3xl">
                     <CardHeader className="p-0">
                         <CardTitle className="text-base mb-2 flex items-center gap-2"><TrendingUp className="h-4 w-4 text-blue-500" /> Performance Indicators</CardTitle>
                     </CardHeader>
@@ -121,7 +121,7 @@ function AIAnalysisDisplay({ analysis, error, isLoading, onRetry }: { analysis: 
                 </Card>
             )}
 
-            <Card className="bg-muted/50 p-4">
+            <Card className="bg-muted/50 p-4 rounded-3xl">
                 <CardHeader className="p-0">
                     <CardTitle className="text-base mb-2 flex items-center gap-2"><Lightbulb className="h-4 w-4 text-yellow-500" /> Suggested Interview Questions</CardTitle>
                 </CardHeader>
@@ -213,7 +213,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-            <Card className={cn("mb-2 bg-card hover:bg-muted/50", isDragging ? "cursor-grabbing" : "cursor-grab")}>
+            <Card className={cn("mb-2 bg-card hover:bg-muted/50 rounded-3xl", isDragging ? "cursor-grabbing" : "cursor-grab")}>
                 <div className="p-3" {...listeners}>
                     <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
@@ -243,7 +243,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                                 AI Review
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl h-[70vh] flex flex-col">
+                        <DialogContent className="max-w-2xl h-[70vh] flex flex-col rounded-3xl">
                             <DialogHeader>
                                 <DialogTitle>AI Applicant Analysis</DialogTitle>
                                 <DialogDescription>
@@ -281,7 +281,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
     return (
         <div className="w-full md:w-80 flex-shrink-0 flex flex-col flex-1">
             <Card className={cn(
-                "h-full flex flex-col transition-colors",
+                "h-full flex flex-col transition-colors rounded-3xl",
                 isOver ? 'bg-primary/10' : 'bg-muted/40'
             )}>
                 <CardHeader className={cn("p-3 border-b-4 select-none", titleColors[id] || 'border-gray-500')}>

@@ -169,7 +169,7 @@ export default function CompanyPage({ params }: { params: Promise<{ name: string
     return (
         <Suspense fallback={
           <div className="space-y-8 p-4 md:p-6 lg:p-8">
-            <Card>
+            <Card className="rounded-3xl">
                 <CardHeader className="flex flex-col md:flex-row items-center gap-6 p-6">
                     <Skeleton className="h-24 w-24 rounded-lg" />
                     <div className="space-y-2 flex-1">

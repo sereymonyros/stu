@@ -110,7 +110,7 @@ export default function SignupPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="mx-auto w-full max-w-md">
+      <Card className="mx-auto w-full max-w-md rounded-3xl">
         <CardHeader>
           <CardTitle className="text-3xl">Sign Up</CardTitle>
           <CardDescription>Enter your information to create an account. Use the buttons below to pre-fill test user data.</CardDescription>

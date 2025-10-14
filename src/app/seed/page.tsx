@@ -43,7 +43,7 @@ export default function SeedPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="mx-auto w-full max-w-lg">
+      <Card className="mx-auto w-full max-w-lg rounded-3xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Database />
@@ -64,7 +64,7 @@ export default function SeedPage() {
             {isLoading ? 'Seeding in Progress...' : 'Seed Database'}
           </Button>
           {result && (
-            <Card className="bg-muted p-4">
+            <Card className="bg-muted p-4 rounded-3xl">
               <CardHeader className="p-0 pb-2">
                 <CardTitle className="text-base">Seeding Results</CardTitle>
               </CardHeader>
