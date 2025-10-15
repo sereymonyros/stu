@@ -79,17 +79,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
     return (
         <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "bg-muted/50")}>
             
-            {isFavourite && (
-                <Heart
-                    className={cn(
-                        'absolute top-4 left-5 h-8 w-8 text-red-500 fill-red-500 z-20 cursor-pointer'
-                    )}
-                    onClick={handleFavouriteClick} // Un-favorite action
-                />
-            )}
-            
             <div className="p-4 flex items-center gap-4">
-                {user && !isOwner && !isRecruiter && !isFavourite && (
+                {user && !isOwner && !isRecruiter && (
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -101,7 +92,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                     disabled={hasApplied}
                                     aria-label="Toggle Favourite"
                                 >
-                                    <Heart className={cn("h-5 w-5")} />
+                                    <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -185,9 +176,16 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         ) : (
                             <>
                             {hasApplied ? (
-                                <Button asChild variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
-                                    <Link href={`/jobs/${job.id}/apply`}>View</Link>
-                                </Button>
+                                 <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button asChild variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => e.stopPropagation()}>
+                                                <Link href={`/jobs/${job.id}/apply`}><Eye className="h-4 w-4" /></Link>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>View</p></TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             ) : (
                                 <TooltipProvider>
                                     <Tooltip>
@@ -225,7 +223,7 @@ function JobsPageContent() {
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
 
     // --- Data Fetching ---
-    const jobsQuery = useMemo(() => collection(firestore, 'jobs'), [firestore]);
+    const jobsQuery = useMemo(() => query(collection(firestore, 'jobs'), where('title', '!=', '')), [firestore]);
     const { data: jobs } = useCollection(jobsQuery);
 
     const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
@@ -394,7 +392,7 @@ function JobsPageContent() {
     const filteredAndSortedJobs = useMemo(() => {
         if (!jobs) return [];
         
-        let filtered = jobs.filter(job => job.title);
+        let filtered = jobs;
 
         if (searchQuery) {
             const query = searchQuery.toLowerCase();

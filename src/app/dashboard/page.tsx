@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
@@ -10,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Briefcase, ClipboardList, FileText, Users, Heart, User, Search, Trash2, Send, BellDot } from 'lucide-react';
+import { Briefcase, ClipboardList, FileText, Users, Heart, User, Search, Trash2, Send, BellDot, Eye } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -19,6 +20,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { findJobMatches } from '@/ai/flows/find-job-matches-flow';
 import { WithdrawApplicationButton } from '@/components/withdraw-application-button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 function JobCard({ job }: { job: any }) {
@@ -98,9 +100,16 @@ function AppliedJobCard({ job, application, isFavourite }: { job: any, applicati
                         <Badge className={cn("capitalize text-white", statusColors[application.status] || 'bg-gray-500')}>{application.status}</Badge>
                     </div>
                     <div className="flex items-center gap-1">
-                        <Button asChild variant="outline" size="sm">
-                           <Link href={`/jobs/${job.id}/apply`}>View</Link>
-                        </Button>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button asChild variant="ghost" size="icon">
+                                        <Link href={`/jobs/${job.id}/apply`}><Eye className="h-4 w-4" /></Link>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>View</p></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                         {canWithdraw && (
                             <WithdrawApplicationButton 
                                 jobId={job.id} 
