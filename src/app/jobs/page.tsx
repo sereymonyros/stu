@@ -73,12 +73,15 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
 
     const handleFavouriteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
+        e.preventDefault();
         onToggleFavourite(job.id, isFavourite);
     };
     
     return (
         <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "bg-muted/50")}>
-            
+            <Link href={destinationUrl} className="block absolute inset-0 z-0">
+                <span className="sr-only">View job: {job.title}</span>
+            </Link>
             <div className="p-4 flex items-center gap-4">
                 {user && !isOwner && !isRecruiter && (
                     <TooltipProvider>
@@ -101,13 +104,6 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         </Tooltip>
                     </TooltipProvider>
                 )}
-
-                <div 
-                  className="absolute inset-0 z-0 cursor-pointer"
-                  onClick={() => router.push(destinationUrl)}
-                >
-                    <span className="sr-only">View job: {job.title}</span>
-                </div>
 
                 <Avatar className="h-12 w-12 flex-shrink-0">
                     <AvatarImage src={job.companyLogoUrl || `https://picsum.photos/seed/${job.companyName}/100`} />
