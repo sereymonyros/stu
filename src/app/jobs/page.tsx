@@ -122,9 +122,12 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </TooltipProvider>
                 )}
 
-                <Link href={destinationUrl} className="absolute inset-0 z-0">
+                <div 
+                  className="absolute inset-0 z-0 cursor-pointer"
+                  onClick={() => router.push(destinationUrl)}
+                >
                     <span className="sr-only">View job: {job.title}</span>
-                </Link>
+                </div>
 
                 <Avatar className="h-12 w-12 flex-shrink-0">
                     <AvatarImage src={job.companyLogoUrl || `https://picsum.photos/seed/${job.companyName}/100`} />
@@ -133,10 +136,11 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
 
                 <div className="flex-1 min-w-0">
                     <div className="font-semibold text-base leading-tight line-clamp-1">
-                        <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="hover:text-primary relative z-10" onClick={(e) => e.stopPropagation()}>
+                        {job.title}
+                        <span className="font-normal text-muted-foreground"> at </span>
+                         <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="hover:text-primary relative z-10" onClick={(e) => e.stopPropagation()}>
                            {job.companyName}
                          </Link>
-                         <span className="font-normal text-muted-foreground"> - {job.title}</span>
                     </div>
                      <div className="flex items-center text-sm text-muted-foreground gap-4 mt-1">
                         <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="line-clamp-1">{job.location}</span></div>
@@ -156,7 +160,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                              <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                                <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
+                                                <Link href={`/jobs/${job.id}/details`} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent><p>View</p></TooltipContent>
@@ -164,7 +168,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Button asChild variant="ghost" size="icon" className="h-9 w-9 relative">
-                                                <Link href={`/jobs/${job.id}/applicants`}>
+                                                <Link href={`/jobs/${job.id}/applicants`} onClick={(e) => e.stopPropagation()}>
                                                     <Users className="h-4 w-4" />
                                                     {applicants && applicants.length > 0 && (
                                                         <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
@@ -183,7 +187,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                            <Link href={destinationUrl}><Eye className="h-4 w-4" /></Link>
+                                            <Link href={destinationUrl} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent><p>View</p></TooltipContent>
@@ -192,7 +196,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         ) : (
                             <>
                             {hasApplied ? (
-                                <Button asChild variant="outline" size="sm">
+                                <Button asChild variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
                                     <Link href={`/jobs/${job.id}/apply`}>View</Link>
                                 </Button>
                             ) : (
@@ -200,7 +204,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Button asChild variant="ghost" size="icon">
-                                                <Link href={destinationUrl}><Send /></Link>
+                                              <Link href={destinationUrl} onClick={(e) => { e.stopPropagation(); router.push(destinationUrl); }}><Send /></Link>
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
@@ -798,3 +802,5 @@ export default function JobsPage() {
         </Suspense>
     )
 }
+
+    
