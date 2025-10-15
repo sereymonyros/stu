@@ -96,7 +96,6 @@ function AppliedJobCard({ job, application, isFavourite }: { job: any, applicati
                 </div>
                  <div className="flex justify-between items-center">
                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-muted-foreground">Status:</span>
                         <Badge className={cn("capitalize text-white", statusColors[application.status] || 'bg-gray-500')}>{application.status}</Badge>
                     </div>
                     <div className="flex items-center gap-1">
