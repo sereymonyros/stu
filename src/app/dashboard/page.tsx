@@ -124,32 +124,34 @@ function AppliedJobCard({ job, application, isFavourite }: { job: any, applicati
 
 function FavouriteJobCard({ job }: { job: any }) {
     return (
-         <Card className="rounded-3xl">
-            <CardContent className="p-4 flex flex-col justify-between h-full">
-                <div className="flex-grow">
-                    <h3 className="font-semibold text-base truncate">{job.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{job.companyName} - {job.location}</p>
-                    <div className="flex items-center gap-2 mb-3">
-                       {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
-                       {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
-                   </div>
-                </div>
-                <div className="flex justify-end">
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button asChild variant="ghost" size="icon">
-                                   <Link href={`/jobs/${job.id}/apply`}><Eye className="h-4 w-4" /></Link>
-                               </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>View</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                </div>
-            </CardContent>
-        </Card>
+         <Link href={`/jobs/${job.id}/apply`} className="block hover:shadow-lg transition-shadow duration-200 rounded-3xl">
+            <Card className="rounded-3xl h-full">
+                <CardContent className="p-4 flex flex-col justify-between h-full">
+                    <div className="flex-grow">
+                        <h3 className="font-semibold text-base truncate">{job.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-2">{job.companyName} - {job.location}</p>
+                        <div className="flex items-center gap-2 mb-3">
+                           {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
+                           {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
+                       </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button asChild variant="ghost" size="icon" className="pointer-events-none">
+                                       <Link href={`/jobs/${job.id}/apply`}><Eye className="h-4 w-4" /></Link>
+                                   </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>View</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+                </CardContent>
+            </Card>
+        </Link>
     );
 }
 
