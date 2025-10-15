@@ -160,7 +160,7 @@ export function JobCard({
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Button asChild variant="ghost" size="icon">
+                                                 <Button asChild variant="ghost" size="icon">
                                                     <Link href={destinationUrl}><Send /></Link>
                                                 </Button>
                                             </TooltipTrigger>
@@ -179,19 +179,17 @@ export function JobCard({
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-             <Link href={destinationUrl} className="block group">
-                 <Card 
-                    className={cn(
-                        "flex flex-col h-full transition-all duration-200 rounded-3xl group-hover:scale-[1.02] group-hover:shadow-lg",
-                        isDraggable ? "mb-2 bg-card" : "",
-                        hasApplied && "bg-muted/30 opacity-60 hover:shadow-none group-hover:scale-100",
-                        isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
-                    )}
-                    {...(isDraggable ? listeners : {})}
-                >
-                    {cardContent}
-                </Card>
-             </Link>
+             <Card 
+                className={cn(
+                    "flex flex-col h-full transition-all duration-200 rounded-3xl group hover:scale-[1.02] hover:shadow-lg",
+                    isDraggable ? "mb-2 bg-card" : "",
+                    hasApplied && "bg-muted/30 opacity-60 hover:shadow-none hover:scale-100",
+                    isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
+                )}
+                {...(isDraggable ? listeners : {})}
+            >
+                {cardContent}
+            </Card>
         </div>
     );
 }
