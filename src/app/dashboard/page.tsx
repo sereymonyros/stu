@@ -139,8 +139,8 @@ function FavouriteJobCard({ job }: { job: any }) {
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button asChild variant="ghost" size="icon" className="pointer-events-none">
-                                       <Link href={`/jobs/${job.id}/apply`}><Eye className="h-4 w-4" /></Link>
+                                    <Button variant="ghost" size="icon" className="pointer-events-none">
+                                       <Eye className="h-4 w-4" />
                                    </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
