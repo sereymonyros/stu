@@ -410,8 +410,7 @@ function JobsPageContent() {
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             filtered = filtered.filter(job => 
-                (job.title?.toLowerCase() || '').includes(query) || 
-                (job.description?.toLowerCase() || '').includes(query)
+                (job.title?.toLowerCase() || '').includes(query)
             );
         }
 
