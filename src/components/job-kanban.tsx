@@ -76,119 +76,120 @@ export function JobCard({
 
     const destinationUrl = isRecruiter ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`;
 
-    const cardContent = (
-        <>
-            <CardHeader className="p-3 pb-2">
-                <div className="flex justify-between items-start gap-2">
-                    <CardTitle className="text-base font-bold select-none">{job.title}</CardTitle>
-                    {user && !isOwner && !isRecruiter && (
-                         <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => { e.preventDefault(); onToggleFavourite(job.id, isFavourite); }}
-                            className="text-muted-foreground hover:text-red-500 h-8 w-8 -mt-1 -mr-1 relative z-10"
-                            disabled={hasApplied}
-                        >
-                            <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
-                        </Button>
-                    )}
-                </div>
-                <div className="flex flex-row flex-wrap items-center text-xs text-muted-foreground gap-x-2 gap-y-1 pt-1">
-                    <div className="flex items-center gap-1.5">
-                        <Building className="h-3 w-3" /> {job.companyName}
-                    </div>
-                    <span className="text-muted-foreground/50">|</span>
-                    <div className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /> {job.location}</div>
-                    {salaryDisplay && (
-                        <>
-                            <span className="text-muted-foreground/50 hidden sm:inline">|</span>
-                            <div className="flex items-center gap-1.5"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>
-                        </>
-                    )}
-                </div>
-            </CardHeader>
-            <CardContent className="flex-grow p-3 pt-0 flex flex-col justify-end">
-                 <div className="flex justify-between items-center">
-                    <div className="flex flex-wrap gap-1">
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">{job.jobType}</Badge>
-                        <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5">{job.status}</Badge>
-                    </div>
-                    <div className="relative z-10">
-                        {isOwner ? (
-                                <TooltipProvider>
-                                    <div className="flex items-center gap-1">
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                                    <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>View</p></TooltipContent>
-                                        </Tooltip>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button asChild variant="ghost" size="icon" className="h-9 w-9 relative">
-                                                    <Link href={`/jobs/${job.id}/applicants`}>
-                                                        <Users className="h-4 w-4" />
-                                                        {applicants && applicants.length > 0 && (
-                                                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                                                                {applicants.length}
-                                                            </span>
-                                                        )}
-                                                    </Link>
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>{applicants?.length === 1 ? '1 Applicant' : `${applicants?.length || 0} Applicants`}</p></TooltipContent>
-                                        </Tooltip>
-                                    </div>
-                                </TooltipProvider>
-                            ) : isRecruiter ? (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                                <Link href={destinationUrl}><Eye className="h-4 w-4" /></Link>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>View</p></TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            ) : (
-                                hasApplied ? (
-                                    <Button asChild variant="outline" size="sm"><Link href={`/jobs/${job.id}/apply`}>View</Link></Button>
-                                ) : (
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                 <Button asChild variant="ghost" size="icon">
-                                                    <Link href={destinationUrl}><Send /></Link>
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Apply</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                )
-                        )}
-                    </div>
-                </div>
-            </CardContent>
-        </>
-    );
-
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
              <Card 
                 className={cn(
-                    "flex flex-col h-full transition-all duration-200 rounded-3xl group hover:scale-[1.02] hover:shadow-lg",
-                    isDraggable ? "mb-2 bg-card" : "",
+                    "flex flex-col h-full transition-all duration-200 rounded-3xl group",
+                    isDraggable ? "mb-2 bg-card" : "hover:scale-[1.02] hover:shadow-lg",
                     hasApplied && "bg-muted/30 opacity-60 hover:shadow-none hover:scale-100",
                     isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
                 )}
                 {...(isDraggable ? listeners : {})}
             >
-                {cardContent}
+              <Link href={destinationUrl} className="flex flex-col flex-grow">
+                 <span className="absolute inset-0" />
+                <CardHeader className="p-3 pb-2">
+                    <div className="flex justify-between items-start gap-2">
+                        <CardTitle className="text-base font-bold select-none">{job.title}</CardTitle>
+                        {user && !isOwner && !isRecruiter && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
+                                className="text-muted-foreground hover:text-red-500 h-8 w-8 -mt-1 -mr-1 relative z-10"
+                                disabled={hasApplied}
+                            >
+                                <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
+                            </Button>
+                        )}
+                    </div>
+                    <div className="flex flex-row flex-wrap items-center text-xs text-muted-foreground gap-x-2 gap-y-1 pt-1">
+                        <div className="flex items-center gap-1.5">
+                            <Building className="h-3 w-3" /> 
+                            <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="hover:text-primary relative z-10" onClick={(e) => e.stopPropagation()}>
+                                {job.companyName}
+                            </Link>
+                        </div>
+                        <span className="text-muted-foreground/50">|</span>
+                        <div className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /> {job.location}</div>
+                        {salaryDisplay && (
+                            <>
+                                <span className="text-muted-foreground/50 hidden sm:inline">|</span>
+                                <div className="flex items-center gap-1.5"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>
+                            </>
+                        )}
+                    </div>
+                </CardHeader>
+                <CardContent className="flex-grow p-3 pt-0 flex flex-col justify-end">
+                    <div className="flex justify-between items-center">
+                        <div className="flex flex-wrap gap-1">
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">{job.jobType}</Badge>
+                            <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5">{job.status}</Badge>
+                        </div>
+                        <div className="relative z-10">
+                            {isOwner ? (
+                                    <TooltipProvider>
+                                        <div className="flex items-center gap-1">
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+                                                        <Link href={`/jobs/${job.id}/details`} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>View</p></TooltipContent>
+                                            </Tooltip>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button asChild variant="ghost" size="icon" className="h-9 w-9 relative">
+                                                        <Link href={`/jobs/${job.id}/applicants`} onClick={(e) => e.stopPropagation()}>
+                                                            <Users className="h-4 w-4" />
+                                                            {applicants && applicants.length > 0 && (
+                                                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                                                                    {applicants.length}
+                                                                </span>
+                                                            )}
+                                                        </Link>
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>{applicants?.length === 1 ? '1 Applicant' : `${applicants?.length || 0} Applicants`}</p></TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                    </TooltipProvider>
+                                ) : isRecruiter ? (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+                                                    <Link href={destinationUrl} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>View</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                ) : (
+                                    hasApplied ? (
+                                        <Button asChild variant="outline" size="sm"><Link href={`/jobs/${job.id}/apply`} onClick={(e) => e.stopPropagation()}>View</Link></Button>
+                                    ) : (
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button asChild variant="ghost" size="icon">
+                                                        {/* This inner link is okay because the parent is not an `a` tag */}
+                                                        <Link href={destinationUrl} onClick={(e) => e.stopPropagation()}><Send /></Link>
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Apply</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )
+                            )}
+                        </div>
+                    </div>
+                </CardContent>
+              </Link>
             </Card>
         </div>
     );
