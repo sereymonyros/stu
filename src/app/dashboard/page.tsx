@@ -130,12 +130,12 @@ function FavouriteJobCard({ job }: { job: any }) {
                     <div className="flex-grow">
                         <h3 className="font-semibold text-base truncate">{job.title}</h3>
                         <p className="text-sm text-muted-foreground mb-2">{job.companyName} - {job.location}</p>
-                        <div className="flex items-center gap-2 mb-3">
+                    </div>
+                     <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
                            {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
                            {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
-                       </div>
-                    </div>
-                    <div className="flex justify-end">
+                        </div>
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
