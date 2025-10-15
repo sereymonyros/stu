@@ -103,7 +103,7 @@ function AppliedJobCard({ job, application, isFavourite }: { job: any, applicati
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button asChild variant="ghost" size="icon">
-                                        <Link href={`/jobs/${job.id}/apply`}><Eye className="h-4 w-4" /></Link>
+                                        <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>View</p></TooltipContent>
@@ -123,7 +123,7 @@ function AppliedJobCard({ job, application, isFavourite }: { job: any, applicati
 
 function FavouriteJobCard({ job }: { job: any }) {
     return (
-         <Link href={`/jobs/${job.id}/apply`} className="block hover:shadow-lg transition-shadow duration-200 rounded-3xl">
+         <Link href={`/jobs/${job.id}/details`} className="block hover:shadow-lg transition-shadow duration-200 rounded-3xl">
             <Card className="rounded-3xl h-full">
                 <CardContent className="p-4 flex flex-col justify-between h-full">
                     <div className="flex-grow">

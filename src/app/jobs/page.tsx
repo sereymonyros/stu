@@ -56,7 +56,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
 
     const { data: applicants } = useCollection(applicantsQuery);
 
-    const destinationUrl = isRecruiter ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`;
+    const destinationUrl = `/jobs/${job.id}/details`;
 
     const salaryDisplay = useMemo(() => {
         if (job.salaryMin && job.salaryMax) {
@@ -162,7 +162,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                     </Tooltip>
                                 </div>
                             </TooltipProvider>
-                        ) : isRecruiter ? (
+                        ) : (
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -170,37 +170,9 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                             <Link href={destinationUrl} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
                                         </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent><p>View</p></TooltipContent>
+                                    <TooltipContent><p>View Details</p></TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-                        ) : (
-                            <>
-                            {hasApplied ? (
-                                 <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button asChild variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => e.stopPropagation()}>
-                                                <Link href={`/jobs/${job.id}/apply`}><Eye className="h-4 w-4" /></Link>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>View</p></TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            ) : (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button asChild variant="ghost" size="icon">
-                                              <Link href={destinationUrl} onClick={(e) => { e.stopPropagation(); router.push(destinationUrl); }}><Send /></Link>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Apply</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                            </>
                         )}
                    
                 </div>
@@ -788,5 +760,3 @@ export default function JobsPage() {
         </Suspense>
     )
 }
-
-    

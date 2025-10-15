@@ -1,15 +1,16 @@
 
+
 'use client';
 
 import { useMemo, Suspense, use } from 'react';
 import { useDoc, useFirestore, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Building, MapPin, DollarSign, Briefcase, Calendar, Pencil } from 'lucide-react';
+import { ArrowLeft, Building, MapPin, DollarSign, Briefcase, Calendar, Pencil, Send } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BackButton } from '@/components/back-button';
@@ -17,6 +18,9 @@ import { BackButton } from '@/components/back-button';
 function JobDetailsProfile({ jobId }: { jobId: string }) {
     const firestore = useFirestore();
     const { user } = useUser();
+    
+    const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
+    const { data: userProfile } = useDoc(userProfileRef);
 
     const jobRef = useMemo(() => {
         if (!firestore) return null;
@@ -25,6 +29,7 @@ function JobDetailsProfile({ jobId }: { jobId: string }) {
 
     const { data: job, isLoading } = useDoc(jobRef);
     const isOwner = user && job && user.uid === job.recruiterId;
+    const isRecruiter = userProfile?.userType === 'recruiter';
     
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
@@ -70,7 +75,7 @@ function JobDetailsProfile({ jobId }: { jobId: string }) {
     return (
         <Card className="w-full max-w-3xl mx-auto rounded-3xl">
             <CardHeader>
-                 <div className="flex justify-between items-start">
+                 <div className="flex justify-between items-start mb-4">
                     <BackButton />
                     {isOwner && (
                          <TooltipProvider>
@@ -114,6 +119,16 @@ function JobDetailsProfile({ jobId }: { jobId: string }) {
                     </div>
                 </div>
             </CardContent>
+             {!isRecruiter && job.status === 'Available' && (
+                <CardFooter>
+                    <Button asChild className="w-full">
+                        <Link href={`/jobs/${jobId}/apply`}>
+                            <Send className="mr-2 h-4 w-4" />
+                            Apply for this Job
+                        </Link>
+                    </Button>
+                </CardFooter>
+            )}
         </Card>
     );
 }
