@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react"
@@ -18,6 +17,7 @@ import { useUser, useCollection } from '@/firebase';
 import { useFirestore } from '@/firebase';
 import { collection, query } from "firebase/firestore";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/tooltip";
+import { useRouter } from "next/navigation";
 
 
 export function JobCard({ 
@@ -30,12 +30,13 @@ export function JobCard({
 }: { 
     job: any; 
     isFavourite: boolean; 
-    onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => void; 
+    onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => Promise<void>; 
     hasApplied: boolean; 
     isRecruiter: boolean;
     isDraggable: boolean;
 }) {
     const { user } = useUser();
+    const router = useRouter();
     const isOwner = user && user.uid === job.recruiterId;
     const firestore = useFirestore();
 
@@ -80,15 +81,18 @@ export function JobCard({
         <div ref={setNodeRef} style={style} {...attributes}>
              <Card 
                 className={cn(
-                    "flex flex-col h-full transition-all duration-200 rounded-3xl group",
+                    "flex flex-col h-full transition-all duration-200 rounded-3xl group relative",
                     isDraggable ? "mb-2 bg-card" : "hover:scale-[1.02] hover:shadow-lg",
                     hasApplied && "bg-muted/30 opacity-60 hover:shadow-none hover:scale-100",
                     isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
                 )}
                 {...(isDraggable ? listeners : {})}
             >
-              <Link href={destinationUrl} className="flex flex-col flex-grow">
-                 <span className="absolute inset-0" />
+              <div 
+                className="flex flex-col flex-grow cursor-pointer"
+                onClick={() => router.push(destinationUrl)}
+              >
+                 <span className="absolute inset-0 z-0" />
                 <CardHeader className="p-3 pb-2">
                     <div className="flex justify-between items-start gap-2">
                         <CardTitle className="text-base font-bold select-none">{job.title}</CardTitle>
@@ -175,8 +179,7 @@ export function JobCard({
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <Button asChild variant="ghost" size="icon">
-                                                        {/* This inner link is okay because the parent is not an `a` tag */}
-                                                        <Link href={destinationUrl} onClick={(e) => e.stopPropagation()}><Send /></Link>
+                                                      <Link href={destinationUrl} onClick={(e) => { e.stopPropagation(); router.push(destinationUrl); }}><Send /></Link>
                                                     </Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
@@ -189,7 +192,7 @@ export function JobCard({
                         </div>
                     </div>
                 </CardContent>
-              </Link>
+              </div>
             </Card>
         </div>
     );
@@ -248,3 +251,5 @@ Board.Column = Column;
 Board.Card = JobCard;
 
 export { Board };
+
+    
