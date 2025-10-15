@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, Suspense, use, useState, useEffect } from 'react';
@@ -55,7 +56,7 @@ function JobCard({ job }: { job: any }) {
             </CardContent>
             <CardFooter>
                 <Button asChild className="w-full">
-                    <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
+                    <Link href={`/jobs/${job.id}/details`}>View & Apply</Link>
                 </Button>
             </CardFooter>
         </Card>
