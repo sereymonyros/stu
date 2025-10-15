@@ -71,15 +71,6 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
         return null;
     }, [job.salaryMin, job.salaryMax]);
 
-    const [triggerAnimation, setTriggerAnimation] = useState(false);
-
-    useEffect(() => {
-      // Only trigger the animation when isFavourite changes from false to true
-      if (isFavourite) {
-        setTriggerAnimation(true);
-      }
-    }, [isFavourite]);
-
     const handleFavouriteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         onToggleFavourite(job.id, isFavourite);
@@ -91,10 +82,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
             {isFavourite && (
                 <Heart
                     className={cn(
-                        'absolute top-4 left-5 h-8 w-8 text-red-500 fill-red-500 z-20 cursor-pointer',
-                        triggerAnimation && 'animate-fly-to-job-avatar animate-fill-forwards'
+                        'absolute top-4 left-5 h-8 w-8 text-red-500 fill-red-500 z-20 cursor-pointer'
                     )}
-                    onAnimationEnd={() => setTriggerAnimation(false)} // Reset trigger after animation
                     onClick={handleFavouriteClick} // Un-favorite action
                 />
             )}

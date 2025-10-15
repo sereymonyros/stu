@@ -88,23 +88,4 @@
     .header-link {
         @apply hover:bg-primary hover:text-primary-foreground;
     }
-
-    @keyframes fly-to-job-avatar {
-      0% {
-        transform: translate(0, 0) scale(1);
-        opacity: 1;
-      }
-      100% {
-        transform: translate(50px, 40px) scale(1.5);
-        opacity: 1;
-      }
-    }
-
-    .animate-fly-to-job-avatar {
-        animation: fly-to-job-avatar 0.7s ease-in-out;
-    }
-
-    .animate-fill-forwards {
-      animation-fill-mode: forwards;
-    }
 }
