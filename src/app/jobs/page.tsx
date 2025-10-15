@@ -91,7 +91,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
             {isFavourite && (
                 <Heart
                     className={cn(
-                        'absolute top-4 left-5 h-12 w-12 text-red-500 fill-red-500 z-20 cursor-pointer',
+                        'absolute top-4 left-5 h-8 w-8 text-red-500 fill-red-500 z-20 cursor-pointer',
                         triggerAnimation && 'animate-fly-to-job-avatar animate-fill-forwards'
                     )}
                     onAnimationEnd={() => setTriggerAnimation(false)} // Reset trigger after animation
@@ -627,7 +627,7 @@ function JobsPageContent() {
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                         <Input
                                             type="search"
-                                            placeholder="Search by title or description..."
+                                            placeholder="Search by title..."
                                             className="pl-10 h-10 w-full"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
