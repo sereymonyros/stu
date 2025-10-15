@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react"
@@ -84,8 +85,8 @@ export function JobCard({
                          <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => onToggleFavourite(job.id, isFavourite)}
-                            className="text-muted-foreground hover:text-red-500 h-8 w-8 -mt-1 -mr-1"
+                            onClick={(e) => { e.preventDefault(); onToggleFavourite(job.id, isFavourite); }}
+                            className="text-muted-foreground hover:text-red-500 h-8 w-8 -mt-1 -mr-1 relative z-10"
                             disabled={hasApplied}
                         >
                             <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
@@ -112,63 +113,65 @@ export function JobCard({
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">{job.jobType}</Badge>
                         <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5">{job.status}</Badge>
                     </div>
-                    {isOwner ? (
-                            <TooltipProvider>
-                                <div className="flex items-center gap-1">
+                    <div className="relative z-10">
+                        {isOwner ? (
+                                <TooltipProvider>
+                                    <div className="flex items-center gap-1">
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+                                                    <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>View</p></TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button asChild variant="ghost" size="icon" className="h-9 w-9 relative">
+                                                    <Link href={`/jobs/${job.id}/applicants`}>
+                                                        <Users className="h-4 w-4" />
+                                                        {applicants && applicants.length > 0 && (
+                                                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                                                                {applicants.length}
+                                                            </span>
+                                                        )}
+                                                    </Link>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>{applicants?.length === 1 ? '1 Applicant' : `${applicants?.length || 0} Applicants`}</p></TooltipContent>
+                                        </Tooltip>
+                                    </div>
+                                </TooltipProvider>
+                            ) : isRecruiter ? (
+                                <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                             <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                                <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
+                                            <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+                                                <Link href={destinationUrl}><Eye className="h-4 w-4" /></Link>
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent><p>View</p></TooltipContent>
                                     </Tooltip>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button asChild variant="ghost" size="icon" className="h-9 w-9 relative">
-                                                <Link href={`/jobs/${job.id}/applicants`}>
-                                                    <Users className="h-4 w-4" />
-                                                    {applicants && applicants.length > 0 && (
-                                                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                                                            {applicants.length}
-                                                        </span>
-                                                    )}
-                                                </Link>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>{applicants?.length === 1 ? '1 Applicant' : `${applicants?.length || 0} Applicants`}</p></TooltipContent>
-                                    </Tooltip>
-                                </div>
-                            </TooltipProvider>
-                        ) : isRecruiter ? (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                            <Link href={destinationUrl}><Eye className="h-4 w-4" /></Link>
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>View</p></TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        ) : (
-                             hasApplied ? (
-                                <Button asChild variant="outline" size="sm"><Link href={`/jobs/${job.id}/apply`}>View</Link></Button>
-                            ) : (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button asChild variant="ghost" size="icon">
-                                                <Link href={destinationUrl}><Send /></Link>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Apply</p>
-                                        </TooltipContent>
-                                    </Tooltip>
                                 </TooltipProvider>
-                            )
-                    )}
+                            ) : (
+                                hasApplied ? (
+                                    <Button asChild variant="outline" size="sm"><Link href={`/jobs/${job.id}/apply`}>View</Link></Button>
+                                ) : (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button asChild variant="ghost" size="icon">
+                                                    <Link href={destinationUrl}><Send /></Link>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Apply</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )
+                        )}
+                    </div>
                 </div>
             </CardContent>
         </>
@@ -176,17 +179,19 @@ export function JobCard({
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-            <Card 
-                className={cn(
-                    "flex flex-col h-full hover:shadow-lg transition-shadow duration-200 rounded-3xl",
-                    isDraggable ? "mb-2 bg-card" : "",
-                    hasApplied && "bg-muted/30 opacity-60 hover:shadow-none",
-                    isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
-                )}
-                {...(isDraggable ? listeners : {})}
-            >
-                {cardContent}
-            </Card>
+             <Link href={destinationUrl} className="block group">
+                 <Card 
+                    className={cn(
+                        "flex flex-col h-full transition-all duration-200 rounded-3xl group-hover:scale-[1.02] group-hover:shadow-lg",
+                        isDraggable ? "mb-2 bg-card" : "",
+                        hasApplied && "bg-muted/30 opacity-60 hover:shadow-none group-hover:scale-100",
+                        isDragging ? "cursor-grabbing" : isDraggable ? "cursor-grab" : ""
+                    )}
+                    {...(isDraggable ? listeners : {})}
+                >
+                    {cardContent}
+                </Card>
+             </Link>
         </div>
     );
 }
