@@ -135,9 +135,18 @@ function FavouriteJobCard({ job }: { job: any }) {
                    </div>
                 </div>
                 <div className="flex justify-end">
-                    <Button asChild variant="outline" size="sm">
-                       <Link href={`/jobs/${job.id}/apply`}>View Job</Link>
-                   </Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button asChild variant="ghost" size="icon">
+                                   <Link href={`/jobs/${job.id}/apply`}><Eye className="h-4 w-4" /></Link>
+                               </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>View</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
             </CardContent>
         </Card>
