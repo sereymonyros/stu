@@ -8,7 +8,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Building, DollarSign, Edit, MapPin, Users, Heart, Pencil, Eye } from 'lucide-react';
+import { Briefcase, Building, DollarSign, Edit, MapPin, Users, Heart, Pencil, Eye, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { Badge } from './ui/badge';
@@ -155,9 +155,18 @@ export function JobCard({
                              hasApplied ? (
                                 <Button asChild variant="outline" size="sm"><Link href={`/jobs/${job.id}/apply`}>View</Link></Button>
                             ) : (
-                                <Button asChild size="sm">
-                                    <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
-                                </Button>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button asChild variant="ghost" size="icon">
+                                                <Link href={destinationUrl}><Send /></Link>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Apply</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             )
                     )}
                 </div>
