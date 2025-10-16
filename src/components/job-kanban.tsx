@@ -176,17 +176,17 @@ export function JobCard({
                                     </TooltipProvider>
                                 ) : (
                                     hasApplied ? (
-                                        <Button asChild variant="outline" size="sm"><Link href={`/jobs/${job.id}/details`} onClick={(e) => e.stopPropagation()}>View</Link></Button>
+                                        <Button variant="outline" size="sm">View</Button>
                                     ) : (
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <Button variant="ghost" size="icon">
-                                                      <Eye className="h-4 w-4" />
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9">
+                                                        <Eye className="h-4 w-4" />
                                                     </Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    <p>View</p>
+                                                    <p>View Details</p>
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
@@ -254,5 +254,7 @@ Board.Column = Column;
 Board.Card = JobCard;
 
 export { Board };
+
+    
 
     
