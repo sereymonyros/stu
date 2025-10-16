@@ -20,6 +20,7 @@ import { withdrawApplication } from "@/ai/flows/withdraw-application-flow";
 import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface WithdrawApplicationButtonProps {
     jobId: string;
@@ -56,7 +57,7 @@ export function WithdrawApplicationButton({ jobId }: WithdrawApplicationButtonPr
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="icon" disabled={isWithdrawing}>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" disabled={isWithdrawing}>
                                 <Trash2 className="h-4 w-4" />
                                 <span className="sr-only">Withdraw Application</span>
                             </Button>
@@ -70,7 +71,7 @@ export function WithdrawApplicationButton({ jobId }: WithdrawApplicationButtonPr
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
-                    <AlertDialogDescription>
+                    <AlertDialogDescription className="py-3">
                         This will permanently remove your application for this role. This action cannot be undone. Are you sure?
                     </AlertDialogDescription>
                 </AlertDialogHeader>
