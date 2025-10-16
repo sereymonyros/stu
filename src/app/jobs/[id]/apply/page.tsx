@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { FileText, ArrowLeft, CheckCircle, UploadCloud, AlertTriangle } from 'lucide-react';
+import { FileText, ArrowLeft, CheckCircle, UploadCloud, AlertTriangle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -392,9 +392,11 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
                         <AlertDialogDescription>
                           Your profile and resume will be sent to {job.companyName}. This action cannot be undone.
                         </AlertDialogDescription>
+                         <AlertDialogCancel asChild>
+                            <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 rounded-full"><X className="h-4 w-4" /></Button>
+                        </AlertDialogCancel>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleApply} disabled={isSubmitting}>
                           {isSubmitting ? 'Submitting...' : 'Yes, Submit Application'}
                         </AlertDialogAction>

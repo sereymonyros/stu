@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { unseedDatabase } from '@/ai/flows/unseed-database-flow';
-import { Database, Trash2 } from 'lucide-react';
+import { Database, Trash2, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -84,9 +84,11 @@ export default function UnseedPage() {
                     <AlertDialogDescription>
                         This will permanently delete all job postings and all associated candidate applications. This data will be gone forever.
                     </AlertDialogDescription>
+                     <AlertDialogCancel asChild>
+                        <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 rounded-full"><X className="h-4 w-4" /></Button>
+                    </AlertDialogCancel>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                         onClick={handleUnseed}
                         disabled={isLoading}
