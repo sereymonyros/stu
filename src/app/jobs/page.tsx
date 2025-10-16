@@ -90,8 +90,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </Badge>
                 </div>
             )}
-            <div className={cn("py-4 px-6 flex items-center", hasApplied && "opacity-50")}>
-                <div className="flex-1 min-w-0 pr-10">
+            <div className={cn("py-3 px-6 flex items-center min-h-[92px]", hasApplied && "opacity-50")}>
+                <div className="flex-1 min-w-0 pr-10 space-y-1.5">
                      <p className="font-semibold text-base leading-tight line-clamp-1">
                         {job.title}
                         <span className="font-normal text-muted-foreground"> at </span>
@@ -99,17 +99,17 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         {job.companyName}
                         </Link>
                     </p>
-                    <div className="flex items-center flex-wrap text-sm text-muted-foreground gap-x-3 gap-y-1 mt-1 min-w-0">
+                    <div className="flex items-center flex-wrap text-sm text-muted-foreground gap-x-3 gap-y-1 min-w-0">
                         <div className="flex items-center gap-1.5 line-clamp-1"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{job.location}</span></div>
                         {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
-                         <div className="flex items-center gap-2">
+                         <div className="flex items-center gap-1.5">
                             <Badge variant="secondary">{job.jobType}</Badge>
                             <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
                         </div>
                     </div>
                 </div>
 
-                <div className="absolute top-0 right-3 bottom-0 z-10 flex flex-col justify-between items-center">
+                <div className="absolute top-0 right-3 bottom-0 z-10 flex flex-col justify-between items-center py-1.5">
                      {user && !isOwner && !isRecruiter && (
                         <TooltipProvider>
                             <Tooltip>
@@ -131,33 +131,33 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                             </Tooltip>
                         </TooltipProvider>
                     )}
+                     {isOwner && hasApplicants && (
+                        <TooltipProvider>
+                             <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={(e) => { e.stopPropagation(); e.preventDefault(); router.push(`/jobs/${job.id}/applicants`); }}>
+                                            <Users className="h-4 w-4" />
+                                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                                                {applicants.length}
+                                            </span>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>{applicants.length === 1 ? '1 Applicant' : `${applicants.length} Applicants`}</p></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                     )}
 
                      <div className="mt-auto">
                         {isOwner ? (
                              <TooltipProvider>
-                                <div className="flex items-center gap-1">
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); router.push(`/jobs/${job.id}/details`); }}>
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>View</p></TooltipContent>
-                                    </Tooltip>
-                                    {hasApplicants && (
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={(e) => { e.stopPropagation(); e.preventDefault(); router.push(`/jobs/${job.id}/applicants`); }}>
-                                                        <Users className="h-4 w-4" />
-                                                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                                                            {applicants.length}
-                                                        </span>
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>{applicants.length === 1 ? '1 Applicant' : `${applicants.length} Applicants`}</p></TooltipContent>
-                                        </Tooltip>
-                                    )}
-                                </div>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                         <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); router.push(`/jobs/${job.id}/details`); }}>
+                                            <Eye className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>View</p></TooltipContent>
+                                </Tooltip>
                             </TooltipProvider>
                         ) : (
                             <TooltipProvider>
@@ -167,7 +167,9 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                             <Link href={destinationUrl} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
                                         </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent><p>View Details</p></TooltipContent>
+                                    <TooltipContent>
+                                        <p>View Details</p>
+                                    </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
                         )}
