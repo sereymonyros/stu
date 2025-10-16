@@ -54,7 +54,7 @@ function JobsPageContent() {
     const isMobile = useIsMobile();
     
     // --- View State ---
-    const [viewMode, setViewMode] = useState<'card' | 'list' |'board'>('list');
+    const [viewMode, setViewMode] = useState<'list' | 'card' |'board'>('list');
     
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
@@ -68,23 +68,6 @@ function JobsPageContent() {
     const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
     
     const [jobCount, setJobCount] = useState<number | null>(null);
-
-    // This is a new query to get all applications to show the count on the job card
-    // We only run this for recruiters to avoid unnecessary reads for standard users.
-    const allApplicationsQuery = useMemo(() => (isRecruiter && firestore) ? query(collection(firestore, 'applications')) : null, [firestore, isRecruiter]);
-    const { data: allApplications } = useCollection(allApplicationsQuery);
-    
-    const applicationsByJob = useMemo(() => {
-        if (!allApplications) return new Map<string, number>();
-        
-        return allApplications.reduce((acc, app) => {
-            if (app.jobId) {
-                acc.set(app.jobId, (acc.get(app.jobId) || 0) + 1);
-            }
-            return acc;
-        }, new Map<string, number>());
-    }, [allApplications]);
-
 
     useEffect(() => {
         if (firestore) {
@@ -520,31 +503,29 @@ function JobsPageContent() {
                                 />
                             </div>
                             <Collapsible>
-                                <div className="flex items-center gap-2">
-                                     <CollapsibleTrigger asChild>
-                                        <Button variant="outline" className="h-10">
-                                            <Filter className="mr-2 h-4 w-4" />
-                                            Filters
-                                        </Button>
-                                    </CollapsibleTrigger>
-                                    {hasActiveFilters && (
-                                         <TooltipProvider>
-                                             <Tooltip>
-                                                 <TooltipTrigger asChild>
-                                                     <Button variant="destructive" size="icon" onClick={clearAllFilters} className="h-10 w-10">
-                                                         <X className="h-5 w-5" />
-                                                     </Button>
-                                                 </TooltipTrigger>
-                                                 <TooltipContent>
-                                                     <p>Clear all filters</p>
-                                                 </TooltipContent>
-                                             </Tooltip>
-                                         </TooltipProvider>
-                                    )}
-                                </div>
+                                <CollapsibleTrigger asChild>
+                                    <Button variant="outline" className="h-10">
+                                        <Filter className="mr-2 h-4 w-4" />
+                                        Filters
+                                    </Button>
+                                </CollapsibleTrigger>
                                 <CollapsibleContent>
                                     <Card className="p-4 rounded-3xl mt-4 absolute z-20 w-full sm:w-[500px] md:w-[600px] lg:w-[800px] bg-background border shadow-xl">
                                         <div className="grid gap-4">
+                                            <div className="flex justify-end">
+                                                 <TooltipProvider>
+                                                     <Tooltip>
+                                                         <TooltipTrigger asChild>
+                                                             <Button variant="ghost" size="icon" onClick={clearAllFilters} className="h-8 w-8">
+                                                                 <X className="h-5 w-5" />
+                                                             </Button>
+                                                         </TooltipTrigger>
+                                                         <TooltipContent>
+                                                             <p>Clear all filters</p>
+                                                         </TooltipContent>
+                                                     </Tooltip>
+                                                 </TooltipProvider>
+                                            </div>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                                 <div className="space-y-2">
                                                     <Label>Company</Label>
@@ -683,7 +664,7 @@ function JobsPageContent() {
                                         {stageJobs.map((job: any) => (
                                             <Board.JobCard
                                                 key={job.id}
-                                                job={{...job, applicantCount: applicationsByJob.get(job.id) || 0}}
+                                                job={job}
                                                 isFavourite={false}
                                                 onToggleFavourite={async () => {}}
                                                 hasApplied={false}
@@ -725,3 +706,5 @@ function JobsPageWrapper() {
 export default function JobsPage() {
     return <JobsPageWrapper />
 }
+
+    

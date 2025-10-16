@@ -33,3 +33,5 @@ export function ApplicantCounter({ jobId }: { jobId: string }) {
         </Badge>
     );
 }
+
+    

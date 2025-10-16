@@ -64,16 +64,16 @@ export function JobCardSmall({
                     </Badge>
                 </div>
             )}
-            <div className={cn("py-2.5 px-6 flex items-center min-h-[84px]", hasApplied && "opacity-50")}>
+            <div className={cn("py-2 px-6 flex items-center", hasApplied && "opacity-50")}>
                 <div className="flex-1 min-w-0 pr-10">
-                    <p className="font-semibold text-base leading-tight line-clamp-1">
+                    <p className="font-semibold text-sm leading-tight line-clamp-1">
                         {job.title}
                         <span className="font-normal text-muted-foreground"> at </span>
                         <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="hover:text-primary relative z-10" onClick={(e) => e.stopPropagation()}>
                             {job.companyName}
                         </Link>
                     </p>
-                    <div className="flex items-center flex-wrap text-sm text-muted-foreground gap-x-3 gap-y-1 min-w-0">
+                    <div className="flex items-center flex-wrap text-xs text-muted-foreground gap-x-3 gap-y-1 min-w-0">
                         <div className="flex items-center gap-1.5 line-clamp-1"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{job.location}</span></div>
                         {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                         <div className="flex items-center gap-1.5">
@@ -129,3 +129,5 @@ export function JobCardSmall({
         </Card>
     );
 }
+
+    

@@ -23,6 +23,7 @@ import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Progress } from './ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { ThumbsUp, ThumbsDown, Lightbulb, TrendingUp } from 'lucide-react';
+import { ApplicantCounter } from './applicant-counter';
 
 
 // Helper function to convert a file URL to a Base64 data URI
@@ -359,3 +360,5 @@ Board.Card = ApplicantCard;
 Board.JobCard = JobCard;
 
 export { Board };
+
+    
