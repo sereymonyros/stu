@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState, useEffect, Suspense } from 'react';
@@ -8,7 +7,7 @@ import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where, getC
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye, Pencil, Users, User, Send, Plus, CheckCircle, KanbanSquare, X } from 'lucide-react';
+import { Heart, Briefcase, Search, Star, LayoutGrid, List, Filter, KanbanSquare, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -31,159 +30,19 @@ import { Board, JobCard } from '@/components/job-kanban';
 import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import JobsLoading from './loading';
-import { Building, DollarSign, MapPin } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { MultiSelectOption, MultiSelect } from '@/components/ui/multi-select';
+import { MultiSelect, type MultiSelectOption } from '@/components/ui/multi-select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { JobCardBig } from '@/components/job-card-big';
+import { JobCardSmall } from '@/components/job-card-small';
+import { Plus } from 'lucide-react';
 
-function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter, router }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => Promise<void>; hasApplied: boolean; isRecruiter: boolean; router: ReturnType<typeof useRouter> }) {
-    const { user } = useUser();
-    const firestore = useFirestore();
-    const isOwner = user && user.uid === job.recruiterId;
-
-    const applicantsQuery = useMemo(() => {
-        if (!firestore || !job.id || !isOwner) return null;
-        return query(collection(firestore, 'jobs', job.id, 'applications'));
-    }, [firestore, job.id, isOwner]);
-
-    const { data: applicants } = useCollection(applicantsQuery);
-    const hasApplicants = applicants && applicants.length > 0;
-
-    const destinationUrl = `/jobs/${job.id}/details`;
-
-    const salaryDisplay = useMemo(() => {
-        if (job.salaryMin && job.salaryMax) {
-            return `$${job.salaryMin.toLocaleString()} - $${job.salaryMax.toLocaleString()}`;
-        }
-        if (job.salaryMin) {
-            return `From $${job.salaryMin.toLocaleString()}`;
-        }
-        if (job.salaryMax) {
-            return `Up to $${job.salaryMax.toLocaleString()}`;
-        }
-        return null;
-    }, [job.salaryMin, job.salaryMax]);
-
-    const handleFavouriteClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        e.preventDefault();
-        onToggleFavourite(job.id, isFavourite);
-    };
-    
-    return (
-        <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "bg-muted/50")}>
-            <Link href={destinationUrl} className="block absolute inset-0 z-0">
-                <span className="sr-only">View job: {job.title}</span>
-            </Link>
-             {hasApplied && (
-                <div className="absolute inset-0 bg-black/30 rounded-3xl z-10 flex items-center justify-center">
-                    <Badge variant="secondary" className="text-sm flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4"/>
-                        Applied
-                    </Badge>
-                </div>
-            )}
-            <div className={cn("py-3 px-6 flex items-center min-h-[92px]", hasApplied && "opacity-50")}>
-                <div className="flex-1 min-w-0 pr-10">
-                     <p className="font-semibold text-base leading-tight line-clamp-1">
-                        {job.title}
-                        <span className="font-normal text-muted-foreground"> at </span>
-                        <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="hover:text-primary relative z-10" onClick={(e) => e.stopPropagation()}>
-                        {job.companyName}
-                        </Link>
-                    </p>
-                    <div className="flex items-center flex-wrap text-sm text-muted-foreground gap-x-3 gap-y-1 min-w-0">
-                        <div className="flex items-center gap-1.5 line-clamp-1"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{job.location}</span></div>
-                        {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
-                         <div className="flex items-center gap-1.5">
-                            <Badge variant="secondary">{job.jobType}</Badge>
-                            <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="absolute top-0 right-3 bottom-0 z-10 flex flex-col justify-center items-center py-1.5">
-                     {user && !isOwner && !isRecruiter && (
-                        <div className="flex flex-col items-center justify-between h-full z-10 relative">
-                             <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={handleFavouriteClick}
-                                            className="h-9 w-9 rounded-full text-muted-foreground flex-shrink-0"
-                                            disabled={hasApplied}
-                                            aria-label="Toggle Favourite"
-                                        >
-                                            <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
-                    )}
-                    {isOwner && (
-                        <div className="flex flex-col items-center justify-between h-full z-10 relative">
-                            {hasApplicants && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={(e) => { e.stopPropagation(); e.preventDefault(); router.push(`/jobs/${job.id}/applicants`); }}>
-                                                {applicants.length === 1 ? <User className="h-4 w-4" /> : <Users className="h-4 w-4" />}
-                                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                                                    {applicants.length}
-                                                </span>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>{applicants.length === 1 ? '1 Applicant' : `${applicants.length} Applicants`}</p></TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                             <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                         <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); router.push(`/jobs/${job.id}/details`); }}>
-                                            <Eye className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>View</p></TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
-                    )}
-
-                     {!isOwner && (
-                        <div className="flex flex-col items-center justify-center h-full z-10 relative">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                            <Link href={destinationUrl} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>View Details</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
-                     )}
-                </div>
-            </div>
-        </Card>
-    );
-}
 
 function JobsPageContent() {
     const firestore = useFirestore();
@@ -191,6 +50,7 @@ function JobsPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { toast } = useToast();
+    const isMobile = useIsMobile();
     
     // --- View State ---
     const [viewMode, setViewMode] = useState<'card' | 'list' |'board'>('card');
@@ -532,7 +392,9 @@ function JobsPageContent() {
     }
 
     const renderJobs = () => {
-        if (filteredAndSortedJobs.length === 0) {
+        const jobsToRender = filteredAndSortedJobs;
+
+        if (jobsToRender.length === 0) {
             return (
                  <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
                     <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -546,35 +408,53 @@ function JobsPageContent() {
             )
         }
 
-        if (viewMode === 'list') {
+        // Mobile always shows CardBig in a grid
+        if (isMobile) {
             return (
-                <div className="grid grid-cols-1 gap-4">
-                    {filteredAndSortedJobs.map((job) => (
-                        <JobListItem 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     {jobsToRender.map((job) => (
+                        <JobCardBig 
                             key={job.id} 
                             job={job}
                             isFavourite={favouriteJobIds.has(job.id)}
                             onToggleFavourite={handleToggleFavourite}
                             hasApplied={appliedJobIds.has(job.id)}
                             isRecruiter={isRecruiter ?? false}
-                            router={router}
                         />
                     ))}
                 </div>
             )
         }
 
+        // Desktop view switching
+        if (viewMode === 'list') {
+            return (
+                <div className="grid grid-cols-1 gap-4">
+                    {jobsToRender.map((job) => (
+                        <JobCardSmall
+                            key={job.id} 
+                            job={job}
+                            isFavourite={favouriteJobIds.has(job.id)}
+                            onToggleFavourite={handleToggleFavourite}
+                            hasApplied={appliedJobIds.has(job.id)}
+                            isRecruiter={isRecruiter ?? false}
+                        />
+                    ))}
+                </div>
+            )
+        }
+
+        // Default to CardBig for 'card' viewMode on desktop
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                {filteredAndSortedJobs.map((job) => (
-                    <JobCard 
+                {jobsToRender.map((job) => (
+                    <JobCardBig 
                         key={job.id} 
                         job={job}
                         isFavourite={favouriteJobIds.has(job.id)}
                         onToggleFavourite={handleToggleFavourite}
                         hasApplied={appliedJobIds.has(job.id)}
                         isRecruiter={isRecruiter ?? false}
-                        isDraggable={false}
                     />
                 ))}
             </div>
@@ -608,8 +488,8 @@ function JobsPageContent() {
                         )}
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row items-center gap-4">
-                        <div className="flex-1 w-full sm:w-auto">
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
+                        <div className="flex-1 w-full">
                             <Collapsible>
                                 <div className="flex items-center gap-2">
                                      <div className="relative flex-1">
@@ -635,7 +515,7 @@ function JobsPageContent() {
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
-                                                        <Button variant="ghost" size="icon" onClick={clearAllFilters} className="h-8 w-8 absolute top-2 right-2 text-muted-foreground">
+                                                        <Button variant="destructive" size="icon" onClick={clearAllFilters} className="h-8 w-8 absolute top-2 right-2">
                                                             <X className="h-5 w-5" />
                                                         </Button>
                                                     </TooltipTrigger>
@@ -781,7 +661,7 @@ function JobsPageContent() {
                                         isLoading={!jobs} // Kanban uses its own loading prop
                                     >
                                         {stageJobs.map((job: any) => (
-                                            <JobCard
+                                            <Board.Card
                                                 key={job.id}
                                                 job={job}
                                                 isFavourite={false}
@@ -802,7 +682,6 @@ function JobsPageContent() {
     );
 }
 
-// Wrap the main content in a new component to fetch data for the Suspense boundary
 function JobsPageWrapper() {
     const firestore = useFirestore();
     const [jobCount, setJobCount] = useState<number | null>(null);
