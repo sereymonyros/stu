@@ -133,21 +133,21 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     )}
                      {isOwner && (
                         <div className="flex flex-col items-center justify-between h-full z-10 relative">
-                             {hasApplicants && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={(e) => { e.stopPropagation(); e.preventDefault(); router.push(`/jobs/${job.id}/applicants`); }}>
-                                                {applicants.length === 1 ? <User className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+                             <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={(e) => { e.stopPropagation(); e.preventDefault(); router.push(`/jobs/${job.id}/applicants`); }}>
+                                            {applicants?.length === 1 ? <User className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+                                            {hasApplicants && (
                                                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                                                     {applicants.length}
                                                 </span>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>{applicants.length === 1 ? '1 Applicant' : `${applicants.length} Applicants`}</p></TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                             )}
+                                            )}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>{applicants?.length === 1 ? '1 Applicant' : `${applicants?.length ?? 0} Applicants`}</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                              <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -162,7 +162,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                      )}
 
                      {!isOwner && (
-                        <div className="flex flex-col items-center justify-end h-full z-10 relative">
+                        <div className="flex flex-col items-center justify-center h-full z-10 relative">
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
