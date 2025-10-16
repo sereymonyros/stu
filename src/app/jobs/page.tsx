@@ -511,16 +511,14 @@ function JobsPageContent() {
     
     const KANBAN_STAGES: ('Available' | 'Offering' | 'Closed')[] = ["Available", "Offering", "Closed"];
     
-    if (areJobsLoading && jobCount === null) {
-        return <JobsLoading />;
-    }
-    
-    if (areJobsLoading && jobCount !== null) {
-        return <JobsLoading count={jobCount > 0 ? jobCount : 4} viewMode={viewMode} />;
+    const isLoading = areJobsLoading || jobCount === null;
+
+    if (isLoading) {
+        return <JobsLoading count={jobCount || 4} viewMode={viewMode} />;
     }
     
     if (!jobs) {
-        return <JobsLoading />;
+        return <JobsLoading count={4} />;
     }
 
     const renderJobs = () => {

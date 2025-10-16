@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,7 +36,7 @@ function ListSkeleton() {
     )
 }
 
-export default function JobsLoading({ count = 8, viewMode = 'list' }: { count?: number, viewMode?: 'list' | 'card' | 'board' }) {
+export default function JobsLoading({ count = 4, viewMode = 'list' }: { count?: number, viewMode?: 'list' | 'card' | 'board' }) {
   const Skeletons = Array.from({ length: count });
 
   return (
