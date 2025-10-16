@@ -68,26 +68,13 @@ export function JobCardBig({
                     </Badge>
                 </div>
             )}
-            {isOwner && (
-                <ApplicantCounter jobId={job.id} />
-            )}
+            
             <div className={cn("flex flex-col flex-grow", hasApplied && "opacity-50")}>
                 <Link href={destinationUrl} className="flex flex-col flex-grow group-hover:no-underline">
                     <span className="absolute inset-0 z-0" />
                     <CardHeader className="p-3 pb-2">
                         <div className="flex justify-between items-start gap-2">
-                            <CardTitle className="text-base font-bold select-none">{job.title}</CardTitle>
-                            {user && !isOwner && !isRecruiter && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
-                                    className="absolute top-1 right-1 text-muted-foreground hover:text-red-500 h-9 w-9 z-10"
-                                    disabled={hasApplied}
-                                >
-                                    <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
-                                </Button>
-                            )}
+                            <CardTitle className="text-base font-bold select-none pr-10">{job.title}</CardTitle>
                         </div>
                         <div className="flex flex-row flex-wrap items-center text-xs text-muted-foreground gap-x-2 gap-y-1 pt-1">
                             <div className="flex items-center gap-1.5">
@@ -112,21 +99,45 @@ export function JobCardBig({
                                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">{job.jobType}</Badge>
                                 <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5">{job.status}</Badge>
                             </div>
-                            <div className="relative z-10">
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-9 w-9 absolute bottom-[-8px] right-[-8px] pointer-events-none">
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>View Details</p></TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
                         </div>
                     </CardContent>
                 </Link>
+            </div>
+            {/* --- Icon Container --- */}
+            <div className="absolute top-1 right-1 bottom-1 flex flex-col justify-between items-end p-1 z-10 pointer-events-none">
+                 {/* --- Top-Right Slot --- */}
+                 <div className="pointer-events-auto">
+                    {isOwner ? (
+                        <ApplicantCounter jobId={job.id} />
+                    ) : (
+                         user && !isRecruiter && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
+                                className="text-muted-foreground hover:text-red-500 h-9 w-9"
+                                disabled={hasApplied}
+                            >
+                                <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
+                            </Button>
+                        )
+                    )}
+                 </div>
+                 {/* --- Bottom-Right Slot --- */}
+                 <div className="pointer-events-auto">
+                     <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                                     <Link href={destinationUrl} onClick={(e) => e.stopPropagation()}>
+                                         <Eye className="h-4 w-4" />
+                                     </Link>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>View Details</p></TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                 </div>
             </div>
         </Card>
     );
