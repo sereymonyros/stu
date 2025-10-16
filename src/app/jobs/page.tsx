@@ -321,11 +321,9 @@ function JobsPageContent() {
         try {
             if (isCurrentlyFavourite) {
                 await deleteDoc(favDocRef);
-                toast({ title: "Removed from Favourites" });
             } else {
                 const favouriteData = { jobId, favouritedAt: serverTimestamp() };
                 await setDoc(favDocRef, favouriteData);
-                toast({ title: "Added to Favourites" });
             }
         } catch (error: any) {
              errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -514,11 +512,21 @@ function JobsPageContent() {
     const isLoading = areJobsLoading || jobCount === null;
 
     if (isLoading) {
-        return <JobsLoading count={jobCount} viewMode={viewMode} />;
+        return <JobsLoading count={jobCount ?? 8} viewMode={viewMode} />;
     }
     
     if (!jobs) {
-        return <JobsLoading count={4} />;
+        return (
+            <main className="flex-1 p-4 md:p-6 lg:p-8">
+                 <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
+                    <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <div className="text-center">
+                        <h2 className="text-2xl font-semibold tracking-tight">No jobs posted yet</h2>
+                        <p className="text-muted-foreground mt-2">Check back soon for new opportunities!</p>
+                    </div>
+                </div>
+            </main>
+        )
     }
 
     const renderJobs = () => {
@@ -607,7 +615,7 @@ function JobsPageContent() {
                 </div>
                 
                 {viewMode !== 'board' && (
-                    <div>
+                    <div className="space-y-6">
                         {jobs.length > 0 && (
                             <Collapsible className="mb-6">
                                 <div className="flex items-center justify-between gap-4 mb-4">
@@ -797,7 +805,7 @@ function JobsPageWrapper() {
     }, [firestore]);
 
     return (
-        <Suspense fallback={<JobsLoading count={jobCount ?? 8} />}>
+        <Suspense fallback={<JobsLoading count={jobCount} />}>
             <JobsPageContent />
         </Suspense>
     )
