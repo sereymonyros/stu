@@ -638,7 +638,7 @@ function JobsPageContent() {
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <Button variant="ghost" size="icon" onClick={clearAllFilters} className="h-8 w-8 absolute top-2 right-2">
+                                                    <Button variant="destructive" size="icon" onClick={clearAllFilters} className="h-8 w-8 absolute top-2 right-2">
                                                         <X className="h-4 w-4" />
                                                     </Button>
                                                 </TooltipTrigger>
