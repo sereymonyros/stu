@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useState, useEffect, Suspense } from 'react';
@@ -7,7 +8,7 @@ import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where, getC
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye, Pencil, Users, User, Send, Plus, CheckCircle } from 'lucide-react';
+import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye, Pencil, Users, User, Send, Plus, CheckCircle, KanbanSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -597,7 +598,20 @@ function JobsPageContent() {
                             <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
                                 <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
                                 <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
-                                {isRecruiter && <ToggleGroupItem value="board" aria-label="Board view" className="hidden lg:inline-flex">Board</ToggleGroupItem>}
+                                {isRecruiter && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <ToggleGroupItem value="board" aria-label="Board view">
+                                                    <KanbanSquare />
+                                                </ToggleGroupItem>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Board View</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
                             </ToggleGroup>
                         )}
                         {isRecruiter && (
