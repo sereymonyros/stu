@@ -90,8 +90,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </Badge>
                 </div>
             )}
-            <div className={cn("p-4 px-6 flex items-center min-h-[5.5rem]", hasApplied && "opacity-50")}>
-                <div className="flex-1 min-w-0 space-y-1.5 pr-10">
+            <div className={cn("p-3 px-6 flex items-center min-h-[5.5rem]", hasApplied && "opacity-50")}>
+                <div className="flex-1 min-w-0 pr-10">
                      <p className="font-semibold text-base leading-tight line-clamp-1">
                         {job.title}
                         <span className="font-normal text-muted-foreground"> at </span>
@@ -99,7 +99,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         {job.companyName}
                         </Link>
                     </p>
-                    <div className="flex items-center flex-wrap text-sm text-muted-foreground gap-x-3 gap-y-1 mt-1.5 min-w-0">
+                    <div className="flex items-center flex-wrap text-sm text-muted-foreground gap-x-3 gap-y-1 mt-1 min-w-0">
                         <div className="flex items-center gap-1.5 line-clamp-1"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{job.location}</span></div>
                         {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                          <div className="flex items-center gap-2">
