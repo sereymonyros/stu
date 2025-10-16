@@ -8,7 +8,7 @@ import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where } fro
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye, Pencil, Users, User, Send, Plus } from 'lucide-react';
+import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye, Pencil, Users, User, Send, Plus, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -83,7 +83,15 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
             <Link href={destinationUrl} className="block absolute inset-0 z-0">
                 <span className="sr-only">View job: {job.title}</span>
             </Link>
-            <div className="p-4 flex items-center gap-4">
+             {hasApplied && (
+                <div className="absolute inset-0 bg-black/30 rounded-3xl z-10 flex items-center justify-center">
+                    <Badge variant="secondary" className="text-sm flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4"/>
+                        Applied
+                    </Badge>
+                </div>
+            )}
+            <div className={cn("p-4 flex items-center gap-4", hasApplied && "opacity-50")}>
                 {user && !isOwner && !isRecruiter && (
                     <TooltipProvider>
                         <Tooltip>
@@ -145,7 +153,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                     {hasApplicants && (
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={(e) => { e.stopPropagation(); router.push(`/jobs/${job.id}/applicants`); }}>
+                                                <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={(e) => { e.stopPropagation(); e.preventDefault(); router.push(`/jobs/${job.id}/applicants`); }}>
                                                         <Users className="h-4 w-4" />
                                                         <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                                                             {applicants.length}
