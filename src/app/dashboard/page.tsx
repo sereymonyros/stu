@@ -62,7 +62,11 @@ function JobCard({ job }: { job: any }) {
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                      <Button size="icon" variant="ghost" className="pointer-events-none h-9 w-9">
-                                       {hasApplicants ? <Users className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+                                        {hasApplicants ? (
+                                            <Users className="h-4 w-4" />
+                                        ) : (
+                                            <Pencil className="h-4 w-4" />
+                                        )}
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
