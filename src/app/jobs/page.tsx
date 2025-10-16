@@ -92,7 +92,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </Badge>
                 </div>
             )}
-            <div className={cn("p-4 flex items-center gap-4", hasApplied && "opacity-50")}>
+            <div className={cn("p-4 flex items-center gap-4 relative", hasApplied && "opacity-50")}>
                 {user && !isOwner && !isRecruiter && (
                     <TooltipProvider>
                         <Tooltip>
@@ -101,7 +101,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                     variant="ghost"
                                     size="icon"
                                     onClick={handleFavouriteClick}
-                                    className="absolute top-1 left-1 h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10"
+                                    className="absolute top-3 right-1 h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10"
                                     disabled={hasApplied}
                                     aria-label="Toggle Favourite"
                                 >
@@ -115,7 +115,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </TooltipProvider>
                 )}
 
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 pr-10">
                     <div className="font-semibold text-base leading-tight line-clamp-1">
                         {job.title}
                         <span className="font-normal text-muted-foreground"> at </span>
