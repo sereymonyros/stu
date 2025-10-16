@@ -64,7 +64,7 @@ export function JobCardSmall({
                     </Badge>
                 </div>
             )}
-            <div className={cn("py-3 px-6 flex items-center min-h-[92px]", hasApplied && "opacity-50")}>
+            <div className={cn("py-2.5 px-6 flex items-center min-h-[84px]", hasApplied && "opacity-50")}>
                 <div className="flex-1 min-w-0 pr-10">
                     <p className="font-semibold text-base leading-tight line-clamp-1">
                         {job.title}
@@ -83,10 +83,12 @@ export function JobCardSmall({
                     </div>
                 </div>
 
-                <div className="absolute top-0 right-3 bottom-0 z-10 flex flex-col justify-center items-center py-1.5">
-                    {user && !isOwner && !isRecruiter && (
-                        <div className="flex flex-col items-center justify-between h-full z-10 relative">
-                            <TooltipProvider>
+                <div className="absolute top-1 right-1.5 bottom-1 z-10 flex flex-col justify-between items-center py-1 pointer-events-none">
+                     <div className="pointer-events-auto">
+                        {isOwner ? (
+                           <ApplicantCounter jobId={job.id} />
+                        ) : user && !isRecruiter ? (
+                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button
@@ -105,40 +107,23 @@ export function JobCardSmall({
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-                        </div>
-                    )}
-                    {isOwner && (
-                        <div className="flex flex-col items-center justify-between h-full z-10 relative">
-                            <ApplicantCounter jobId={job.id} />
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); router.push(`/jobs/${job.id}/details`); }}>
-                                            <Eye className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>View</p></TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
-                    )}
+                        ) : null}
+                    </div>
 
-                    {!isOwner && (
-                        <div className="flex flex-col items-center justify-center h-full z-10 relative">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                            <Link href={destinationUrl} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>View Details</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
-                    )}
+                    <div className="pointer-events-auto">
+                         <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+                                        <Link href={destinationUrl} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>View Details</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
                 </div>
             </div>
         </Card>
