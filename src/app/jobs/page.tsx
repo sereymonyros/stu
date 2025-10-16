@@ -191,7 +191,7 @@ function JobsPageContent() {
     const { toast } = useToast();
     
     // --- View State ---
-    const [viewMode, setViewMode] = useState<'card' | 'list' |'board'>('list');
+    const [viewMode, setViewMode] = useState<'card' | 'list' |'board'>('card');
     
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
@@ -592,7 +592,8 @@ function JobsPageContent() {
                         )}
                     </div>
                     <div className="flex items-center gap-2">
-                       {(jobs.length > 0) && (
+                       <div className="hidden sm:flex">
+                         {(jobs.length > 0) && (
                             <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
                                 <TooltipProvider>
                                     <Tooltip>
@@ -622,6 +623,7 @@ function JobsPageContent() {
                                 </TooltipProvider>
                             </ToggleGroup>
                         )}
+                       </div>
                         {isRecruiter && (
                              <TooltipProvider>
                                 <Tooltip>
