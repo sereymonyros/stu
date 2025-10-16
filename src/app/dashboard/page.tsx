@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Briefcase, ClipboardList, FileText, Users, Heart, User, Search, Trash2, Send, BellDot, Eye } from 'lucide-react';
+import { Briefcase, ClipboardList, FileText, Users, Heart, User, Search, Trash2, Send, BellDot, Eye, Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -32,7 +32,8 @@ function JobCard({ job }: { job: any }) {
 
     const { data: applicants, isLoading } = useCollection(applicantsQuery);
 
-    const destinationUrl = applicants && applicants.length > 0
+    const hasApplicants = applicants && applicants.length > 0;
+    const destinationUrl = hasApplicants
         ? `/jobs/${job.id}/applicants`
         : `/jobs/${job.id}/edit`;
 
@@ -41,7 +42,7 @@ function JobCard({ job }: { job: any }) {
             <Card className="h-full relative overflow-hidden rounded-3xl">
                  {isLoading ? (
                     <Skeleton className="absolute top-0 right-0 h-8 w-12 rounded-bl-lg" />
-                ) : applicants && applicants.length > 0 ? (
+                ) : hasApplicants ? (
                     <Badge className="absolute top-0 right-0 flex items-center gap-1.5 z-10 px-3 py-1.5 rounded-bl-lg rounded-tr-lg text-sm bg-lime-500 text-black hover:bg-lime-600">
                         {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
                         {applicants.length}
@@ -57,9 +58,18 @@ function JobCard({ job }: { job: any }) {
                         </div>
                     </div>
                     <div className="flex justify-end items-center">
-                        <Button size="sm" className="pointer-events-none w-full">
-                           {applicants && applicants.length > 0 ? 'View Applicants' : 'Edit Job'}
-                        </Button>
+                       <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                     <Button size="icon" variant="ghost" className="pointer-events-none h-9 w-9">
+                                       {hasApplicants ? <Users className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{hasApplicants ? 'View Applicants' : 'Edit Job'}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                 </CardContent>
             </Card>
