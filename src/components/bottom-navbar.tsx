@@ -58,7 +58,7 @@ export function BottomNavbar() {
             isScrolling ? "opacity-30" : "opacity-100"
         )}>
             <div className="relative w-full max-w-lg pointer-events-auto" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-                <div className="bg-background/80 dark:bg-gradient-to-r from-black via-blue-900 to-black backdrop-blur-sm border rounded-full shadow-lg py-2.5">
+                <div className="bg-background/80 dark:bg-gradient-to-r from-black via-blue-900 to-black backdrop-blur-sm border rounded-full shadow-lg py-2">
                     <div className="flex h-full items-center justify-evenly max-w-lg mx-auto font-medium">
                         {navItems.map((item) => {
                             const isActive = pathname.startsWith(item.href);

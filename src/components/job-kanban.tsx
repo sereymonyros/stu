@@ -114,7 +114,7 @@ export function JobCard({
                                     variant="ghost"
                                     size="icon"
                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
-                                    className="text-muted-foreground hover:text-red-500 h-8 w-8 -mt-1 -mr-1 relative z-10"
+                                    className="absolute top-4 right-5 text-muted-foreground hover:text-red-500 h-8 w-8 -mt-1 -mr-1 z-10"
                                     disabled={hasApplied}
                                 >
                                     <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
