@@ -111,25 +111,27 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
 
                 <div className="absolute top-0 right-3 bottom-0 z-10 flex flex-col justify-between items-center py-1.5">
                      {user && !isOwner && !isRecruiter && (
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={handleFavouriteClick}
-                                        className="h-9 w-9 rounded-full text-muted-foreground flex-shrink-0"
-                                        disabled={hasApplied}
-                                        aria-label="Toggle Favourite"
-                                    >
-                                        <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+                        <div className="flex flex-col items-center justify-between h-full z-10 relative">
+                             <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={handleFavouriteClick}
+                                            className="h-9 w-9 rounded-full text-muted-foreground flex-shrink-0"
+                                            disabled={hasApplied}
+                                            aria-label="Toggle Favourite"
+                                        >
+                                            <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                     )}
                      {isOwner && (
                         <div className="flex flex-col items-center justify-between h-full z-10 relative">
@@ -585,7 +587,7 @@ function JobsPageContent() {
         <div className="flex flex-col min-h-screen">
             <main className="flex-1 p-4 md:p-6 lg:p-8">
                 <div className="mb-6 space-y-4">
-                    <div className="flex justify-between items-center">
+                     <div className="flex justify-between items-center">
                          <div>
                             <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
                             {isRecruiter && viewMode === 'board' && (
@@ -593,7 +595,7 @@ function JobsPageContent() {
                             )}
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="hidden sm:flex">
+                             <div className="hidden sm:flex">
                                 {(jobs.length > 0) && (
                                 <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
                                     <TooltipProvider>
@@ -629,8 +631,8 @@ function JobsPageContent() {
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button asChild size="icon" variant="ghost" className="hover:bg-primary/10 w-10 h-10">
-                                                <Link href="/jobs/new"><Plus className="h-8 w-8" /></Link>
+                                             <Button asChild size="icon" variant="destructive" className="h-10 w-10">
+                                                <Link href="/jobs/new"><Plus className="h-6 w-6" /></Link>
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
@@ -647,7 +649,7 @@ function JobsPageContent() {
                     <div className="space-y-6">
                         {jobs.length > 0 && (
                             <Collapsible className="mb-6">
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
                                      <div className="relative flex-1 w-full">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                         <Input
