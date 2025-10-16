@@ -8,7 +8,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Building, DollarSign, Edit, MapPin, Users, Heart, Pencil, Eye, Send, CheckCircle } from 'lucide-react';
+import { Briefcase, Building, DollarSign, Edit, MapPin, Users, Heart, Pencil, Eye, Send, CheckCircle, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { Badge } from './ui/badge';
@@ -114,7 +114,7 @@ export function JobCard({
                                     variant="ghost"
                                     size="icon"
                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
-                                    className="absolute top-4 right-5 text-muted-foreground hover:text-red-500 h-8 w-8 -mt-1 -mr-1 z-10"
+                                    className="absolute top-1 right-1 text-muted-foreground hover:text-red-500 h-9 w-9 z-10"
                                     disabled={hasApplied}
                                 >
                                     <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
@@ -146,32 +146,22 @@ export function JobCard({
                             </div>
                             <div className="relative z-10">
                                 {isOwner ? (
-                                        <TooltipProvider>
-                                            <div className="flex items-center gap-1">
+                                    <>
+                                        {hasApplicants && (
+                                            <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-9 w-9">
-                                                            <Eye className="h-4 w-4" />
+                                                        <Button variant="ghost" size="icon" className="h-9 w-9 absolute top-[-90px] right-[-8px] " onClick={(e) => { e.stopPropagation(); e.preventDefault(); router.push(`/jobs/${job.id}/applicants`); }}>
+                                                            {applicants.length === 1 ? <User className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+                                                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                                                                {applicants.length}
+                                                            </span>
                                                         </Button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent><p>View</p></TooltipContent>
+                                                    <TooltipContent><p>{applicants.length === 1 ? '1 Applicant' : `${applicants.length} Applicants`}</p></TooltipContent>
                                                 </Tooltip>
-                                                 {hasApplicants && (
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={(e) => { e.stopPropagation(); e.preventDefault(); router.push(`/jobs/${job.id}/applicants`); }}>
-                                                                <Users className="h-4 w-4" />
-                                                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                                                                    {applicants.length}
-                                                                </span>
-                                                            </Button>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent><p>{applicants.length === 1 ? '1 Applicant' : `${applicants.length} Applicants`}</p></TooltipContent>
-                                                    </Tooltip>
-                                                )}
-                                            </div>
-                                        </TooltipProvider>
-                                    ) : isRecruiter ? (
+                                            </TooltipProvider>
+                                        )}
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
@@ -182,20 +172,32 @@ export function JobCard({
                                                 <TooltipContent><p>View</p></TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
-                                    ) : (
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-9 w-9 pointer-events-none">
-                                                        <Eye className="h-4 w-4" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>View Details</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    )}
+                                    </>
+                                ) : isRecruiter ? (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-9 w-9">
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>View</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                ) : (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-9 w-9 absolute bottom-[-8px] right-[-8px] pointer-events-none">
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>View Details</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
                             </div>
                         </div>
                     </CardContent>
