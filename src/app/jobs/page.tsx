@@ -596,8 +596,20 @@ function JobsPageContent() {
                     <div className="flex items-center gap-2">
                        {(jobs.length > 0) && (
                             <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
-                                <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
-                                <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                             <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>List View</p></TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                             <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>Card View</p></TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                                 {isRecruiter && (
                                     <TooltipProvider>
                                         <Tooltip>

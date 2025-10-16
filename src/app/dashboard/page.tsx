@@ -195,10 +195,19 @@ function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting, onNotif
                             <BellDot className="mr-1.5 h-4 w-4" /> Notify
                         </Button>
                     </div>
-                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onDelete(savedSearch.id)} disabled={isDeleting}>
-                         <Trash2 className="h-4 w-4" />
-                         <span className="sr-only">Delete search</span>
-                    </Button>
+                     <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onDelete(savedSearch.id)} disabled={isDeleting}>
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="sr-only">Delete search</span>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Delete Search</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
             </CardContent>
         </Card>
