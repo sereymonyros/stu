@@ -4,7 +4,7 @@
 
 import { useMemo, useState, useEffect, Suspense } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where, getCountFromServer } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -43,6 +43,7 @@ import {
 import { MultiSelectOption, MultiSelect } from '@/components/ui/multi-select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BackButton } from '@/components/back-button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter, router }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => Promise<void>; hasApplied: boolean; isRecruiter: boolean; router: ReturnType<typeof useRouter> }) {
     const { user } = useUser();
@@ -199,7 +200,18 @@ function JobsPageContent() {
 
     // --- Data Fetching ---
     const jobsQuery = useMemo(() => query(collection(firestore, 'jobs'), where('title', '!=', '')), [firestore]);
-    const { data: jobs } = useCollection(jobsQuery);
+    const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
+    
+    const [jobCount, setJobCount] = useState<number | null>(null);
+    useEffect(() => {
+        if (firestore) {
+            const jobsCollection = collection(firestore, 'jobs');
+            getCountFromServer(jobsCollection).then(snapshot => {
+                setJobCount(snapshot.data().count);
+            });
+        }
+    }, [firestore]);
+
 
     const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
     const { data: userProfile } = useDoc(userProfileRef);
@@ -499,8 +511,15 @@ function JobsPageContent() {
     
     const KANBAN_STAGES: ('Available' | 'Offering' | 'Closed')[] = ["Available", "Offering", "Closed"];
     
+    if (areJobsLoading && jobCount === null) {
+        return <JobsLoading />;
+    }
+    
+    if (areJobsLoading && jobCount !== null) {
+        return <JobsLoading count={jobCount > 0 ? jobCount : 4} viewMode={viewMode} />;
+    }
+    
     if (!jobs) {
-        // This case is handled by Suspense, but as a safeguard:
         return <JobsLoading />;
     }
 
@@ -565,7 +584,7 @@ function JobsPageContent() {
                         )}
                     </div>
                     <div className="flex items-center gap-2">
-                       {(isRecruiter || jobs.length > 0) && (
+                       {(jobs.length > 0) && (
                             <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
                                 <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
                                 <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
