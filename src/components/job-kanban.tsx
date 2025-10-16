@@ -88,10 +88,7 @@ export function JobCard({
                 )}
                 {...(isDraggable ? listeners : {})}
             >
-              <div 
-                className="flex flex-col flex-grow cursor-pointer"
-                onClick={() => router.push(destinationUrl)}
-              >
+              <Link href={destinationUrl} className="flex flex-col flex-grow group-hover:no-underline">
                  <span className="absolute inset-0 z-0" />
                 <CardHeader className="p-3 pb-2">
                     <div className="flex justify-between items-start gap-2">
@@ -179,7 +176,7 @@ export function JobCard({
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <Button asChild variant="ghost" size="icon">
-                                                      <Link href={destinationUrl} onClick={(e) => { e.stopPropagation(); router.push(destinationUrl); }}><Eye /></Link>
+                                                      <Link href={destinationUrl} onClick={(e) => { e.stopPropagation(); router.push(destinationUrl); }}><Eye className="h-4 w-4" /></Link>
                                                     </Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
@@ -192,7 +189,7 @@ export function JobCard({
                         </div>
                     </div>
                 </CardContent>
-              </div>
+              </Link>
             </Card>
         </div>
     );
