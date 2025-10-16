@@ -7,14 +7,13 @@ export default function JobDetailsLoading() {
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1 p-4 md:p-6 lg:p-8">
-        <Card className="w-full max-w-3xl mx-auto">
+        <Card className="w-full max-w-3xl mx-auto rounded-3xl">
             <CardHeader>
-                <div className="mb-4 w-fit -ml-2 h-7 flex items-center">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> 
-                    <Skeleton className="h-4 w-24" />
+                <div className="flex justify-between items-start mb-4">
+                    <Skeleton className="h-10 w-10" />
                 </div>
                 <Skeleton className="h-9 w-3/4" />
-                <Skeleton className="h-6 w-1/2" />
+                <Skeleton className="h-7 w-1/2 mt-1" />
                 <div className="flex flex-wrap gap-2 pt-2">
                     <Skeleton className="h-6 w-24 rounded-full" />
                     <Skeleton className="h-6 w-24 rounded-full" />
@@ -37,6 +36,9 @@ export default function JobDetailsLoading() {
                     </div>
                 </div>
             </CardContent>
+            <div className="p-6 pt-0">
+                <Skeleton className="h-12 w-full" />
+            </div>
         </Card>
       </main>
     </div>

@@ -8,33 +8,32 @@ export default function ApplyLoading() {
     <div className="flex flex-col min-h-screen">
       <main className="flex-1 p-4 md:p:6 lg:p-8">
         <div>
-            <Card className="max-w-2xl mx-auto">
+            <Card className="max-w-2xl mx-auto rounded-3xl">
             <CardHeader>
-                <div className="mb-4 w-fit -ml-2 h-7 flex items-center">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> 
-                    <Skeleton className="h-4 w-24" />
+                <div className="mb-4">
+                    <Skeleton className="h-10 w-10" />
                 </div>
                 <Skeleton className="h-8 w-3/4" />
-                <Skeleton className="h-4 w-1/2 mt-2" />
+                <Skeleton className="h-5 w-1/2 mt-2" />
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-2">
-                    <Skeleton className="h-5 w-24" />
-                    <div className="flex gap-2">
-                        <Skeleton className="h-6 w-20" />
-                        <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-5 w-24 mb-2" />
+                    <div className="flex items-center gap-2">
+                        <Skeleton className="h-6 w-20 rounded-full" />
+                        <Skeleton className="h-6 w-20 rounded-full" />
                     </div>
                 </div>
 
                 <div className="space-y-2">
-                    <Skeleton className="h-5 w-32" />
-                    <div className="flex items-center gap-3 p-3 rounded-md border bg-muted/50">
+                    <Skeleton className="h-5 w-32 mb-2" />
+                    <div className="flex items-center gap-3 p-3 rounded-md border bg-muted/50 h-[58px]">
                         <Skeleton className="h-6 w-6 rounded" />
                         <Skeleton className="h-4 w-48" />
                     </div>
-                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-4 w-full" />
                 </div>
-                 <Skeleton className="h-10 w-full" />
+                 <Skeleton className="h-10 w-full rounded-md" />
             </CardContent>
             </Card>
         </div>
