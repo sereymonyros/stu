@@ -6,11 +6,8 @@ import { useMemo, useEffect, useState } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { collection, query, where, doc, deleteDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
-import Image from 'next/image';
 import { Briefcase, ClipboardList, FileText, Users, Heart, User, Search, Trash2, Send, BellDot, Eye, Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -20,153 +17,9 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { findJobMatches } from '@/ai/flows/find-job-matches-flow';
 import { WithdrawApplicationButton } from '@/components/withdraw-application-button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { JobCardBig } from '@/components/job-card-big';
+import { setDoc, serverTimestamp } from 'firebase/firestore';
 
-
-function JobCard({ job }: { job: any }) {
-    const firestore = useFirestore();
-    const applicantsQuery = useMemo(() => {
-        if (!firestore || !job.id) return null;
-        return collection(firestore, `jobs/${job.id}/applications`);
-    }, [firestore, job.id]);
-
-    const { data: applicants, isLoading } = useCollection(applicantsQuery);
-
-    const hasApplicants = applicants && applicants.length > 0;
-    const destinationUrl = hasApplicants
-        ? `/jobs/${job.id}/applicants`
-        : `/jobs/${job.id}/edit`;
-
-    return (
-        <Link href={destinationUrl} className="block rounded-3xl">
-            <Card className="h-full relative overflow-hidden rounded-3xl">
-                 {isLoading ? (
-                    <Skeleton className="absolute top-0 right-0 h-8 w-12 rounded-bl-lg" />
-                ) : hasApplicants ? (
-                    <Badge className="absolute top-0 right-0 flex items-center gap-1.5 z-10 px-3 py-1.5 rounded-bl-lg rounded-tr-lg text-sm bg-lime-500 text-black">
-                        {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
-                        {applicants.length}
-                    </Badge>
-                ) : null}
-                <CardContent className="p-4 flex flex-col justify-between h-full">
-                    <div className="flex-grow">
-                        <h3 className="font-semibold text-base truncate pr-8">{job.title}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">{job.companyName} - {job.location}</p>
-                        <div className="flex items-center gap-2 mb-3">
-                            {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
-                            {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
-                        </div>
-                    </div>
-                    <div className="flex justify-end items-center">
-                       <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                     <Button size="icon" variant="ghost" className="pointer-events-none h-9 w-9">
-                                        {hasApplicants ? (
-                                            <Users className="h-4 w-4" />
-                                        ) : (
-                                            <Pencil className="h-4 w-4" />
-                                        )}
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{hasApplicants ? 'View Applicants' : 'Edit Job'}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </div>
-                </CardContent>
-            </Card>
-        </Link>
-    );
-}
-
-function AppliedJobCard({ job, application, isFavourite }: { job: any, application: any, isFavourite: boolean }) {
-    if (!application) {
-        return null;
-    }
-
-    const statusColors: { [key: string]: string } = {
-        submitted: 'bg-blue-500',
-        reviewed: 'bg-yellow-500 text-black',
-        offered: 'bg-purple-500',
-        accepted: 'bg-green-500',
-        rejected: 'bg-red-500',
-    }
-    
-    const canWithdraw = application.status === 'submitted' || application.status === 'reviewed';
-
-    return (
-        <Card className="rounded-3xl">
-            <CardContent className="p-4 flex flex-col justify-between h-full">
-                <div className="flex-grow">
-                    <div className="flex justify-between items-start">
-                        <h3 className="font-semibold text-base truncate pr-2">{job.title}</h3>
-                        {isFavourite && (
-                            <Heart className="h-5 w-5 flex-shrink-0 fill-red-500 text-red-500" title="Favorite Job" />
-                        )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">{job.companyName} - {job.location}</p>
-                </div>
-                 <div className="flex justify-between items-center">
-                     <div className="flex items-center gap-2">
-                        <Badge className={cn("capitalize text-white", statusColors[application.status] || 'bg-gray-500')}>{application.status}</Badge>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button asChild variant="ghost" size="icon">
-                                        <Link href={`/jobs/${job.id}/details`}><Eye className="h-4 w-4" /></Link>
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>View</p></TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        {canWithdraw && (
-                            <WithdrawApplicationButton 
-                                jobId={job.id} 
-                            />
-                        )}
-                   </div>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-function FavouriteJobCard({ job }: { job: any }) {
-    return (
-         <Link href={`/jobs/${job.id}/details`} className="block rounded-3xl">
-            <Card className="rounded-3xl h-full">
-                <CardContent className="p-4 flex flex-col justify-between h-full">
-                    <div className="flex-grow">
-                        <h3 className="font-semibold text-base truncate">{job.title}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">{job.companyName} - {job.location}</p>
-                    </div>
-                     <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                           {job.jobType && <Badge variant="secondary">{job.jobType}</Badge>}
-                           {job.status && <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>}
-                        </div>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="pointer-events-none">
-                                       <Eye className="h-4 w-4" />
-                                   </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>View</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </div>
-                </CardContent>
-            </Card>
-        </Link>
-    );
-}
 
 function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting, onNotify, isNotifying }: { savedSearch: any, onExecute: (search: any) => void, onDelete: (searchId: string) => void, isDeleting: boolean, onNotify: (searchId: string) => void, isNotifying: boolean }) {
     const { name, searchQuery, filters = {} } = savedSearch;
@@ -195,19 +48,10 @@ function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting, onNotif
                             <BellDot className="mr-1.5 h-4 w-4" /> Notify
                         </Button>
                     </div>
-                     <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => onDelete(savedSearch.id)} disabled={isDeleting}>
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">Delete search</span>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Delete Search</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
+                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => onDelete(savedSearch.id)} disabled={isDeleting}>
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Delete search</span>
+                    </Button>
                 </div>
             </CardContent>
         </Card>
@@ -257,15 +101,12 @@ export default function DashboardPage() {
     }, [firestore, user, isRecruiter, shouldRunRoleQueries]);
     const { data: applications } = useCollection(applicationsQuery);
 
-    // Create a map of jobId to application data
-    const applicationMap = useMemo(() => {
-        if (!applications) return new Map();
-        return new Map(applications.map(app => [app.jobId, app]));
-    }, [applications]);
-
     const appliedJobIds = useMemo(() => {
         return applications ? applications.map(app => app.jobId).filter(id => !!id) : [];
     }, [applications]);
+    
+    const appliedJobIdsSet = useMemo(() => new Set(appliedJobIds), [appliedJobIds]);
+
 
     // For Standard Users: Fetch the details of the jobs they applied for
     const appliedJobsQuery = useMemo(() => {
@@ -291,8 +132,8 @@ export default function DashboardPage() {
 
     // Filter out favorite jobs that the user has already applied for
     const filteredFavouriteJobIds = useMemo(() => {
-        return favouriteJobIds.filter(id => !appliedJobIds.includes(id));
-    }, [favouriteJobIds, appliedJobIds]);
+        return favouriteJobIds.filter(id => !appliedJobIdsSet.has(id));
+    }, [favouriteJobIds, appliedJobIdsSet]);
 
 
     const favouriteJobsDetailsQuery = useMemo(() => {
@@ -323,6 +164,35 @@ export default function DashboardPage() {
         if (savedSearch.filters?.salaryMax) params.set('salaryMax', savedSearch.filters.salaryMax);
         router.push(`/jobs?${params.toString()}`);
     };
+    
+    const handleToggleFavourite = async (jobId: string, isCurrentlyFavourite: boolean) => {
+        if (!user || !firestore) {
+            router.push('/login');
+            return;
+        }
+
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+
+        const favDocRef = doc(firestore, `users/${user.uid}/favouriteJobs`, jobId);
+
+        try {
+            if (isCurrentlyFavourite) {
+                await deleteDoc(favDocRef);
+            } else {
+                const favouriteData = { jobId, favouritedAt: serverTimestamp() };
+                await setDoc(favDocRef, favouriteData);
+            }
+        } catch (error: any) {
+             errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: favDocRef.path,
+                operation: isCurrentlyFavourite ? 'delete' : 'create'
+            }));
+            toast({ variant: "destructive", title: "An error occurred", description: "You may not have permission to perform this action." });
+        }
+    };
+
 
     const handleDeleteSearch = async (searchId: string) => {
         if (!user || !firestore) return;
@@ -408,7 +278,16 @@ export default function DashboardPage() {
                         </div>
                         {postedJobs && postedJobs.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {postedJobs.map(job => <JobCard key={job.id} job={job} />)}
+                                {postedJobs.map(job => (
+                                     <JobCardBig 
+                                        key={job.id}
+                                        job={job}
+                                        isFavourite={false}
+                                        onToggleFavourite={async () => {}}
+                                        hasApplied={false}
+                                        isRecruiter={true}
+                                     />
+                                ))}
                             </div>
                         ) : (
                              <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
@@ -427,11 +306,13 @@ export default function DashboardPage() {
                         {appliedJobs && appliedJobs.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {appliedJobs.map(job => (
-                                    <AppliedJobCard
+                                    <JobCardBig
                                         key={job.id}
                                         job={job}
-                                        application={applicationMap.get(job.id)}
                                         isFavourite={favouriteJobIdsSet.has(job.id)}
+                                        onToggleFavourite={handleToggleFavourite}
+                                        hasApplied={true}
+                                        isRecruiter={false}
                                     />
                                 ))}
                             </div>
@@ -452,7 +333,16 @@ export default function DashboardPage() {
                             <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Heart /> My Favorite Jobs</h2>
                              {favouriteJobs.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {favouriteJobs.map(job => <FavouriteJobCard key={job.id} job={job} />)}
+                                    {favouriteJobs.map(job => (
+                                         <JobCardBig
+                                            key={job.id}
+                                            job={job}
+                                            isFavourite={true}
+                                            onToggleFavourite={handleToggleFavourite}
+                                            hasApplied={false}
+                                            isRecruiter={false}
+                                        />
+                                    ))}
                                 </div>
                             ) : (
                                 <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
@@ -495,5 +385,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-
-    
