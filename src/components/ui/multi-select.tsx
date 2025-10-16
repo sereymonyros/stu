@@ -61,9 +61,8 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
                                     .filter((option) => selectedValues.includes(option.value))
                                     .map((option) => (
                                         <Badge
-                                            variant="secondary"
                                             key={option.value}
-                                            className="mr-1 mb-1"
+                                            className="mr-1 mb-1 bg-lime-500 text-black hover:bg-lime-500/80"
                                             onClick={(e) => handleUnselect(e, option.value)}
                                         >
                                             {option.label}
