@@ -183,23 +183,19 @@ export function JobCard({
                                             </Tooltip>
                                         </TooltipProvider>
                                     ) : (
-                                        hasApplied ? (
-                                            <Button variant="outline" size="sm" className="pointer-events-none">View</Button>
-                                        ) : (
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-9 w-9">
-                                                            <Eye className="h-4 w-4" />
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>View Details</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        )
-                                )}
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 pointer-events-none">
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>View Details</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )}
                             </div>
                         </div>
                     </CardContent>
@@ -263,6 +259,8 @@ Board.Column = Column;
 Board.Card = JobCard;
 
 export { Board };
+
+    
 
     
 
