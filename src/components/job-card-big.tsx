@@ -4,7 +4,7 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building, DollarSign, MapPin, Heart, Eye, CheckCircle, User, Users } from 'lucide-react';
+import { Building, DollarSign, MapPin, Heart, Eye, CheckCircle, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import Link from 'next/link';
@@ -47,12 +47,24 @@ export function JobCardBig({
         return null;
     }, [job.salaryMin, job.salaryMax]);
 
-    const destinationUrl = `/jobs/${job.id}/details`;
-
+    const destinationUrl = isOwner ? `/jobs/${job.id}/applicants` : `/jobs/${job.id}/details`;
+    
     const handleCompanyClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
         router.push(`/companies/${encodeURIComponent(job.companyName)}`);
+    };
+
+    const handleFavouriteClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        onToggleFavourite(job.id, isFavourite);
+    };
+
+    const handleApplicantsClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        router.push(`/jobs/${job.id}/applicants`);
     };
 
     return (
@@ -108,13 +120,15 @@ export function JobCardBig({
                  {/* --- Top-Right Slot --- */}
                  <div className="pointer-events-auto">
                     {isOwner ? (
-                        <ApplicantCounter jobId={job.id} />
+                        <a href={`/jobs/${job.id}/applicants`} onClick={handleApplicantsClick} className="relative z-20">
+                            <ApplicantCounter jobId={job.id} />
+                        </a>
                     ) : (
                          user && !isRecruiter && (
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(job.id, isFavourite); }}
+                                onClick={handleFavouriteClick}
                                 className="text-muted-foreground hover:text-red-500 h-9 w-9"
                                 disabled={hasApplied}
                             >
@@ -128,13 +142,13 @@ export function JobCardBig({
                      <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
-                                     <Link href={destinationUrl} onClick={(e) => e.stopPropagation()}>
-                                         <Eye className="h-4 w-4" />
+                                <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+                                     <Link href={isOwner ? `/jobs/${job.id}/edit` : destinationUrl} onClick={(e) => e.stopPropagation()}>
+                                         {isOwner ? <Pencil className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                      </Link>
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent><p>View Details</p></TooltipContent>
+                            <TooltipContent><p>{isOwner ? 'Edit Job' : 'View Details'}</p></TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
                  </div>
@@ -142,5 +156,3 @@ export function JobCardBig({
         </Card>
     );
 }
-
-    

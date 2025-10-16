@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Eye, CheckCircle, User, Users, MapPin, DollarSign } from 'lucide-react';
+import { Heart, Eye, CheckCircle, MapPin, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
@@ -50,6 +50,12 @@ export function JobCardSmall({
         e.preventDefault();
         onToggleFavourite(job.id, isFavourite);
     };
+    
+    const handleApplicantsClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        router.push(`/jobs/${job.id}/applicants`);
+    };
 
     return (
         <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "bg-muted/50")}>
@@ -74,8 +80,8 @@ export function JobCardSmall({
                         </Link>
                     </p>
                     <div className="flex items-center flex-wrap text-xs text-muted-foreground gap-x-3 gap-y-1 min-w-0">
-                        <div className="flex items-center gap-1.5 line-clamp-1"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{job.location}</span></div>
-                        {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
+                        <div className="flex items-center gap-1.5 line-clamp-1"><MapPin className="h-3 w-3 flex-shrink-0" /> <span className="truncate">{job.location}</span></div>
+                        {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>}
                         <div className="flex items-center gap-1.5">
                             <Badge variant="secondary">{job.jobType}</Badge>
                             <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
@@ -83,10 +89,12 @@ export function JobCardSmall({
                     </div>
                 </div>
 
-                <div className="absolute top-1 right-1.5 bottom-1 z-10 flex flex-col justify-between items-center py-1 pointer-events-none">
+                <div className="absolute top-1.5 right-1.5 bottom-1.5 z-10 flex flex-col justify-between items-center py-1 pointer-events-none">
                      <div className="pointer-events-auto">
                         {isOwner ? (
-                           <ApplicantCounter jobId={job.id} />
+                           <a href={`/jobs/${job.id}/applicants`} onClick={handleApplicantsClick} className="relative z-20">
+                             <ApplicantCounter jobId={job.id} />
+                           </a>
                         ) : user && !isRecruiter ? (
                              <TooltipProvider>
                                 <Tooltip>
@@ -129,5 +137,3 @@ export function JobCardSmall({
         </Card>
     );
 }
-
-    
