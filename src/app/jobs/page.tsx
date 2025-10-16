@@ -199,6 +199,10 @@ function JobsPageContent() {
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
 
     // --- Data Fetching ---
+    const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
+    const { data: userProfile } = useDoc(userProfileRef);
+    const isRecruiter = userProfile?.userType === 'recruiter';
+    
     const jobsQuery = useMemo(() => query(collection(firestore, 'jobs'), where('title', '!=', '')), [firestore]);
     const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
     
@@ -211,44 +215,6 @@ function JobsPageContent() {
             });
         }
     }, [firestore]);
-
-    const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
-    const { data: userProfile } = useDoc(userProfileRef);
-    
-    const isRecruiter = userProfile?.userType === 'recruiter';
-    
-    const allApplicationsQuery = useMemo(() => isRecruiter ? query(collection(firestore, 'jobs')) : null, [firestore, isRecruiter]);
-    const { data: jobsWithApps } = useCollection(allApplicationsQuery);
-
-    const applicationsByJob = useMemo(() => {
-        const map = new Map<string, number>();
-        if (jobsWithApps) {
-            jobsWithApps.forEach(job => {
-                 if (job.applications && Array.isArray(job.applications)) {
-                    map.set(job.id, job.applications.length);
-                 }
-            });
-        }
-        return map;
-    }, [jobsWithApps]);
-    
-     const applicantsQuery = useMemo(() => {
-        if (!firestore || !jobs || !isRecruiter) return null;
-        // This is a simplified approach. For production, you'd likely fetch counts differently
-        // to avoid loading all applications for all jobs.
-        return query(collection(firestore, 'applications'));
-    }, [firestore, jobs, isRecruiter]);
-    const { data: allApplications } = useCollection(applicantsQuery);
-
-    const applicantCounts = useMemo(() => {
-        if (!allApplications) return new Map();
-        return allApplications.reduce((acc, app) => {
-            if (app.jobId) {
-                acc.set(app.jobId, (acc.get(app.jobId) || 0) + 1);
-            }
-            return acc;
-        }, new Map<string, number>());
-    }, [allApplications]);
     
     const favouriteJobsQuery = useMemo(() => (firestore && user && !isRecruiter) ? collection(firestore, `users/${user.uid}/favouriteJobs`) : null, [firestore, user, isRecruiter]);
     const { data: favouriteJobs } = useCollection(favouriteJobsQuery);
@@ -604,7 +570,6 @@ function JobsPageContent() {
                     <JobCard 
                         key={job.id} 
                         job={job}
-                        applicantCount={applicantCounts.get(job.id) || 0}
                         isFavourite={favouriteJobIds.has(job.id)}
                         onToggleFavourite={handleToggleFavourite}
                         hasApplied={appliedJobIds.has(job.id)}
@@ -643,7 +608,7 @@ function JobsPageContent() {
                         )}
                     </div>
                     
-                     <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
                         <div className="flex-1 w-full sm:w-auto">
                             <Collapsible>
                                 <div className="flex items-center gap-2">
@@ -705,7 +670,7 @@ function JobsPageContent() {
                                                         <MultiSelect
                                                         options={jobTypeOptions}
                                                         selectedValues={selectedJobTypes}
-                                                        onValuechange={(val) => toggleFilter(setSelectedJobTypes, val)}
+                                                        onValueChange={(val) => toggleFilter(setSelectedJobTypes, val)}
                                                         placeholder="Filter job types..."
                                                     />
                                                 </div>
@@ -819,7 +784,6 @@ function JobsPageContent() {
                                             <JobCard
                                                 key={job.id}
                                                 job={job}
-                                                applicantCount={applicantCounts.get(job.id) || 0}
                                                 isFavourite={false}
                                                 onToggleFavourite={() => {}}
                                                 hasApplied={false}

@@ -19,6 +19,33 @@ import { collection, query } from "firebase/firestore";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import { useRouter } from "next/navigation";
 
+// A new component to securely fetch and display applicant count for a single job
+function ApplicantCounter({ jobId }: { jobId: string }) {
+    const firestore = useFirestore();
+    const { user } = useUser();
+
+    // Query for applicants of a specific job
+    const applicantsQuery = useMemo(() => {
+        if (!firestore || !jobId) return null;
+        return query(collection(firestore, 'jobs', jobId, 'applications'));
+    }, [firestore, jobId]);
+
+    const { data: applicants, isLoading } = useCollection(applicantsQuery);
+
+    if (isLoading || !applicants || applicants.length === 0) {
+        return null;
+    }
+
+    const applicantCount = applicants.length;
+    
+    return (
+         <Badge className="absolute top-2 right-2 flex items-center gap-1.5 z-10 px-2 py-1 rounded-full text-xs bg-lime-500 text-black">
+            {applicantCount === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
+            {applicantCount}
+        </Badge>
+    )
+}
+
 
 export function JobCard({ 
     job, 
@@ -27,7 +54,6 @@ export function JobCard({
     hasApplied, 
     isRecruiter,
     isDraggable,
-    applicantCount,
 }: { 
     job: any; 
     isFavourite: boolean; 
@@ -35,7 +61,6 @@ export function JobCard({
     hasApplied: boolean; 
     isRecruiter: boolean;
     isDraggable: boolean;
-    applicantCount?: number;
 }) {
     const { user } = useUser();
     const router = useRouter();
@@ -52,8 +77,6 @@ export function JobCard({
         transform: isDragging ? `${CSS.Transform.toString(transform)} scale(1.05)` : CSS.Transform.toString(transform),
         zIndex: isDragging ? 10 : 'auto',
     };
-
-    const hasApplicants = applicantCount && applicantCount > 0;
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
@@ -99,11 +122,8 @@ export function JobCard({
                     </Badge>
                 </div>
               )}
-               {isOwner && hasApplicants && (
-                    <Badge className="absolute top-2 right-2 flex items-center gap-1.5 z-10 px-2 py-1 rounded-full text-xs bg-lime-500 text-black">
-                        {applicantCount === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
-                        {applicantCount}
-                    </Badge>
+               {isOwner && (
+                   <ApplicantCounter jobId={job.id} />
                 )}
               <div className={cn("flex flex-col flex-grow", hasApplied && "opacity-50")}>
                   <Link href={destinationUrl} className="flex flex-col flex-grow group-hover:no-underline">
