@@ -90,18 +90,27 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </Badge>
                 </div>
             )}
-            <div className={cn("p-4 px-6 flex flex-col justify-center min-h-[5.5rem]", hasApplied && "opacity-50")}>
-                <div className="flex justify-between items-start gap-4">
-                    <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-base leading-tight line-clamp-1">
-                            {job.title}
-                            <span className="font-normal text-muted-foreground"> at </span>
-                            <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="hover:text-primary relative z-10" onClick={(e) => e.stopPropagation()}>
-                            {job.companyName}
-                            </Link>
-                        </p>
+            <div className={cn("p-4 px-6 flex items-center min-h-[5.5rem]", hasApplied && "opacity-50")}>
+                <div className="flex-1 min-w-0 space-y-1.5">
+                     <p className="font-semibold text-base leading-tight line-clamp-1 pr-10">
+                        {job.title}
+                        <span className="font-normal text-muted-foreground"> at </span>
+                        <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="hover:text-primary relative z-10" onClick={(e) => e.stopPropagation()}>
+                        {job.companyName}
+                        </Link>
+                    </p>
+                    <div className="flex items-center flex-wrap text-sm text-muted-foreground gap-x-3 gap-y-1 mt-1.5 min-w-0">
+                        <div className="flex items-center gap-1.5 line-clamp-1"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{job.location}</span></div>
+                        {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
+                         <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{job.jobType}</Badge>
+                            <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
+                        </div>
                     </div>
-                    {user && !isOwner && !isRecruiter && (
+                </div>
+
+                <div className="relative z-10 flex flex-col justify-between items-center h-full self-stretch">
+                     {user && !isOwner && !isRecruiter && (
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -109,7 +118,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                         variant="ghost"
                                         size="icon"
                                         onClick={handleFavouriteClick}
-                                        className="h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10 flex-shrink-0 -mt-1"
+                                        className="h-9 w-9 rounded-full text-muted-foreground hover:text-red-500 flex-shrink-0"
                                         disabled={hasApplied}
                                         aria-label="Toggle Favourite"
                                     >
@@ -122,18 +131,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                             </Tooltip>
                         </TooltipProvider>
                     )}
-                </div>
 
-                <div className="flex justify-between items-end gap-4">
-                     <div className="flex items-center flex-wrap text-sm text-muted-foreground gap-x-3 gap-y-1 mt-1.5 min-w-0">
-                        <div className="flex items-center gap-1.5 line-clamp-1"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{job.location}</span></div>
-                        {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
-                        <div className="flex items-center gap-2">
-                            <Badge variant="secondary">{job.jobType}</Badge>
-                            <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
-                        </div>
-                    </div>
-                    <div className="relative z-10 flex-shrink-0 -mb-1">
+                     <div className="mt-auto">
                         {isOwner ? (
                              <TooltipProvider>
                                 <div className="flex items-center gap-1">
