@@ -126,7 +126,6 @@ export default function NewJobPage() {
       );
     });
 
-    toast({ title: 'Job posted successfully!' });
     router.push('/jobs');
   };
 
