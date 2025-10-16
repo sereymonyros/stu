@@ -28,7 +28,7 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ACCEPTED_IMAGE_TYPES, ACCEPTED_RESUME_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
-import { FileText, Sparkles, UploadCloud } from 'lucide-react';
+import { FileText, Sparkles, UploadCloud, Save } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -36,6 +36,7 @@ import { Progress } from '@/components/ui/progress';
 import { verifyHumanFace } from '@/ai/flows/verify-human-face-flow';
 import { uploadResume } from '@/ai/flows/upload-resume-flow';
 import { updateResumeOnApplications } from '@/ai/flows/update-resume-on-applications-flow';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Helper function to convert a File to a Base64 data URI
 const toBase64 = (file: File): Promise<string> =>
@@ -304,152 +305,165 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1 p-4 md:p-6 lg:p-8">
-        <Card className="max-w-2xl mx-auto rounded-3xl">
-          <CardHeader>
-            <CardTitle>My Profile</CardTitle>
-            <CardDescription>A complete profile with a real photo is required to post or apply for jobs.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {user && userProfile ? (
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                  <div className="flex flex-col sm:flex-row items-center gap-6">
-                    <Avatar className="h-24 w-24">
-                        <AvatarImage src={currentPhoto ?? ''} />
-                        <AvatarFallback>{userProfile.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <FormField control={form.control} name="photo" render={({ field }) => (
-                        <FormItem className="w-full">
-                            <FormLabel>Update Picture (Must be a human face)</FormLabel>
-                            <FormControl>
-                              <div className="w-full">
-                                <Label htmlFor="photo-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
-                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                        <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
-                                        <p className="mb-1 text-sm text-muted-foreground">
-                                          <span className="font-semibold">Click to upload</span> or drag and drop
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">PNG, JPG or WEBP (MAX. 5MB)</p>
-                                    </div>
-                                    <Input 
-                                      id="photo-upload"
-                                      type="file" 
-                                      className="hidden"
-                                      accept="image/*" 
-                                      disabled={isSubmitting}
-                                      ref={photoInputRef}
-                                      onChange={(e) => {
-                                          field.onChange(e.target.files);
-                                          handleImageChange(e);
-                                      }}
-                                    />
-                                </Label>
-                              </div>
-                            </FormControl>
-                            {verificationMessage && (
-                                <FormDescription className="flex items-center gap-2 mt-2">
-                                  <Sparkles className="h-4 w-4 text-yellow-500" /> {verificationMessage}
-                                </FormDescription>
-                            )}
-                            <FormMessage />
-                        </FormItem>
-                    )}/>
-                  </div>
-
-                  <FormField control={form.control} name="displayName" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your public name" {...field} disabled={isSubmitting} required />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                   <FormField control={form.control} name="address" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., #123 Street 456, Phnom Penh" {...field} disabled={isSubmitting} required/>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                  <FormField control={form.control} name="phone" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., 012 345 678" {...field} disabled={isSubmitting} required/>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                  {userProfile.userType === 'standard' && (
-                    <>
-                      <Separator />
-                      <FormField control={form.control} name="resume" render={({ field }) => (
+        <div className="max-w-2xl mx-auto relative">
+          <Card className="rounded-3xl">
+            <CardHeader>
+              <CardTitle>My Profile</CardTitle>
+              <CardDescription>A complete profile with a real photo is required to post or apply for jobs.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {user && userProfile ? (
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-16">
+                    <div className="flex flex-col sm:flex-row items-center gap-6">
+                      <Avatar className="h-24 w-24">
+                          <AvatarImage src={currentPhoto ?? ''} />
+                          <AvatarFallback>{userProfile.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <FormField control={form.control} name="photo" render={({ field }) => (
                           <FormItem className="w-full">
-                              <FormLabel>Resume</FormLabel>
-                                {userProfile.resumeUrl && !form.watch("resume")?.[0] && (
-                                  <div className="flex items-center gap-3 p-3 rounded-md border bg-muted/50 mb-4">
-                                      <FileText className="h-6 w-6 text-muted-foreground" />
-                                      <a href={userProfile.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline flex-1 truncate">
-                                          {getFileName(userProfile.resumeUrl)}
-                                      </a>
-                                  </div>
-                                )}
+                              <FormLabel>Update Picture (Must be a human face)</FormLabel>
                               <FormControl>
-                                <div>
-                                  <Label htmlFor="resume-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
+                                <div className="w-full">
+                                  <Label htmlFor="photo-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
                                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                           <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
                                           <p className="mb-1 text-sm text-muted-foreground">
-                                            <span className="font-semibold">{userProfile.resumeUrl ? 'Upload new resume' : 'Click to upload'}</span> or drag and drop
+                                            <span className="font-semibold">Click to upload</span> or drag and drop
                                           </p>
-                                          <p className="text-xs text-muted-foreground">PDF, DOC, or DOCX (MAX. 5MB)</p>
+                                          <p className="text-xs text-muted-foreground">PNG, JPG or WEBP (MAX. 5MB)</p>
                                       </div>
                                       <Input 
-                                        id="resume-upload"
+                                        id="photo-upload"
                                         type="file" 
                                         className="hidden"
-                                        accept=".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                        accept="image/*" 
                                         disabled={isSubmitting}
-                                        ref={resumeInputRef}
-                                        onChange={(e) => field.onChange(e.target.files)}
+                                        ref={photoInputRef}
+                                        onChange={(e) => {
+                                            field.onChange(e.target.files);
+                                            handleImageChange(e);
+                                        }}
                                       />
                                   </Label>
                                 </div>
                               </FormControl>
-                              <FormDescription>Uploading a new resume will update it on all active job applications.</FormDescription>
+                              {verificationMessage && (
+                                  <FormDescription className="flex items-center gap-2 mt-2">
+                                    <Sparkles className="h-4 w-4 text-yellow-500" /> {verificationMessage}
+                                  </FormDescription>
+                              )}
                               <FormMessage />
                           </FormItem>
                       )}/>
-                    </>
-                  )}
-                  
-                  {uploadProgress !== null && (
-                    <div className="space-y-2">
-                        <Label>{isSubmitting ? 'Uploading...' : 'Upload Complete'}</Label>
-                        <Progress value={uploadProgress} />
-                        <p className="text-sm text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
                     </div>
-                  )}
 
-                  <Button type="submit" disabled={isSubmitting} className="w-full">
-                    {isSubmitting ? 'Saving...' : 'Save Changes'}
-                  </Button>
-                </form>
-              </Form>
-            ) : (
-                <div className="text-center">
-                    <p className="text-muted-foreground">{error ? `Error: ${error.message}` : "Could not load profile."}</p>
-                </div>
-            )}
-          </CardContent>
-        </Card>
+                    <FormField control={form.control} name="displayName" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your public name" {...field} disabled={isSubmitting} required />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                     <FormField control={form.control} name="address" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., #123 Street 456, Phnom Penh" {...field} disabled={isSubmitting} required/>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    <FormField control={form.control} name="phone" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., 012 345 678" {...field} disabled={isSubmitting} required/>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    {userProfile.userType === 'standard' && (
+                      <>
+                        <Separator />
+                        <FormField control={form.control} name="resume" render={({ field }) => (
+                            <FormItem className="w-full">
+                                <FormLabel>Resume</FormLabel>
+                                  {userProfile.resumeUrl && !form.watch("resume")?.[0] && (
+                                    <div className="flex items-center gap-3 p-3 rounded-md border bg-muted/50 mb-4">
+                                        <FileText className="h-6 w-6 text-muted-foreground" />
+                                        <a href={userProfile.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline flex-1 truncate">
+                                            {getFileName(userProfile.resumeUrl)}
+                                        </a>
+                                    </div>
+                                  )}
+                                <FormControl>
+                                  <div>
+                                    <Label htmlFor="resume-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
+                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                                            <p className="mb-1 text-sm text-muted-foreground">
+                                              <span className="font-semibold">{userProfile.resumeUrl ? 'Upload new resume' : 'Click to upload'}</span> or drag and drop
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">PDF, DOC, or DOCX (MAX. 5MB)</p>
+                                        </div>
+                                        <Input 
+                                          id="resume-upload"
+                                          type="file" 
+                                          className="hidden"
+                                          accept=".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                          disabled={isSubmitting}
+                                          ref={resumeInputRef}
+                                          onChange={(e) => field.onChange(e.target.files)}
+                                        />
+                                    </Label>
+                                  </div>
+                                </FormControl>
+                                <FormDescription>Uploading a new resume will update it on all active job applications.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}/>
+                      </>
+                    )}
+                    
+                    {uploadProgress !== null && (
+                      <div className="space-y-2">
+                          <Label>{isSubmitting ? 'Uploading...' : 'Upload Complete'}</Label>
+                          <Progress value={uploadProgress} />
+                          <p className="text-sm text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
+                      </div>
+                    )}
+                    <TooltipProvider>
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                              <Button type="submit" size="icon" disabled={isSubmitting} className="absolute bottom-6 right-6 h-14 w-14 rounded-full shadow-lg">
+                                  <Save className="h-6 w-6" />
+                              </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                              <p>Save Changes</p>
+                          </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                  </form>
+                </Form>
+              ) : (
+                  <div className="text-center">
+                      <p className="text-muted-foreground">{error ? `Error: ${error.message}` : "Could not load profile."}</p>
+                  </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   );
 }
+
+    
