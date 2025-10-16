@@ -38,12 +38,12 @@ function JobCard({ job }: { job: any }) {
         : `/jobs/${job.id}/edit`;
 
     return (
-        <Link href={destinationUrl} className="block hover:shadow-lg transition-shadow duration-200 rounded-3xl">
+        <Link href={destinationUrl} className="block rounded-3xl">
             <Card className="h-full relative overflow-hidden rounded-3xl">
                  {isLoading ? (
                     <Skeleton className="absolute top-0 right-0 h-8 w-12 rounded-bl-lg" />
                 ) : hasApplicants ? (
-                    <Badge className="absolute top-0 right-0 flex items-center gap-1.5 z-10 px-3 py-1.5 rounded-bl-lg rounded-tr-lg text-sm bg-lime-500 text-black hover:bg-lime-600">
+                    <Badge className="absolute top-0 right-0 flex items-center gap-1.5 z-10 px-3 py-1.5 rounded-bl-lg rounded-tr-lg text-sm bg-lime-500 text-black">
                         {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
                         {applicants.length}
                     </Badge>
@@ -87,11 +87,11 @@ function AppliedJobCard({ job, application, isFavourite }: { job: any, applicati
     }
 
     const statusColors: { [key: string]: string } = {
-        submitted: 'bg-blue-500 hover:bg-blue-600',
-        reviewed: 'bg-yellow-500 hover:bg-yellow-600 text-black',
-        offered: 'bg-purple-500 hover:bg-purple-600',
-        accepted: 'bg-green-500 hover:bg-green-600',
-        rejected: 'bg-red-500 hover:bg-red-600',
+        submitted: 'bg-blue-500',
+        reviewed: 'bg-yellow-500 text-black',
+        offered: 'bg-purple-500',
+        accepted: 'bg-green-500',
+        rejected: 'bg-red-500',
     }
     
     const canWithdraw = application.status === 'submitted' || application.status === 'reviewed';
@@ -137,7 +137,7 @@ function AppliedJobCard({ job, application, isFavourite }: { job: any, applicati
 
 function FavouriteJobCard({ job }: { job: any }) {
     return (
-         <Link href={`/jobs/${job.id}/details`} className="block hover:shadow-lg transition-shadow duration-200 rounded-3xl">
+         <Link href={`/jobs/${job.id}/details`} className="block rounded-3xl">
             <Card className="rounded-3xl h-full">
                 <CardContent className="p-4 flex flex-col justify-between h-full">
                     <div className="flex-grow">
@@ -198,7 +198,7 @@ function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting, onNotif
                      <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onDelete(savedSearch.id)} disabled={isDeleting}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => onDelete(savedSearch.id)} disabled={isDeleting}>
                                     <Trash2 className="h-4 w-4" />
                                     <span className="sr-only">Delete search</span>
                                 </Button>
