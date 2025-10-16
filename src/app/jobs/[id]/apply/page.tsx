@@ -389,7 +389,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure you want to apply?</AlertDialogTitle>
-                        <AlertDialogDescription>
+                        <AlertDialogDescription className="py-3">
                           Your profile and resume will be sent to {job.companyName}. This action cannot be undone.
                         </AlertDialogDescription>
                          <AlertDialogCancel asChild>
