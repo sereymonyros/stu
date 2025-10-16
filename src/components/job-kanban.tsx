@@ -75,7 +75,7 @@ export function JobCard({
         return null;
     }, [job.salaryMin, job.salaryMax]);
 
-    const destinationUrl = isRecruiter ? `/jobs/${job.id}/details` : `/jobs/${job.id}/apply`;
+    const destinationUrl = `/jobs/${job.id}/details`;
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
@@ -173,17 +173,17 @@ export function JobCard({
                                     </TooltipProvider>
                                 ) : (
                                     hasApplied ? (
-                                        <Button asChild variant="outline" size="sm"><Link href={`/jobs/${job.id}/apply`} onClick={(e) => e.stopPropagation()}>View</Link></Button>
+                                        <Button asChild variant="outline" size="sm"><Link href={`/jobs/${job.id}/details`} onClick={(e) => e.stopPropagation()}>View</Link></Button>
                                     ) : (
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <Button asChild variant="ghost" size="icon">
-                                                      <Link href={destinationUrl} onClick={(e) => { e.stopPropagation(); router.push(destinationUrl); }}><Send /></Link>
+                                                      <Link href={destinationUrl} onClick={(e) => { e.stopPropagation(); router.push(destinationUrl); }}><Eye /></Link>
                                                     </Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    <p>Apply</p>
+                                                    <p>View</p>
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
