@@ -5,13 +5,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { seedDatabase } from '@/ai/flows/seed-database-flow';
+import { seedDatabase, type SeedDatabaseOutput } from '@/ai/flows/seed-database-flow';
 import { Database } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function SeedPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<SeedDatabaseOutput | null>(null);
   const { toast } = useToast();
 
   const handleSeed = async () => {
@@ -50,18 +50,23 @@ export default function SeedPage() {
             Database Seeder
           </CardTitle>
           <CardDescription>
-            Use this tool to populate your Firestore database with test data. It will create test users, jobs, and add 10 specific jobs for 'sereymonyros@gmail.com'.
+            Use this tool to populate your Firestore database with a consistent set of test data.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <Alert>
-            <AlertTitle>Warning!</AlertTitle>
+            <AlertTitle>What this tool does:</AlertTitle>
             <AlertDescription>
-              This action will create users in Firebase Authentication and documents in Firestore. It is designed to skip existing data to prevent duplicates.
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Creates or verifies user 'sereymonyros@gmail.com' and adds 10 jobs.</li>
+                <li>Creates or verifies user 'testrecruiter@example.com' and adds 5 jobs.</li>
+                <li>Creates or verifies one 'standarduser@example.com' for testing applications.</li>
+                 <li>This process is safe to run multiple times; it will not duplicate users. However, it will add new jobs on each run.</li>
+              </ul>
             </AlertDescription>
           </Alert>
           <Button onClick={handleSeed} disabled={isLoading} className="w-full">
-            {isLoading ? 'Seeding in Progress...' : 'Seed Database'}
+            {isLoading ? 'Seeding in Progress...' : 'Run Seeder'}
           </Button>
           {result && (
             <Card className="bg-muted p-4 rounded-3xl">
@@ -71,10 +76,10 @@ export default function SeedPage() {
               <CardContent className="p-0 text-sm space-y-1">
                 <p><strong>Message:</strong> {result.message}</p>
                 <ul className="list-disc list-inside space-y-1 pl-2">
-                  <li><strong>Recruiters Created:</strong> {result.recruitersCreated}</li>
-                  <li><strong>Standard Users Created:</strong> {result.standardUsersCreated}</li>
-                  <li><strong>Jobs Created:</strong> {result.jobsCreated}</li>
-                  <li><strong>Special Jobs Created:</strong> {result.specialJobsCreated} (for sereymonyros@gmail.com)</li>
+                  <li><strong>New Users Created:</strong> {result.usersCreated}</li>
+                  <li><strong>Jobs for sereymonyros@gmail.com:</strong> {result.jobsCreatedForUser1}</li>
+                  <li><strong>Jobs for testrecruiter@example.com:</strong> {result.jobsCreatedForUser2}</li>
+                   <li><strong>Total New Jobs:</strong> {result.totalJobsCreated}</li>
                 </ul>
               </CardContent>
             </Card>

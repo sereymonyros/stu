@@ -2,8 +2,7 @@
 'use server';
 /**
  * @fileOverview A flow to seed the Firestore database with test data.
- * It creates 10 recruiters, 10 standard users, and 10 job postings.
- * It also includes logic to add 10 specific jobs for the user 'sereymonyros@gmail.com'.
+ * It creates specific test users and job postings associated with them.
  */
 
 import { ai } from '@/ai/genkit';
@@ -15,10 +14,10 @@ import type { UserRecord } from 'firebase-admin/auth';
 
 const SeedDatabaseOutputSchema = z.object({
   message: z.string(),
-  recruitersCreated: z.number(),
-  standardUsersCreated: z.number(),
-  jobsCreated: z.number(),
-  specialJobsCreated: z.number(),
+  usersCreated: z.number(),
+  jobsCreatedForUser1: z.number(),
+  jobsCreatedForUser2: z.number(),
+  totalJobsCreated: z.number(),
 });
 export type SeedDatabaseOutput = z.infer<typeof SeedDatabaseOutputSchema>;
 
@@ -30,6 +29,34 @@ export async function seedDatabase(): Promise<SeedDatabaseOutput> {
   return seedDatabaseFlow({});
 }
 
+// Helper function to create or get a user
+async function createOrGetUser(auth: any, firestore: any, email: string, displayName: string, userType: 'recruiter' | 'standard' = 'recruiter'): Promise<{user: UserRecord, created: boolean}> {
+    try {
+        const user = await auth.getUserByEmail(email);
+        return { user, created: false };
+    } catch (error: any) {
+        if (error.code === 'auth/user-not-found') {
+            const userRecord = await auth.createUser({
+                email,
+                password: 'password',
+                displayName,
+            });
+            await firestore.collection('users').doc(userRecord.uid).set({
+                uid: userRecord.uid,
+                displayName,
+                email,
+                address: `123 ${displayName.split(' ')[0]} Street`,
+                phone: '555-555-5555',
+                userType: userType,
+                photoURL: `https://i.pravatar.cc/150?u=${email}`
+            });
+            return { user: userRecord, created: true };
+        }
+        throw error;
+    }
+}
+
+
 const seedDatabaseFlow = ai.defineFlow(
   {
     name: 'seedDatabaseFlow',
@@ -38,163 +65,98 @@ const seedDatabaseFlow = ai.defineFlow(
   },
   async () => {
     const { auth, firestore } = initializeFirebaseAdmin();
-    let recruitersCreated = 0;
-    let standardUsersCreated = 0;
-    let jobsCreated = 0;
-    let specialJobsCreated = 0;
+    let usersCreated = 0;
+    let jobsCreatedForUser1 = 0;
+    let jobsCreatedForUser2 = 0;
 
-    const recruiters: UserRecord[] = [];
+    const locations = ['Phnom Penh', 'Siem Reap', 'Battambang', 'Sihanoukville'];
+    const jobTypes = ['Full-time', 'Part-time', 'Contract'];
 
     try {
-      // 1. Create 10 Recruiter Users
-      for (let i = 1; i <= 10; i++) {
-        const email = `recruiter${i}@example.com`;
-        const displayName = `Recruiter ${i}`;
-        try {
-            const user = await auth.getUserByEmail(email);
-            recruiters.push(user);
-        } catch (error: any) {
-            if (error.code === 'auth/user-not-found') {
-                const userRecord = await auth.createUser({
-                    email,
-                    password: 'password',
-                    displayName,
-                });
-                await firestore.collection('users').doc(userRecord.uid).set({
-                    uid: userRecord.uid,
-                    displayName,
-                    email,
-                    address: `${i} Recruiter Lane`,
-                    phone: '555-010' + i,
-                    userType: 'recruiter',
-                    photoURL: `https://i.pravatar.cc/150?u=${email}`
-                });
-                recruiters.push(userRecord);
-                recruitersCreated++;
-            } else {
-                throw error; // Re-throw other errors
-            }
-        }
-      }
+      // --- User 1: 6b43Hazb5dWAygJrWly999YbnvM2 ---
+      const user1Email = 'sereymonyros@gmail.com';
+      const user1Result = await createOrGetUser(auth, firestore, user1Email, 'Sereymony Ros');
+      const user1 = user1Result.user;
+      if (user1Result.created) usersCreated++;
 
-      // 2. Create 10 Standard Users
-      for (let i = 1; i <= 10; i++) {
-        const email = `standarduser${i}@example.com`;
-        const displayName = `Standard User ${i}`;
-         try {
-            await auth.getUserByEmail(email);
-        } catch (error: any) {
-             if (error.code === 'auth/user-not-found') {
-                const userRecord = await auth.createUser({
-                    email,
-                    password: 'password',
-                    displayName,
-                });
-                await firestore.collection('users').doc(userRecord.uid).set({
-                    uid: userRecord.uid,
-                    displayName,
-                    email,
-                    address: `${i} Standard Street`,
-                    phone: '555-020' + i,
-                    userType: 'standard',
-                    photoURL: `https://i.pravatar.cc/150?u=${email}`
-                });
-                standardUsersCreated++;
-             } else {
-                 throw error;
-             }
-        }
-      }
+      const user1Jobs = [
+        { title: 'Lead Blockchain Developer', company: 'CryptoCambodia' },
+        { title: 'AI/ML Engineer', company: 'AI Solutions Khmer' },
+        { title: 'Senior Cloud Architect', company: 'Mekong Cloud Services' },
+        { title: 'Mobile Development Lead (React Native)', company: 'Angkor App Development' },
+        { title: 'Cybersecurity Analyst', company: 'CyberGuardians' },
+        { title: 'Head of Digital Marketing', company: 'Digital Pagoda' },
+        { title: 'E-commerce Manager', company: 'KhmerCart' },
+        { title: 'Chief Technology Officer (CTO)', company: 'Startup Hub PP' },
+        { title: 'Principal UI/UX Designer', company: 'Banyan UX' },
+        { title: 'Director of Engineering', company: 'FutureTech Cambodia' },
+      ];
 
-      // 3. Create 10 Job Postings for the new recruiters
-      const jobTitles = ['Software Engineer', 'UX Designer', 'Product Manager', 'Data Scientist', 'Marketing Lead', 'DevOps Engineer', 'QA Tester', 'Frontend Developer', 'Backend Developer', 'Project Manager'];
-      const companies = ['TechCorp', 'Innovate LLC', 'Data Solutions', 'Creative Minds', 'MarketBoost', 'CloudNine', 'BugFree Inc.', 'UI Masters', 'API World', 'TaskMasters'];
-      const locations = ['Phnom Penh', 'Siem Reap', 'Battambang', 'Sihanoukville'];
-      const jobTypes = ['Full-time', 'Part-time', 'Contract'];
-      
-      for (let i = 0; i < 10; i++) {
-        const recruiter = recruiters[i];
+      for (const job of user1Jobs) {
         const jobData = {
-          title: jobTitles[i],
-          companyName: companies[i],
-          location: locations[i % locations.length],
-          jobType: jobTypes[i % jobTypes.length],
+          title: job.title,
+          companyName: job.company,
+          location: locations[jobsCreatedForUser1 % locations.length],
+          jobType: jobTypes[jobsCreatedForUser1 % jobTypes.length],
           status: 'Available',
-          description: `This is a great opportunity for a ${jobTitles[i]} at ${companies[i]}.`,
-          salaryMin: 50000 + (i * 5000),
-          salaryMax: 70000 + (i * 5000),
-          recruiterId: recruiter.uid,
-          recruiterDisplayName: recruiter.displayName,
+          description: `An exciting new role for a ${job.title} at ${job.company}.`,
+          salaryMin: 90000 + (jobsCreatedForUser1 * 10000),
+          salaryMax: 120000 + (jobsCreatedForUser1 * 10000),
+          recruiterId: user1.uid,
+          recruiterDisplayName: user1.displayName,
           createdAt: FieldValue.serverTimestamp(),
         };
-        const jobRef = firestore.collection('jobs').doc(jobTitles[i].replace(/\s+/g, '-').toLowerCase());
-        const jobDoc = await jobRef.get();
-        if (!jobDoc.exists) {
-            await jobRef.set(jobData);
-            jobsCreated++;
-        }
+        await firestore.collection('jobs').add(jobData);
+        jobsCreatedForUser1++;
       }
+      
+      // --- User 2: zsxcTqelyFashlfKMrXKAYvAJ783 ---
+      const user2Email = 'testrecruiter@example.com';
+      const user2Result = await createOrGetUser(auth, firestore, user2Email, 'Test Recruiter');
+      const user2 = user2Result.user;
+       if (user2Result.created) usersCreated++;
 
-      // 4. Create or get special user and create 10 specific jobs for them
-      const specialUserEmail = 'sereymonyros@gmail.com';
-      let specialUser: UserRecord;
-      try {
-        specialUser = await auth.getUserByEmail(specialUserEmail);
-      } catch (error: any) {
-        if (error.code === 'auth/user-not-found') {
-          console.log(`Special user ${specialUserEmail} not found, creating them now...`);
-          specialUser = await auth.createUser({
-            email: specialUserEmail,
-            password: 'password',
-            displayName: 'Sereymony Ros',
-          });
-          await firestore.collection('users').doc(specialUser.uid).set({
-            uid: specialUser.uid,
-            displayName: 'Sereymony Ros',
-            email: specialUserEmail,
-            address: '1 Special Ave, Phnom Penh',
-            phone: '555-555-5555',
-            userType: 'recruiter',
-            photoURL: `https://i.pravatar.cc/150?u=${specialUserEmail}`
-          });
-        } else {
-          throw error;
-        }
-      }
-
-      const specialJobTitles = [
-          'Lead Blockchain Developer', 'AI/ML Engineer', 'Senior Cloud Architect', 'Mobile Development Lead (React Native)',
-          'Cybersecurity Analyst', 'Head of Digital Marketing', 'E-commerce Manager', 'Chief Technology Officer (CTO)',
-          'Principal UI/UX Designer', 'Director of Engineering'
-      ];
-      const specialCompanies = [
-          'CryptoCambodia', 'AI Solutions Khmer', 'Mekong Cloud Services', 'Angkor App Development', 'CyberGuardians',
-          'Digital Pagoda', 'KhmerCart', 'Startup Hub PP', 'Banyan UX', 'FutureTech Cambodia'
+      const user2Jobs = [
+        { title: 'Junior Frontend Developer', company: 'WebWeavers' },
+        { title: 'Graphic Designer', company: 'Creative Circle' },
+        { title: 'Customer Support Specialist', company: 'Helpful Hands' },
+        { title: 'IT Helpdesk Technician', company: 'TechFixers' },
+        { title: 'Social Media Manager', company: 'BuzzBuilders' },
       ];
 
-      for (let i = 0; i < 10; i++) {
-          const jobTitleWithSuffix = `${specialJobTitles[i]} #${Math.floor(Math.random() * 1000)}`;
-          const jobData = {
-              title: jobTitleWithSuffix,
-              companyName: specialCompanies[i],
-              location: locations[i % locations.length],
-              jobType: jobTypes[i % jobTypes.length],
-              status: 'Available',
-              description: `An exciting new role for a ${specialJobTitles[i]} at ${specialCompanies[i]}.`,
-              salaryMin: 90000 + (i * 10000),
-              salaryMax: 120000 + (i * 10000),
-              recruiterId: specialUser.uid,
-              recruiterDisplayName: specialUser.displayName,
-              createdAt: FieldValue.serverTimestamp(),
-          };
-          // Using addDoc for guaranteed unique IDs for special jobs.
-          await firestore.collection('jobs').add(jobData);
-          specialJobsCreated++;
+       for (const job of user2Jobs) {
+        const jobData = {
+          title: job.title,
+          companyName: job.company,
+          location: locations[jobsCreatedForUser2 % locations.length],
+          jobType: jobTypes[jobsCreatedForUser2 % jobTypes.length],
+          status: 'Available',
+          description: `A great entry-level opportunity for a ${job.title} at ${job.company}.`,
+          salaryMin: 40000 + (jobsCreatedForUser2 * 2000),
+          salaryMax: 55000 + (jobsCreatedForUser2 * 2000),
+          recruiterId: user2.uid,
+          recruiterDisplayName: user2.displayName,
+          createdAt: FieldValue.serverTimestamp(),
+        };
+        await firestore.collection('jobs').add(jobData);
+        jobsCreatedForUser2++;
       }
+      
+      // --- Create one standard user for testing applications ---
+      const standardUserResult = await createOrGetUser(auth, firestore, 'standarduser@example.com', 'Standard User', 'standard');
+      if (standardUserResult.created) usersCreated++;
 
 
-      const message = `Database seeding complete. Already existing data was skipped.`;
-      return { message, recruitersCreated, standardUsersCreated, jobsCreated, specialJobsCreated };
+      const totalJobsCreated = jobsCreatedForUser1 + jobsCreatedForUser2;
+      const message = `Database seeding complete. ${totalJobsCreated} jobs and ${usersCreated} users were newly created.`;
+      
+      return { 
+          message, 
+          usersCreated,
+          jobsCreatedForUser1, 
+          jobsCreatedForUser2, 
+          totalJobsCreated 
+      };
 
     } catch (error: any) {
       console.error('Error seeding database:', error);
