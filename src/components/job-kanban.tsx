@@ -140,7 +140,7 @@ export function JobCard({
                                         <div className="flex items-center gap-1">
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+                                                     <Button asChild variant="ghost" size="icon" className="h-9 w-9">
                                                         <Link href={`/jobs/${job.id}/details`} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
                                                     </Button>
                                                 </TooltipTrigger>
@@ -159,7 +159,7 @@ export function JobCard({
                                                         </Link>
                                                     </Button>
                                                 </TooltipTrigger>
-                                                <TooltipContent><p>{applicants?.length === 1 ? '1 Applicant' : `${applicants?.length || 0} Applicants`}</p></TooltipContent>
+                                                 <TooltipContent><p>{applicants?.length === 1 ? '1 Applicant' : `${applicants?.length || 0} Applicants`}</p></TooltipContent>
                                             </Tooltip>
                                         </div>
                                     </TooltipProvider>
@@ -181,8 +181,8 @@ export function JobCard({
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <Button asChild variant="ghost" size="icon">
-                                                      <Link href={destinationUrl} onClick={(e) => { e.stopPropagation(); router.push(destinationUrl); }}><Eye className="h-4 w-4" /></Link>
+                                                    <Button variant="ghost" size="icon">
+                                                      <Eye className="h-4 w-4" />
                                                     </Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
