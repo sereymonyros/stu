@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState, useEffect, Suspense } from 'react';
@@ -314,6 +313,10 @@ function JobsPageContent() {
         if (!user || !firestore) {
             router.push('/login');
             return;
+        }
+
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            navigator.vibrate(50);
         }
 
         const favDocRef = doc(firestore, `users/${user.uid}/favouriteJobs`, jobId);
