@@ -26,7 +26,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { DndContext, type DragEndEvent, type DragStartEvent, useSensor, PointerSensor, TouchSensor, useSensors } from '@dnd-kit/core';
-import { Board, JobCard } from '@/components/job-kanban';
+import { Board } from '@/components/job-kanban';
 import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import JobsLoading from './loading';
@@ -42,6 +42,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { JobCardBig } from '@/components/job-card-big';
 import { JobCardSmall } from '@/components/job-card-small';
 import { Plus } from 'lucide-react';
+import { ApplicantCounter } from '@/components/applicant-counter';
 
 
 function JobsPageContent() {
@@ -53,7 +54,7 @@ function JobsPageContent() {
     const isMobile = useIsMobile();
     
     // --- View State ---
-    const [viewMode, setViewMode] = useState<'card' | 'list' |'board'>('card');
+    const [viewMode, setViewMode] = useState<'card' | 'list' |'board'>('list');
     
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
@@ -67,6 +68,24 @@ function JobsPageContent() {
     const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
     
     const [jobCount, setJobCount] = useState<number | null>(null);
+
+    // This is a new query to get all applications to show the count on the job card
+    // We only run this for recruiters to avoid unnecessary reads for standard users.
+    const allApplicationsQuery = useMemo(() => (isRecruiter && firestore) ? query(collection(firestore, 'applications')) : null, [firestore, isRecruiter]);
+    const { data: allApplications } = useCollection(allApplicationsQuery);
+    
+    const applicationsByJob = useMemo(() => {
+        if (!allApplications) return new Map<string, number>();
+        
+        return allApplications.reduce((acc, app) => {
+            if (app.jobId) {
+                acc.set(app.jobId, (acc.get(app.jobId) || 0) + 1);
+            }
+            return acc;
+        }, new Map<string, number>());
+    }, [allApplications]);
+
+
     useEffect(() => {
         if (firestore) {
             const jobsCollection = collection(firestore, 'jobs');
@@ -488,43 +507,43 @@ function JobsPageContent() {
                         )}
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row items-center gap-2">
-                        <div className="flex-1 w-full">
+                     <div className="flex flex-col sm:flex-row items-center gap-2">
+                        <div className="flex flex-1 items-center gap-2 w-full">
+                           <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                    type="search"
+                                    placeholder="Search by title..."
+                                    className="pl-10 h-10 w-full"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
                             <Collapsible>
                                 <div className="flex items-center gap-2">
-                                     <div className="relative flex-1">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                        <Input
-                                            type="search"
-                                            placeholder="Search by title..."
-                                            className="pl-10 h-10 w-full"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                        />
-                                    </div>
-                                    <CollapsibleTrigger asChild>
+                                     <CollapsibleTrigger asChild>
                                         <Button variant="outline" className="h-10">
                                             <Filter className="mr-2 h-4 w-4" />
                                             Filters
                                         </Button>
                                     </CollapsibleTrigger>
+                                    {hasActiveFilters && (
+                                         <TooltipProvider>
+                                             <Tooltip>
+                                                 <TooltipTrigger asChild>
+                                                     <Button variant="destructive" size="icon" onClick={clearAllFilters} className="h-10 w-10">
+                                                         <X className="h-5 w-5" />
+                                                     </Button>
+                                                 </TooltipTrigger>
+                                                 <TooltipContent>
+                                                     <p>Clear all filters</p>
+                                                 </TooltipContent>
+                                             </Tooltip>
+                                         </TooltipProvider>
+                                    )}
                                 </div>
                                 <CollapsibleContent>
-                                    <Card className="p-4 rounded-3xl mt-4 relative">
-                                        {hasActiveFilters && (
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button variant="destructive" size="icon" onClick={clearAllFilters} className="h-8 w-8 absolute top-2 right-2">
-                                                            <X className="h-5 w-5" />
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Clear all filters</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        )}
+                                    <Card className="p-4 rounded-3xl mt-4 absolute z-20 w-full sm:w-[500px] md:w-[600px] lg:w-[800px] bg-background border shadow-xl">
                                         <div className="grid gap-4">
                                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                                 <div className="space-y-2">
@@ -633,8 +652,8 @@ function JobsPageContent() {
                         
                         <div className="hidden sm:flex">
                              <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}}>
-                                <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
                                 <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
+                                <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
                                 {isRecruiter && <ToggleGroupItem value="board" aria-label="Board view"><KanbanSquare /></ToggleGroupItem>}
                             </ToggleGroup>
                         </div>
@@ -657,15 +676,16 @@ function JobsPageContent() {
                                         key={stage}
                                         id={stage}
                                         title={stage}
-                                        jobs={stageJobs}
+                                        items={stageJobs}
+                                        type="jobs"
                                         isLoading={!jobs} // Kanban uses its own loading prop
                                     >
                                         {stageJobs.map((job: any) => (
-                                            <Board.Card
+                                            <Board.JobCard
                                                 key={job.id}
-                                                job={job}
+                                                job={{...job, applicantCount: applicationsByJob.get(job.id) || 0}}
                                                 isFavourite={false}
-                                                onToggleFavourite={() => {}}
+                                                onToggleFavourite={async () => {}}
                                                 hasApplied={false}
                                                 isRecruiter={true}
                                                 isDraggable={true}
