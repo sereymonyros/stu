@@ -123,13 +123,13 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                            {job.companyName}
                          </Link>
                     </div>
-                     <div className="flex items-center text-sm text-muted-foreground gap-4 mt-1">
+                     <div className="flex items-center flex-wrap text-sm text-muted-foreground gap-x-4 gap-y-2 mt-1.5">
                         <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="line-clamp-1">{job.location}</span></div>
                         {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
-                    </div>
-                     <div className="mt-2 flex items-center gap-2">
-                        <Badge variant="secondary">{job.jobType}</Badge>
-                        <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
+                        <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{job.jobType}</Badge>
+                            <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
+                        </div>
                     </div>
                 </div>
 
