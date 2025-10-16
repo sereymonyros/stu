@@ -13,7 +13,7 @@ import { marked } from 'marked';
 import { useUser, useDoc, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useMemo } from 'react';
-import { JobResultCard } from './job-result-card';
+import { JobCardSmall } from './job-card-small';
 import { useChatbot } from './chatbot-provider';
 
 interface Message {
@@ -49,7 +49,14 @@ export function Chatbot() {
             <div className="space-y-2">
                 <p className="font-medium">I found {content.length} job(s) for you:</p>
                 {content.map(job => (
-                   <JobResultCard key={job.id} job={job} onLinkClick={() => setOpen(false)}/>
+                   <JobCardSmall 
+                        key={job.id} 
+                        job={job}
+                        isFavourite={false} // Chatbot doesn't know about favourites
+                        onToggleFavourite={async () => {}}
+                        hasApplied={false} // Chatbot doesn't know about applications
+                        isRecruiter={false}
+                   />
                 ))}
             </div>
         )

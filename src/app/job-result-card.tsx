@@ -28,7 +28,7 @@ export function JobResultCard({ job, onLinkClick }: JobResultCardProps) {
       <CardContent className="p-3 pt-0 flex justify-between items-center">
         <Badge variant="secondary">{job.jobType}</Badge>
         <Button asChild size="sm" variant="outline" onClick={onLinkClick}>
-          <Link href={`/jobs/${job.id}/details`}>View Details</Link>
+          <Link href={`/jobs/${job.id}/apply`}>View & Apply</Link>
         </Button>
       </CardContent>
     </Card>

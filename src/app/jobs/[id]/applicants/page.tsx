@@ -12,7 +12,7 @@ import { ArrowLeft, Briefcase } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Board } from '@/components/kanban';
+import { Board } from '@/components/job-kanban';
 import { DndContext, type DragEndEvent, type DragStartEvent, useSensor, PointerSensor, TouchSensor, useSensors } from '@dnd-kit/core';
 import { updateApplicationStatus } from '@/ai/flows/update-application-status-flow';
 import { analyzeApplicant } from '@/ai/flows/analyze-applicant-flow';
@@ -265,7 +265,8 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                                         key={stage}
                                         id={stage}
                                         title={stage}
-                                        applicants={stageApplicants}
+                                        items={stageApplicants}
+                                        type="applicants"
                                         isLoading={!applications && !job}
                                     >
                                         {stageApplicants.map((app: any) => (

@@ -4,13 +4,13 @@
 
 import { useMemo, Suspense, use, useState, useEffect } from 'react';
 import { useCollection, useFirestore, useUser } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, doc, deleteDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Briefcase, Building, MapPin, DollarSign, ArrowLeft, Link as LinkIcon } from 'lucide-react';
+import { Briefcase, Building, MapPin, DollarSign, ArrowLeft, Link as LinkIcon, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -18,55 +18,17 @@ import Image from 'next/image';
 import { getCompanyByName } from '@/ai/flows/get-company-by-name-flow';
 import type { GetCompanyByNameOutput } from '@/ai/flows/get-company-by-name-flow';
 import { BackButton } from '@/components/back-button';
+import { JobCardBig } from '@/components/job-card-big';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
-const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
-}
-
-// This is the same JobCard from the jobs page, slightly adapted.
-function JobCard({ job }: { job: any }) {
-
-     const salaryDisplay = useMemo(() => {
-        if (job.salaryMin && job.salaryMax) {
-            return `${formatCurrency(job.salaryMin)} - ${formatCurrency(job.salaryMax)}`;
-        }
-        if (job.salaryMin) {
-            return `From ${formatCurrency(job.salaryMin)}`;
-        }
-        if (job.salaryMax) {
-            return `Up to ${formatCurrency(job.salaryMax)}`;
-        }
-        return null;
-    }, [job.salaryMin, job.salaryMax]);
-
-    return (
-        <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200 rounded-3xl">
-            <CardHeader>
-                <CardTitle className="text-xl font-bold">{job.title}</CardTitle>
-                <div className="flex flex-col text-sm text-muted-foreground gap-1 pt-1">
-                    <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {job.location}</div>
-                    {salaryDisplay && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
-                </div>
-            </CardHeader>
-            <CardContent className="flex-grow">
-                <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">{job.jobType}</Badge>
-                    <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
-                </div>
-            </CardContent>
-            <CardFooter>
-                <Button asChild className="w-full">
-                    <Link href={`/jobs/${job.id}/details`}>View & Apply</Link>
-                </Button>
-            </CardFooter>
-        </Card>
-    );
-}
 
 function CompanyProfile({ name: encodedName }: { name: string }) {
     const companyName = decodeURIComponent(encodedName);
     const firestore = useFirestore();
+    const { user } = useUser();
     const { toast } = useToast();
+    const router = useRouter();
 
     const [company, setCompany] = useState<GetCompanyByNameOutput | null>(null);
     const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -82,7 +44,20 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
         .finally(() => setIsLoadingProfile(false));
     }, [companyName, toast]);
 
-    // Fetch jobs for this company (this can remain client-side as it should be public)
+    const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
+    const { data: userProfile } = useDoc(userProfileRef);
+    const isRecruiter = userProfile?.userType === 'recruiter';
+
+    const favouriteJobsQuery = useMemo(() => (firestore && user && !isRecruiter) ? collection(firestore, `users/${user.uid}/favouriteJobs`) : null, [firestore, user, isRecruiter]);
+    const { data: favouriteJobs } = useCollection(favouriteJobsQuery);
+    const favouriteJobIds = useMemo(() => new Set(favouriteJobs?.map(fav => fav.jobId)), [favouriteJobs]);
+    
+    const applicationsQuery = useMemo(() => (firestore && user && !isRecruiter) ? query(collection(firestore, `users/${user.uid}/applications`)) : null, [firestore, user, isRecruiter]);
+    const { data: applications } = useCollection(applicationsQuery);
+    const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
+
+
+    // Fetch jobs for this company
     const jobsQuery = useMemo(() => {
         if (!firestore) return null;
         return query(collection(firestore, 'jobs'), where('companyName', '==', companyName));
@@ -90,6 +65,35 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
     const { data: jobs, isLoading: isLoadingJobs } = useCollection(jobsQuery);
     
     const availableJobs = useMemo(() => jobs?.filter(job => job.status === 'Available') || [], [jobs]);
+    
+     const handleToggleFavourite = async (jobId: string, isCurrentlyFavourite: boolean) => {
+        if (!user || !firestore) {
+            router.push('/login');
+            return;
+        }
+
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+
+        const favDocRef = doc(firestore, `users/${user.uid}/favouriteJobs`, jobId);
+
+        try {
+            if (isCurrentlyFavourite) {
+                await deleteDoc(favDocRef);
+            } else {
+                const favouriteData = { jobId, favouritedAt: serverTimestamp() };
+                await setDoc(favDocRef, favouriteData);
+            }
+        } catch (error: any) {
+             errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: favDocRef.path,
+                operation: isCurrentlyFavourite ? 'delete' : 'create'
+            }));
+            toast({ variant: "destructive", title: "An error occurred", description: "You may not have permission to perform this action." });
+        }
+    };
+
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -100,8 +104,17 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
                     </div>
                 </div>
 
-                {/* Show detailed header if company profile exists */}
-                {company ? (
+                {isLoadingProfile ? (
+                     <Card className="mb-8 overflow-hidden rounded-3xl">
+                        <CardHeader className="flex flex-col md:flex-row items-center gap-6 p-6">
+                            <Skeleton className="h-24 w-24 rounded-lg" />
+                            <div className="flex-1 space-y-2 text-center md:text-left">
+                                <Skeleton className="h-8 w-64 mx-auto md:mx-0" />
+                                <Skeleton className="h-5 w-48 mx-auto md:mx-0" />
+                            </div>
+                        </CardHeader>
+                    </Card>
+                ) : company ? (
                      <Card className="mb-8 overflow-hidden rounded-3xl">
                         <CardHeader className="flex flex-col md:flex-row items-center gap-6 p-6">
                            <Image
@@ -137,7 +150,7 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
 
 
                 {isLoadingJobs && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         <Skeleton className="h-64 w-full" />
                         <Skeleton className="h-64 w-full" />
                         <Skeleton className="h-64 w-full" />
@@ -147,8 +160,17 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
                 {!isLoadingJobs && jobs && jobs.length > 0 && (
                     <div>
                         <h2 className="text-2xl font-semibold tracking-tight mb-4">Current Openings</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                           {jobs.map(job => <JobCard key={job.id} job={job} />)}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                           {jobs.map(job => (
+                                <JobCardBig
+                                    key={job.id}
+                                    job={job}
+                                    isFavourite={favouriteJobIds.has(job.id)}
+                                    onToggleFavourite={handleToggleFavourite}
+                                    hasApplied={appliedJobIds.has(job.id)}
+                                    isRecruiter={isRecruiter ?? false}
+                                />
+                           ))}
                         </div>
                     </div>
                 )}
@@ -186,7 +208,7 @@ export default function CompanyPage({ params }: { params: Promise<{ name: string
                 </CardHeader>
             </Card>
             <Skeleton className="h-8 w-48 mb-4" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 <Skeleton className="h-64 w-full" />
                 <Skeleton className="h-64 w-full" />
                 <Skeleton className="h-64 w-full" />

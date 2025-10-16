@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useEffect, useState, useRef, use } from 'react';
@@ -35,6 +36,7 @@ import { applicantConfirmationTemplate } from '@/components/emails/applicant-con
 import { WithdrawApplicationButton } from '@/components/withdraw-application-button';
 import { sendRecruiterEmail } from '@/ai/flows/send-recruiter-email-flow';
 import { BackButton } from '@/components/back-button';
+import { JobCardSmall } from '@/components/job-card-small';
 
 
 // Helper function to convert a File to a Base64 data URI
