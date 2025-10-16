@@ -132,7 +132,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                         </TooltipProvider>
                     )}
                      {isOwner && (
-                        <div className="flex flex-col items-center justify-center h-full z-10 relative">
+                        <div className="flex flex-col items-center justify-between h-full z-10 relative">
                             {hasApplicants && (
                                 <TooltipProvider>
                                     <Tooltip>
@@ -584,60 +584,62 @@ function JobsPageContent() {
     return (
         <div className="flex flex-col min-h-screen">
             <main className="flex-1 p-4 md:p-6 lg:p-8">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                    <div className="flex-1">
-                        <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
-                        {isRecruiter && viewMode === 'board' && (
-                            <p className="text-muted-foreground mt-1">Manage the status of your job postings.</p>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                       <div className="hidden sm:flex">
-                         {(jobs.length > 0) && (
-                            <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
+                <div className="mb-6 space-y-4">
+                    <div className="flex justify-between items-center">
+                         <div>
+                            <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
+                            {isRecruiter && viewMode === 'board' && (
+                                <p className="text-muted-foreground mt-1">Manage the status of your job postings.</p>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="hidden sm:flex">
+                                {(jobs.length > 0) && (
+                                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>List View</p></TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Card View</p></TooltipContent>
+                                        </Tooltip>
+                                        {isRecruiter && (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <ToggleGroupItem value="board" aria-label="Board view">
+                                                        <KanbanSquare />
+                                                    </ToggleGroupItem>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Board View</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        )}
+                                    </TooltipProvider>
+                                </ToggleGroup>
+                                )}
+                            </div>
+                            {isRecruiter && (
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                             <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
+                                            <Button asChild size="icon" variant="ghost" className="hover:bg-primary/10 w-10 h-10">
+                                                <Link href="/jobs/new"><Plus className="h-8 w-8" /></Link>
+                                            </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent><p>List View</p></TooltipContent>
+                                        <TooltipContent>
+                                            <p>Post a New Job</p>
+                                        </TooltipContent>
                                     </Tooltip>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                             <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>Card View</p></TooltipContent>
-                                    </Tooltip>
-                                    {isRecruiter && (
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <ToggleGroupItem value="board" aria-label="Board view">
-                                                    <KanbanSquare />
-                                                </ToggleGroupItem>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Board View</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    )}
                                 </TooltipProvider>
-                            </ToggleGroup>
-                        )}
-                       </div>
-                        {isRecruiter && (
-                             <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button asChild size="icon" variant="ghost" className="hover:bg-primary/10">
-                                            <Link href="/jobs/new"><Plus className="h-8 w-8" /></Link>
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Post a New Job</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
                 
