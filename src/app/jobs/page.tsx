@@ -629,7 +629,7 @@ function JobsPageContent() {
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button asChild size="icon" variant="ghost" className="hover:bg-primary/10">
-                                            <Link href="/jobs/new"><Plus className="h-4 w-4" /></Link>
+                                            <Link href="/jobs/new"><Plus className="h-8 w-8" /></Link>
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -645,8 +645,8 @@ function JobsPageContent() {
                     <div className="space-y-6">
                         {jobs.length > 0 && (
                             <Collapsible className="mb-6">
-                                <div className="flex items-center justify-between gap-4 mb-4">
-                                     <div className="relative flex-1">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+                                     <div className="relative flex-1 w-full">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                         <Input
                                             type="search"
@@ -657,7 +657,7 @@ function JobsPageContent() {
                                         />
                                     </div>
                                     <CollapsibleTrigger asChild>
-                                        <Button variant="outline" className="h-10">
+                                        <Button variant="outline" className="h-10 w-full sm:w-auto">
                                             <Filter className="mr-2 h-4 w-4" />
                                             Filters
                                             <ChevronDown className="ml-2 h-4 w-4" />
