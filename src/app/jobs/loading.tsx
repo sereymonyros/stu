@@ -31,7 +31,6 @@ function CardSkeleton() {
 function ListSkeleton() {
     return (
         <Card className="p-4 flex items-center gap-4 rounded-3xl">
-            <Skeleton className="h-12 w-12 rounded-full" />
             <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-3/4" />
                 <div className="flex items-center gap-4">

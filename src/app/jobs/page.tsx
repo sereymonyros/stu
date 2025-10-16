@@ -115,11 +115,6 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </TooltipProvider>
                 )}
 
-                <Avatar className="h-12 w-12 flex-shrink-0">
-                    <AvatarImage src={job.companyLogoUrl || `https://picsum.photos/seed/${job.companyName}/100`} />
-                    <AvatarFallback>{job.companyName?.charAt(0)}</AvatarFallback>
-                </Avatar>
-
                 <div className="flex-1 min-w-0">
                     <div className="font-semibold text-base leading-tight line-clamp-1">
                         {job.title}
