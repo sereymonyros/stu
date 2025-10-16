@@ -148,15 +148,13 @@ export function JobCard({
                                             </Tooltip>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <Button asChild variant="ghost" size="icon" className="h-9 w-9 relative">
-                                                        <Link href={`/jobs/${job.id}/applicants`} onClick={(e) => e.stopPropagation()}>
-                                                            <Users className="h-4 w-4" />
-                                                            {applicants && applicants.length > 0 && (
-                                                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                                                                    {applicants.length}
-                                                                </span>
-                                                            )}
-                                                        </Link>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={(e) => { e.stopPropagation(); e.preventDefault(); router.push(`/jobs/${job.id}/applicants`); }}>
+                                                        <Users className="h-4 w-4" />
+                                                        {applicants && applicants.length > 0 && (
+                                                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                                                                {applicants.length}
+                                                            </span>
+                                                        )}
                                                     </Button>
                                                 </TooltipTrigger>
                                                  <TooltipContent><p>{applicants?.length === 1 ? '1 Applicant' : `${applicants?.length || 0} Applicants`}</p></TooltipContent>
