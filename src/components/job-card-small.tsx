@@ -54,12 +54,6 @@ export function JobCardSmall({
         }
         onToggleFavourite(job.id, isFavourite);
     };
-    
-    const handleApplicantsClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        e.preventDefault();
-        router.push(`/jobs/${job.id}/applicants`);
-    };
 
     return (
         <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "bg-muted/50")}>
@@ -74,7 +68,7 @@ export function JobCardSmall({
                     </Badge>
                 </div>
             )}
-            <div className={cn("p-4 flex items-start", hasApplied && "opacity-50")}>
+            <div className={cn("p-4 flex items-start py-4", hasApplied && "opacity-50")}>
                 <div className="flex-1 min-w-0 pr-10">
                     <p className="font-semibold text-sm leading-tight line-clamp-1">
                         {job.title}
@@ -96,9 +90,7 @@ export function JobCardSmall({
                 <div className="absolute top-1.5 right-1.5 bottom-1.5 z-10 flex flex-col justify-between items-center py-1 pointer-events-none">
                      <div className="pointer-events-auto">
                         {isOwner ? (
-                           <a href={`/jobs/${job.id}/applicants`} onClick={handleApplicantsClick} className="relative z-20">
-                             <ApplicantCounter jobId={job.id} />
-                           </a>
+                           <ApplicantCounter jobId={job.id} />
                         ) : user && !isRecruiter ? (
                              <TooltipProvider>
                                 <Tooltip>
@@ -127,13 +119,13 @@ export function JobCardSmall({
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                        <Link href={isOwner ? `/jobs/${job.id}/edit` : destinationUrl} onClick={(e) => e.stopPropagation()}>
-                                            {isOwner ? <Pencil className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        <Link href={`/jobs/${job.id}/details`} onClick={(e) => e.stopPropagation()}>
+                                            <Eye className="h-4 w-4" />
                                         </Link>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>{isOwner ? 'Edit Job' : 'View Details'}</p>
+                                    <p>View Details</p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>

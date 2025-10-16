@@ -61,12 +61,6 @@ export function JobCardBig({
         onToggleFavourite(job.id, isFavourite);
     };
 
-    const handleApplicantsClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        e.preventDefault();
-        router.push(`/jobs/${job.id}/applicants`);
-    };
-
     return (
         <Card className={cn(
             "flex flex-col h-full transition-all duration-200 rounded-3xl group relative hover:scale-[1.02] hover:shadow-lg",
@@ -120,9 +114,7 @@ export function JobCardBig({
                  {/* --- Top-Right Slot --- */}
                  <div className="pointer-events-auto">
                     {isOwner ? (
-                        <a href={`/jobs/${job.id}/applicants`} onClick={handleApplicantsClick} className="relative z-20">
-                            <ApplicantCounter jobId={job.id} />
-                        </a>
+                        <ApplicantCounter jobId={job.id} />
                     ) : (
                          user && !isRecruiter && (
                             <Button
@@ -143,12 +135,12 @@ export function JobCardBig({
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                     <Link href={isOwner ? `/jobs/${job.id}/edit` : destinationUrl} onClick={(e) => e.stopPropagation()}>
-                                         {isOwner ? <Pencil className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                     <Link href={`/jobs/${job.id}/details`} onClick={(e) => e.stopPropagation()}>
+                                         <Eye className="h-4 w-4" />
                                      </Link>
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent><p>{isOwner ? 'Edit Job' : 'View Details'}</p></TooltipContent>
+                            <TooltipContent><p>View Details</p></TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
                  </div>
