@@ -91,8 +91,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                 </div>
             )}
             <div className={cn("p-4 px-6 flex items-center min-h-[5.5rem]", hasApplied && "opacity-50")}>
-                <div className="flex-1 min-w-0 space-y-1.5">
-                     <p className="font-semibold text-base leading-tight line-clamp-1 pr-10">
+                <div className="flex-1 min-w-0 space-y-1.5 pr-10">
+                     <p className="font-semibold text-base leading-tight line-clamp-1">
                         {job.title}
                         <span className="font-normal text-muted-foreground"> at </span>
                         <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="hover:text-primary relative z-10" onClick={(e) => e.stopPropagation()}>
@@ -109,7 +109,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                 </div>
 
-                <div className="relative z-10 flex flex-col justify-between items-center h-full self-stretch">
+                <div className="absolute top-2 right-2 bottom-2 z-10 flex flex-col justify-between items-center">
                      {user && !isOwner && !isRecruiter && (
                         <TooltipProvider>
                             <Tooltip>
@@ -602,9 +602,7 @@ function JobsPageContent() {
                                         </TooltipTrigger>
                                         <TooltipContent><p>Card View</p></TooltipContent>
                                     </Tooltip>
-                                </TooltipProvider>
-                                {isRecruiter && (
-                                    <TooltipProvider>
+                                    {isRecruiter && (
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <ToggleGroupItem value="board" aria-label="Board view">
@@ -615,8 +613,8 @@ function JobsPageContent() {
                                                 <p>Board View</p>
                                             </TooltipContent>
                                         </Tooltip>
-                                    </TooltipProvider>
-                                )}
+                                    )}
+                                </TooltipProvider>
                             </ToggleGroup>
                         )}
                         {isRecruiter && (
