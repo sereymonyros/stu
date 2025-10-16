@@ -631,8 +631,8 @@ function JobsPageContent() {
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                             <Button asChild size="icon" variant="destructive" className="h-10 w-10">
-                                                <Link href="/jobs/new"><Plus className="h-6 w-6" /></Link>
+                                             <Button asChild size="icon" variant="destructive">
+                                                <Link href="/jobs/new"><Plus className="h-12 w-12" /></Link>
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
