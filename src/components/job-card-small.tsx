@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Eye, CheckCircle, MapPin, DollarSign } from 'lucide-react';
+import { Heart, Eye, CheckCircle, MapPin, DollarSign, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
@@ -30,7 +30,7 @@ export function JobCardSmall({
     const router = useRouter();
     const isOwner = user && user.uid === job.recruiterId;
 
-    const destinationUrl = `/jobs/${job.id}/details`;
+    const destinationUrl = isOwner ? `/jobs/${job.id}/applicants` : `/jobs/${job.id}/details`;
 
     const salaryDisplay = useMemo(() => {
         if (job.salaryMin && job.salaryMax) {
@@ -48,6 +48,10 @@ export function JobCardSmall({
     const handleFavouriteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
+        if (!user) {
+            router.push('/login');
+            return;
+        }
         onToggleFavourite(job.id, isFavourite);
     };
     
@@ -70,7 +74,7 @@ export function JobCardSmall({
                     </Badge>
                 </div>
             )}
-            <div className={cn("py-2 px-6 flex items-center", hasApplied && "opacity-50")}>
+            <div className={cn("p-4 flex items-start", hasApplied && "opacity-50")}>
                 <div className="flex-1 min-w-0 pr-10">
                     <p className="font-semibold text-sm leading-tight line-clamp-1">
                         {job.title}
@@ -79,12 +83,12 @@ export function JobCardSmall({
                             {job.companyName}
                         </Link>
                     </p>
-                    <div className="flex items-center flex-wrap text-xs text-muted-foreground gap-x-3 gap-y-1 min-w-0">
+                    <div className="flex items-center flex-wrap text-xs text-muted-foreground gap-x-3 gap-y-1 min-w-0 mt-1">
                         <div className="flex items-center gap-1.5 line-clamp-1"><MapPin className="h-3 w-3 flex-shrink-0" /> <span className="truncate">{job.location}</span></div>
                         {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>}
                         <div className="flex items-center gap-1.5">
-                            <Badge variant="secondary">{job.jobType}</Badge>
-                            <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
+                            <Badge variant="secondary" className="px-1.5 py-0.5 text-[10px]">{job.jobType}</Badge>
+                            <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize px-1.5 py-0.5 text-[10px]">{job.status}</Badge>
                         </div>
                     </div>
                 </div>
@@ -123,11 +127,13 @@ export function JobCardSmall({
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                        <Link href={destinationUrl} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
+                                        <Link href={isOwner ? `/jobs/${job.id}/edit` : destinationUrl} onClick={(e) => e.stopPropagation()}>
+                                            {isOwner ? <Pencil className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </Link>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>View Details</p>
+                                    <p>{isOwner ? 'Edit Job' : 'View Details'}</p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
