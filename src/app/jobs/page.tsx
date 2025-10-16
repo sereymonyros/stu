@@ -133,7 +133,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                             </TooltipProvider>
                         </div>
                     )}
-                     {isOwner && (
+                    {isOwner && (
                         <div className="flex flex-col items-center justify-between h-full z-10 relative">
                             {hasApplicants && (
                                 <TooltipProvider>
@@ -161,7 +161,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 </Tooltip>
                             </TooltipProvider>
                         </div>
-                     )}
+                    )}
 
                      {!isOwner && (
                         <div className="flex flex-col items-center justify-center h-full z-10 relative">
@@ -586,7 +586,7 @@ function JobsPageContent() {
     return (
         <div className="flex flex-col min-h-screen">
             <main className="flex-1 p-4 md:p-6 lg:p-8">
-                <div className="mb-6 space-y-4">
+                 <div className="mb-6 space-y-4">
                      <div className="flex justify-between items-center">
                          <div>
                             <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
@@ -594,54 +594,20 @@ function JobsPageContent() {
                                 <p className="text-muted-foreground mt-1">Manage the status of your job postings.</p>
                             )}
                         </div>
-                        <div className="flex items-center gap-2">
-                             <div className="hidden sm:flex">
-                                {(jobs.length > 0) && (
-                                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}} defaultValue="card">
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>List View</p></TooltipContent>
-                                        </Tooltip>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>Card View</p></TooltipContent>
-                                        </Tooltip>
-                                        {isRecruiter && (
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <ToggleGroupItem value="board" aria-label="Board view">
-                                                        <KanbanSquare />
-                                                    </ToggleGroupItem>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Board View</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        )}
-                                    </TooltipProvider>
-                                </ToggleGroup>
-                                )}
-                            </div>
-                            {isRecruiter && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                             <Button asChild size="icon" variant="beautiful">
-                                                <Link href="/jobs/new"><Plus className="h-12 w-12" /></Link>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Post a New Job</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                        </div>
+                        {isRecruiter && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button asChild size="icon" variant="destructive" className="hover:bg-destructive/90">
+                                            <Link href="/jobs/new"><Plus className="h-12 w-12" /></Link>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Post a New Job</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
                     </div>
                 </div>
                 
@@ -649,7 +615,7 @@ function JobsPageContent() {
                     <div className="space-y-6">
                         {jobs.length > 0 && (
                             <Collapsible className="mb-6">
-                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+                                 <div className="flex flex-col sm:flex-row items-center gap-4 mb-4">
                                      <div className="relative flex-1 w-full">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                         <Input
@@ -660,13 +626,29 @@ function JobsPageContent() {
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                         />
                                     </div>
-                                    <CollapsibleTrigger asChild>
-                                        <Button variant="outline" className="h-10 w-full sm:w-auto">
-                                            <Filter className="mr-2 h-4 w-4" />
-                                            Filters
-                                            <ChevronDown className="ml-2 h-4 w-4" />
-                                        </Button>
-                                    </CollapsibleTrigger>
+                                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                                        <CollapsibleTrigger asChild>
+                                            <Button variant="outline" className="h-10 flex-1">
+                                                <Filter className="mr-2 h-4 w-4" />
+                                                Filters
+                                                <ChevronDown className="ml-2 h-4 w-4" />
+                                            </Button>
+                                        </CollapsibleTrigger>
+                                        {hasActiveFilters && (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button variant="ghost" size="icon" onClick={clearAllFilters} className="h-10 w-10">
+                                                            <FilterX className="h-4 w-4" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Clear all filters</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        )}
+                                    </div>
                                 </div>
                                 <CollapsibleContent>
                                     <Card className="p-4 rounded-3xl">
@@ -731,12 +713,6 @@ function JobsPageContent() {
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    {hasActiveFilters && (
-                                                        <Button variant="ghost" onClick={clearAllFilters}>
-                                                            <FilterX className="mr-2 h-4 w-4" />
-                                                            Clear filters
-                                                        </Button>
-                                                    )}
                                                      {user && !isRecruiter && hasActiveFilters && (
                                                         <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
                                                             <DialogTrigger asChild>
