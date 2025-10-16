@@ -91,7 +91,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                 </div>
             )}
             <div className={cn("py-3 px-6 flex items-center min-h-[92px]", hasApplied && "opacity-50")}>
-                <div className="flex-1 min-w-0 pr-10 space-y-1.5">
+                <div className="flex-1 min-w-0 pr-10">
                      <p className="font-semibold text-base leading-tight line-clamp-1">
                         {job.title}
                         <span className="font-normal text-muted-foreground"> at </span>
@@ -131,24 +131,23 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                             </Tooltip>
                         </TooltipProvider>
                     )}
-                     {isOwner && hasApplicants && (
-                        <TooltipProvider>
-                             <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={(e) => { e.stopPropagation(); e.preventDefault(); router.push(`/jobs/${job.id}/applicants`); }}>
-                                            <Users className="h-4 w-4" />
-                                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                                                {applicants.length}
-                                            </span>
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{applicants.length === 1 ? '1 Applicant' : `${applicants.length} Applicants`}</p></TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                     )}
-
-                     <div className="mt-auto">
-                        {isOwner ? (
+                     {isOwner && (
+                        <div className="flex flex-col items-center justify-between h-full z-10 relative">
+                             {hasApplicants && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={(e) => { e.stopPropagation(); e.preventDefault(); router.push(`/jobs/${job.id}/applicants`); }}>
+                                                {applicants.length === 1 ? <User className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+                                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                                                    {applicants.length}
+                                                </span>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>{applicants.length === 1 ? '1 Applicant' : `${applicants.length} Applicants`}</p></TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                             )}
                              <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -159,7 +158,11 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                     <TooltipContent><p>View</p></TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-                        ) : (
+                        </div>
+                     )}
+
+                     {!isOwner && (
+                        <div className="flex flex-col items-center justify-end h-full z-10 relative">
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -172,8 +175,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-                        )}
-                    </div>
+                        </div>
+                     )}
                 </div>
             </div>
         </Card>
