@@ -24,13 +24,16 @@ export function Header() {
         isHomePage ? 'absolute bg-transparent' : 'sticky bg-background/80 backdrop-blur-sm'
       )}>
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-            <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 text-2xl font-bold">
-                <Slack className="h-8 w-8" />
-                <span className="hidden sm:inline-block">Cambodia Hub</span>
-            </Link>
+            <div className="flex w-1/3 items-center gap-6">
+                <UserAuthButton />
             </div>
-            <UserAuthButton />
+            <div className="flex w-1/3 items-center justify-center">
+                <Link href="/" className="flex items-center gap-2 text-2xl font-bold">
+                    <Slack className="h-8 w-8" />
+                    <span className="hidden sm:inline-block">Cambodia Hub</span>
+                </Link>
+            </div>
+            <div className="w-1/3" />
         </div>
       </header>
 
