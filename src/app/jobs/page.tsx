@@ -109,7 +109,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                 </div>
 
-                <div className="absolute top-0 right-3 bottom-0 z-10 flex flex-col justify-between items-center py-1.5">
+                <div className="absolute top-0 right-3 bottom-0 z-10 flex flex-col justify-center items-center py-1.5">
                      {user && !isOwner && !isRecruiter && (
                         <div className="flex flex-col items-center justify-between h-full z-10 relative">
                              <TooltipProvider>
@@ -631,23 +631,23 @@ function JobsPageContent() {
                                         <ChevronDown className="ml-2 h-4 w-4" />
                                     </Button>
                                 </CollapsibleTrigger>
-                                {hasActiveFilters && (
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" onClick={clearAllFilters} className="h-10 w-10">
-                                                    <X className="h-4 w-4" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Clear all filters</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                )}
                              </div>
                             <CollapsibleContent>
-                                <Card className="p-4 rounded-3xl mt-4">
+                                <Card className="p-4 rounded-3xl mt-4 relative">
+                                    {hasActiveFilters && (
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="ghost" size="icon" onClick={clearAllFilters} className="h-8 w-8 absolute top-2 right-2">
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Clear all filters</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )}
                                     <div className="grid gap-4">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                             <div className="space-y-2">
