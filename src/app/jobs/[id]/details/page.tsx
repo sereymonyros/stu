@@ -119,7 +119,7 @@ function JobDetailsProfile({ jobId }: { jobId: string }) {
                     </div>
                 </div>
             </CardContent>
-             {!isRecruiter && job.status === 'Available' && (
+             {!isRecruiter && job.status !== 'Closed' && (
                 <CardFooter>
                     <Button asChild className="w-full">
                         <Link href={`/jobs/${jobId}/apply`}>
