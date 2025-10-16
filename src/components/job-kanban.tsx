@@ -140,8 +140,8 @@ export function JobCard({
                                         <div className="flex items-center gap-1">
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                     <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                                        <Link href={`/jobs/${job.id}/details`} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
+                                                     <Button variant="ghost" size="icon" className="h-9 w-9">
+                                                        <Eye className="h-4 w-4" />
                                                     </Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent><p>View</p></TooltipContent>
@@ -167,8 +167,8 @@ export function JobCard({
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                                    <Link href={destinationUrl} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
+                                                <Button variant="ghost" size="icon" className="h-9 w-9">
+                                                    <Eye className="h-4 w-4" />
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent><p>View</p></TooltipContent>
