@@ -514,7 +514,7 @@ function JobsPageContent() {
     const isLoading = areJobsLoading || jobCount === null;
 
     if (isLoading) {
-        return <JobsLoading count={jobCount || 4} viewMode={viewMode} />;
+        return <JobsLoading count={jobCount} viewMode={viewMode} />;
     }
     
     if (!jobs) {
@@ -782,10 +782,27 @@ function JobsPageContent() {
     );
 }
 
-export default function JobsPage() {
+// Wrap the main content in a new component to fetch data for the Suspense boundary
+function JobsPageWrapper() {
+    const firestore = useFirestore();
+    const [jobCount, setJobCount] = useState<number | null>(null);
+
+    useEffect(() => {
+        if (firestore) {
+            const jobsCollection = collection(firestore, 'jobs');
+            getCountFromServer(jobsCollection).then(snapshot => {
+                setJobCount(snapshot.data().count);
+            });
+        }
+    }, [firestore]);
+
     return (
-        <Suspense fallback={<JobsLoading />}>
+        <Suspense fallback={<JobsLoading count={jobCount ?? 8} />}>
             <JobsPageContent />
         </Suspense>
     )
+}
+
+export default function JobsPage() {
+    return <JobsPageWrapper />
 }
