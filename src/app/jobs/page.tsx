@@ -598,8 +598,8 @@ function JobsPageContent() {
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button asChild size="icon" variant="default" className="hover:bg-primary/90">
-                                            <Link href="/jobs/new"><Plus className="h-12 w-12" /></Link>
+                                        <Button asChild size="icon" variant="default" className="hover:bg-primary/90 h-10 w-10">
+                                            <Link href="/jobs/new"><Plus className="h-5 w-5" /></Link>
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -623,7 +623,7 @@ function JobsPageContent() {
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                            <Collapsible className="flex-1">
-                             <div className="flex items-center gap-2">
+                            <div className="relative">
                                <CollapsibleTrigger asChild>
                                     <Button variant="outline" className="h-10 w-full sm:w-auto">
                                         <Filter className="mr-2 h-4 w-4" />
@@ -631,23 +631,24 @@ function JobsPageContent() {
                                         <ChevronDown className="ml-2 h-4 w-4" />
                                     </Button>
                                 </CollapsibleTrigger>
-                             </div>
+
+                               {hasActiveFilters && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="destructive" size="icon" onClick={clearAllFilters} className="h-8 w-8 absolute -top-2 -right-2 rounded-full">
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Clear all filters</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                               )}
+                            </div>
                             <CollapsibleContent>
                                 <Card className="p-4 rounded-3xl mt-4 relative">
-                                    {hasActiveFilters && (
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button variant="destructive" size="icon" onClick={clearAllFilters} className="h-8 w-8 absolute top-2 right-2">
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Clear all filters</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    )}
                                     <div className="grid gap-4">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                             <div className="space-y-2">
