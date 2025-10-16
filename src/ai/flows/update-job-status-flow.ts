@@ -11,7 +11,7 @@ import { initializeFirebaseAdmin } from '@/firebase/server-init';
 
 const UpdateJobStatusInputSchema = z.object({
   jobId: z.string().describe("The ID of the job."),
-  newStatus: z.enum(["Available", "Offering", "Closed"]),
+  newStatus: z.enum(["Available", "Closed"]),
 });
 export type UpdateJobStatusInput = z.infer<typeof UpdateJobStatusInputSchema>;
 

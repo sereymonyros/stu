@@ -510,7 +510,7 @@ function JobsPageContent() {
         }
     };
     
-    const KANBAN_STAGES: ('Available' | 'Offering' | 'Closed')[] = ["Available", "Offering", "Closed"];
+    const KANBAN_STAGES: ('Available' | 'Closed')[] = ["Available", "Closed"];
     
     const isLoading = areJobsLoading || jobCount === null;
 
@@ -808,7 +808,7 @@ function JobsPageWrapper() {
     }, [firestore]);
 
     return (
-        <Suspense fallback={<JobsLoading count={jobCount} />}>
+        <Suspense fallback={<JobsLoading count={jobCount ?? 8} />}>
             <JobsPageContent />
         </Suspense>
     )
