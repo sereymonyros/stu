@@ -5,7 +5,7 @@
 import { useMemo, useState, useEffect, Suspense } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where, getCountFromServer } from 'firebase/firestore';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye, Pencil, Users, User, Send, Plus, CheckCircle, KanbanSquare } from 'lucide-react';
@@ -31,7 +31,6 @@ import { Board, JobCard } from '@/components/job-kanban';
 import { updateJobStatus } from '@/ai/flows/update-job-status-flow';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import JobsLoading from './loading';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building, DollarSign, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -42,7 +41,6 @@ import {
 } from "@/components/ui/collapsible"
 import { MultiSelectOption, MultiSelect } from '@/components/ui/multi-select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { BackButton } from '@/components/back-button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecruiter, router }: { job: any; isFavourite: boolean; onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => Promise<void>; hasApplied: boolean; isRecruiter: boolean; router: ReturnType<typeof useRouter> }) {
@@ -92,49 +90,50 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </Badge>
                 </div>
             )}
-            <div className={cn("p-4 flex flex-col h-full", hasApplied && "opacity-50")}>
-                {user && !isOwner && !isRecruiter && (
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={handleFavouriteClick}
-                                    className="absolute top-3 right-3 h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10"
-                                    disabled={hasApplied}
-                                    aria-label="Toggle Favourite"
-                                >
-                                    <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                )}
-
-                <div className="flex-grow min-w-0 pr-10">
-                    <div className="font-semibold text-base leading-tight line-clamp-1">
-                        {job.title}
-                        <span className="font-normal text-muted-foreground"> at </span>
-                         <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="hover:text-primary relative z-10" onClick={(e) => e.stopPropagation()}>
-                           {job.companyName}
-                         </Link>
+            <div className={cn("p-4 px-6 flex flex-col justify-center min-h-[5.5rem]", hasApplied && "opacity-50")}>
+                <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-base leading-tight line-clamp-1">
+                            {job.title}
+                            <span className="font-normal text-muted-foreground"> at </span>
+                            <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="hover:text-primary relative z-10" onClick={(e) => e.stopPropagation()}>
+                            {job.companyName}
+                            </Link>
+                        </p>
                     </div>
-                     <div className="flex items-center flex-wrap text-sm text-muted-foreground gap-x-4 gap-y-2 mt-1.5">
-                        <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="line-clamp-1">{job.location}</span></div>
+                    {user && !isOwner && !isRecruiter && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={handleFavouriteClick}
+                                        className="h-8 w-8 rounded-full text-muted-foreground hover:text-red-500 z-10 flex-shrink-0 -mt-1"
+                                        disabled={hasApplied}
+                                        aria-label="Toggle Favourite"
+                                    >
+                                        <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+                </div>
+
+                <div className="flex justify-between items-end gap-4">
+                     <div className="flex items-center flex-wrap text-sm text-muted-foreground gap-x-3 gap-y-1 mt-1.5 min-w-0">
+                        <div className="flex items-center gap-1.5 line-clamp-1"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{job.location}</span></div>
                         {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryDisplay}</div>}
                         <div className="flex items-center gap-2">
                             <Badge variant="secondary">{job.jobType}</Badge>
                             <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize">{job.status}</Badge>
                         </div>
                     </div>
-                </div>
-
-                <div className="flex-shrink-0 flex items-center justify-end gap-1 z-10 mt-4">
-                   
+                    <div className="relative z-10 flex-shrink-0 -mb-1">
                         {isOwner ? (
                              <TooltipProvider>
                                 <div className="flex items-center gap-1">
@@ -173,7 +172,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 </Tooltip>
                             </TooltipProvider>
                         )}
-                   
+                    </div>
                 </div>
             </div>
         </Card>
