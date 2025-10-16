@@ -8,7 +8,7 @@ import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where } fro
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye, Pencil, Users, User, Send } from 'lucide-react';
+import { Heart, Briefcase, Search, FilterX, Star, LayoutGrid, List, Filter, ChevronDown, Eye, Pencil, Users, User, Send, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -136,8 +136,8 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                 <div className="flex items-center gap-1">
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                             <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                                <Link href={`/jobs/${job.id}/details`} onClick={(e) => e.stopPropagation()}><Eye className="h-4 w-4" /></Link>
+                                             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); router.push(`/jobs/${job.id}/details`); }}>
+                                                <Eye className="h-4 w-4" />
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent><p>View</p></TooltipContent>
@@ -145,13 +145,11 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                                     {hasApplicants && (
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Button asChild variant="ghost" size="icon" className="h-9 w-9 relative">
-                                                    <Link href={`/jobs/${job.id}/applicants`} onClick={(e) => e.stopPropagation()}>
+                                                <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={(e) => { e.stopPropagation(); router.push(`/jobs/${job.id}/applicants`); }}>
                                                         <Users className="h-4 w-4" />
                                                         <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                                                             {applicants.length}
                                                         </span>
-                                                    </Link>
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent><p>{applicants.length === 1 ? '1 Applicant' : `${applicants.length} Applicants`}</p></TooltipContent>
@@ -567,9 +565,18 @@ function JobsPageContent() {
                             </ToggleGroup>
                         )}
                         {isRecruiter && (
-                            <Button asChild>
-                                <Link href="/jobs/new">Post a New Job</Link>
-                            </Button>
+                             <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button asChild size="icon">
+                                            <Link href="/jobs/new"><Plus className="h-4 w-4" /></Link>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Post a New Job</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         )}
                     </div>
                 </div>
