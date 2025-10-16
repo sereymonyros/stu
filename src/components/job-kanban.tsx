@@ -8,7 +8,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building, DollarSign, MapPin, Heart, Eye, CheckCircle } from 'lucide-react';
+import { Building, DollarSign, MapPin, Heart, Eye, CheckCircle, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { Badge } from './ui/badge';
@@ -27,6 +27,7 @@ export function JobCard({
     hasApplied, 
     isRecruiter,
     isDraggable,
+    applicantCount,
 }: { 
     job: any; 
     isFavourite: boolean; 
@@ -34,11 +35,11 @@ export function JobCard({
     hasApplied: boolean; 
     isRecruiter: boolean;
     isDraggable: boolean;
+    applicantCount?: number;
 }) {
     const { user } = useUser();
     const router = useRouter();
     const isOwner = user && user.uid === job.recruiterId;
-    const firestore = useFirestore();
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
         id: job.id,
@@ -52,12 +53,7 @@ export function JobCard({
         zIndex: isDragging ? 10 : 'auto',
     };
 
-    const applicantsQuery = useMemo(() => {
-        if (!firestore || !job.id || !isOwner) return null;
-        return query(collection(firestore, 'jobs', job.id, 'applications'));
-    }, [firestore, job.id, isOwner]);
-    const { data: applicants } = useCollection(applicantsQuery);
-    const hasApplicants = applicants && applicants.length > 0;
+    const hasApplicants = applicantCount && applicantCount > 0;
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
@@ -103,6 +99,12 @@ export function JobCard({
                     </Badge>
                 </div>
               )}
+               {isOwner && hasApplicants && (
+                    <Badge className="absolute top-2 right-2 flex items-center gap-1.5 z-10 px-2 py-1 rounded-full text-xs bg-lime-500 text-black">
+                        {applicantCount === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
+                        {applicantCount}
+                    </Badge>
+                )}
               <div className={cn("flex flex-col flex-grow", hasApplied && "opacity-50")}>
                   <Link href={destinationUrl} className="flex flex-col flex-grow group-hover:no-underline">
                     <span className="absolute inset-0 z-0" />
@@ -145,31 +147,16 @@ export function JobCard({
                                 <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize text-[10px] px-1.5 py-0.5">{job.status}</Badge>
                             </div>
                             <div className="relative z-10">
-                                {isRecruiter ? (
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 absolute bottom-[-8px] right-[-8px] pointer-events-none">
-                                                    <Eye className="h-4 w-4" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>View</p></TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                ) : (
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 absolute bottom-[-8px] right-[-8px] pointer-events-none">
-                                                    <Eye className="h-4 w-4" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>View Details</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                )}
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-9 w-9 absolute bottom-[-8px] right-[-8px] pointer-events-none">
+                                                <Eye className="h-4 w-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>View Details</p></TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             </div>
                         </div>
                     </CardContent>
@@ -233,9 +220,3 @@ Board.Column = Column;
 Board.Card = JobCard;
 
 export { Board };
-
-    
-
-    
-
-    
