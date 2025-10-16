@@ -377,7 +377,7 @@ export default function DashboardPage() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-8 pb-24 md:pb-8">
+            <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-8">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                 </div>

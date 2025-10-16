@@ -590,7 +590,7 @@ function JobsPageContent() {
                 </div>
                 
                 {viewMode !== 'board' && (
-                    <div className="pb-24">
+                    <div>
                         {jobs.length > 0 && (
                             <Collapsible className="mb-6">
                                 <div className="flex items-center justify-between gap-4 mb-4">
