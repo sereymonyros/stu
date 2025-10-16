@@ -90,7 +90,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </Badge>
                 </div>
             )}
-            <div className={cn("p-3 px-6 flex items-center min-h-[5.5rem]", hasApplied && "opacity-50")}>
+            <div className={cn("py-4 px-6 flex items-center", hasApplied && "opacity-50")}>
                 <div className="flex-1 min-w-0 pr-10">
                      <p className="font-semibold text-base leading-tight line-clamp-1">
                         {job.title}
@@ -109,7 +109,7 @@ function JobListItem({ job, isFavourite, onToggleFavourite, hasApplied, isRecrui
                     </div>
                 </div>
 
-                <div className="absolute top-2 right-2 bottom-2 z-10 flex flex-col justify-between items-center">
+                <div className="absolute top-0 right-3 bottom-0 z-10 flex flex-col justify-between items-center">
                      {user && !isOwner && !isRecruiter && (
                         <TooltipProvider>
                             <Tooltip>
