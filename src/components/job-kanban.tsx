@@ -77,6 +77,12 @@ export function JobCard({
 
     const destinationUrl = `/jobs/${job.id}/details`;
 
+    const handleCompanyClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        router.push(`/companies/${encodeURIComponent(job.companyName)}`);
+    };
+
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
              <Card 
@@ -108,9 +114,9 @@ export function JobCard({
                     <div className="flex flex-row flex-wrap items-center text-xs text-muted-foreground gap-x-2 gap-y-1 pt-1">
                         <div className="flex items-center gap-1.5">
                             <Building className="h-3 w-3" /> 
-                            <Link href={`/companies/${encodeURIComponent(job.companyName)}`} className="hover:text-primary relative z-10" onClick={(e) => e.stopPropagation()}>
+                             <span onClick={handleCompanyClick} className="hover:text-primary relative z-10 cursor-pointer">
                                 {job.companyName}
-                            </Link>
+                            </span>
                         </div>
                         <span className="text-muted-foreground/50">|</span>
                         <div className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /> {job.location}</div>
