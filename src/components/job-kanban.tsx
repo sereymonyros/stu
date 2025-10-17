@@ -9,7 +9,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
-import { JobCardBig } from './job-card-big';
+import { JobCardSmall } from './job-card-small';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
@@ -339,9 +339,9 @@ const JobCard = ({
     };
     
     return (
-        <div ref={setNodeRef} style={style} {...attributes}>
+        <div ref={setNodeRef} style={style} {...attributes} className="mb-2">
              <div {...(isDraggable ? listeners : {})} className={cn(isDragging ? "cursor-grabbing" : "cursor-grab")}>
-                <JobCardBig
+                <JobCardSmall
                     job={job}
                     isFavourite={false}
                     onToggleFavourite={async () => {}}
@@ -359,5 +359,3 @@ Board.Card = ApplicantCard;
 Board.JobCard = JobCard;
 
 export { Board };
-
-    
