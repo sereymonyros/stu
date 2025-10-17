@@ -19,6 +19,7 @@ import { findJobMatches } from '@/ai/flows/find-job-matches-flow';
 import { WithdrawApplicationButton } from '@/components/withdraw-application-button';
 import { JobCardBig } from '@/components/job-card-big';
 import { setDoc, serverTimestamp } from 'firebase/firestore';
+import { Badge } from '@/components/ui/badge';
 
 
 function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting, onNotify, isNotifying }: { savedSearch: any, onExecute: (search: any) => void, onDelete: (searchId: string) => void, isDeleting: boolean, onNotify: (searchId: string) => void, isNotifying: boolean }) {
