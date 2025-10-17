@@ -7,7 +7,7 @@ import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where, getC
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Heart, Briefcase, Search, Star, LayoutGrid, List, Filter, KanbanSquare, X } from 'lucide-react';
+import { Heart, Briefcase, Search, Star, LayoutGrid, List, Filter, KanbanSquare, X, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -41,7 +41,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useIsMobile } from '@/hooks/use-mobile';
 import { JobCardBig } from '@/components/job-card-big';
 import { JobCardSmall } from '@/components/job-card-small';
-import { Plus } from 'lucide-react';
 import { ApplicantCounter } from '@/components/applicant-counter';
 
 
@@ -495,27 +494,26 @@ function JobsPageContent() {
                     </div>
                      {viewMode !== 'board' && (
                         <div className="w-full sm:w-1/2">
-                          <div className="flex flex-col sm:flex-row items-center gap-2">
-                              <div className="flex flex-1 items-center gap-2 w-full">
-                                <div className="relative flex-1">
-                                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                      <Input
-                                          type="search"
-                                          placeholder="Search by title..."
-                                          className="pl-10 h-10 w-full"
-                                          value={searchQuery}
-                                          onChange={(e) => setSearchQuery(e.target.value)}
-                                      />
-                                  </div>
-                                  <Collapsible>
-                                      <CollapsibleTrigger asChild>
-                                          <Button variant="outline" className="h-10">
-                                              <Filter className="mr-2 h-4 w-4" />
-                                              Filters
-                                          </Button>
-                                      </CollapsibleTrigger>
+                          <div className="flex flex-col items-stretch gap-2">
+                              <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <Input
+                                        type="search"
+                                        placeholder="Search by title..."
+                                        className="pl-10 h-10 w-full"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                                <Collapsible>
+                                    <CollapsibleTrigger asChild>
+                                        <Button variant="outline" className="h-10 w-full justify-start">
+                                            <Filter className="mr-2 h-4 w-4" />
+                                            Filters
+                                        </Button>
+                                    </CollapsibleTrigger>
                                       <CollapsibleContent>
-                                          <Card className="p-4 rounded-3xl mt-4 absolute z-20 w-full sm:w-[500px] md:w-[600px] lg:w-[800px] bg-background border shadow-xl">
+                                          <Card className="p-4 rounded-3xl mt-2 absolute z-20 w-full sm:w-[500px] md:w-[600px] lg:w-[800px] bg-background border shadow-xl">
                                               <div className="grid gap-4">
                                                   <div className="flex justify-end">
                                                       <TooltipProvider>
@@ -633,8 +631,7 @@ function JobsPageContent() {
                                               </div>
                                           </Card>
                                       </CollapsibleContent>
-                                  </Collapsible>
-                              </div>
+                                </Collapsible>
                           </div>
                         </div>
                     )}
