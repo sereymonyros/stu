@@ -58,7 +58,7 @@ export function JobCardSmall({
             <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl")}>
                  {hasApplied && (
                     <div className="absolute inset-0 bg-background/80 z-20 flex items-center justify-center rounded-3xl">
-                        <Badge variant="secondary" className="text-base px-4 py-2 rounded-full bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200 border-red-200 dark:border-red-800">
+                        <Badge variant="secondary" className="text-base px-4 py-1 rounded-full bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200 border-red-200 dark:border-red-800">
                             <CheckCircle className="h-5 w-5 mr-2" />
                             Applied
                         </Badge>
@@ -87,25 +87,16 @@ export function JobCardSmall({
                         <div className="pointer-events-auto">
                             {isOwner ? (
                                 <ApplicantCounter jobId={job.id} />
-                            ) : user && !isRecruiter ? (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={handleFavouriteClick}
-                                                className="h-9 w-9 rounded-full text-muted-foreground flex-shrink-0"
-                                                aria-label="Toggle Favourite"
-                                            >
-                                                <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>{isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
+                            ) : user && !isRecruiter ? (                                
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={handleFavouriteClick}
+                                    className="h-9 w-9 rounded-full text-muted-foreground flex-shrink-0"
+                                    aria-label="Toggle Favourite"
+                                >
+                                    <Heart className={cn("h-5 w-5", isFavourite && "fill-red-500 text-red-500")} />
+                                </Button>
                             ) : null}
                         </div>
 

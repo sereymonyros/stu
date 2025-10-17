@@ -33,6 +33,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
+import { BackButton } from '@/components/back-button';
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -138,6 +139,9 @@ export default function NewJobPage() {
         {isAuthorized ? (
             <Card className="max-w-2xl mx-auto rounded-3xl">
             <CardHeader>
+                <div className="mb-4 -ml-2">
+                    <BackButton />
+                </div>
                 <CardTitle>Post a New Job</CardTitle>
                  {!profileComplete && (
                   <CardDescription>
