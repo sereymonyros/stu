@@ -87,10 +87,10 @@ export function JobCardSmall({
                     </div>
                 </div>
 
-                <div className="absolute top-1.5 right-1.5 bottom-1.5 z-10 flex flex-col justify-between items-center py-1 pointer-events-none">
+                <div className="absolute top-0 right-1.5 bottom-0 z-10 flex flex-col justify-between items-center pointer-events-none">
                      <div className="pointer-events-auto">
                         {isOwner ? (
-                           <ApplicantCounter jobId={job.id} />
+                            <ApplicantCounter jobId={job.id} />
                         ) : user && !isRecruiter ? (
                              <TooltipProvider>
                                 <Tooltip>
