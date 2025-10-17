@@ -147,7 +147,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
         transform: CSS.Transform.toString(transform),
         transition,
         boxShadow: isDragging ? '0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.1)' : undefined,
-        transform: isDragging ? `${CSS.Transform.toString(transform)} scale(1.05)` : CSS.Transform.toString(transform),
+        transform: isDragging ? `${"\'\'" + CSS.Transform.toString(transform)} scale(1.05)` : CSS.Transform.toString(transform),
         zIndex: isDragging ? 10 : 'auto',
     };
     
@@ -277,8 +277,7 @@ function Column({ id, title, children, items, isLoading, type }: { id: string, t
         <div className="w-full md:w-80 flex-shrink-0 flex flex-col flex-1">
             <Card ref={setNodeRef} className={cn(
                 "h-full flex flex-col transition-colors rounded-3xl",
-                isOver ? 'bg-primary/10' : 'bg-muted/40',
-                isOver && 'cursor-copy'
+                isOver ? 'bg-primary/10 cursor-copy' : 'bg-muted/40',
             )}>
                 <CardHeader className={cn("p-3 border-b-4 select-none", titleColors[id] || 'border-gray-500')}>
                     <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
@@ -335,13 +334,13 @@ const JobCard = ({
     const style = {
         transition,
         boxShadow: isDragging ? '0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.1)' : undefined,
-        transform: isDragging ? `${CSS.Transform.toString(transform)} scale(1.05)` : CSS.Transform.toString(transform),
+        transform: isDragging ? `${"\'\'" + CSS.Transform.toString(transform)} scale(1.05)` : CSS.Transform.toString(transform),
         zIndex: isDragging ? 10 : 'auto',
     };
     
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-             <div {...(isDraggable ? listeners : {})}>
+             <div {...(isDraggable ? listeners : {})} className={cn(isDragging ? "cursor-grabbing" : "cursor-grab")}>
                 <JobCardBig
                     job={job}
                     isFavourite={false}
