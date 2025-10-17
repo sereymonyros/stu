@@ -56,10 +56,10 @@ export function JobCardSmall({
     return (
         <Link href={`/jobs/${job.id}/details`} className="block group/card">
             <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "opacity-60")}>
-                {hasApplied && (
-                    <div className="absolute right-1 bottom-1 z-10 flex items-center justify-center pointer-events-none">
-                        <Badge variant="secondary" className="text-xs flex items-center gap-1.5">
-                            <CheckCircle className="h-3 w-3" />
+                 {hasApplied && (
+                    <div className="absolute inset-0 bg-background/50 z-10 flex items-center justify-center pointer-events-none">
+                        <Badge variant="secondary" className="text-sm px-3 py-1 rounded-full">
+                            <CheckCircle className="h-4 w-4 mr-1.5" />
                             Applied
                         </Badge>
                     </div>
@@ -83,7 +83,7 @@ export function JobCardSmall({
                         </div>
                     </div>
 
-                    <div className="absolute top-0 right-1.5 bottom-0 z-10 flex flex-col justify-between items-center pointer-events-none">
+                    <div className="absolute top-0 right-1.5 bottom-0 z-20 flex flex-col justify-between items-center pointer-events-none">
                         <div className="pointer-events-auto">
                             {isOwner ? (
                                 <ApplicantCounter jobId={job.id} />
