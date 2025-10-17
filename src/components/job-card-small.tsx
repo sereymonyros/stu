@@ -55,10 +55,10 @@ export function JobCardSmall({
 
     return (
         <Link href={`/jobs/${job.id}/details`} className="block group/card">
-            <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl", hasApplied && "opacity-60")}>
+            <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl")}>
                  {hasApplied && (
-                    <div className="absolute inset-0 bg-background/50 z-10 flex items-center justify-center pointer-events-none">
-                        <Badge variant="secondary" className="text-sm px-3 py-1 rounded-full">
+                    <div className="absolute inset-0 bg-background/80 z-10 flex items-center justify-center pointer-events-none rounded-3xl">
+                        <Badge variant="secondary" className="text-sm px-3 py-1 rounded-full bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200 border-red-200 dark:border-red-800">
                             <CheckCircle className="h-4 w-4 mr-1.5" />
                             Applied
                         </Badge>
@@ -113,11 +113,9 @@ export function JobCardSmall({
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                            <span onClick={(e) => e.stopPropagation()}>
-                                                <Eye className="h-4 w-4" />
-                                            </span>
-                                        </Button>
+                                        <div tabIndex={-1} className='h-9 w-9 rounded-md inline-flex items-center justify-center'>
+                                            <Eye className="h-4 w-4" />
+                                        </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
                                         <p>View Details</p>

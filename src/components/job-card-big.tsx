@@ -63,18 +63,17 @@ export function JobCardBig({
         <Link href={`/jobs/${job.id}/details`} className="block group/card h-full">
             <Card className={cn(
                 "flex flex-col h-full transition-all duration-200 rounded-3xl group-hover/card:scale-[1.02] group-hover/card:shadow-lg relative",
-                 hasApplied && "opacity-60",
             )}>
                 {hasApplied && (
-                    <div className="absolute inset-0 bg-background/50 z-10 flex items-center justify-center pointer-events-none">
-                        <Badge variant="secondary" className="text-base px-4 py-2 rounded-full">
+                    <div className="absolute inset-0 bg-background/80 z-10 flex items-center justify-center pointer-events-none rounded-3xl">
+                        <Badge variant="secondary" className="text-base px-4 py-2 rounded-full bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200 border-red-200 dark:border-red-800">
                             <CheckCircle className="h-5 w-5 mr-2" />
                             Applied
                         </Badge>
                     </div>
                 )}
                 
-                <div className="flex flex-col flex-grow">
+                <div className={cn("flex flex-col flex-grow")}>
                         <CardHeader className="p-3 pb-2">
                             <div className="flex justify-between items-start gap-2">
                                 <CardTitle className="text-base font-bold select-none pr-10">{job.title}</CardTitle>
