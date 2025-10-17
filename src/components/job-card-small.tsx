@@ -57,14 +57,14 @@ export function JobCardSmall({
         <Link href={`/jobs/${job.id}/details`} className="block group/card">
             <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl")}>
                  {hasApplied && (
-                    <div className="absolute inset-0 bg-background/80 z-10 flex items-center justify-center pointer-events-none rounded-3xl">
-                        <Badge variant="secondary" className="text-sm px-3 py-1 rounded-full bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200 border-red-200 dark:border-red-800">
-                            <CheckCircle className="h-4 w-4 mr-1.5" />
+                    <div className="absolute inset-0 bg-background/80 z-20 flex items-center justify-center rounded-3xl">
+                        <Badge variant="secondary" className="text-base px-4 py-2 rounded-full bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200 border-red-200 dark:border-red-800">
+                            <CheckCircle className="h-5 w-5 mr-2" />
                             Applied
                         </Badge>
                     </div>
                 )}
-                <div className={cn("flex items-start py-4")}>
+                <div className="flex items-start py-4">
                     <div className="flex-1 min-w-0 pr-10 pl-4">
                         <p className="font-semibold text-sm leading-tight line-clamp-1">
                             {job.title}

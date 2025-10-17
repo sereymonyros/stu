@@ -22,7 +22,6 @@ export function BottomNavbar() {
     const { user } = useUser();
     const [isScrolling, setIsScrolling] = useState(false);
     const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const { setOpen: setSettingsOpen } = useSettingsSheet();
     const { theme, setTheme } = useTheme();
 
 
@@ -34,7 +33,7 @@ export function BottomNavbar() {
             }
             scrollTimeoutRef.current = setTimeout(() => {
                 setIsScrolling(false);
-            }, 1000);
+            }, 500);
         };
 
         // Listen on the window object for global scroll events
@@ -54,8 +53,8 @@ export function BottomNavbar() {
 
     return (
         <div className={cn(
-            "fixed bottom-4 left-1/2 -translate-x-1/2 w-full px-4 flex justify-center z-50 transition-opacity duration-1000 ease-in-out pointer-events-none",
-            isScrolling ? "opacity-30" : "opacity-100"
+            "fixed bottom-4 left-1/2 -translate-x-1/2 w-full px-4 flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none",
+            isScrolling ? "opacity-50" : "opacity-100"
         )}>
             <div className="relative w-full max-w-lg pointer-events-auto" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
                 <div className="bg-background/80 dark:bg-gradient-to-r from-black via-blue-900 to-black backdrop-blur-sm border rounded-full shadow-lg py-2">
