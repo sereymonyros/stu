@@ -4,7 +4,7 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building, DollarSign, MapPin, Heart, Eye, CheckCircle, Pencil } from 'lucide-react';
+import { Building, DollarSign, MapPin, Heart, Eye, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import Link from 'next/link';
@@ -65,7 +65,7 @@ export function JobCardBig({
                 "flex flex-col h-full transition-all duration-200 rounded-3xl group-hover/card:scale-[1.02] group-hover/card:shadow-lg relative",
             )}>
                 {hasApplied && (
-                    <div className="absolute inset-0 bg-background/80 z-10 flex items-center justify-center pointer-events-none rounded-3xl">
+                    <div className="absolute inset-0 bg-background/80 z-10 flex items-center justify-center rounded-3xl">
                         <Badge variant="secondary" className="text-base px-4 py-2 rounded-full bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200 border-red-200 dark:border-red-800">
                             <CheckCircle className="h-5 w-5 mr-2" />
                             Applied
