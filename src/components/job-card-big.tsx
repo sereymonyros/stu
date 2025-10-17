@@ -129,11 +129,9 @@ export function JobCardBig({
                          <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                                         <Link href={`/jobs/${job.id}/details`} onClick={(e) => e.stopPropagation()}>
-                                             <Eye className="h-4 w-4" />
-                                         </Link>
-                                    </Button>
+                                    <div className="h-9 w-9 inline-flex items-center justify-center rounded-md" tabIndex={-1}>
+                                         <Eye className="h-4 w-4" />
+                                    </div>
                                 </TooltipTrigger>
                                 <TooltipContent><p>View Details</p></TooltipContent>
                             </Tooltip>
