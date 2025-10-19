@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useMemo, useState, useEffect, Suspense } from 'react';
+import { useMemo, useState, useEffect, Suspense, useRef } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where, getCountFromServer } from 'firebase/firestore';
 import { Card } from '@/components/ui/card';
@@ -52,6 +52,10 @@ function JobsPageContent() {
     const searchParams = useSearchParams();
     const { toast } = useToast();
     const isMobile = useIsMobile();
+    
+    // --- Filter Panel State & Ref ---
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const filterRef = useRef<HTMLDivElement>(null);
     
     // --- View State ---
     const [viewMode, setViewMode] = useState<'list' | 'card' |'board'>('list');
@@ -146,6 +150,20 @@ function JobsPageContent() {
         // Using router.replace to update the URL without adding to history
         router.replace(`/jobs?${params.toString()}`, { scroll: false });
     }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, router]);
+
+    // --- Close filters on outside click ---
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+                setIsFilterOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
 
     // --- Toggle Handlers ---
     const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
@@ -465,7 +483,7 @@ function JobsPageContent() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <main className="flex-1 p-4 lg:p-8 pb-6">
+            <main className="flex-1 p-4 lg:p-8">
                  <div className="mb-6 space-y-4">
                     <div className="flex justify-between items-center">
                          <div className="flex items-center gap-4">
@@ -495,7 +513,7 @@ function JobsPageContent() {
                     </div>
                      {viewMode !== 'board' && (
                         <div className="w-full sm:w-1/2">
-                          <Collapsible className="space-y-2">
+                          <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen} className="space-y-2">
                                 <div className="relative flex-1">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
@@ -528,10 +546,10 @@ function JobsPageContent() {
                                         </TooltipProvider>
                                     )}
                                 </div>
-                                <CollapsibleContent>
+                                <CollapsibleContent ref={filterRef}>
                                     <Card className="p-4 rounded-3xl mt-2">
                                         <div className="grid gap-4">
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                                 <div className="space-y-2">
                                                     <Label>Company</Label>
                                                     <MultiSelect
@@ -559,19 +577,19 @@ function JobsPageContent() {
                                                         placeholder="Filter job types..."
                                                     />
                                                 </div>
-                                            </div>
                                                 <div className="space-y-2">
-                                                <Label>Salary Range</Label>
-                                                <Slider
-                                                    value={salaryRange}
-                                                    onValueChange={setSalaryRange}
-                                                    max={maxSalary}
-                                                    step={1000}
-                                                    className="my-4"
-                                                />
-                                                <div className="flex justify-between text-xs text-muted-foreground">
-                                                    <span>${salaryRange[0].toLocaleString()}</span>
-                                                    <span>${salaryRange[1].toLocaleString()}</span>
+                                                    <Label>Salary Range</Label>
+                                                    <Slider
+                                                        value={salaryRange}
+                                                        onValueChange={setSalaryRange}
+                                                        max={maxSalary}
+                                                        step={1000}
+                                                        className="my-4 pt-2"
+                                                    />
+                                                    <div className="flex justify-between text-xs text-muted-foreground">
+                                                        <span>${salaryRange[0].toLocaleString()}</span>
+                                                        <span>${salaryRange[1].toLocaleString()}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             
@@ -707,4 +725,5 @@ export default function JobsPage() {
     
 
     
+
 
