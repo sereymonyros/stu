@@ -26,7 +26,11 @@ export default function ListingsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
+<<<<<<< HEAD
       <main className="flex-1 p-4 lg:p-8 pb-6">
+=======
+      <main className="flex-1 p-4">
+>>>>>>> ff51ee2e479d0711ef5148f52b53980e45a1c75b
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold tracking-tight">For Sale</h1>
           <Button asChild>
