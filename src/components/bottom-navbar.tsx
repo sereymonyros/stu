@@ -107,7 +107,7 @@ export function BottomNavbar() {
                          <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button asChild size="icon" className="rounded-full h-10 w-10 bg-background/80 backdrop-blur-sm border" onClick={(e) => e.stopPropagation()}>
+                                    <Button asChild size="icon" className="rounded-full h-10 w-10 bg-background/80 backdrop-blur-sm border dark:text-white dark:border-white" onClick={(e) => e.stopPropagation()}>
                                         <Link href="/jobs/new"><Plus className="h-5 w-5" /></Link>
                                     </Button>
                                 </TooltipTrigger>
