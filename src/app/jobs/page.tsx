@@ -530,8 +530,8 @@ function JobsPageContent() {
                                         </CollapsibleTrigger>
                                     </div>
                                 </div>
-                                <CollapsibleContent ref={filterRef}>
-                                    <Card className="p-4 rounded-3xl mt-2">
+                                <CollapsibleContent>
+                                    <Card ref={filterRef} onClick={(e) => e.stopPropagation()} className="p-4 rounded-3xl mt-2">
                                         <div className="grid gap-4">
                                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                                 <div className="space-y-2">
@@ -709,6 +709,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
