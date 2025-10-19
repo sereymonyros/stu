@@ -30,7 +30,6 @@ export function Header() {
             <div className="flex w-1/3 items-center justify-center">
                 <Link href="/" className="flex items-center gap-2 text-2xl font-bold">
                     <Slack className="h-8 w-8" />
-                    <span className="hidden sm:inline-block">Cambodia Hub</span>
                 </Link>
             </div>
             <div className="w-1/3" />
