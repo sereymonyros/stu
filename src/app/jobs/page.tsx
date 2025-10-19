@@ -512,7 +512,7 @@ function JobsPageContent() {
                         </div>
                     </div>
                      {viewMode !== 'board' && (
-                        <div className="w-full sm:w-1/2">
+                        <div className="w-full">
                           <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen} className="space-y-2">
                                 <div className="relative flex-1">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -549,7 +549,7 @@ function JobsPageContent() {
                                 <CollapsibleContent ref={filterRef}>
                                     <Card className="p-4 rounded-3xl mt-2">
                                         <div className="grid gap-4">
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                                 <div className="space-y-2">
                                                     <Label>Company</Label>
                                                     <MultiSelect
@@ -725,5 +725,6 @@ export default function JobsPage() {
     
 
     
+
 
 
