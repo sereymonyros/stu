@@ -399,7 +399,7 @@ function JobsPageContent() {
     
     if (!jobs) {
         return (
-            <main className="flex-1 p-4 md:p-6 lg:p-8">
+            <main className="flex-1 p-4 md:p-6 lg:p-8 pb-32">
                  <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
                     <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
                     <div className="text-center">
@@ -483,7 +483,7 @@ function JobsPageContent() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <main className="flex-1 p-4 lg:p-8">
+            <main className="flex-1 p-4 lg:p-8 pb-32">
                  <div className="mb-6 space-y-4">
                     <div className="flex justify-between items-center">
                          <div className="flex items-center gap-4">
@@ -500,37 +500,35 @@ function JobsPageContent() {
                      {viewMode !== 'board' && (
                         <div className="w-full">
                           <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen} className="space-y-2">
-                                <div className="relative flex-1">
+                                <div className="relative flex items-center">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
                                         type="search"
                                         placeholder="Search by title..."
-                                        className="pl-10 h-10 w-full"
+                                        className="pl-10 h-10 w-full pr-24"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <CollapsibleTrigger asChild>
-                                        <Button variant="outline" className="h-10">
-                                            <Filter className="mr-2 h-4 w-4"/>
-                                            Filters
-                                        </Button>
-                                    </CollapsibleTrigger>
-                                     {hasActiveFilters && (
-                                         <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button variant="ghost" size="icon" onClick={clearAllFilters} className="h-8 w-8">
-                                                        <X className="h-5 w-5" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Clear all filters</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    )}
+                                    <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center">
+                                        {hasActiveFilters && (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button variant="ghost" size="icon" onClick={clearAllFilters} className="h-8 w-8">
+                                                            <X className="h-5 w-5" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent><p>Clear all filters</p></TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        )}
+                                        <CollapsibleTrigger asChild>
+                                            <Button variant="ghost" className="h-10 px-3">
+                                                <Filter className="mr-2 h-4 w-4"/>
+                                                Filters
+                                            </Button>
+                                        </CollapsibleTrigger>
+                                    </div>
                                 </div>
                                 <CollapsibleContent ref={filterRef}>
                                     <Card className="p-4 rounded-3xl mt-2">
@@ -711,6 +709,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
