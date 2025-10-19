@@ -103,12 +103,12 @@ export function BottomNavbar() {
                     <span className="sr-only">Toggle theme</span>
                 </Button>
                 {isRecruiter && (
-                    <div className="absolute left-1/2 -translate-x-1/2 -top-5">
+                    <div className="absolute -top-2 left-0">
                          <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button asChild size="icon" className="rounded-full h-14 w-14 shadow-lg" onClick={(e) => e.stopPropagation()}>
-                                        <Link href="/jobs/new"><Plus className="h-6 w-6" /></Link>
+                                    <Button asChild size="icon" className="rounded-full h-10 w-10 shadow-lg" onClick={(e) => e.stopPropagation()}>
+                                        <Link href="/jobs/new"><Plus className="h-5 w-5" /></Link>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
