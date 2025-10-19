@@ -97,11 +97,7 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
 
     return (
         <div className="flex flex-col min-h-screen">
-<<<<<<< HEAD
             <main className="flex-1 p-4 lg:p-8 pb-6">
-=======
-            <main className="flex-1 p-4">
->>>>>>> ff51ee2e479d0711ef5148f52b53980e45a1c75b
                 <div className="mb-6">
                     <div className="mb-4">
                       <BackButton />
