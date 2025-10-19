@@ -488,20 +488,6 @@ function JobsPageContent() {
                     <div className="flex justify-between items-center">
                          <div className="flex items-center gap-4">
                             <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
-                            {isRecruiter && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button asChild size="icon" variant="default" className="h-10 w-10 hover:bg-primary/90">
-                                                <Link href="/jobs/new"><Plus className="h-5 w-5" /></Link>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Post a New Job</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
                         </div>
                         <div className="hidden sm:flex">
                              <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}}>
@@ -725,6 +711,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 

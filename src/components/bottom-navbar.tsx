@@ -3,13 +3,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Briefcase, User, Settings, Moon, Sun } from "lucide-react";
+import { LayoutDashboard, Briefcase, User, Settings, Moon, Sun, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useUser } from "@/firebase";
-import { useState, useEffect, useRef } from "react";
+import { useUser, useDoc, useFirestore } from "@/firebase";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSettingsSheet } from "./settings-sheet";
 import { useTheme } from "next-themes";
 import { Button } from "./ui/button";
+import { doc } from "firebase/firestore";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 
 const navItems = [
     { href: "/jobs", icon: Briefcase, label: "Jobs" },
@@ -23,6 +25,11 @@ export function BottomNavbar() {
     const [isScrolling, setIsScrolling] = useState(false);
     const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const { theme, setTheme } = useTheme();
+    const firestore = useFirestore();
+
+    const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
+    const { data: userProfile } = useDoc(userProfileRef);
+    const isRecruiter = userProfile?.userType === 'recruiter';
 
 
     useEffect(() => {
@@ -95,6 +102,22 @@ export function BottomNavbar() {
                     <Moon className="absolute h-3 w-3 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                     <span className="sr-only">Toggle theme</span>
                 </Button>
+                {isRecruiter && (
+                    <div className="absolute left-1/2 -translate-x-1/2 -top-5">
+                         <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button asChild size="icon" className="rounded-full h-14 w-14 shadow-lg" onClick={(e) => e.stopPropagation()}>
+                                        <Link href="/jobs/new"><Plus className="h-6 w-6" /></Link>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Post a New Job</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+                )}
             </div>
         </div>
     )
