@@ -54,7 +54,7 @@ export function JobCardSmall({
     };
 
     return (
-        <Link href={`/jobs/${job.id}/details`} className="block group/card">
+        <Link href={`/jobs/${job.id}/details`} className="block group/card last:md:pb-[90px]">
             <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl")}>
                  {hasApplied && (
                     <div className="absolute inset-0 bg-background/80 z-20 flex items-center justify-center rounded-3xl">
