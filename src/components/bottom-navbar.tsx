@@ -63,7 +63,7 @@ export function BottomNavbar() {
             "fixed bottom-4 left-1/2 -translate-x-1/2 w-full px-4 flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none",
             isScrolling ? "opacity-50" : "opacity-100"
         )}>
-            <div className="relative w-full max-w-lg pointer-events-auto" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+            <div className="relative w-full max-w-lg pointer-events-auto">
                 <div className="bg-background/80 dark:bg-gradient-to-r from-black via-blue-900 to-black backdrop-blur-sm border rounded-full shadow-lg py-2">
                     <div className="flex h-full items-center justify-evenly max-w-lg mx-auto font-medium">
                         {navItems.map((item) => {
@@ -73,7 +73,6 @@ export function BottomNavbar() {
                                     key={item.href}
                                     href={item.href}
                                     className="inline-flex flex-col items-center justify-center relative"
-                                    onClick={(e) => e.stopPropagation()}
                                 >
                                     <div className={cn(
                                         "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200",
@@ -95,7 +94,7 @@ export function BottomNavbar() {
                  <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute -bottom-1 -right-2 h-7 w-7 rounded-full"
+                    className="absolute bottom-2 right-2 h-7 w-7 rounded-full"
                     onClick={(e) => { e.stopPropagation(); setTheme(theme === 'dark' ? 'light' : 'dark'); }}
                 >
                     <Sun className="h-3 w-3 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
