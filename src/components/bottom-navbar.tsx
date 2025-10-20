@@ -95,7 +95,7 @@ export function BottomNavbar() {
                  <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
+                    className="absolute -bottom-1 -right-2 h-7 w-7 rounded-full"
                     onClick={(e) => { e.stopPropagation(); setTheme(theme === 'dark' ? 'light' : 'dark'); }}
                 >
                     <Sun className="h-3 w-3 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -107,7 +107,7 @@ export function BottomNavbar() {
                          <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button asChild size="icon" className="rounded-full h-10 w-10 bg-background/80 backdrop-blur-sm border dark:text-white dark:border-white" onClick={(e) => e.stopPropagation()}>
+                                    <Button asChild size="icon" className="bg-background/80 backdrop-blur-sm border dark:text-white dark:border-white rounded-full h-10 w-10" onClick={(e) => e.stopPropagation()}>
                                         <Link href="/jobs/new"><Plus className="h-5 w-5" /></Link>
                                     </Button>
                                 </TooltipTrigger>
