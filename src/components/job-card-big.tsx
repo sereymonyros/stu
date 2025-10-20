@@ -61,7 +61,7 @@ export function JobCardBig({
     };
 
     return (
-        <Link href={`/jobs/${job.id}/details`} className="block group/card h-full">
+        <Link href={`/jobs/${job.id}/details`} className="block group/card h-full last:pb-[90px] last:md:pb-[0] ">
             <Card className={cn(
                 "flex flex-col h-full transition-all duration-200 rounded-3xl group-hover/card:scale-[1.02] group-hover/card:shadow-lg relative",
             )}>

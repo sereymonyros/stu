@@ -151,20 +151,6 @@ function JobsPageContent() {
         router.replace(`/jobs?${params.toString()}`, { scroll: false });
     }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, router]);
 
-    // --- Close filters on outside click ---
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-                setIsFilterOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
-
-
     // --- Toggle Handlers ---
     const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
         setter(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
@@ -483,7 +469,7 @@ function JobsPageContent() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <main className="flex-1 p-4 lg:p-8 pb-32">
+            <main className="flex-1 p-4 lg:p-8">
                  <div className="mb-6 space-y-4">
                     <div className="flex justify-between items-center">
                          <div className="flex items-center gap-4">
