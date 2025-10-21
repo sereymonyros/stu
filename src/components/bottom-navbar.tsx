@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Briefcase, User, Settings, Moon, Sun, Plus, MoreHorizontal, MessageSquare, LogOut } from "lucide-react";
+import { LayoutDashboard, Briefcase, User, Settings, Moon, Sun, Plus, MoreHorizontal, MessageSquare, LogOut, MessageSquareHeart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser, useDoc, useFirestore, useAuth } from "@/firebase";
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -155,7 +155,7 @@ export function BottomNavbar() {
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                                 <Link href="/feedback">
-                                    <Settings className="mr-2 h-4 w-4" />
+                                    <MessageSquareHeart className="mr-2 h-4 w-4" />
                                     <span>Give Feedback</span>
                                 </Link>
                             </DropdownMenuItem>
