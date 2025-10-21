@@ -90,7 +90,7 @@ export function BottomNavbar() {
                          <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button asChild variant="ghost" size="icon" className="bg-background/80 backdrop-blur-sm border rounded-full h-8 w-8 shadow-lg" onClick={(e) => e.stopPropagation()}>
+                                    <Button asChild variant="ghost" size="icon" className="bg-background/80 backdrop-blur-sm border rounded-full h-10 w-10 shadow-lg" onClick={(e) => e.stopPropagation()}>
                                         <Link href="/jobs/new"><Plus className="h-4 w-4" /></Link>
                                     </Button>
                                 </TooltipTrigger>
@@ -102,7 +102,7 @@ export function BottomNavbar() {
                     </div>
                 )}
 
-                <div className="min-w-48 bg-background/80 dark:bg-zinc-900/80 backdrop-blur-sm border rounded-full shadow-lg flex h-8 items-center justify-evenly font-medium flex-1">
+                <div className="min-w-48 bg-background/80 dark:bg-zinc-900/80 backdrop-blur-sm border rounded-full shadow-lg flex h-10 items-center justify-evenly font-medium flex-1">
                     {navItems.map((item) => {
                         const isActive = pathname.startsWith(item.href);
                         return (
@@ -130,7 +130,7 @@ export function BottomNavbar() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="bg-background/80 backdrop-blur-sm border rounded-full h-8 w-8 shadow-lg"
+                                className="bg-background/80 backdrop-blur-sm border rounded-full h-10 w-10 shadow-lg"
                             >
                                 <MoreHorizontal className="h-3 w-3" />
                                 <span className="sr-only">More options</span>
