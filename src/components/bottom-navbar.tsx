@@ -3,17 +3,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Briefcase, User, Settings, Moon, Sun, Plus, MoreHorizontal, MessageSquareHeart } from "lucide-react";
+import { LayoutDashboard, Briefcase, User, Settings, Moon, Sun, Plus, MoreHorizontal, MessageSquare, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useUser, useDoc, useFirestore } from "@/firebase";
+import { useUser, useDoc, useFirestore, useAuth } from "@/firebase";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useSettingsSheet } from "./settings-sheet";
 import { useTheme } from "next-themes";
 import { Button } from "./ui/button";
 import { doc } from "firebase/firestore";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/tooltip";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { useChatbot } from "./chatbot-provider";
+import { signOut } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 const navItems = [
     { href: "/jobs", label: "Jobs", icon: Briefcase },
@@ -24,6 +25,8 @@ const navItems = [
 export function BottomNavbar() {
     const pathname = usePathname();
     const { user } = useUser();
+    const auth = useAuth();
+    const router = useRouter();
     const [isScrolling, setIsScrolling] = useState(false);
     const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const { theme, setTheme } = useTheme();
@@ -37,6 +40,12 @@ export function BottomNavbar() {
      const handleAskAI = () => {
         setChatbotOpen(true);
     };
+
+    const handleSignOut = async () => {
+        await signOut(auth);
+        router.push('/');
+    };
+
 
     useEffect(() => {
         const handleScroll = () => {
@@ -133,15 +142,27 @@ export function BottomNavbar() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-56 mb-2" side="top" align="end">
+                            <DropdownMenuLabel className="font-normal">
+                                <div className="flex flex-col space-y-1">
+                                <p className="text-sm font-medium leading-none">{userProfile?.displayName ?? user.email}</p>
+                                <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                                </div>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
                              <DropdownMenuItem onClick={handleAskAI}>
-                                <Settings className="mr-2 h-4 w-4" />
+                                <MessageSquare className="mr-2 h-4 w-4" />
                                 <span>Ask AI Helper</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                                 <Link href="/feedback">
-                                    <MessageSquareHeart className="mr-2 h-4 w-4" />
+                                    <Settings className="mr-2 h-4 w-4" />
                                     <span>Give Feedback</span>
                                 </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleSignOut}>
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>Log out</span>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
