@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Briefcase, User, Settings, Moon, Sun, Plus } from "lucide-react";
+import { LayoutDashboard, Briefcase, User, Settings, Moon, Sun, Plus, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser, useDoc, useFirestore } from "@/firebase";
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -12,11 +12,13 @@ import { useTheme } from "next-themes";
 import { Button } from "./ui/button";
 import { doc } from "firebase/firestore";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/tooltip";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { useChatbot } from "./chatbot-provider";
 
 const navItems = [
-    { href: "/jobs", icon: Briefcase, label: "Jobs" },
-    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/profile", icon: User, label: "Profile" },
+    { href: "/jobs", label: "Jobs", icon: Briefcase },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/profile", label: "Profile", icon: User },
 ];
 
 export function BottomNavbar() {
@@ -26,11 +28,15 @@ export function BottomNavbar() {
     const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const { theme, setTheme } = useTheme();
     const firestore = useFirestore();
+    const { setOpen: setChatbotOpen } = useChatbot();
 
     const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
     const { data: userProfile } = useDoc(userProfileRef);
     const isRecruiter = userProfile?.userType === 'recruiter';
 
+     const handleAskAI = () => {
+        setChatbotOpen(true);
+    };
 
     useEffect(() => {
         const handleScroll = () => {
@@ -43,7 +49,6 @@ export function BottomNavbar() {
             }, 500);
         };
 
-        // Listen on the window object for global scroll events
         window.addEventListener("scroll", handleScroll, { passive: true });
 
         return () => {
@@ -60,63 +65,87 @@ export function BottomNavbar() {
 
     return (
         <div className={cn(
-            "fixed bottom-4 left-1/2 -translate-x-1/2 w-full px-4 flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none",
+            "fixed bottom-4 left-1/2 -translate-x-1/2 w-full flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none",
             isScrolling ? "opacity-50" : "opacity-100"
         )}>
-            <div className="relative w-full max-w-lg pointer-events-auto">
-                <div className="bg-background/80 dark:bg-gradient-to-r from-black via-blue-900 to-black backdrop-blur-sm border rounded-full shadow-lg py-2">
-                    <div className="flex h-full items-center justify-evenly max-w-lg mx-auto font-medium">
-                        {navItems.map((item) => {
-                            const isActive = pathname.startsWith(item.href);
-                            return (
-                                <Link 
-                                    key={item.href}
-                                    href={item.href}
-                                    className="inline-flex flex-col items-center justify-center relative"
-                                >
-                                    <div className={cn(
-                                        "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200",
-                                        isActive ? "bg-primary/10 dark:bg-white/10" : "text-muted-foreground dark:text-zinc-400"
-                                    )}>
-                                        <div className={cn(
-                                            "flex flex-col items-center justify-center px-5 py-2 rounded-full",
-                                            isActive ? "text-primary dark:text-white" : ""
-                                        )}>
-                                            <item.icon className="w-5 h-5 mb-1" />
-                                            <span className="text-xs font-medium">{item.label}</span>
-                                        </div>
-                                    </div>
-                                </Link>
-                            )
-                        })}
-                    </div>
-                </div>
-                 <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute bottom-2 right-2 h-7 w-7 rounded-full"
-                    onClick={(e) => { e.stopPropagation(); setTheme(theme === 'dark' ? 'light' : 'dark'); }}
-                >
-                    <Sun className="h-3 w-3 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-3 w-3 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                    <span className="sr-only">Toggle theme</span>
-                </Button>
+            <div className="relative w-full max-w-lg pointer-events-auto flex items-center justify-center gap-2">
+                
                 {isRecruiter && (
-                    <div className="absolute left-0 -top-2">
+                    <div className="pointer-events-auto">
                          <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button asChild size="icon" className="bg-background/80 backdrop-blur-sm border dark:text-white dark:border-white rounded-full h-10 w-10" onClick={(e) => e.stopPropagation()}>
-                                        <Link href="/jobs/new"><Plus className="h-5 w-5" /></Link>
+                                    <Button asChild size="icon" className="bg-background/80 backdrop-blur-sm border dark:text-white dark:border-white rounded-full h-12 w-12 shadow-lg" onClick={(e) => e.stopPropagation()}>
+                                        <Link href="/jobs/new"><Plus className="h-6 w-6" /></Link>
                                     </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>
+                                <TooltipContent side="top">
                                     <p>Post a New Job</p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
                     </div>
                 )}
+
+                <div className="bg-background/80 dark:bg-zinc-900/80 backdrop-blur-sm border rounded-full shadow-lg flex h-12 items-center justify-evenly font-medium flex-1">
+                    {navItems.map((item) => {
+                        const isActive = pathname.startsWith(item.href);
+                        return (
+                            <Link 
+                                key={item.href}
+                                href={item.href}
+                                className="inline-flex flex-col items-center justify-center"
+                            >
+                                <div className={cn(
+                                    "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200 text-muted-foreground dark:text-zinc-400",
+                                    isActive ? "text-primary dark:text-white" : ""
+                                )}>
+                                    <div className="flex flex-col items-center justify-center px-4">
+                                        <item.icon className="h-5 w-5" />
+                                        <span className="text-[10px] font-medium">{item.label}</span>
+                                    </div>
+                                </div>
+                            </Link>
+                        )
+                    })}
+                </div>
+                
+                <div className="flex items-center gap-2 pointer-events-auto">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="bg-background/80 backdrop-blur-sm border rounded-full h-12 w-12 shadow-lg"
+                        onClick={(e) => { e.stopPropagation(); setTheme(theme === 'dark' ? 'light' : 'dark'); }}
+                    >
+                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                        <span className="sr-only">Toggle theme</span>
+                    </Button>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                             <Button
+                                variant="ghost"
+                                size="icon"
+                                className="bg-background/80 backdrop-blur-sm border rounded-full h-12 w-12 shadow-lg"
+                            >
+                                <MoreHorizontal className="h-5 w-5" />
+                                <span className="sr-only">More options</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56 mb-2" side="top" align="end">
+                             <DropdownMenuItem onClick={handleAskAI}>
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Ask AI Helper</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href="/feedback">
+                                    <MessageSquareHeart className="mr-2 h-4 w-4" />
+                                    <span>Give Feedback</span>
+                                </Link>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
         </div>
     )
