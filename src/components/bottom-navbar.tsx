@@ -136,7 +136,7 @@ export function BottomNavbar() {
                                 <span className="sr-only">More options</span>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56 mb-2" side="top" align="end">
+                        <DropdownMenuContent className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/80 dark:bg-zinc-900/80 backdrop-blur-lg" side="top" align="end">
                              {user && userProfile && (
                                 <>
                                     <DropdownMenuLabel className="font-normal">
