@@ -68,15 +68,12 @@ export function BottomNavbar() {
         };
     }, []);
 
-    if (!user) {
-        return null;
-    }
-
     return (
         <div className={cn(
             "fixed bottom-4 left-1/2 -translate-x-1/2 w-full flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none",
             isScrolling ? "opacity-50" : "opacity-100"
         )}>
+           {user && (
             <div className="relative w-full max-w-lg pointer-events-auto flex items-center justify-center gap-2">
                 
                 {isRecruiter && (
@@ -168,6 +165,7 @@ export function BottomNavbar() {
                     </DropdownMenu>
                 </div>
             </div>
+            )}
         </div>
     )
 }
