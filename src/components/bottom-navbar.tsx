@@ -31,10 +31,22 @@ export function BottomNavbar() {
     const { theme, setTheme } = useTheme();
     const firestore = useFirestore();
     const { setOpen: setChatbotOpen } = useChatbot();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
     const { data: userProfile } = useDoc(userProfileRef);
     const isRecruiter = userProfile?.userType === 'recruiter';
+
+    useEffect(() => {
+        if (isMenuOpen) {
+            const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+            document.body.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
+            document.body.classList.add('body-lock');
+        } else {
+            document.body.classList.remove('body-lock');
+            document.body.style.removeProperty('--scrollbar-width');
+        }
+    }, [isMenuOpen]);
 
      const handleAskAI = () => {
         setChatbotOpen(true);
@@ -114,7 +126,7 @@ export function BottomNavbar() {
                 </div>
                 
                 <div className="flex-shrink-0 flex items-center gap-2 pointer-events-auto">
-                     <DropdownMenu>
+                     <DropdownMenu onOpenChange={setIsMenuOpen}>
                         <DropdownMenuTrigger asChild>
                             <Button
                                 variant="ghost"
