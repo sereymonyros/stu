@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Briefcase, User, Settings, Moon, Sun, Plus, MoreHorizontal, MessageSquare, LogOut, MessageSquareHeart } from "lucide-react";
+import { LayoutDashboard, Briefcase, User, Settings, Moon, Sun, Plus, MoreHorizontal, MessageSquare, LogOut, MessageSquareHeart, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser, useDoc, useFirestore, useAuth } from "@/firebase";
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -46,7 +46,6 @@ export function BottomNavbar() {
         router.push('/');
     };
 
-
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolling(true);
@@ -73,10 +72,9 @@ export function BottomNavbar() {
             "fixed bottom-4 left-1/2 -translate-x-1/2 w-full flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none",
             isScrolling ? "opacity-50" : "opacity-100"
         )}>
-           {user && (
             <div className="relative w-full max-w-lg pointer-events-auto flex items-center justify-center gap-2">
                 
-                {isRecruiter && (
+                {user && isRecruiter && (
                     <div className="pointer-events-auto">
                          <TooltipProvider>
                             <Tooltip>
@@ -127,45 +125,59 @@ export function BottomNavbar() {
                         <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                         <span className="sr-only">Toggle theme</span>
                     </Button>
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                             <Button
-                                variant="ghost"
-                                size="icon"
-                                className="bg-background/80 backdrop-blur-sm border rounded-full h-12 w-12 shadow-lg"
-                            >
-                                <MoreHorizontal className="h-5 w-5" />
-                                <span className="sr-only">More options</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56 mb-2" side="top" align="end">
-                            <DropdownMenuLabel className="font-normal">
-                                <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-medium leading-none">{userProfile?.displayName ?? user.email}</p>
-                                <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                                </div>
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                             <DropdownMenuItem onClick={handleAskAI}>
-                                <MessageSquare className="mr-2 h-4 w-4" />
-                                <span>Ask AI Helper</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/feedback">
-                                    <MessageSquareHeart className="mr-2 h-4 w-4" />
-                                    <span>Give Feedback</span>
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={handleSignOut}>
-                                <LogOut className="mr-2 h-4 w-4" />
-                                <span>Log out</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    {user && userProfile ? (
+                         <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="bg-background/80 backdrop-blur-sm border rounded-full h-12 w-12 shadow-lg"
+                                >
+                                    <MoreHorizontal className="h-5 w-5" />
+                                    <span className="sr-only">More options</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56 mb-2" side="top" align="end">
+                                <DropdownMenuLabel className="font-normal">
+                                    <div className="flex flex-col space-y-1">
+                                    <p className="text-sm font-medium leading-none">{userProfile.displayName ?? user.email}</p>
+                                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                                    </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleAskAI}>
+                                    <MessageSquare className="mr-2 h-4 w-4" />
+                                    <span>Ask AI Helper</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/feedback">
+                                        <MessageSquareHeart className="mr-2 h-4 w-4" />
+                                        <span>Give Feedback</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleSignOut}>
+                                    <LogOut className="mr-2 h-4 w-4" />
+                                    <span>Log out</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : (
+                         <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button asChild size="icon" className="bg-background/80 backdrop-blur-sm border dark:text-white dark:border-white rounded-full h-12 w-12 shadow-lg" onClick={(e) => e.stopPropagation()}>
+                                        <Link href="/login"><LogIn className="h-5 w-5" /></Link>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>Login</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
                 </div>
             </div>
-            )}
         </div>
     )
 }
