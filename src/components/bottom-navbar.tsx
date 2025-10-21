@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Briefcase, User, Settings, Moon, Sun, Plus, MoreHorizontal, MessageSquare, LogOut, MessageSquareHeart, LogIn } from "lucide-react";
+import { LayoutDashboard, Briefcase, User, Moon, Sun, Plus, MoreHorizontal, MessageSquare, LogOut, MessageSquareHeart, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser, useDoc, useFirestore, useAuth } from "@/firebase";
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -115,67 +115,66 @@ export function BottomNavbar() {
                 </div>
                 
                 <div className="flex items-center gap-2 pointer-events-auto">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="bg-background/80 backdrop-blur-sm border rounded-full h-12 w-12 shadow-lg"
-                        onClick={(e) => { e.stopPropagation(); setTheme(theme === 'dark' ? 'light' : 'dark'); }}
-                    >
-                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                        <span className="sr-only">Toggle theme</span>
-                    </Button>
-                    {user && userProfile ? (
-                         <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="bg-background/80 backdrop-blur-sm border rounded-full h-12 w-12 shadow-lg"
-                                >
-                                    <MoreHorizontal className="h-5 w-5" />
-                                    <span className="sr-only">More options</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56 mb-2" side="top" align="end">
-                                <DropdownMenuLabel className="font-normal">
-                                    <div className="flex flex-col space-y-1">
-                                    <p className="text-sm font-medium leading-none">{userProfile.displayName ?? user.email}</p>
-                                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                                    </div>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={handleAskAI}>
-                                    <MessageSquare className="mr-2 h-4 w-4" />
-                                    <span>Ask AI Helper</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link href="/feedback">
-                                        <MessageSquareHeart className="mr-2 h-4 w-4" />
-                                        <span>Give Feedback</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={handleSignOut}>
-                                    <LogOut className="mr-2 h-4 w-4" />
-                                    <span>Log out</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    ) : (
-                         <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button asChild size="icon" className="bg-background/80 backdrop-blur-sm border dark:text-white dark:border-white rounded-full h-12 w-12 shadow-lg" onClick={(e) => e.stopPropagation()}>
-                                        <Link href="/login"><LogIn className="h-5 w-5" /></Link>
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                    <p>Login</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    )}
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="bg-background/80 backdrop-blur-sm border rounded-full h-12 w-12 shadow-lg"
+                            >
+                                <MoreHorizontal className="h-5 w-5" />
+                                <span className="sr-only">More options</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56 mb-2" side="top" align="end">
+                             {user && userProfile && (
+                                <>
+                                    <DropdownMenuLabel className="font-normal">
+                                        <div className="flex flex-col space-y-1">
+                                            <p className="text-sm font-medium leading-none">{userProfile.displayName ?? user.email}</p>
+                                            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                                        </div>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                </>
+                             )}
+                            <DropdownMenuItem onClick={handleAskAI}>
+                                <MessageSquare className="mr-2 h-4 w-4" />
+                                <span>Ask AI Helper</span>
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+                                {theme === 'dark' ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                                <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                            </DropdownMenuItem>
+                            
+                            {user ? (
+                                <>
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/feedback">
+                                            <MessageSquareHeart className="mr-2 h-4 w-4" />
+                                            <span>Give Feedback</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={handleSignOut}>
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        <span>Log out</span>
+                                    </DropdownMenuItem>
+                                </>
+                            ) : (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild>
+                                         <Link href="/login">
+                                            <LogIn className="mr-2 h-4 w-4" />
+                                            <span>Login</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
         </div>
