@@ -17,8 +17,8 @@ import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
 const navItems = [
-    { href: "/jobs", label: "Jobs", icon: Briefcase },
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/jobs", label: "Jobs" },
+    { href: "/dashboard", label: "Dashboard" },
 ];
 
 export function BottomNavbar() {
@@ -83,7 +83,7 @@ export function BottomNavbar() {
             "fixed bottom-4 left-1/2 -translate-x-1/2 w-full flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none",
             isScrolling ? "opacity-50" : "opacity-100"
         )}>
-            <div className="relative w-full max-w-lg pointer-events-auto flex items-center justify-center gap-2">
+            <div className="relative pointer-events-auto flex items-center justify-center gap-2">
                 
                 {user && isRecruiter && (
                     <div className="pointer-events-auto">
@@ -102,7 +102,7 @@ export function BottomNavbar() {
                     </div>
                 )}
 
-                <div className="bg-background/80 dark:bg-zinc-900/80 backdrop-blur-sm border rounded-full shadow-lg flex h-12 items-center justify-evenly font-medium flex-1">
+                <div className="min-w-48 bg-background/80 dark:bg-zinc-900/80 backdrop-blur-sm border rounded-full shadow-lg flex h-8 items-center justify-evenly font-medium flex-1">
                     {navItems.map((item) => {
                         const isActive = pathname.startsWith(item.href);
                         return (
@@ -116,7 +116,6 @@ export function BottomNavbar() {
                                     isActive ? "text-primary dark:text-white" : ""
                                 )}>
                                     <div className="flex flex-col items-center justify-center px-4">
-                                        <item.icon className="h-5 w-5" />
                                         <span className="text-[10px] font-medium">{item.label}</span>
                                     </div>
                                 </div>
@@ -131,9 +130,9 @@ export function BottomNavbar() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="bg-background/80 backdrop-blur-sm border rounded-full h-12 w-12 shadow-lg"
+                                className="bg-background/80 backdrop-blur-sm border rounded-full h-8 w-8 shadow-lg"
                             >
-                                <MoreHorizontal className="h-5 w-5" />
+                                <MoreHorizontal className="h-3 w-3" />
                                 <span className="sr-only">More options</span>
                             </Button>
                         </DropdownMenuTrigger>
