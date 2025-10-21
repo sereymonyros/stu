@@ -90,8 +90,8 @@ export function BottomNavbar() {
                          <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button asChild size="icon" className="bg-background/80 backdrop-blur-sm border dark:text-white dark:border-white rounded-full h-12 w-12 shadow-lg" onClick={(e) => e.stopPropagation()}>
-                                        <Link href="/jobs/new"><Plus className="h-6 w-6" /></Link>
+                                    <Button asChild variant="ghost" size="icon" className="bg-background/80 backdrop-blur-sm border rounded-full h-8 w-8 shadow-lg" onClick={(e) => e.stopPropagation()}>
+                                        <Link href="/jobs/new"><Plus className="h-4 w-4" /></Link>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent side="top">
