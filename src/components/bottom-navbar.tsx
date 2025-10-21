@@ -113,7 +113,7 @@ export function BottomNavbar() {
                     })}
                 </div>
                 
-                <div className="flex items-center gap-2 pointer-events-auto">
+                <div className="flex-shrink-0 flex items-center gap-2 pointer-events-auto">
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
