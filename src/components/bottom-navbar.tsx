@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Moon, Sun, Plus, MoreHorizontal, MessageSquare, LogOut, User as UserIcon, LogIn } from "lucide-react";
+import { Briefcase, Moon, Sun, Plus, MoreHorizontal, MessageSquare, LogOut, User as UserIcon, LogIn, MessageSquareHeart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser, useDoc, useFirestore, useAuth } from "@/firebase";
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -43,6 +43,11 @@ export function BottomNavbar() {
             document.body.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
             document.body.classList.add('body-lock');
         } else {
+            document.body.classList.remove('body-lock');
+            document.body.style.removeProperty('--scrollbar-width');
+        }
+
+        return () => {
             document.body.classList.remove('body-lock');
             document.body.style.removeProperty('--scrollbar-width');
         }
@@ -136,7 +141,7 @@ export function BottomNavbar() {
                                 <span className="sr-only">More options</span>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/80 dark:bg-zinc-900/80 backdrop-blur-lg" side="top" align="end">
+                        <DropdownMenuContent className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/80 dark:bg-zinc-950/80 backdrop-blur-lg" side="top" align="end">
                              {user && userProfile && (
                                 <>
                                     <DropdownMenuLabel className="font-normal">
@@ -167,6 +172,12 @@ export function BottomNavbar() {
                                             <span>Profile</span>
                                         </Link>
                                     </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/feedback">
+                                            <MessageSquareHeart className="mr-2 h-4 w-4" />
+                                            <span>Give Feedback</span>
+                                        </Link>
+                                    </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={handleSignOut}>
                                         <LogOut className="mr-2 h-4 w-4" />
@@ -175,6 +186,12 @@ export function BottomNavbar() {
                                 </>
                             ) : (
                                 <>
+                                    <DropdownMenuItem asChild>
+                                         <Link href="/feedback">
+                                            <MessageSquareHeart className="mr-2 h-4 w-4" />
+                                            <span>Give Feedback</span>
+                                        </Link>
+                                    </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem asChild>
                                          <Link href="/login">
