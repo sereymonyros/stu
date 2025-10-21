@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 
 export default function JobDetailsLoading() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col  ">
       <main className="flex-1 p-4 md:p-6 lg:p-8">
         <Card className="w-full max-w-3xl mx-auto rounded-3xl">
             <CardHeader>

@@ -23,7 +23,7 @@ function ListingCardSkeleton() {
 
 export default function ListingsLoading() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col  ">
       <main className="flex-1 p-4 md:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-6">
           <Skeleton className="h-10 w-48" />

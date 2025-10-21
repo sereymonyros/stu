@@ -53,7 +53,7 @@ export default function UnseedPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex   items-center justify-center bg-background p-4">
       <Card className="mx-auto w-full max-w-lg rounded-3xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

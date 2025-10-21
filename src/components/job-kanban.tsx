@@ -231,7 +231,7 @@ function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDetails: 
                     </div>
                      <Dialog onOpenChange={(open) => { if (open) handleGetAIAnalysis() }}>
                         <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="w-full mt-2 text-xs">
+                            <Button variant="outline" size="sm" className="w-full mt-2 text-xs rounded-full">
                                 <Sparkles className="mr-2 h-3 w-3 text-yellow-500" />
                                 AI Review
                             </Button>
@@ -359,3 +359,5 @@ Board.Card = ApplicantCard;
 Board.JobCard = JobCard;
 
 export { Board };
+
+    

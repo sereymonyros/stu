@@ -44,7 +44,7 @@ function SearchResults() {
   }, [queryText]);
 
   return (
-    <div className="flex flex-col items-center w-full min-h-screen bg-background text-foreground">
+    <div className="flex flex-col items-center w-full   bg-background text-foreground">
       <main className="w-full mt-4 flex-1 p-4 md:p-6 lg:p-8">
         <div className="max-w-xl mx-auto mb-8">
             <SearchBox searchAction={search} />
@@ -84,7 +84,7 @@ export default function SearchPage({
   searchParams: { q: string };
 }) {
   return (
-    <Suspense fallback={<div className="min-h-screen w-full flex items-center justify-center"><p>Loading...</p></div>}>
+    <Suspense fallback={<div className="  w-full flex items-center justify-center"><p>Loading...</p></div>}>
       <SearchResults />
     </Suspense>
   );

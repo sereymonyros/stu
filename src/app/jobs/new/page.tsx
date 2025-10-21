@@ -134,8 +134,8 @@ export default function NewJobPage() {
   const profileComplete = isAuthorized && !!userProfile?.photoURL;
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <main className="flex-1 p-4 md:p-6 lg:p-8">
+    <div className="flex flex-col  ">
+      <main className="flex-1 p-4 md:p-6 lg:p-8 mb-24">
         {isAuthorized ? (
             <Card className="max-w-2xl mx-auto rounded-3xl">
             <CardHeader>
@@ -183,7 +183,6 @@ export default function NewJobPage() {
                                 <FormItem><FormLabel>Maximum Salary (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g., 70000" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                             </div>
-                            <FormDescription>Enter salary as annual numbers (e.g., 60000 for $60,000/year).</FormDescription>
 
                             <FormField control={form.control} name="description" render={({ field }) => (
                             <FormItem><FormLabel>Job Description</FormLabel><FormControl><Textarea placeholder="Describe the role, responsibilities, and requirements..." className="min-h-[150px]" {...field} /></FormControl><FormMessage /></FormItem>

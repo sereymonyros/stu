@@ -25,7 +25,7 @@ export default function ListingsPage() {
   const { data: listings } = useCollection(listingsCollection);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col  ">
       <main className="flex-1 p-4 lg:p-8 pb-32">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold tracking-tight">For Sale</h1>

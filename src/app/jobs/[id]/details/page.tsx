@@ -137,7 +137,7 @@ function JobDetailsProfile({ jobId }: { jobId: string }) {
 export default function JobDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col  ">
             <main className="flex-1 p-4 md:p-6 lg:p-8">
                 <Suspense fallback={<Skeleton className="h-96 w-full max-w-3xl mx-auto rounded-3xl" />}>
                     <JobDetailsProfile jobId={id} />

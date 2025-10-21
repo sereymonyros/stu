@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardLoading() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col  ">
       <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-8">
         <div>
           <Skeleton className="h-10 w-1/3 mb-6" />
