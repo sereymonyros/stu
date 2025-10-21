@@ -19,7 +19,6 @@ import { useRouter } from "next/navigation";
 const navItems = [
     { href: "/jobs", label: "Jobs", icon: Briefcase },
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/profile", label: "Profile", icon: User },
 ];
 
 export function BottomNavbar() {
@@ -66,7 +65,7 @@ export function BottomNavbar() {
             }
         };
     }, []);
-
+    
     return (
         <div className={cn(
             "fixed bottom-4 left-1/2 -translate-x-1/2 w-full flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none",
@@ -138,6 +137,7 @@ export function BottomNavbar() {
                                     <DropdownMenuSeparator />
                                 </>
                              )}
+
                             <DropdownMenuItem onClick={handleAskAI}>
                                 <MessageSquare className="mr-2 h-4 w-4" />
                                 <span>Ask AI Helper</span>
@@ -150,6 +150,12 @@ export function BottomNavbar() {
                             
                             {user ? (
                                 <>
+                                     <DropdownMenuItem asChild>
+                                        <Link href="/profile">
+                                            <User className="mr-2 h-4 w-4" />
+                                            <span>Profile</span>
+                                        </Link>
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
                                         <Link href="/feedback">
                                             <MessageSquareHeart className="mr-2 h-4 w-4" />
