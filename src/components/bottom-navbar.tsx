@@ -30,10 +30,34 @@ export function BottomNavbar() {
     const firestore = useFirestore();
     const { setOpen: setChatbotOpen } = useChatbot();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    
+    // --- Scroll State ---
+    const [isVisible, setIsVisible] = useState(true);
+    const lastScrollY = useRef(0);
 
     const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
     const { data: userProfile } = useDoc(userProfileRef);
     const isRecruiter = userProfile?.userType === 'recruiter';
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+            if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+                // Scrolling down
+                setIsVisible(false);
+            } else {
+                // Scrolling up
+                setIsVisible(true);
+            }
+            lastScrollY.current = currentScrollY;
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
 
     useEffect(() => {
         if (isMenuOpen) {
@@ -62,15 +86,17 @@ export function BottomNavbar() {
     
     return (
         <div className={cn(
-            "fixed bottom-4 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none"
+            "fixed bottom-4 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 flex justify-center z-50 transition-transform duration-300 ease-in-out",
+            isVisible ? "translate-y-0" : "translate-y-[150%]",
+            "pointer-events-none"
         )}>
-            <div className="relative pointer-events-auto flex items-center justify-center gap-2 w-full rounded-full">                
+            <div className="relative pointer-events-auto flex items-center justify-center gap-2 w-full bg-zinc-100/10 dark:bg-zinc-950/10 backdrop-blur-lg rounded-full shadow-[0_-8px_20px_-8px_rgba(0,0,0,0.1)]">                
                 {user && isRecruiter && (
                     <div className="pointer-events-auto flex-shrink-0">
                          <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button asChild variant="ghost" size="icon" className="shadow-xl bg-zinc-100/10 backdrop-blur-lg rounded-full h-10 w-10 border" onClick={(e) => e.stopPropagation()}>
+                                    <Button asChild variant="ghost" size="icon" className="shadow-xl bg-background rounded-full h-8 w-8" onClick={(e) => e.stopPropagation()}>
                                         <Link href="/jobs/new"><Plus className="h-4 w-4" /></Link>
                                     </Button>
                                 </TooltipTrigger>
@@ -82,7 +108,7 @@ export function BottomNavbar() {
                     </div>
                 )}
 
-                <div className="min-w-48 rounded-full flex h-10 items-center justify-evenly font-medium flex-1 border shadow-xl bg-zinc-100/10 backdrop-blur-lg">
+                <div className="min-w-48 bg-background rounded-full border flex h-10 items-center justify-evenly font-medium flex-1">
                     {navItems.map((item) => {
                         const isActive = pathname.startsWith(item.href);
                         return (
@@ -110,14 +136,14 @@ export function BottomNavbar() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="rounded-full h-10 w-10 border shadow-xl bg-zinc-100/10 backdrop-blur-lg"
+                                className="rounded-full h-8 w-8 shadow-xl bg-background border"
                             >
                                 <MoreHorizontal className="h-4 w-4" />
                                 <span className="sr-only">More options</span>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
-                            className="w-64 p-2 mb-2 rounded-3xl shadow-xl bg-zinc-100/10 backdrop-blur-lg"
+                            className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/10 dark:bg-zinc-950/10 backdrop-blur-lg"
                             side="top"
                             align="end"
                         >
