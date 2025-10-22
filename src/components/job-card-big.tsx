@@ -67,8 +67,8 @@ export function JobCardBig({
             )}>
                 {hasApplied && (
                      <div className="absolute inset-0 bg-muted/80 backdrop-blur-sm z-20 flex items-center justify-center rounded-3xl pointer-events-none">
-                        <Badge variant="secondary" className="text-base px-4 py-1 rounded-full bg-background/80 border-border">
-                            <CheckCircle className="h-5 w-5 mr-2 text-muted-foreground" />
+                        <Badge variant="secondary" className="text-base px-4 py-1 rounded-full bg-green-500/10 text-green-700 dark:bg-green-500/10 dark:text-green-400 border-green-500/50">
+                            <CheckCircle className="h-5 w-5 mr-2" />
                             Applied
                         </Badge>
                     </div>
