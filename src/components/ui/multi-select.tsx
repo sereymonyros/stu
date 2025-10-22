@@ -51,7 +51,7 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        className={cn("w-full justify-between h-auto min-h-10 rounded-3xl", selectedValues.length > 0 ? 'h-auto' : 'h-10', className)}
+                        className={cn("w-full justify-between h-auto min-h-10", selectedValues.length > 0 ? 'h-auto' : 'h-10', className)}
                         onClick={() => setOpen(!open)}
                         {...props}
                     >
@@ -62,7 +62,7 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
                                     .map((option) => (
                                         <Badge
                                             key={option.value}
-                                            className="mr-1 mb-1 bg-lime-500 text-black hover:bg-lime-500/80"
+                                            className="mr-1 mb-1 bg-lime-500 text-black hover:bg-lime-500/80 py-1"
                                             onClick={(e) => handleUnselect(e, option.value)}
                                         >
                                             {option.label}
@@ -93,7 +93,7 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
                                         >
                                             <div
                                                 className={cn(
-                                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-3xl border border-primary",
+                                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                                                     isSelected
                                                         ? "bg-primary text-primary-foreground"
                                                         : "opacity-50 [&_svg]:invisible"
