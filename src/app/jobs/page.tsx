@@ -519,7 +519,7 @@ function JobsPageContent() {
                                 <CollapsibleContent>
                                     <Card ref={filterRef} onClick={(e) => e.stopPropagation()} className="p-4 rounded-3xl mt-2">
                                         <div className="grid gap-4">
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                                 <div className="space-y-2">
                                                     <Label>Company</Label>
                                                     <MultiSelect
@@ -547,7 +547,10 @@ function JobsPageContent() {
                                                         placeholder="Filter job types..."
                                                     />
                                                 </div>
-                                                <div className="space-y-2">
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+                                                <div className="space-y-2 lg:col-span-2">
                                                     <Label>Salary Range</Label>
                                                     <Slider
                                                         value={salaryRange}
@@ -561,10 +564,7 @@ function JobsPageContent() {
                                                         <span>${salaryRange[1].toLocaleString()}</span>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            
-                                            <div className="flex flex-col sm:flex-row justify-between items-center gap-2 pt-2">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 justify-end">
                                                     {user && !isRecruiter && (
                                                         <Toggle
                                                             pressed={showFavoritesOnly}
@@ -574,9 +574,7 @@ function JobsPageContent() {
                                                             <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "fill-red-500 text-red-500")} />
                                                         </Toggle>
                                                     )}
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                        {user && !isRecruiter && hasActiveFilters && (
+                                                     {user && !isRecruiter && hasActiveFilters && (
                                                         <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
                                                             <DialogTrigger asChild>
                                                                 <Button>
@@ -692,6 +690,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
