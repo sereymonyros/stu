@@ -67,15 +67,15 @@ export function JobCardSmall({
                 <div className="flex items-start py-4">
                     <div className="flex-1 min-w-0 pr-10 pl-4">
                         <p className="font-semibold text-sm leading-tight line-clamp-1">
-                            {job.title}
+                            <span className="hover:text-primary">{job.title}</span>
                             <span className="font-normal text-muted-foreground"> at </span>
                             <span className="hover:text-primary relative z-10" onClick={(e) => { e.preventDefault(); router.push(`/companies/${encodeURIComponent(job.companyName)}`)}}>
                                 {job.companyName}
                             </span>
                         </p>
                         <div className="flex items-center flex-wrap text-xs text-muted-foreground gap-x-3 gap-y-1 min-w-0 mt-1">
-                            <div className="flex items-center gap-1.5 line-clamp-1"><MapPin className="h-3 w-3 flex-shrink-0" /> <span className="truncate">{job.location}</span></div>
-                            {salaryDisplay && <div className="flex items-center gap-1.5"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>}
+                            <div className="flex items-center gap-1.5 line-clamp-1 hover:text-primary"><MapPin className="h-3 w-3 flex-shrink-0" /> <span className="truncate">{job.location}</span></div>
+                            {salaryDisplay && <div className="flex items-center gap-1.5 hover:text-primary"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>}
                             <div className="flex items-center gap-1.5">
                                 <Badge variant="secondary" className="px-1.5 py-0.5 text-[10px]">{job.jobType}</Badge>
                                 <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize px-1.5 py-0.5 text-[10px]">{job.status}</Badge>

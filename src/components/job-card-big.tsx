@@ -77,7 +77,7 @@ export function JobCardBig({
                 <div className={cn("flex flex-col flex-grow")}>
                         <CardHeader className="p-3 pb-2">
                             <div className="flex justify-between items-start gap-2">
-                                <CardTitle className="text-base font-bold select-none pr-10">{job.title}</CardTitle>
+                                <CardTitle className="text-base font-bold select-none pr-10 hover:text-primary">{job.title}</CardTitle>
                             </div>
                             <div className="flex flex-row flex-wrap items-center text-xs text-muted-foreground gap-x-2 gap-y-1 pt-1">
                                 <div className="flex items-center gap-1.5">
@@ -87,11 +87,11 @@ export function JobCardBig({
                                     </span>
                                 </div>
                                 <span className="text-muted-foreground/50">|</span>
-                                <div className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /> {job.location}</div>
+                                <div className="flex items-center gap-1.5 hover:text-primary"><MapPin className="h-3 w-3" /> {job.location}</div>
                                 {salaryDisplay && (
                                     <>
                                         <span className="text-muted-foreground/50 hidden sm:inline">|</span>
-                                        <div className="flex items-center gap-1.5"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>
+                                        <div className="flex items-center gap-1.5 hover:text-primary"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>
                                     </>
                                 )}
                             </div>
