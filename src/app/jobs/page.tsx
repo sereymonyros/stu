@@ -451,7 +451,7 @@ function JobsPageContent() {
             <main className="flex-1 p-4 lg:p-8">
                  <div className="mb-6 space-y-4">
                     <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen} className="space-y-2">
-                        <div className="flex items-center gap-2">
+                         <div className="flex items-center gap-2">
                              <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                 <Input
@@ -461,15 +461,18 @@ function JobsPageContent() {
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
+                                {hasActiveFilters && (
+                                    <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground" onClick={clearAllFilters}>
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                )}
                             </div>
-
                             <CollapsibleTrigger asChild>
                                 <Button variant="outline" className="h-10">
                                     <Filter className="h-4 w-4" />
-                                    {hasActiveFilters && <span className="h-2 w-2 rounded-full bg-blue-500"></span>}
+                                    {hasActiveFilters && <span className="ml-1 h-2 w-2 rounded-full bg-blue-500"></span>}
                                 </Button>
                             </CollapsibleTrigger>
-                            
                             <div className="hidden sm:flex">
                                 <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}}>
                                     <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
@@ -478,9 +481,9 @@ function JobsPageContent() {
                                 </ToggleGroup>
                             </div>
                         </div>
+
                         <CollapsibleContent>
-                            <Card ref={filterRef} onClick={(e) => e.stopPropagation()} className="p-4 pr-8 rounded-3xl mt-2 relative">
-                                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 rounded-full" onClick={() => setIsFilterOpen(false)}><X className="h-4 w-4" /></Button>
+                            <Card ref={filterRef} onClick={(e) => e.stopPropagation()} className="p-4 rounded-3xl mt-2">
                                 <div className="w-9/10 mx-auto">
                                     <div className="grid gap-4">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -519,17 +522,13 @@ function JobsPageContent() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2 justify-center sm:justify-end flex-shrink-0">
-                                                 {hasActiveFilters && (
-                                                    <Button variant="ghost" onClick={clearAllFilters} className="h-9 px-3 text-muted-foreground">
-                                                        Clear
-                                                    </Button>
-                                                )}
                                                 {user && !isRecruiter && (
                                                     <Toggle
                                                         pressed={showFavoritesOnly}
                                                         onPressedChange={setShowFavoritesOnly}
                                                         className="h-9 px-3"
                                                         aria-label="Show favorites only"
+                                                        variant="outline"
                                                     >
                                                         <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "fill-red-500 text-red-500")} />
                                                         <span>Favorites</span>
