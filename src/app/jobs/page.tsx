@@ -58,7 +58,7 @@ function JobsPageContent() {
     const filterRef = useRef<HTMLDivElement>(null);
     
     // --- View State ---
-    const [viewMode, setViewMode] = useState<'list' | 'card' |'board'>('card');
+    const [viewMode, setViewMode] = useState<'list' | 'card' |'board'>('list');
     
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
@@ -466,14 +466,14 @@ function JobsPageContent() {
                             <CollapsibleTrigger asChild>
                                 <Button variant="outline" className="h-10">
                                     <Filter className="h-4 w-4" />
-                                    {hasActiveFilters && <span className="ml-1 h-2 w-2 rounded-full bg-blue-500"></span>}
+                                    {hasActiveFilters && <span className="h-2 w-2 rounded-full bg-blue-500"></span>}
                                 </Button>
                             </CollapsibleTrigger>
                             
                             <div className="hidden sm:flex">
                                 <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}}>
-                                    <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
                                     <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
+                                    <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
                                     {isRecruiter && <ToggleGroupItem value="board" aria-label="Board view"><KanbanSquare /></ToggleGroupItem>}
                                 </ToggleGroup>
                             </div>
