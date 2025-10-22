@@ -549,7 +549,7 @@ function JobsPageContent() {
                                                 </div>
                                             </div>
                                             
-                                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                                                 <div className="space-y-2 flex-1 w-full">
                                                     <Label>Salary Range</Label>
                                                     <Slider
@@ -572,7 +572,7 @@ function JobsPageContent() {
                                                             className="h-9"
                                                             aria-label="Show favorites only"
                                                         >
-                                                            <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "text-red-500 fill-red-500")} />
+                                                            <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "fill-red-500 text-red-500")} />
                                                             <span className="hidden sm:inline">Favorites</span>
                                                         </Toggle>
                                                     )}
@@ -692,6 +692,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
