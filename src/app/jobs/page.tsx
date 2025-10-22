@@ -525,7 +525,7 @@ function JobsPageContent() {
                                                 </div>
                                             </div>
                                             
-                                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                                            <div className="flex flex-col sm:flex-row items-end gap-4 justify-center">
                                                 <div className="space-y-2 flex-1 w-full">
                                                     <Slider
                                                         value={salaryRange}
@@ -544,11 +544,11 @@ function JobsPageContent() {
                                                         <Toggle
                                                             pressed={showFavoritesOnly}
                                                             onPressedChange={setShowFavoritesOnly}
-                                                            className="h-9"
+                                                            className="h-9 bg-background"
                                                             aria-label="Show favorites only"
                                                         >
                                                             <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "fill-red-500 text-red-500")} />
-                                                            <span className="hidden sm:inline">Favorites</span>
+                                                            <span>Favorites</span>
                                                         </Toggle>
                                                     )}
                                                      {user && !isRecruiter && (
@@ -667,6 +667,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
