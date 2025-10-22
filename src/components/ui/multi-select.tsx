@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -52,7 +51,7 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        className={cn("w-full justify-between h-auto min-h-10", selectedValues.length > 0 ? 'h-auto' : 'h-10', className)}
+                        className={cn("w-full justify-between h-auto min-h-10 rounded-3xl", selectedValues.length > 0 ? 'h-auto' : 'h-10', className)}
                         onClick={() => setOpen(!open)}
                         {...props}
                     >
