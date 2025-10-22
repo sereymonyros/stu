@@ -574,10 +574,10 @@ function JobsPageContent() {
                                                             <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "fill-red-500 text-red-500")} />
                                                         </Toggle>
                                                     )}
-                                                     {user && !isRecruiter && hasActiveFilters && (
+                                                     {user && !isRecruiter && (
                                                         <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
                                                             <DialogTrigger asChild>
-                                                                <Button>
+                                                                <Button disabled={!hasActiveFilters}>
                                                                     <Star className="mr-2 h-4 w-4" /> Save Search
                                                                 </Button>
                                                             </DialogTrigger>
@@ -690,6 +690,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
