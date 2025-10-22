@@ -90,13 +90,13 @@ export function BottomNavbar() {
             isScrolling ? "opacity-30" : "opacity-100",
             "pointer-events-none"
         )}>
-            <div className="relative pointer-events-auto flex items-center justify-center gap-2 w-full bg-zinc-100/10 dark:bg-zinc-950/10 backdrop-blur-lg rounded-full shadow-[0_-8px_20px_-8px_rgba(0,0,0,0.1)]">                
+            <div className="relative pointer-events-auto flex items-center justify-center gap-2 w-full">
                 {user && isRecruiter && (
                     <div className="pointer-events-auto flex-shrink-0">
                          <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button asChild variant="ghost" size="icon" className="shadow-xl bg-background rounded-full border h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                                    <Button asChild variant="ghost" size="icon" className="shadow-3xl bg-zinc-100/10 backdrop-blur-lg rounded-full border h-8 w-8" onClick={(e) => e.stopPropagation()}>
                                         <Link href="/jobs/new"><Plus className="h-4 w-4" /></Link>
                                     </Button>
                                 </TooltipTrigger>
@@ -108,7 +108,7 @@ export function BottomNavbar() {
                     </div>
                 )}
 
-                <div className="min-w-48 bg-background rounded-full shadow-lg border flex h-10 items-center justify-evenly font-medium flex-1">
+                <div className="min-w-48 rounded-full border flex h-10 items-center justify-evenly font-medium flex-1 shadow-3xl bg-zinc-100/10 backdrop-blur-lg">
                     {navItems.map((item) => {
                         const isActive = pathname.startsWith(item.href);
                         return (
@@ -136,14 +136,14 @@ export function BottomNavbar() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="rounded-full h-8 w-8 shadow-xl bg-background border"
+                                className="rounded-full h-8 w-8 shadow-xl shadow-3xl bg-zinc-100/10 backdrop-blur-lg border"
                             >
                                 <MoreHorizontal className="h-4 w-4" />
                                 <span className="sr-only">More options</span>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
-                            className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/10 dark:bg-zinc-950/10 backdrop-blur-lg"
+                            className="w-64 mb-2 rounded-3xl shadow-3xl bg-zinc-100/10 backdrop-blur-lg"
                             side="top"
                             align="end"
                         >
@@ -155,11 +155,11 @@ export function BottomNavbar() {
                                             <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                                         </div>
                                     </DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSeparator className="bg-zinc-900/20 dark:bg-zinc-100/20" />
                                 </>
                              )}
 
-                            <DropdownMenuItem onClick={handleAskAI}>
+                            <DropdownMenuItem onClick={handleAskAI} className="pt-6">
                                 <MessageSquare className="mr-2 h-4 w-4" />
                                 <span>Ask AI Helper</span>
                             </DropdownMenuItem>
@@ -177,13 +177,13 @@ export function BottomNavbar() {
                                             <span>Profile</span>
                                         </Link>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
+                                    <DropdownMenuItem asChild className="pb-6">
                                         <Link href="/feedback">
                                             <MessageSquareHeart className="mr-2 h-4 w-4" />
                                             <span>Give Feedback</span>
                                         </Link>
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSeparator className="bg-zinc-900/20 dark:bg-zinc-100/20" />
                                     <DropdownMenuItem onClick={handleSignOut}>
                                         <LogOut className="mr-2 h-4 w-4" />
                                         <span>Log out</span>
@@ -197,7 +197,7 @@ export function BottomNavbar() {
                                             <span>Give Feedback</span>
                                         </Link>
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSeparator className="bg-zinc-900/20 dark:bg-zinc-100/20" />
                                     <DropdownMenuItem asChild>
                                          <Link href="/login">
                                             <LogIn className="mr-2 h-4 w-4" />
