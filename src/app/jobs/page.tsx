@@ -567,14 +567,11 @@ function JobsPageContent() {
                                                 <div className="flex items-center gap-2">
                                                     {user && !isRecruiter && (
                                                         <Toggle
-                                                            size="sm"
-                                                            variant="outline"
                                                             pressed={showFavoritesOnly}
                                                             onPressedChange={setShowFavoritesOnly}
-                                                            className="h-9 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                                            className="h-9"
                                                         >
                                                             <Heart className="mr-2 h-4 w-4" />
-                                                            My Favourites
                                                         </Toggle>
                                                     )}
                                                 </div>
