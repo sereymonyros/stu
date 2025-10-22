@@ -385,7 +385,7 @@ function JobsPageContent() {
     
     if (!jobs) {
         return (
-            <main className="flex-1 p-4 md:p-6 lg:p-8 pb-32">
+            <main className="flex-1 p-4 md:p-6 lg:p-8">
                  <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
                     <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
                     <div className="text-center">
@@ -449,10 +449,10 @@ function JobsPageContent() {
     return (
         <div className="flex flex-col  ">
             <main className="flex-1 p-4 lg:p-8">
-                 <div className="mb-6 space-y-4">
+                <div className="mb-6 space-y-4">
                     <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen} className="space-y-2">
-                         <div className="flex items-center gap-2">
-                             <div className="relative flex-1">
+                        <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                 <Input
                                     type="search"
@@ -470,7 +470,7 @@ function JobsPageContent() {
                             <CollapsibleTrigger asChild>
                                 <Button variant="outline" className="h-10">
                                     <Filter className="h-4 w-4" />
-                                    {hasActiveFilters && <span className="h-2 w-2 rounded-full bg-blue-500"></span>}
+                                    {hasActiveFilters && <span className="ml-1 h-2 w-2 rounded-full bg-blue-500"></span>}
                                 </Button>
                             </CollapsibleTrigger>
                             <div className="hidden sm:flex">
