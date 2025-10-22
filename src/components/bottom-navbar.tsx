@@ -64,7 +64,7 @@ export function BottomNavbar() {
         <div className={cn(
             "fixed bottom-4 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none"
         )}>
-            <div className="relative pointer-events-auto flex items-center justify-center gap-2 w-full bg-background rounded-full shadow-[0_-8px_20px_-8px_rgba(0,0,0,0.1)]">
+            <div className="relative pointer-events-auto flex items-center justify-center gap-2 w-full bg-zinc-100/10 dark:bg-zinc-950/10 backdrop-blur-lg rounded-full shadow-[0_-8px_20px_-8px_rgba(0,0,0,0.1)]">
                 
                 {user && isRecruiter && (
                     <div className="pointer-events-auto flex-shrink-0">
