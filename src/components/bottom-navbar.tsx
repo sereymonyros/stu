@@ -105,7 +105,7 @@ export function BottomNavbar() {
                     })}
                 </div>
                 
-                <div className="flex-shrink-0 flex items-center gap-2 pointer-events-auto">
+                <div className="flex-shrink-0 pointer-events-auto">
                      <DropdownMenu onOpenChange={setIsMenuOpen}>
                         <DropdownMenuTrigger asChild>
                             <Button
@@ -118,7 +118,7 @@ export function BottomNavbar() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
-                            className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/50 dark:bg-zinc-950/50 backdrop-blur-lg"
+                            className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/30 dark:bg-zinc-950/30 backdrop-blur-lg"
                             side="top"
                             align="end"
                         >
