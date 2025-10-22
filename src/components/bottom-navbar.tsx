@@ -115,7 +115,7 @@ export function BottomNavbar() {
                             <Link 
                                 key={item.href}
                                 href={item.href}
-                                className="inline-flex flex-col items-center justify-center w-full h-full"
+                                className="inline-flex flex-col items-center justify-center h-full"
                             >
                                 <div className={cn(
                                     "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200 font-medium",
