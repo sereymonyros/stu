@@ -3,7 +3,7 @@
 'use client';
 
 import { useMemo, Suspense, use, useState, useEffect } from 'react';
-import { useCollection, useFirestore, useUser } from '@/firebase';
+import { useCollection, useFirestore, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc, deleteDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -97,7 +97,7 @@ function CompanyProfile({ name: encodedName }: { name: string }) {
 
     return (
         <div className="flex flex-col  ">
-            <main className="flex-1 p-4 lg:p-8 pb-32">
+            <main className="flex-1 p-4 lg:p-8">
                 <div className="mb-6">
                     <div className="mb-4">
                       <BackButton />
