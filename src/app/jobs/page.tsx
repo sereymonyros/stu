@@ -55,7 +55,6 @@ function JobsPageContent() {
     
     // --- Filter Panel State & Ref ---
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const filterRef = useRef<HTMLDivElement>(null);
     
     // --- View State ---
     const [viewMode, setViewMode] = useState<'list' | 'card' |'board'>('list');
@@ -483,7 +482,7 @@ function JobsPageContent() {
                         </div>
 
                         <CollapsibleContent>
-                            <Card ref={filterRef} onClick={(e) => e.stopPropagation()} className="p-4 rounded-3xl mt-2">
+                            <Card className="p-4 rounded-3xl mt-2">
                                 <div className="w-9/10 mx-auto">
                                     <div className="grid gap-4">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -622,7 +621,8 @@ function JobsPageContent() {
     );
 }
 
-function JobsPageWrapper() {
+
+export default function JobsPage() {
     const firestore = useFirestore();
     const [jobCount, setJobCount] = useState<number | null>(null);
 
@@ -634,14 +634,10 @@ function JobsPageWrapper() {
             });
         }
     }, [firestore]);
-
+    
     return (
         <Suspense fallback={<JobsLoading count={jobCount ?? 8} />}>
             <JobsPageContent />
         </Suspense>
     )
-}
-
-export default function JobsPage() {
-    return <JobsPageWrapper />
 }
