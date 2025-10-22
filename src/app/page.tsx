@@ -22,7 +22,7 @@ export default function Home() {
       )}
       
       {/* Overlay and Content container */}
-      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/70 p-4 text-center pb-32">
+      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/70 p-4 text-center pb-24">
         <div className="flex flex-col items-center space-y-4">
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-foreground drop-shadow-md">
             Cambodia Hub
