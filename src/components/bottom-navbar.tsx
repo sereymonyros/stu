@@ -83,7 +83,7 @@ export function BottomNavbar() {
                     </div>
                 )}
 
-                <div className="min-w-48 bg-background rounded-full shadow-lg flex h-10 items-center justify-evenly font-medium flex-1">
+                <div className="min-w-48 bg-background rounded-full shadow-[0_-8px_20px_-8px_rgba(0,0,0,0.1)] flex h-10 items-center justify-evenly font-medium flex-1">
                     {navItems.map((item) => {
                         const isActive = pathname.startsWith(item.href);
                         return (
@@ -166,7 +166,7 @@ export function BottomNavbar() {
                                 </>
                             ) : (
                                 <>
-                                    <DropdownMenuItem asChild>
+                                     <DropdownMenuItem asChild>
                                          <Link href="/feedback">
                                             <MessageSquareHeart className="mr-2 h-4 w-4" />
                                             <span>Give Feedback</span>
