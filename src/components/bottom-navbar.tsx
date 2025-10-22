@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Moon, Sun, Plus, MoreHorizontal, MessageSquare, LogOut, User as UserIcon, LogIn, MessageSquareHeart } from "lucide-react";
+import { Briefcase, Moon, Sun, Plus, MoreHorizontal, MessageSquare, LogOut, User as UserIcon, LogIn, MessageSquareHeart, Settings, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser, useDoc, useFirestore, useAuth } from "@/firebase";
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -11,14 +11,14 @@ import { useTheme } from "next-themes";
 import { Button } from "./ui/button";
 import { doc } from "firebase/firestore";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/tooltip";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "./ui/dropdown-menu";
 import { useChatbot } from "./chatbot-provider";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
 const navItems = [
-    { href: "/jobs", label: "Jobs" },
-    { href: "/dashboard", label: "Dashboard" },
+    { href: "/jobs", label: "Jobs", icon: Briefcase },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 ];
 
 export function BottomNavbar() {
@@ -118,7 +118,7 @@ export function BottomNavbar() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
-                            className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/30 dark:bg-zinc-950/30 backdrop-blur-lg"
+                            className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/10 dark:bg-zinc-950/10 backdrop-blur-lg"
                             side="top"
                             align="end"
                         >
