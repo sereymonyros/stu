@@ -31,8 +31,8 @@ export function BottomNavbar() {
     const { setOpen: setChatbotOpen } = useChatbot();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     
-    // --- Scroll Opacity State ---
-    const [isScrolled, setIsScrolled] = useState(false);
+    const [isScrolling, setIsScrolling] = useState(false);
+    const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
     const { data: userProfile } = useDoc(userProfileRef);
@@ -40,17 +40,22 @@ export function BottomNavbar() {
 
     useEffect(() => {
         const handleScroll = () => {
-            const currentScrollY = window.scrollY;
-            setIsScrolled(currentScrollY > 10);
+            setIsScrolling(true);
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+            }
+            scrollTimeoutRef.current = setTimeout(() => {
+                setIsScrolling(false);
+            }, 150); // User is considered "stopped" after 150ms of no scrolling
         };
 
         window.addEventListener('scroll', handleScroll, { passive: true });
 
-        // Initial check
-        handleScroll();
-
         return () => {
             window.removeEventListener('scroll', handleScroll);
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+            }
         };
     }, []);
 
@@ -82,7 +87,7 @@ export function BottomNavbar() {
     return (
         <div className={cn(
             "fixed bottom-4 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 flex justify-center z-50 transition-opacity duration-1000",
-            isScrolled ? "opacity-100" : "opacity-30",
+            isScrolling ? "opacity-30" : "opacity-100",
             "pointer-events-none"
         )}>
             <div className="relative pointer-events-auto flex items-center justify-center gap-2 w-full bg-zinc-100/10 dark:bg-zinc-950/10 backdrop-blur-lg rounded-full shadow-[0_-8px_20px_-8px_rgba(0,0,0,0.1)]">                
