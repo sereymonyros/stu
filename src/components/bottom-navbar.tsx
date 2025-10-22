@@ -26,8 +26,6 @@ export function BottomNavbar() {
     const { user } = useUser();
     const auth = useAuth();
     const router = useRouter();
-    const [isScrolling, setIsScrolling] = useState(false);
-    const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const { theme, setTheme } = useTheme();
     const firestore = useFirestore();
     const { setOpen: setChatbotOpen } = useChatbot();
@@ -61,37 +59,15 @@ export function BottomNavbar() {
         await signOut(auth);
         router.push('/');
     };
-
-    useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolling(true);
-            if (scrollTimeoutRef.current) {
-                clearTimeout(scrollTimeoutRef.current);
-            }
-            scrollTimeoutRef.current = setTimeout(() => {
-                setIsScrolling(false);
-            }, 500);
-        };
-
-        window.addEventListener("scroll", handleScroll, { passive: true });
-
-        return () => {
-            window.removeEventListener("scroll", handleScroll);
-            if (scrollTimeoutRef.current) {
-                clearTimeout(scrollTimeoutRef.current);
-            }
-        };
-    }, []);
     
     return (
         <div className={cn(
-            "fixed bottom-4 left-1/2 -translate-x-1/2 w-full flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none",
-            isScrolling ? "opacity-50" : "opacity-100"
+            "fixed bottom-4 left-1/2 -translate-x-1/2 w-full max-w-lg flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none"
         )}>
             <div className="relative pointer-events-auto flex items-center justify-center gap-2">
                 
                 {user && isRecruiter && (
-                    <div className="pointer-events-auto">
+                    <div className="pointer-events-auto flex-shrink-0">
                          <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -141,7 +117,11 @@ export function BottomNavbar() {
                                 <span className="sr-only">More options</span>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/80 dark:bg-zinc-950/80 backdrop-blur-lg" side="top" align="end">
+                        <DropdownMenuContent
+                            className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/70 dark:bg-zinc-950/70 backdrop-blur-lg"
+                            side="top"
+                            align="end"
+                        >
                              {user && userProfile && (
                                 <>
                                     <DropdownMenuLabel className="font-normal">
