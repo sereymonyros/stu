@@ -571,7 +571,7 @@ function JobsPageContent() {
                                                             onPressedChange={setShowFavoritesOnly}
                                                             className="h-9"
                                                         >
-                                                            <Heart className="mr-2 h-4 w-4" />
+                                                            <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "fill-red-500 text-red-500")} />
                                                         </Toggle>
                                                     )}
                                                 </div>
@@ -692,6 +692,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
