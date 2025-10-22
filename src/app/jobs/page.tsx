@@ -465,39 +465,33 @@ function JobsPageContent() {
                      {viewMode !== 'board' && (
                         <div className="w-full">
                           <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen} className="space-y-2">
-                                <div className="relative flex items-center">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input
-                                        type="search"
-                                        placeholder="Search by title..."
-                                        className="pl-10 h-10 w-full pr-24"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                    />
-                                    <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center">
-                                        {hasActiveFilters && (
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button variant="ghost" size="icon" onClick={clearAllFilters} className="h-8 w-8">
-                                                            <X className="h-5 w-5" />
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent><p>Clear all filters</p></TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        )}
-                                        <CollapsibleTrigger asChild>
-                                            <Button variant="ghost" className="h-10 px-3">
-                                                <Filter className="mr-2 h-4 w-4"/>
-                                                Filters
-                                            </Button>
-                                        </CollapsibleTrigger>
-                                    </div>
+                                <div className="flex items-center gap-2">
+                                    <CollapsibleTrigger asChild>
+                                        <Button variant="outline" className="h-10">
+                                            <Filter className="mr-2 h-4 w-4"/>
+                                            Filters
+                                            {hasActiveFilters && <span className="ml-2 h-2 w-2 rounded-full bg-blue-500"></span>}
+                                        </Button>
+                                    </CollapsibleTrigger>
+                                     {hasActiveFilters && (
+                                        <Button variant="ghost" onClick={clearAllFilters} className="h-10 px-3 text-muted-foreground">
+                                            Clear
+                                        </Button>
+                                    )}
                                 </div>
                                 <CollapsibleContent>
                                     <Card ref={filterRef} onClick={(e) => e.stopPropagation()} className="p-4 rounded-3xl mt-2">
                                         <div className="grid gap-4">
+                                            <div className="relative">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                                <Input
+                                                    type="search"
+                                                    placeholder="Search by title..."
+                                                    className="pl-10 h-10 w-full"
+                                                    value={searchQuery}
+                                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                                />
+                                            </div>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                 <div className="space-y-2">
                                                     <MultiSelect
@@ -544,7 +538,7 @@ function JobsPageContent() {
                                                         <Toggle
                                                             pressed={showFavoritesOnly}
                                                             onPressedChange={setShowFavoritesOnly}
-                                                            className="h-9 bg-background"
+                                                            className="h-9"
                                                             aria-label="Show favorites only"
                                                         >
                                                             <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "fill-red-500 text-red-500")} />
@@ -667,6 +661,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
