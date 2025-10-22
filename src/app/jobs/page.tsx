@@ -518,6 +518,7 @@ function JobsPageContent() {
                                                 />
                                                 <div className="flex justify-between text-xs text-muted-foreground">
                                                     <span>${salaryRange[0].toLocaleString()}</span>
+                                                    <span className="flex-grow text-center">Filter salary</span>
                                                     <span>${salaryRange[1].toLocaleString()}</span>
                                                 </div>
                                             </div>
