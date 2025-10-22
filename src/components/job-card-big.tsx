@@ -66,9 +66,9 @@ export function JobCardBig({
                 "flex flex-col h-full transition-all duration-200 rounded-3xl group-hover/card:scale-[1.02] group-hover/card:shadow-lg relative",
             )}>
                 {hasApplied && (
-                     <div className="absolute inset-0 bg-background/80 z-20 flex items-center justify-center rounded-3xl">
-                        <Badge variant="secondary" className="text-base px-4 py-1 rounded-full bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200 border-red-200 dark:border-red-800">
-                            <CheckCircle className="h-5 w-5 mr-2" />
+                     <div className="absolute inset-0 bg-muted/80 backdrop-blur-sm z-20 flex items-center justify-center rounded-3xl pointer-events-none">
+                        <Badge variant="secondary" className="text-base px-4 py-1 rounded-full bg-background/80 border-border">
+                            <CheckCircle className="h-5 w-5 mr-2 text-muted-foreground" />
                             Applied
                         </Badge>
                     </div>
