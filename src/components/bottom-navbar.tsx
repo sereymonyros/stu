@@ -118,7 +118,7 @@ export function BottomNavbar() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
-                            className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/70 dark:bg-zinc-950/70 backdrop-blur-lg"
+                            className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/50 dark:bg-zinc-950/50 backdrop-blur-lg"
                             side="top"
                             align="end"
                         >
