@@ -470,7 +470,7 @@ function JobsPageContent() {
                             <CollapsibleTrigger asChild>
                                 <Button variant="outline" className="h-10">
                                     <Filter className="h-4 w-4" />
-                                    {hasActiveFilters && <span className="ml-1 h-2 w-2 rounded-full bg-blue-500"></span>}
+                                    {hasActiveFilters && <span className="h-2 w-2 rounded-full bg-blue-500"></span>}
                                 </Button>
                             </CollapsibleTrigger>
                             <div className="hidden sm:flex">
@@ -528,7 +528,6 @@ function JobsPageContent() {
                                                         onPressedChange={setShowFavoritesOnly}
                                                         className="h-9 px-3"
                                                         aria-label="Show favorites only"
-                                                        variant="outline"
                                                     >
                                                         <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "fill-red-500 text-red-500")} />
                                                         <span>Favorites</span>
