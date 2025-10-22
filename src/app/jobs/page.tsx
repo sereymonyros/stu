@@ -519,9 +519,9 @@ function JobsPageContent() {
                                 <CollapsibleContent>
                                     <Card ref={filterRef} onClick={(e) => e.stopPropagation()} className="p-4 rounded-3xl mt-2">
                                         <div className="grid gap-4">
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                            <div className="grid grid-cols-1 gap-4">
                                                 <div className="space-y-2">
-                                                    <Label>Company</Label>
+                                                    
                                                     <MultiSelect
                                                         options={companyOptions}
                                                         selectedValues={selectedCompanies}
@@ -530,7 +530,7 @@ function JobsPageContent() {
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <Label>Location</Label>
+                                                    
                                                         <MultiSelect
                                                         options={locationOptions}
                                                         selectedValues={selectedLocations}
@@ -539,7 +539,7 @@ function JobsPageContent() {
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <Label>Job Type</Label>
+                                                    
                                                         <MultiSelect
                                                         options={jobTypeOptions}
                                                         selectedValues={selectedJobTypes}
@@ -551,7 +551,7 @@ function JobsPageContent() {
                                             
                                             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                                                 <div className="space-y-2 flex-1 w-full">
-                                                    <Label>Salary Range</Label>
+                                                    
                                                     <Slider
                                                         value={salaryRange}
                                                         onValueChange={setSalaryRange}
@@ -692,6 +692,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
