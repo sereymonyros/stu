@@ -308,8 +308,7 @@ export default function ProfilePage() {
         <div className="max-w-2xl mx-auto relative">
           <Card className="rounded-3xl">
             <CardHeader>
-              <CardTitle>My Profile</CardTitle>
-              <CardDescription>A complete profile with a real photo is required to post or apply for jobs.</CardDescription>
+              <CardTitle>Profile</CardTitle>
             </CardHeader>
             <CardContent>
               {user && userProfile ? (
