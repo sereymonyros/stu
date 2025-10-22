@@ -466,8 +466,7 @@ function JobsPageContent() {
                           <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen} className="space-y-2">
                                 <CollapsibleTrigger asChild>
                                     <Button variant="outline" className="h-10">
-                                        <Filter className="mr-2 h-4 w-4"/>
-                                        Filters
+                                        <Filter className="h-4 w-4"/>
                                         {hasActiveFilters && <span className="ml-2 h-2 w-2 rounded-full bg-blue-500"></span>}
                                     </Button>
                                 </CollapsibleTrigger>
@@ -657,6 +656,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
