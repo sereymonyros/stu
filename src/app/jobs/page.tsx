@@ -465,58 +465,53 @@ function JobsPageContent() {
                      {viewMode !== 'board' && (
                         <div className="w-full">
                           <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen} className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <CollapsibleTrigger asChild>
-                                        <Button variant="outline" className="h-10">
-                                            <Filter className="mr-2 h-4 w-4"/>
-                                            Filters
-                                            {hasActiveFilters && <span className="ml-2 h-2 w-2 rounded-full bg-blue-500"></span>}
-                                        </Button>
-                                    </CollapsibleTrigger>
-                                     {hasActiveFilters && (
-                                        <Button variant="ghost" onClick={clearAllFilters} className="h-10 px-3 text-muted-foreground">
-                                            Clear
-                                        </Button>
-                                    )}
-                                </div>
+                                <CollapsibleTrigger asChild>
+                                    <Button variant="outline" className="h-10">
+                                        <Filter className="mr-2 h-4 w-4"/>
+                                        Filters
+                                        {hasActiveFilters && <span className="ml-2 h-2 w-2 rounded-full bg-blue-500"></span>}
+                                    </Button>
+                                </CollapsibleTrigger>
                                 <CollapsibleContent>
-                                    <Card ref={filterRef} onClick={(e) => e.stopPropagation()} className="p-4 rounded-3xl mt-2">
+                                    <Card ref={filterRef} onClick={(e) => e.stopPropagation()} className="p-4 rounded-3xl mt-2 relative">
+                                         <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 rounded-full" onClick={() => setIsFilterOpen(false)}><X className="h-4 w-4" /></Button>
                                         <div className="grid gap-4">
-                                            <div className="relative">
-                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                                <Input
-                                                    type="search"
-                                                    placeholder="Search by title..."
-                                                    className="pl-10 h-10 w-full"
-                                                    value={searchQuery}
-                                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                                />
+                                             <div className="flex items-center gap-2">
+                                                <div className="relative flex-1">
+                                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                                    <Input
+                                                        type="search"
+                                                        placeholder="Search by title..."
+                                                        className="pl-10 h-10 w-full"
+                                                        value={searchQuery}
+                                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                                    />
+                                                </div>
+                                                {hasActiveFilters && (
+                                                    <Button variant="ghost" onClick={clearAllFilters} className="h-10 px-3">
+                                                        Clear
+                                                    </Button>
+                                                )}
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <div className="space-y-2">
-                                                    <MultiSelect
-                                                        options={companyOptions}
-                                                        selectedValues={selectedCompanies}
-                                                        onValueChange={(val) => toggleFilter(setSelectedCompanies, val)}
-                                                        placeholder="Filter companies..."
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                        <MultiSelect
-                                                        options={locationOptions}
-                                                        selectedValues={selectedLocations}
-                                                        onValueChange={(val) => toggleFilter(setSelectedLocations, val)}
-                                                        placeholder="Filter locations..."
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                        <MultiSelect
-                                                        options={jobTypeOptions}
-                                                        selectedValues={selectedJobTypes}
-                                                        onValueChange={(val) => toggleFilter(setSelectedJobTypes, val)}
-                                                        placeholder="Filter job types..."
-                                                    />
-                                                </div>
+                                                <MultiSelect
+                                                    options={companyOptions}
+                                                    selectedValues={selectedCompanies}
+                                                    onValueChange={(val) => toggleFilter(setSelectedCompanies, val)}
+                                                    placeholder="Filter companies..."
+                                                />
+                                                <MultiSelect
+                                                    options={locationOptions}
+                                                    selectedValues={selectedLocations}
+                                                    onValueChange={(val) => toggleFilter(setSelectedLocations, val)}
+                                                    placeholder="Filter locations..."
+                                                />
+                                                <MultiSelect
+                                                    options={jobTypeOptions}
+                                                    selectedValues={selectedJobTypes}
+                                                    onValueChange={(val) => toggleFilter(setSelectedJobTypes, val)}
+                                                    placeholder="Filter job types..."
+                                                />
                                             </div>
                                             
                                             <div className="flex flex-col sm:flex-row items-end gap-4 justify-center">
@@ -538,7 +533,7 @@ function JobsPageContent() {
                                                         <Toggle
                                                             pressed={showFavoritesOnly}
                                                             onPressedChange={setShowFavoritesOnly}
-                                                            className="h-9"
+                                                            className="h-9 px-3 bg-background"
                                                             aria-label="Show favorites only"
                                                         >
                                                             <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "fill-red-500 text-red-500")} />
@@ -548,7 +543,7 @@ function JobsPageContent() {
                                                      {user && !isRecruiter && (
                                                         <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
                                                             <DialogTrigger asChild>
-                                                                <Button variant="outline" disabled={!hasActiveFilters}>
+                                                                <Button variant="outline" className="bg-background" disabled={!hasActiveFilters}>
                                                                     <Star className="mr-2 h-4 w-4" /> Save Search
                                                                 </Button>
                                                             </DialogTrigger>
@@ -661,6 +656,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
