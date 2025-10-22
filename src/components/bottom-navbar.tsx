@@ -62,16 +62,16 @@ export function BottomNavbar() {
     
     return (
         <div className={cn(
-            "fixed bottom-4 left-1/2 -translate-x-1/2 w-full max-w-lg flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none"
+            "fixed bottom-4 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 flex justify-center z-50 transition-opacity duration-500 ease-in-out pointer-events-none"
         )}>
-            <div className="relative pointer-events-auto flex items-center justify-center gap-2">
+            <div className="relative pointer-events-auto flex items-center justify-center gap-2 w-full bg-background rounded-full shadow-[0_-8px_20px_-8px_rgba(0,0,0,0.1)]">
                 
                 {user && isRecruiter && (
                     <div className="pointer-events-auto flex-shrink-0">
                          <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button asChild variant="ghost" size="icon" className="bg-background rounded-full h-10 w-10 shadow-lg" onClick={(e) => e.stopPropagation()}>
+                                    <Button asChild variant="ghost" size="icon" className="bg-background rounded-full h-10 w-10 border" onClick={(e) => e.stopPropagation()}>
                                         <Link href="/jobs/new"><Plus className="h-4 w-4" /></Link>
                                     </Button>
                                 </TooltipTrigger>
@@ -83,18 +83,18 @@ export function BottomNavbar() {
                     </div>
                 )}
 
-                <div className="min-w-48 bg-background rounded-full shadow-[0_-8px_20px_-8px_rgba(0,0,0,0.1)] flex h-10 items-center justify-evenly font-medium flex-1">
+                <div className="min-w-48 bg-background rounded-full flex h-10 items-center justify-evenly font-medium flex-1 border">
                     {navItems.map((item) => {
                         const isActive = pathname.startsWith(item.href);
                         return (
                             <Link 
                                 key={item.href}
                                 href={item.href}
-                                className="inline-flex flex-col items-center justify-center"
+                                className="inline-flex flex-col items-center justify-center w-full h-full"
                             >
                                 <div className={cn(
-                                    "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200 text-muted-foreground dark:text-zinc-400",
-                                    isActive ? "text-primary dark:text-white" : ""
+                                    "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200",
+                                    isActive ? "text-primary dark:text-white" : "dark:text-zinc-400"
                                 )}>
                                     <div className="flex flex-col items-center justify-center px-4">
                                         <span className="text-[10px] font-medium">{item.label}</span>
@@ -111,7 +111,7 @@ export function BottomNavbar() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="bg-background rounded-full h-10 w-10 shadow-lg"
+                                className="bg-background rounded-full h-10 w-10 border"
                             >
                                 <MoreHorizontal className="h-4 w-4" />
                                 <span className="sr-only">More options</span>
