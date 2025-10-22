@@ -473,9 +473,9 @@ function JobsPageContent() {
                                     </Button>
                                 </CollapsibleTrigger>
                                 <CollapsibleContent>
-                                    <Card ref={filterRef} onClick={(e) => e.stopPropagation()} className="p-4 rounded-3xl mt-2 relative">
+                                    <Card ref={filterRef} onClick={(e) => e.stopPropagation()} className="p-4 pr-8 rounded-3xl mt-2 relative">
                                          <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 rounded-full" onClick={() => setIsFilterOpen(false)}><X className="h-4 w-4" /></Button>
-                                        <div className="w-4/5 mx-auto">
+                                        <div className="w-9/10 mx-auto">
                                             <div className="grid gap-4">
                                                 <div className="flex items-center gap-2">
                                                     <div className="relative flex-1">
@@ -534,7 +534,7 @@ function JobsPageContent() {
                                                             <Toggle
                                                                 pressed={showFavoritesOnly}
                                                                 onPressedChange={setShowFavoritesOnly}
-                                                                className="h-9 px-3"
+                                                                className="h-9 px-3 bg-background"
                                                                 aria-label="Show favorites only"
                                                             >
                                                                 <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "fill-red-500 text-red-500")} />
@@ -658,6 +658,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
