@@ -549,8 +549,8 @@ function JobsPageContent() {
                                                 </div>
                                             </div>
                                             
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-                                                <div className="space-y-2 lg:col-span-2">
+                                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                                                <div className="space-y-2 flex-1 w-full">
                                                     <Label>Salary Range</Label>
                                                     <Slider
                                                         value={salaryRange}
@@ -564,14 +564,16 @@ function JobsPageContent() {
                                                         <span>${salaryRange[1].toLocaleString()}</span>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2 justify-end">
+                                                <div className="flex items-center gap-2 justify-end flex-shrink-0">
                                                     {user && !isRecruiter && (
                                                         <Toggle
                                                             pressed={showFavoritesOnly}
                                                             onPressedChange={setShowFavoritesOnly}
                                                             className="h-9"
+                                                            aria-label="Show favorites only"
                                                         >
-                                                            <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "fill-red-500 text-red-500")} />
+                                                            <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "text-red-500 fill-red-500")} />
+                                                            <span className="hidden sm:inline">Favorites</span>
                                                         </Toggle>
                                                     )}
                                                      {user && !isRecruiter && (
@@ -690,6 +692,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
