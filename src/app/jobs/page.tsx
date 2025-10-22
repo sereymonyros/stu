@@ -450,40 +450,41 @@ function JobsPageContent() {
         <div className="flex flex-col  ">
             <main className="flex-1 p-4 lg:p-8">
                  <div className="mb-6 space-y-4">
-                    <div className="flex justify-between items-center">
-                         <div className="flex items-center gap-4">
-                            <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
+                     <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input
+                                type="search"
+                                placeholder="Search by title..."
+                                className="pl-10 h-10 w-full"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
                         </div>
+                        <CollapsibleTrigger asChild>
+                            <Button variant="outline" className="h-10">
+                                <Filter className="h-4 w-4" />
+                                {hasActiveFilters && <span className="ml-1 h-2 w-2 rounded-full bg-blue-500"></span>}
+                            </Button>
+                        </CollapsibleTrigger>
+                         {hasActiveFilters && (
+                            <Button variant="ghost" onClick={clearAllFilters} className="h-10 px-3 text-muted-foreground">
+                                Clear
+                            </Button>
+                        )}
                         <div className="hidden sm:flex">
                              <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}}>
                                 <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
+                                <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
                                 {isRecruiter && <ToggleGroupItem value="board" aria-label="Board view"><KanbanSquare /></ToggleGroupItem>}
                             </ToggleGroup>
                         </div>
                     </div>
                      {viewMode !== 'board' && (
                         <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen} className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <div className="relative flex-1">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input
-                                        type="search"
-                                        placeholder="Search by title..."
-                                        className="pl-10 h-10 w-full"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                    />
-                                </div>
-                                <CollapsibleTrigger asChild>
-                                    <Button variant="outline" className="h-10">
-                                        <Filter className="h-4 w-4"/>
-                                        {hasActiveFilters && <span className="ml-1 h-2 w-2 rounded-full bg-blue-500"></span>}
-                                    </Button>
-                                </CollapsibleTrigger>
-                            </div>
-
                             <CollapsibleContent>
                                 <Card ref={filterRef} onClick={(e) => e.stopPropagation()} className="p-4 pr-8 rounded-3xl mt-2 relative">
+                                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 rounded-full" onClick={() => setIsFilterOpen(false)}><X className="h-4 w-4" /></Button>
                                     <div className="w-9/10 mx-auto">
                                         <div className="grid gap-4">
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -526,7 +527,7 @@ function JobsPageContent() {
                                                         <Toggle
                                                             pressed={showFavoritesOnly}
                                                             onPressedChange={setShowFavoritesOnly}
-                                                            className="h-9 px-3 bg-primary/20"
+                                                            className="h-9 px-3"
                                                             aria-label="Show favorites only"
                                                         >
                                                             <Heart className={cn("mr-2 h-4 w-4", showFavoritesOnly && "fill-red-500 text-red-500")} />
@@ -569,11 +570,6 @@ function JobsPageContent() {
                                                                 </DialogFooter>
                                                             </DialogContent>
                                                         </Dialog>
-                                                    )}
-                                                    {hasActiveFilters && (
-                                                        <Button variant="ghost" onClick={clearAllFilters} className="h-10 px-3 text-muted-foreground">
-                                                            Clear
-                                                        </Button>
                                                     )}
                                                 </div>
                                             </div>
@@ -654,6 +650,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
