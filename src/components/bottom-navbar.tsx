@@ -90,13 +90,13 @@ export function BottomNavbar() {
             isScrolling ? "opacity-30" : "opacity-100",
             "pointer-events-none"
         )}>
-            <div className="relative pointer-events-auto flex items-center justify-center gap-2 w-full bg-zinc-100/10 dark:bg-zinc-950/10 backdrop-blur-lg rounded-full shadow-[0_-8px_20px_-8px_rgba(0,0,0,0.1)]">                
+            <div className="relative pointer-events-auto flex items-center justify-center gap-2 w-full">
                 {user && isRecruiter && (
                     <div className="pointer-events-auto flex-shrink-0">
                          <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button asChild variant="ghost" size="icon" className="shadow-xl bg-background rounded-full border h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                                    <Button asChild variant="ghost" size="icon" className="border shadow-3xl bg-zinc-100/10 backdrop-blur-lg rounded-full h-12 w-12" onClick={(e) => e.stopPropagation()}>
                                         <Link href="/jobs/new"><Plus className="h-4 w-4" /></Link>
                                     </Button>
                                 </TooltipTrigger>
@@ -108,7 +108,7 @@ export function BottomNavbar() {
                     </div>
                 )}
 
-                <div className="min-w-48 bg-background rounded-full shadow-lg border flex h-10 items-center justify-evenly font-medium flex-1">
+                <div className="min-w-48 shadow-3xl bg-zinc-100/10 backdrop-blur-lg rounded-full flex h-12 items-center justify-evenly flex-1 border">
                     {navItems.map((item) => {
                         const isActive = pathname.startsWith(item.href);
                         return (
@@ -118,11 +118,11 @@ export function BottomNavbar() {
                                 className="inline-flex flex-col items-center justify-center w-full h-full"
                             >
                                 <div className={cn(
-                                    "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200",
+                                    "flex items-center justify-center w-full h-full rounded-full transition-colors duration-200 font-medium",
                                     isActive ? "text-primary dark:text-white" : "dark:text-zinc-400"
                                 )}>
                                     <div className="flex flex-col items-center justify-center px-4">
-                                        <span className="text-[10px] font-medium">{item.label}</span>
+                                        <span>{item.label}</span>
                                     </div>
                                 </div>
                             </Link>
@@ -136,14 +136,14 @@ export function BottomNavbar() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="rounded-full h-8 w-8 shadow-xl bg-background border"
+                                className="rounded-full h-12 w-12 shadow-3xl bg-zinc-100/10 backdrop-blur-lg border"
                             >
                                 <MoreHorizontal className="h-4 w-4" />
                                 <span className="sr-only">More options</span>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
-                            className="w-64 p-2 mb-2 rounded-2xl shadow-2xl bg-zinc-100/10 dark:bg-zinc-950/10 backdrop-blur-lg"
+                            className="w-64 p-4 mb-2 rounded-3xl shadow-3xl bg-zinc-100/10 backdrop-blur-lg gap-3 flex flex-col border"
                             side="top"
                             align="end"
                         >
@@ -155,7 +155,7 @@ export function BottomNavbar() {
                                             <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                                         </div>
                                     </DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSeparator className="bg-zinc-900/20 dark:bg-zinc-100/20 -mx-4" />
                                 </>
                              )}
 
@@ -183,7 +183,7 @@ export function BottomNavbar() {
                                             <span>Give Feedback</span>
                                         </Link>
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSeparator className="bg-zinc-900/20 dark:bg-zinc-100/20 -mx-4" />
                                     <DropdownMenuItem onClick={handleSignOut}>
                                         <LogOut className="mr-2 h-4 w-4" />
                                         <span>Log out</span>
@@ -197,7 +197,7 @@ export function BottomNavbar() {
                                             <span>Give Feedback</span>
                                         </Link>
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSeparator className="bg-zinc-900/20 dark:bg-zinc-100/20 -mx-4" />
                                     <DropdownMenuItem asChild>
                                          <Link href="/login">
                                             <LogIn className="mr-2 h-4 w-4" />
