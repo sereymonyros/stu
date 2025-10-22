@@ -58,7 +58,7 @@ function JobsPageContent() {
     const filterRef = useRef<HTMLDivElement>(null);
     
     // --- View State ---
-    const [viewMode, setViewMode] = useState<'list' | 'card' |'board'>('list');
+    const [viewMode, setViewMode] = useState<'list' | 'card' |'board'>('card');
     
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
@@ -456,7 +456,6 @@ function JobsPageContent() {
                         </div>
                         <div className="hidden sm:flex">
                              <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}}>
-                                <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
                                 <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
                                 {isRecruiter && <ToggleGroupItem value="board" aria-label="Board view"><KanbanSquare /></ToggleGroupItem>}
                             </ToggleGroup>
@@ -515,7 +514,7 @@ function JobsPageContent() {
                                                     />
                                                 </div>
                                                 
-                                                <div className="flex flex-col sm:flex-row items-end gap-4">
+                                                <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4">
                                                     <div className="space-y-2 flex-1 w-full">
                                                         <Slider
                                                             value={salaryRange}
@@ -529,7 +528,7 @@ function JobsPageContent() {
                                                             <span>${salaryRange[1].toLocaleString()}</span>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2 justify-end flex-shrink-0">
+                                                    <div className="flex items-center gap-2 justify-center sm:justify-end flex-shrink-0">
                                                         {user && !isRecruiter && (
                                                             <Toggle
                                                                 pressed={showFavoritesOnly}
@@ -658,6 +657,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
