@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
           <CardDescription>
             {isSubmitted 
               ? "A password reset link has been sent to your email."
-              : "Enter your email and we'll send you a link to reset your password."
+              : null
             }
           </CardDescription>
         </CardHeader>
@@ -90,7 +90,6 @@ export default function ForgotPasswordPage() {
                 {isLoading ? 'Sending...' : 'Send Reset Link'}
               </Button>
                <div className="mt-4 text-center text-sm">
-                Remembered your password?{' '}
                 <Link href="/login" className="underline">
                   Login
                 </Link>

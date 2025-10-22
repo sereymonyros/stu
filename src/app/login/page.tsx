@@ -40,7 +40,6 @@ export default function LoginPage() {
       <Card className="mx-auto w-full max-w-sm rounded-3xl">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>Enter your email below to login to your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignIn} className="grid gap-4">

@@ -155,7 +155,7 @@ export function BottomNavbar() {
                                             <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                                         </div>
                                     </DropdownMenuLabel>
-                                    <DropdownMenuSeparator className="bg-zinc-900/20 dark:bg-zinc-100/20 -mx-4" />
+                                    <DropdownMenuSeparator className="bg-zinc-900/20 dark:bg-zinc-100/20 -mx-4 -mt-2" />
                                 </>
                              )}
 
@@ -184,7 +184,7 @@ export function BottomNavbar() {
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator className="bg-zinc-900/20 dark:bg-zinc-100/20 -mx-4" />
-                                    <DropdownMenuItem onClick={handleSignOut}>
+                                    <DropdownMenuItem onClick={handleSignOut} className="-mt-1">
                                         <LogOut className="mr-2 h-4 w-4" />
                                         <span>Log out</span>
                                     </DropdownMenuItem>
@@ -198,7 +198,7 @@ export function BottomNavbar() {
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator className="bg-zinc-900/20 dark:bg-zinc-100/20 -mx-4" />
-                                    <DropdownMenuItem asChild>
+                                    <DropdownMenuItem asChild className="-mt-1">
                                          <Link href="/login">
                                             <LogIn className="mr-2 h-4 w-4" />
                                             <span>Login</span>
