@@ -525,7 +525,7 @@ function JobsPageContent() {
                                                 </div>
                                             </div>
                                             
-                                            <div className="flex flex-col sm:flex-row items-end justify-center gap-4">
+                                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                                                 <div className="space-y-2 flex-1 w-full">
                                                     <Slider
                                                         value={salaryRange}
@@ -554,7 +554,7 @@ function JobsPageContent() {
                                                      {user && !isRecruiter && (
                                                         <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
                                                             <DialogTrigger asChild>
-                                                                <Button disabled={!hasActiveFilters}>
+                                                                <Button variant="outline" disabled={!hasActiveFilters}>
                                                                     <Star className="mr-2 h-4 w-4" /> Save Search
                                                                 </Button>
                                                             </DialogTrigger>
@@ -667,6 +667,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
