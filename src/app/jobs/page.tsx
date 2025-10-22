@@ -414,25 +414,6 @@ function JobsPageContent() {
             )
         }
 
-        // Mobile always shows CardBig in a grid
-        if (isMobile) {
-            return (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     {jobsToRender.map((job) => (
-                        <JobCardBig 
-                            key={job.id} 
-                            job={job}
-                            isFavourite={favouriteJobIds.has(job.id)}
-                            onToggleFavourite={handleToggleFavourite}
-                            hasApplied={appliedJobIds.has(job.id)}
-                            isRecruiter={isRecruiter ?? false}
-                        />
-                    ))}
-                </div>
-            )
-        }
-
-        // Desktop view switching
         if (viewMode === 'list') {
             return (
                 <div className="grid grid-cols-1 gap-4">
@@ -449,10 +430,8 @@ function JobsPageContent() {
                 </div>
             )
         }
-
-        // Default to CardBig for 'card' viewMode on desktop
         return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
                 {jobsToRender.map((job) => (
                     <JobCardBig 
                         key={job.id} 
@@ -519,9 +498,8 @@ function JobsPageContent() {
                                 <CollapsibleContent>
                                     <Card ref={filterRef} onClick={(e) => e.stopPropagation()} className="p-4 rounded-3xl mt-2">
                                         <div className="grid gap-4">
-                                            <div className="grid grid-cols-1 gap-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                 <div className="space-y-2">
-                                                    
                                                     <MultiSelect
                                                         options={companyOptions}
                                                         selectedValues={selectedCompanies}
@@ -530,7 +508,6 @@ function JobsPageContent() {
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
-                                                    
                                                         <MultiSelect
                                                         options={locationOptions}
                                                         selectedValues={selectedLocations}
@@ -539,7 +516,6 @@ function JobsPageContent() {
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
-                                                    
                                                         <MultiSelect
                                                         options={jobTypeOptions}
                                                         selectedValues={selectedJobTypes}
@@ -549,9 +525,8 @@ function JobsPageContent() {
                                                 </div>
                                             </div>
                                             
-                                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                                            <div className="flex flex-col sm:flex-row items-end justify-center gap-4">
                                                 <div className="space-y-2 flex-1 w-full">
-                                                    
                                                     <Slider
                                                         value={salaryRange}
                                                         onValueChange={setSalaryRange}
@@ -692,6 +667,7 @@ export default function JobsPage() {
     
 
     
+
 
 
 
