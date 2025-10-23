@@ -34,28 +34,43 @@ export function ApplicantCounter({ jobId, layout = 'horizontal' }: { jobId: stri
         return <Skeleton className="h-6 w-6 rounded-full" />;
     }
 
-    if (!applicants || applicants.length === 0) {
-        return null;
-    }
-    
+    const applicantCount = applicants?.length ?? 0;
+
+    const getBackgroundColor = () => {
+        if (applicantCount === 0) return 'bg-red-500 text-white';
+        if (applicantCount < 6) return 'bg-yellow-400 text-black';
+        return 'bg-green-500 text-white';
+    };
+
     if (layout === 'vertical') {
         return (
             <div
                 onClick={handleBadgeClick}
-                className="flex items-center justify-center h-full w-8 bg-lime-500 text-black hover:bg-lime-600 cursor-pointer rounded-r-2xl"
+                className={cn(
+                    "flex items-center justify-center h-full w-8 text-black hover:bg-lime-600 cursor-pointer rounded-r-2xl",
+                    getBackgroundColor()
+                )}
             >
-                <span className="font-bold text-xs">{applicants.length}</span>
+                <span className="font-bold text-xs">{applicantCount}</span>
             </div>
         )
+    }
+    
+    // Default horizontal layout
+    if (applicantCount === 0) {
+        return null;
     }
 
     return (
         <Badge 
             onClick={handleBadgeClick}
-            className="absolute top-2 right-1 flex items-center gap-1.5 z-10 px-2 py-1 rounded-full text-xs bg-lime-500 text-black pointer-events-auto hover:bg-lime-600 cursor-pointer"
+            className={cn(
+                "absolute top-2 right-1 flex items-center gap-1.5 z-10 px-2 py-1 rounded-full text-xs pointer-events-auto cursor-pointer",
+                getBackgroundColor()
+            )}
         >
-            {applicants.length === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
-            {applicants.length}
+            {applicantCount === 1 ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
+            {applicantCount}
         </Badge>
     );
 }
