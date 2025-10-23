@@ -237,9 +237,6 @@ export default function FeedbackPage() {
                                 />
                             </Label>
                           </FormControl>
-                        <FormDescription>
-                          Optionally, add a screenshot or image to help explain your feedback.
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
