@@ -42,6 +42,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useIsMobile } from '@/hooks/use-mobile';
 import { JobCardBig } from '@/components/job-card-big';
 import { JobCardSmall } from '@/components/job-card-small';
+import { JobCardBigMobile } from '@/components/job-card-big-mobile';
+import { JobCardSmallMobile } from '@/components/job-card-small-mobile';
 import { ApplicantCounter } from '@/components/applicant-counter';
 
 
@@ -417,14 +419,25 @@ function JobsPageContent() {
             return (
                 <div className="grid grid-cols-1 gap-4">
                     {jobsToRender.map((job) => (
-                        <JobCardSmall
-                            key={job.id} 
-                            job={job}
-                            isFavourite={favouriteJobIds.has(job.id)}
-                            onToggleFavourite={handleToggleFavourite}
-                            hasApplied={appliedJobIds.has(job.id)}
-                            isRecruiter={isRecruiter ?? false}
-                        />
+                        isMobile ? (
+                            <JobCardSmallMobile
+                                key={job.id} 
+                                job={job}
+                                isFavourite={favouriteJobIds.has(job.id)}
+                                onToggleFavourite={handleToggleFavourite}
+                                hasApplied={appliedJobIds.has(job.id)}
+                                isRecruiter={isRecruiter ?? false}
+                            />
+                        ) : (
+                            <JobCardSmall
+                                key={job.id} 
+                                job={job}
+                                isFavourite={favouriteJobIds.has(job.id)}
+                                onToggleFavourite={handleToggleFavourite}
+                                hasApplied={appliedJobIds.has(job.id)}
+                                isRecruiter={isRecruiter ?? false}
+                            />
+                        )
                     ))}
                 </div>
             )
@@ -432,14 +445,25 @@ function JobsPageContent() {
         return (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
                 {jobsToRender.map((job) => (
-                    <JobCardBig 
-                        key={job.id} 
-                        job={job}
-                        isFavourite={favouriteJobIds.has(job.id)}
-                        onToggleFavourite={handleToggleFavourite}
-                        hasApplied={appliedJobIds.has(job.id)}
-                        isRecruiter={isRecruiter ?? false}
-                    />
+                     isMobile ? (
+                        <JobCardBigMobile
+                            key={job.id} 
+                            job={job}
+                            isFavourite={favouriteJobIds.has(job.id)}
+                            onToggleFavourite={handleToggleFavourite}
+                            hasApplied={appliedJobIds.has(job.id)}
+                            isRecruiter={isRecruiter ?? false}
+                        />
+                     ) : (
+                        <JobCardBig 
+                            key={job.id} 
+                            job={job}
+                            isFavourite={favouriteJobIds.has(job.id)}
+                            onToggleFavourite={handleToggleFavourite}
+                            hasApplied={appliedJobIds.has(job.id)}
+                            isRecruiter={isRecruiter ?? false}
+                        />
+                     )
                 ))}
             </div>
         )

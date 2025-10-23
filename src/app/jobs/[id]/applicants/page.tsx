@@ -19,6 +19,7 @@ import { analyzeApplicant } from '@/ai/flows/analyze-applicant-flow';
 import { getCachedAnalysis, setCachedAnalysis } from '@/lib/ai-cache';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BackButton } from '@/components/back-button';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Helper function to convert a file URL to a Base64 data URI
 const urlToDataUri = async (url: string): Promise<string> => {
@@ -43,6 +44,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
     const { user } = useUser();
     const router = useRouter();
     const { toast } = useToast();
+    const isMobile = useIsMobile();
 
     const finalJobId = Array.isArray(jobId) ? jobId[0] : jobId;
 
@@ -269,11 +271,19 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                                         isLoading={!applications && !job}
                                     >
                                         {stageApplicants.map((app: any) => (
-                                            <Board.Card
-                                              key={app.id}
-                                              applicant={app}
-                                              jobDetails={job}
-                                            />
+                                            isMobile ? (
+                                                <Board.CardMobile
+                                                  key={app.id}
+                                                  applicant={app}
+                                                  jobDetails={job}
+                                                />
+                                            ) : (
+                                                <Board.Card
+                                                  key={app.id}
+                                                  applicant={app}
+                                                  jobDetails={job}
+                                                />
+                                            )
                                         ))}
                                     </Board.Column>
                                 )

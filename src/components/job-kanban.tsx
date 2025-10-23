@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { JobCardSmall } from './job-card-small';
 import { ApplicantCardMobile } from "./applicant-card-mobile";
+import { ApplicantCard } from "./applicant-card";
 
 
 function Column({ id, title, children, items, isLoading, type }: { id: string, title: string, children: React.ReactNode, items: any[], isLoading: boolean, type: 'jobs' | 'applicants' }) {
@@ -109,7 +110,8 @@ const JobCard = ({
 
 
 Board.Column = Column;
-Board.Card = ApplicantCardMobile;
+Board.Card = ApplicantCard;
+Board.CardMobile = ApplicantCardMobile;
 Board.JobCard = JobCard;
 
 export { Board };
