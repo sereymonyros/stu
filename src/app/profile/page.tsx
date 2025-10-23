@@ -307,145 +307,158 @@ export default function ProfilePage() {
       <main className="flex-1 p-4 md:p-6 lg:p-8">
         <div className="max-w-2xl mx-auto relative">
           <Card className="rounded-3xl">
+             <CardHeader>
+                <CardTitle>My Profile</CardTitle>
+                <CardDescription>Update your public profile information.</CardDescription>
+            </CardHeader>
             <CardContent>
               {user && userProfile ? (
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pt-4">
-                  <div className="flex flex-row items-center gap-6">
-                    <Avatar className="h-12 w-12 sm:h-24 sm:w-24">
-                        <AvatarImage src={currentPhoto ?? ''} />
-                        <AvatarFallback>{userProfile.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <FormField control={form.control} name="photo" render={({ field }) => (
-                        <FormItem className="w-full">
-                            <FormControl>
-                              <div className="w-full">
-                                <Label htmlFor="photo-upload" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
-                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                        <UploadCloud className="w-6 h-6 mb-1 text-muted-foreground" />
-                                        <p className="mb-1 text-xs text-muted-foreground">
-                                          <span className="font-semibold">Click to upload</span>
-                                        </p>
-                                        <p className="text-[10px] text-muted-foreground">PNG, JPG, WEBP</p>
-                                    </div>
-                                    <Input 
-                                      id="photo-upload"
-                                      type="file" 
-                                      className="hidden"
-                                      accept="image/*" 
-                                      disabled={isSubmitting}
-                                      ref={photoInputRef}
-                                      onChange={(e) => {
-                                          field.onChange(e.target.files);
-                                          handleImageChange(e);
-                                      }}
-                                    />
-                                </Label>
-                              </div>
-                            </FormControl>
-                            <FormLabel className="pt-2 text-center text-xs text-muted-foreground block">Update Picture (Must be a human face)</FormLabel>
-                            {verificationMessage && (
-                                <FormDescription className="flex items-center gap-2 mt-2">
-                                  <Sparkles className="h-4 w-4 text-yellow-500" /> {verificationMessage}
-                                </FormDescription>
-                            )}
-                            <FormMessage />
-                        </FormItem>
-                    )}/>
-                  </div>
-
-                  <FormField control={form.control} name="displayName" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your public name" {...field} disabled={isSubmitting} required />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                   <FormField control={form.control} name="address" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., #123 Street 456, Phnom Penh" {...field} disabled={isSubmitting} required/>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                  <FormField control={form.control} name="phone" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., 012 345 678" {...field} disabled={isSubmitting} required/>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                  {userProfile.userType === 'standard' && (
-                    <>
-                      <Separator />
-                      <FormField control={form.control} name="resume" render={({ field }) => (
-                          <FormItem className="w-full">
-                              <FormLabel>Resume</FormLabel>
-                                {userProfile.resumeUrl && !form.watch("resume")?.[0] && (
-                                  <div className="flex items-center gap-3 p-3 rounded-md border bg-muted/50 mb-4">
-                                      <FileText className="h-6 w-6 text-muted-foreground" />
-                                      <a href={userProfile.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline flex-1 truncate">
-                                          {getFileName(userProfile.resumeUrl)}
-                                      </a>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                    <div className="flex flex-row items-center gap-6">
+                        <Avatar className="h-12 w-12 sm:h-24 sm:w-24">
+                            <AvatarImage src={currentPhoto ?? ''} />
+                            <AvatarFallback>{userProfile.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <FormField control={form.control} name="photo" render={({ field }) => (
+                            <FormItem className="w-full">
+                                <FormControl>
+                                  <div className="w-full">
+                                    <Label htmlFor="photo-upload" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
+                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <UploadCloud className="w-6 h-6 mb-1 text-muted-foreground" />
+                                            <p className="mb-1 text-xs text-muted-foreground">
+                                              <span className="font-semibold">Click to upload</span>
+                                            </p>
+                                            <p className="text-[10px] text-muted-foreground">PNG, JPG, WEBP</p>
+                                        </div>
+                                        <Input 
+                                          id="photo-upload"
+                                          type="file" 
+                                          className="hidden"
+                                          accept="image/*" 
+                                          disabled={isSubmitting}
+                                          ref={photoInputRef}
+                                          onChange={(e) => {
+                                              field.onChange(e.target.files);
+                                              handleImageChange(e);
+                                          }}
+                                        />
+                                    </Label>
                                   </div>
+                                </FormControl>
+                                <FormLabel className="pt-2 text-center text-xs text-muted-foreground block">Update Picture (Must be a human face)</FormLabel>
+                                {verificationMessage && (
+                                    <FormDescription className="flex items-center gap-2 mt-2">
+                                      <Sparkles className="h-4 w-4 text-yellow-500" /> {verificationMessage}
+                                    </FormDescription>
                                 )}
-                              <FormControl>
-                                <div>
-                                  <Label htmlFor="resume-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
-                                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                          <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
-                                          <p className="mb-1 text-sm text-muted-foreground">
-                                            <span className="font-semibold">{userProfile.resumeUrl ? 'Upload new resume' : 'Click to upload'}</span> or drag and drop
-                                          </p>
-                                          <p className="text-xs text-muted-foreground">PDF, DOC, or DOCX (MAX. 5MB)</p>
-                                      </div>
-                                      <Input 
-                                        id="resume-upload"
-                                        type="file" 
-                                        className="hidden"
-                                        accept=".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                                        disabled={isSubmitting}
-                                        ref={resumeInputRef}
-                                        onChange={(e) => field.onChange(e.target.files)}
-                                      />
-                                  </Label>
-                                </div>
-                              </FormControl>
-                              <FormDescription>Uploading a new resume will update it on all active job applications.</FormDescription>
-                              <FormMessage />
-                          </FormItem>
-                      )}/>
-                    </>
-                  )}
-                  
-                  {uploadProgress !== null && (
-                    <div className="space-y-2">
-                        <Label>{isSubmitting ? 'Uploading...' : 'Upload Complete'}</Label>
-                        <Progress value={uploadProgress} />
-                        <p className="text-sm text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
+                                <FormMessage />
+                            </FormItem>
+                        )}/>
                     </div>
-                  )}
-                  <div className="flex justify-center">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                           <Button type="submit" size="lg" disabled={isSubmitting} className="w-[120px] rounded-3xl shadow-lg">Save</Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Save Changes</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </form>
+
+                    <FormField control={form.control} name="displayName" render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Your public name" {...field} disabled={isSubmitting} required />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )} />
+
+                    <FormField control={form.control} name="address" render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., #123 Street 456, Phnom Penh" {...field} disabled={isSubmitting} required/>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )} />
+
+                    <FormField control={form.control} name="phone" render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., 012 345 678" {...field} disabled={isSubmitting} required/>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )} />
+
+                    {userProfile.userType === 'standard' && (
+                        <>
+                        <Separator />
+                        <FormField control={form.control} name="resume" render={({ field }) => (
+                            <FormItem className="w-full">
+                                <FormLabel>Resume</FormLabel>
+                                    {userProfile.resumeUrl && !form.watch("resume")?.[0] && (
+                                    <div className="flex items-center gap-3 p-3 rounded-md border bg-muted/50 mb-4">
+                                        <FileText className="h-6 w-6 text-muted-foreground" />
+                                        <a href={userProfile.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline flex-1 truncate">
+                                            {getFileName(userProfile.resumeUrl)}
+                                        </a>
+                                    </div>
+                                    )}
+                                <FormControl>
+                                    <div>
+                                    <Label htmlFor="resume-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
+                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                                            <p className="mb-1 text-sm text-muted-foreground">
+                                                <span className="font-semibold">{userProfile.resumeUrl ? 'Upload new resume' : 'Click to upload'}</span> or drag and drop
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">PDF, DOC, or DOCX (MAX. 5MB)</p>
+                                        </div>
+                                        <Input 
+                                            id="resume-upload"
+                                            type="file" 
+                                            className="hidden"
+                                            accept=".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                            disabled={isSubmitting}
+                                            ref={resumeInputRef}
+                                            onChange={(e) => field.onChange(e.target.files)}
+                                        />
+                                    </Label>
+                                    </div>
+                                </FormControl>
+                                <FormDescription>Uploading a new resume will update it on all active job applications.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}/>
+                        </>
+                    )}
+                    
+                    {isSubmitting || uploadProgress !== null ? (
+                      <div className="space-y-2 pt-2">
+                          <Button type="button" size="lg" disabled={true} className="w-[120px] rounded-3xl shadow-lg mx-auto flex">
+                              Saving...
+                          </Button>
+                           {uploadProgress !== null && (
+                              <div className="space-y-1">
+                                  <Progress value={uploadProgress} />
+                                  <p className="text-xs text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
+                              </div>
+                           )}
+                      </div>
+                    ) : (
+                      <div className="flex justify-center">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button type="submit" size="lg" className="w-[120px] rounded-3xl shadow-lg">Save</Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Save Changes</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    )}
+                  </form>
+                </Form>
               ) : (
                   <div className="text-center">
                       <p className="text-muted-foreground">{error ? `Error: ${error.message}` : "Could not load profile."}</p>
@@ -458,14 +471,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
-
-    
-
-    
-
-
-
-
-    
