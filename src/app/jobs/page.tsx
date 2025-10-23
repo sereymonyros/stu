@@ -170,12 +170,9 @@ function JobsPageContent() {
             q = query(q, where('__name__', 'in', Array.from(favouriteJobIds)));
         }
 
-        const [minSal, maxSal] = salaryRange;
+        const [minSal] = salaryRange;
         if (minSal > 0) {
             q = query(q, where('salaryMax', '>=', minSal));
-        }
-        if (maxSal < maxSalary) {
-             q = query(q, where('salaryMin', '<=', maxSal));
         }
         
         if (loadMore && lastVisible) {
@@ -189,15 +186,22 @@ function JobsPageContent() {
             setLastVisible(snapshot.docs[snapshot.docs.length - 1] || null);
             setHasMore(newJobs.length === JOBS_PER_PAGE);
 
-            // Client-side search query filtering
+            // Client-side search query and max salary filtering
             let finalJobs = newJobs;
-            if (searchQuery) {
-                const lowercasedQuery = searchQuery.toLowerCase();
-                finalJobs = newJobs.filter(job =>
-                    job.title?.toLowerCase().includes(lowercasedQuery) ||
-                    job.description?.toLowerCase().includes(lowercasedQuery)
-                );
-            }
+            const [, maxSal] = salaryRange;
+
+            finalJobs = newJobs.filter(job => {
+                const textMatch = searchQuery 
+                    ? job.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                      job.description?.toLowerCase().includes(searchQuery.toLowerCase())
+                    : true;
+                
+                const salaryMatch = maxSal < maxSalary 
+                    ? (job.salaryMin || 0) <= maxSal
+                    : true;
+                
+                return textMatch && salaryMatch;
+            });
 
             setJobs(prevJobs => loadMore ? [...prevJobs, ...finalJobs] : finalJobs);
             
@@ -218,8 +222,7 @@ function JobsPageContent() {
     useEffect(() => {
         fetchJobs();
     }, [
-        fetchJobs, searchQuery, selectedCompanies, selectedLocations,
-        selectedJobTypes, showFavoritesOnly, salaryRange
+        fetchJobs, // Now safely included due to useCallback
     ]);
 
     // --- Handlers ---
