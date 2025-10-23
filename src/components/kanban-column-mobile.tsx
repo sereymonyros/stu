@@ -9,17 +9,12 @@ import { useDroppable } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
-import { JobCardSmall } from './job-card-small';
-import { ApplicantCard } from "./applicant-card";
 
-
-function Column({ id, title, children, items, isLoading, type }: { id: string, title: string, children: React.ReactNode, items: any[], isLoading: boolean, type: 'jobs' | 'applicants' }) {
+export function KanbanColumnMobile({ id, title, children, items, isLoading }: { id: string, title: string, children: React.ReactNode, items: any[], isLoading: boolean }) {
     const { setNodeRef, isOver } = useDroppable({ id });
     const itemIds = useMemo(() => items.map(i => i.id), [items]);
 
     const titleColors: { [key: string]: string } = {
-        Available: 'border-blue-500',
-        Closed: 'border-red-500',
         submitted: 'border-blue-500',
         reviewed: 'border-yellow-500',
         offered: 'border-purple-500',
@@ -39,15 +34,15 @@ function Column({ id, title, children, items, isLoading, type }: { id: string, t
                         <span className="text-sm font-normal bg-primary/10 text-primary rounded-full h-6 w-6 flex items-center justify-center">{items.length}</span>
                     </CardTitle>
                 </CardHeader>
-                <div 
+                <div
                     className={cn(
                         "p-2 flex-1 rounded-b-lg transition-colors min-h-[100px]"
                     )}
                 >
                      {isLoading ? (
                         <div className="space-y-2">
-                             <Skeleton className="h-24 w-full" />
-                             <Skeleton className="h-24 w-full" />
+                             <Skeleton className="h-12 w-full" />
+                             <Skeleton className="h-12 w-full" />
                         </div>
                     ) : (
                         <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
@@ -59,57 +54,3 @@ function Column({ id, title, children, items, isLoading, type }: { id: string, t
         </div>
     );
 }
-
-function Board({ children }: { children: React.ReactNode }) {
-    return (
-        <div className="flex flex-wrap justify-center gap-4 pb-4 items-stretch">
-            {children}
-        </div>
-    );
-}
-
-
-const JobCard = ({
-    job,
-    isDraggable,
-}: {
-    job: any;
-    isDraggable: boolean;
-    isFavourite: boolean;
-    onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => Promise<void>;
-    hasApplied: boolean;
-    isRecruiter: boolean;
-}) => {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-        id: job.id,
-        disabled: !isDraggable,
-    });
-
-    const style = {
-        transition,
-        boxShadow: isDragging ? '0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.1)' : undefined,
-        transform: isDragging ? `${"\'\'" + CSS.Transform.toString(transform)} scale(1.05)` : CSS.Transform.toString(transform),
-        zIndex: isDragging ? 10 : 'auto',
-    };
-    
-    return (
-        <div ref={setNodeRef} style={style} {...attributes} className="mb-2">
-             <div {...(isDraggable ? listeners : {})} className={cn(isDragging ? "cursor-grabbing" : "cursor-grab")}>
-                <JobCardSmall
-                    job={job}
-                    isFavourite={false}
-                    onToggleFavourite={async () => {}}
-                    hasApplied={false}
-                    isRecruiter={true}
-                />
-            </div>
-        </div>
-    );
-}
-
-
-Board.Column = Column;
-Board.Card = ApplicantCard;
-Board.JobCard = JobCard;
-
-export { Board };

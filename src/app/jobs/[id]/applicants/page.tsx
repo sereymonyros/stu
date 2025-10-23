@@ -20,6 +20,8 @@ import { getCachedAnalysis, setCachedAnalysis } from '@/lib/ai-cache';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BackButton } from '@/components/back-button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { KanbanColumnMobile } from '@/components/kanban-column-mobile';
+import { ApplicantCardMobile } from '@/components/applicant-card-mobile';
 
 // Helper function to convert a file URL to a Base64 data URI
 const urlToDataUri = async (url: string): Promise<string> => {
@@ -261,18 +263,20 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                         <Board>
                             {KANBAN_STAGES.map(stage => {
                                 const stageApplicants = applicantsByStatus[stage] || [];
+                                const ColumnComponent = isMobile ? KanbanColumnMobile : Board.Column;
+
                                 return (
-                                    <Board.Column
+                                    <ColumnComponent
                                         key={stage}
                                         id={stage}
                                         title={stage}
                                         items={stageApplicants}
-                                        type="applicants"
                                         isLoading={!applications && !job}
+                                        type="applicants"
                                     >
                                         {stageApplicants.map((app: any) => (
                                             isMobile ? (
-                                                <Board.CardMobile
+                                                <ApplicantCardMobile
                                                   key={app.id}
                                                   applicant={app}
                                                   jobDetails={job}
@@ -285,7 +289,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                                                 />
                                             )
                                         ))}
-                                    </Board.Column>
+                                    </ColumnComponent>
                                 )
                             })}
                         </Board>
