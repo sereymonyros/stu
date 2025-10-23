@@ -28,7 +28,7 @@ export function KanbanColumnMobile({ id, title, children, items, isLoading }: { 
                 "h-full flex flex-col transition-colors rounded-3xl",
                 isOver ? 'bg-primary/10 cursor-copy' : 'bg-muted/40',
             )}>
-                <CardHeader className={cn("p-3 border-b-4 select-none", titleColors[id] || 'border-gray-500')}>
+                <CardHeader className={cn("p-2 border-b-4 select-none", titleColors[id] || 'border-gray-500')}>
                     <CardTitle className="text-base font-semibold capitalize flex justify-between items-center">
                         <span>{title}</span>
                         <span className="text-sm font-normal bg-primary/10 text-primary rounded-full h-6 w-6 flex items-center justify-center">{items.length}</span>
