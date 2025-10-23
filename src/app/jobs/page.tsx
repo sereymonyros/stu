@@ -501,7 +501,7 @@ function JobsPageContent() {
                                         {hasActiveFilters && <span className="ml-1 h-2 w-2 rounded-full bg-blue-500"></span>}
                                     </Button>
                                 </CollapsibleTrigger>
-                                <div className="hidden sm:flex">
+                                <div>
                                     <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}}>
                                         <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
                                         <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
