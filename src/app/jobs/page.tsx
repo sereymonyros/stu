@@ -477,7 +477,7 @@ function JobsPageContent() {
                 </div>
 
                 <div className="mb-6 space-y-4">
-                    {viewMode !== 'board' && (
+                    {viewMode !== 'board' ? (
                         <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen} className="space-y-2">
                             <div className="flex items-center gap-2">
                                 <div className="relative flex-1">
@@ -606,13 +606,12 @@ function JobsPageContent() {
                                 </Card>
                             </CollapsibleContent>
                         </Collapsible>
-                    )}
-                     {isRecruiter && viewMode === 'board' && (
+                    ) : (
                         <div className="flex justify-end">
-                             <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}}>
-                                <ToggleGroupItem value="list" aria-label="List view" className="md:inline-flex"><List /></ToggleGroupItem>
+                            <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}}>
+                                <ToggleGroupItem value="list" aria-label="List view" className="hidden md:inline-flex"><List /></ToggleGroupItem>
                                 <ToggleGroupItem value="card" aria-label="Card view" className="hidden md:inline-flex"><LayoutGrid /></ToggleGroupItem>
-                                <ToggleGroupItem value="board" aria-label="Board view"><KanbanSquare /></ToggleGroupItem>
+                                {isRecruiter && <ToggleGroupItem value="board" aria-label="Board view"><KanbanSquare /></ToggleGroupItem>}
                             </ToggleGroup>
                         </div>
                     )}
