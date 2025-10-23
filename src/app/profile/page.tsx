@@ -438,7 +438,7 @@ export default function ProfilePage() {
                         <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button type="submit" size="bigIcon" disabled={isSubmitting} className="h-16 w-16 rounded-3xl shadow-lg">Save</Button>
+                                <Button type="submit" size="lg" disabled={isSubmitting} className="w-[120px] rounded-3xl shadow-lg">Save</Button>
                             </TooltipTrigger>
                             <TooltipContent>
                                 <p>Save Changes</p>
@@ -461,5 +461,7 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
 
     
