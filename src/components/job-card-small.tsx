@@ -18,13 +18,15 @@ export function JobCardSmall({
     isFavourite,
     onToggleFavourite,
     hasApplied,
-    isRecruiter
+    isRecruiter,
+    isDraggable = false,
 }: {
     job: any;
     isFavourite: boolean;
     onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => Promise<void>;
     hasApplied: boolean;
     isRecruiter: boolean;
+    isDraggable?: boolean;
 }) {
     const { user } = useUser();
     const router = useRouter();
@@ -52,10 +54,9 @@ export function JobCardSmall({
         }
         onToggleFavourite(job.id, isFavourite);
     };
-
-    return (
-        <Link href={`/jobs/${job.id}/details`} className="block group/card">
-            <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl")}>
+    
+    const CardContent = (
+         <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl")}>
                  {hasApplied && (
                     <div className="absolute inset-0 bg-muted/80 backdrop-blur-sm z-20 flex items-center justify-center rounded-3xl pointer-events-none">
                         <Badge variant="secondary" className="text-base px-4 py-1 rounded-full bg-green-500/10 text-green-700 dark:bg-green-500/10 dark:text-green-400 border-green-500/50">
@@ -67,9 +68,9 @@ export function JobCardSmall({
                 <div className="flex items-start py-4">
                     <div className="flex-1 min-w-0 pr-10 pl-4">
                         <p className="font-semibold text-sm leading-tight line-clamp-1">
-                            <span className="hover:text-primary">{job.title}</span>
+                            <span className={cn(!isDraggable && "hover:text-primary")}>{job.title}</span>
                             <span className="font-normal text-muted-foreground"> at </span>
-                            <span className="hover:text-primary relative z-10" onClick={(e) => { e.preventDefault(); router.push(`/companies/${encodeURIComponent(job.companyName)}`)}}>
+                            <span className={cn(!isDraggable && "hover:text-primary", "relative z-10")} onClick={(e) => { e.preventDefault(); router.push(`/companies/${encodeURIComponent(job.companyName)}`)}}>
                                 {job.companyName}
                             </span>
                         </p>
@@ -100,7 +101,8 @@ export function JobCardSmall({
                             ) : null}
                         </div>
 
-                        <div className="pointer-events-auto">
+                       {!isDraggable && (
+                         <div className="pointer-events-auto">
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -114,9 +116,19 @@ export function JobCardSmall({
                                 </Tooltip>
                             </TooltipProvider>
                         </div>
+                       )}
                     </div>
                 </div>
             </Card>
+    )
+
+    if (isDraggable) {
+        return CardContent;
+    }
+
+    return (
+        <Link href={`/jobs/${job.id}/details`} className="block group/card">
+           {CardContent}
         </Link>
     );
 }

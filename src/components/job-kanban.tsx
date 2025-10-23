@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react"
@@ -110,6 +109,7 @@ const JobCard = ({
                         onToggleFavourite={async () => {}}
                         hasApplied={false}
                         isRecruiter={true}
+                        isDraggable={isDraggable}
                     />
                 }
             </div>
