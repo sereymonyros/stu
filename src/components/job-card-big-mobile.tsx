@@ -13,7 +13,7 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/t
 import { useRouter } from "next/navigation";
 import { ApplicantCounter } from './applicant-counter';
 
-export function JobCardBig({
+export function JobCardBigMobile({
     job,
     isFavourite,
     onToggleFavourite,
