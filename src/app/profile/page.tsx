@@ -311,7 +311,7 @@ export default function ProfilePage() {
               {user && userProfile ? (
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pt-4">
-                    <div className="flex flex-col sm:flex-row items-center gap-6">
+                    <div className="flex flex-row items-start gap-6">
                       <Avatar className="h-24 w-24">
                           <AvatarImage src={currentPhoto ?? ''} />
                           <AvatarFallback>{userProfile.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}</AvatarFallback>
@@ -467,3 +467,4 @@ export default function ProfilePage() {
     
 
     
+
