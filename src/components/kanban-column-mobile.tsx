@@ -36,7 +36,7 @@ export function KanbanColumnMobile({ id, title, children, items, isLoading }: { 
                 </CardHeader>
                 <div
                     className={cn(
-                        "p-2 flex-1 rounded-b-lg transition-colors min-h-[100px]"
+                        "p-2 flex-1 rounded-b-lg transition-colors min-h-[50px]"
                     )}
                 >
                      {isLoading ? (
