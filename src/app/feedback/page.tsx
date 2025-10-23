@@ -158,7 +158,6 @@ export default function FeedbackPage() {
         <Card className="max-w-2xl mx-auto rounded-3xl">
           <CardHeader>
             <CardTitle>Submit Feedback</CardTitle>
-            <CardDescription>We value your opinion. Let us know how we can improve.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
