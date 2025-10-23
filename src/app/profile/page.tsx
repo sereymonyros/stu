@@ -318,7 +318,6 @@ export default function ProfilePage() {
                       </Avatar>
                       <FormField control={form.control} name="photo" render={({ field }) => (
                           <FormItem className="w-full">
-                              <FormLabel>Update Picture (Must be a human face)</FormLabel>
                               <FormControl>
                                 <div className="w-full">
                                   <Label htmlFor="photo-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
@@ -344,6 +343,7 @@ export default function ProfilePage() {
                                   </Label>
                                 </div>
                               </FormControl>
+                              <FormLabel className="pt-2 text-center block">Update Picture (Must be a human face)</FormLabel>
                               {verificationMessage && (
                                   <FormDescription className="flex items-center gap-2 mt-2">
                                     <Sparkles className="h-4 w-4 text-yellow-500" /> {verificationMessage}
@@ -461,6 +461,8 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
 
     
 
