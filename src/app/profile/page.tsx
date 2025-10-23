@@ -310,7 +310,7 @@ export default function ProfilePage() {
             <CardContent>
               {user && userProfile ? (
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-16 pt-4">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pt-4">
                     <div className="flex flex-col sm:flex-row items-center gap-6">
                       <Avatar className="h-24 w-24">
                           <AvatarImage src={currentPhoto ?? ''} />
