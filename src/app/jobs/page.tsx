@@ -187,10 +187,8 @@ function JobsPageContent() {
             setHasMore(newJobs.length === JOBS_PER_PAGE);
 
             // Client-side search query and max salary filtering
-            let finalJobs = newJobs;
             const [, maxSal] = salaryRange;
-
-            finalJobs = newJobs.filter(job => {
+            const finalJobs = newJobs.filter(job => {
                 const textMatch = searchQuery 
                     ? job.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
                       job.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -221,8 +219,10 @@ function JobsPageContent() {
 
     useEffect(() => {
         fetchJobs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
-        fetchJobs, // Now safely included due to useCallback
+        searchQuery, selectedCompanies, selectedLocations, 
+        selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary
     ]);
 
     // --- Handlers ---
