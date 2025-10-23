@@ -474,11 +474,6 @@ function JobsPageContent() {
             <main className="flex-1 p-4 lg:p-8">
                  <div className="flex items-center justify-between mb-6">
                     <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
-                    {isRecruiter && (
-                        <Button asChild>
-                            <Link href="/jobs/new"><Plus className="mr-2 h-4 w-4" /> Post a New Job</Link>
-                        </Button>
-                    )}
                 </div>
 
                 <div className="mb-6 space-y-4">
@@ -612,7 +607,7 @@ function JobsPageContent() {
                             </CollapsibleContent>
                         </Collapsible>
                     )}
-                     {viewMode === 'board' && (
+                     {isRecruiter && viewMode === 'board' && (
                         <div className="flex justify-end">
                              <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}}>
                                 <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
