@@ -167,7 +167,6 @@ export default function FeedbackPage() {
                   name="rating"
                   render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel>Rating</FormLabel>
                       <FormControl>
                         <div className="flex items-center gap-1">
                           {[1, 2, 3, 4, 5].map((star) => (
