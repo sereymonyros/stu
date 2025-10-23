@@ -113,14 +113,16 @@ export default function DashboardPage() {
 
     // --- Data Fetching Callbacks ---
     const fetchPostedJobs = useCallback(async (loadMore = false) => {
-        if (!user || !isRecruiter) {
+        if (!user || !isRecruiter || (loadMore && !hasMorePosted)) {
             setIsLoadingPosted(false);
             return;
         }
+
         if (loadMore) {
-          setIsLoadingMorePosted(true);
+            setIsLoadingMorePosted(true);
         } else {
-          setIsLoadingPosted(true);
+            setIsLoadingPosted(true);
+            setPostedJobs([]); // Reset on initial fetch
         }
 
         let q = query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid), limit(JOBS_PER_PAGE));
@@ -129,22 +131,24 @@ export default function DashboardPage() {
         }
 
         const snapshot = await getDocs(q);
-        
         const newJobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // Sort client-side to avoid needing a composite index
-        const sortedJobs = newJobs.sort((a, b) => {
+        setLastPosted(snapshot.docs[snapshot.docs.length - 1] || null);
+        setHasMorePosted(newJobs.length === JOBS_PER_PAGE);
+
+        const updatedJobs = loadMore ? [...postedJobs, ...newJobs] : newJobs;
+
+        // Sort the entire list client-side to avoid needing a composite index
+        const sortedJobs = updatedJobs.sort((a, b) => {
             const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
             const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
             return dateB - dateA;
         });
 
-        setLastPosted(snapshot.docs[snapshot.docs.length - 1] || null);
-        setHasMorePosted(newJobs.length === JOBS_PER_PAGE);
-        setPostedJobs(prev => loadMore ? [...prev, ...sortedJobs] : sortedJobs);
+        setPostedJobs(sortedJobs);
         setIsLoadingPosted(false);
         setIsLoadingMorePosted(false);
-    }, [user, isRecruiter, firestore, lastPosted]);
+    }, [user, isRecruiter, firestore, lastPosted, hasMorePosted, postedJobs]);
 
     const fetchAppliedJobs = useCallback(async (loadMore = false) => {
         if (!user || !isStandardUser) {
