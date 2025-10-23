@@ -20,12 +20,6 @@ export function KanbanCardMobile({
                         <p className="text-xs font-medium truncate">{job.title}</p>
                     </div>
                     <div className="flex-shrink-0 flex items-center space-x-2">
-                        <Badge 
-                            variant={job.status === 'Closed' ? 'destructive' : 'default'} 
-                            className="capitalize text-[10px] px-1.5 py-0.5"
-                        >
-                            {job.status}
-                        </Badge>
                         <div className="pointer-events-auto">
                             <ApplicantCounter jobId={job.id} />
                         </div>
