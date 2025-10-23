@@ -114,7 +114,7 @@ export default function DashboardPage() {
     // --- Data Fetching Callbacks ---
     const fetchPostedJobs = useCallback(async (loadMore = false) => {
         if (!user || !isRecruiter || (loadMore && !hasMorePosted)) {
-            setIsLoadingPosted(false);
+            if (!loadMore) setIsLoadingPosted(false);
             return;
         }
 
@@ -122,6 +122,7 @@ export default function DashboardPage() {
             setIsLoadingMorePosted(true);
         } else {
             setIsLoadingPosted(true);
+            setPostedJobs([]); // Reset on initial fetch
         }
 
         let q = query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid), limit(JOBS_PER_PAGE));
@@ -134,30 +135,26 @@ export default function DashboardPage() {
 
         setLastPosted(snapshot.docs[snapshot.docs.length - 1] || null);
         setHasMorePosted(newJobs.length === JOBS_PER_PAGE);
+        
+        const combined = loadMore ? [...postedJobs, ...newJobs] : newJobs;
+        combined.sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
 
-        setPostedJobs(prevJobs => {
-            const combinedJobs = loadMore ? [...prevJobs, ...newJobs] : newJobs;
-            // Sort the entire list client-side to avoid needing a composite index
-            return combinedJobs.sort((a, b) => {
-                const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
-                const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
-                return dateB - dateA;
-            });
-        });
+        setPostedJobs(combined);
 
         setIsLoadingPosted(false);
         setIsLoadingMorePosted(false);
-    }, [user, isRecruiter, firestore, lastPosted, hasMorePosted]);
+    }, [user, isRecruiter, firestore, lastPosted, hasMorePosted, postedJobs]);
 
     const fetchAppliedJobs = useCallback(async (loadMore = false) => {
-        if (!user || !isStandardUser) {
-            setIsLoadingApplied(false);
+        if (!user || !isStandardUser || (loadMore && !hasMoreApplied)) {
+            if (!loadMore) setIsLoadingApplied(false);
             return;
         }
         if (loadMore) {
           setIsLoadingMoreApplied(true);
         } else {
           setIsLoadingApplied(true);
+          setAppliedJobs([]); // Reset on initial fetch
         }
 
         // 1. Fetch references from the user's subcollection
@@ -176,7 +173,6 @@ export default function DashboardPage() {
         if (jobIds.length === 0) {
             setIsLoadingApplied(false);
             setIsLoadingMoreApplied(false);
-            if (!loadMore) setAppliedJobs([]);
             return;
         }
 
@@ -191,17 +187,18 @@ export default function DashboardPage() {
         setAppliedJobs(prev => loadMore ? [...prev, ...newJobs] : newJobs);
         setIsLoadingApplied(false);
         setIsLoadingMoreApplied(false);
-    }, [user, isStandardUser, firestore, lastAppliedRef]);
+    }, [user, isStandardUser, firestore, lastAppliedRef, hasMoreApplied]);
     
     const fetchFavouriteJobs = useCallback(async (loadMore = false) => {
-        if (!user || !isStandardUser) {
-            setIsLoadingFavourites(false);
+        if (!user || !isStandardUser || (loadMore && !hasMoreFavourites)) {
+            if (!loadMore) setIsLoadingFavourites(false);
             return;
         }
         if (loadMore) {
           setIsLoadingMoreFavourites(true);
         } else {
           setIsLoadingFavourites(true);
+          setFavouriteJobs([]); // Reset on initial fetch
         }
 
         let refQuery = query(collection(firestore, `users/${user.uid}/favouriteJobs`), orderBy('favouritedAt', 'desc'), limit(JOBS_PER_PAGE));
@@ -219,7 +216,6 @@ export default function DashboardPage() {
         if (jobIds.length === 0) {
             setIsLoadingFavourites(false);
             setIsLoadingMoreFavourites(false);
-            if (!loadMore) setFavouriteJobs([]);
             return;
         }
 
@@ -232,7 +228,7 @@ export default function DashboardPage() {
         setFavouriteJobs(prev => loadMore ? [...prev, ...newJobs] : newJobs);
         setIsLoadingFavourites(false);
         setIsLoadingMoreFavourites(false);
-    }, [user, isStandardUser, firestore, lastFavouriteRef]);
+    }, [user, isStandardUser, firestore, lastFavouriteRef, hasMoreFavourites]);
 
     // Initial data fetch
     useEffect(() => {
@@ -245,7 +241,7 @@ export default function DashboardPage() {
                 fetchFavouriteJobs();
             }
         }
-    }, [user, isRecruiter, isStandardUser, userProfile]);
+    }, [user, userProfile, isRecruiter, isStandardUser]); // Removed fetch functions from here
 
     // --- Handlers ---
     const [isDeletingSearch, setIsDeletingSearch] = useState(false);
