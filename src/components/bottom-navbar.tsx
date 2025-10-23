@@ -180,7 +180,7 @@ export function BottomNavbar() {
                                     <DropdownMenuItem asChild>
                                         <Link href="/feedback">
                                             <MessageSquareHeart className="mr-2 h-4 w-4" />
-                                            <span>Give Feedback</span>
+                                            <span>Feedback</span>
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator className="bg-zinc-900/20 dark:bg-zinc-100/20 -mx-4" />
@@ -194,7 +194,7 @@ export function BottomNavbar() {
                                      <DropdownMenuItem asChild>
                                          <Link href="/feedback">
                                             <MessageSquareHeart className="mr-2 h-4 w-4" />
-                                            <span>Give Feedback</span>
+                                            <span>Feedback</span>
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator className="bg-zinc-900/20 dark:bg-zinc-100/20 -mx-4" />
