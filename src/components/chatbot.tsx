@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageSquare, Send, Sparkles, User } from 'lucide-react';
+import { MessageSquare, Send, Sparkles, User, X } from 'lucide-react';
 import { chat, type ChatOutput } from '@/ai/flows/chat-flow';
 import { marked } from 'marked';
 import { useUser, useDoc, useFirestore } from '@/firebase';
@@ -15,6 +15,11 @@ import { doc } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { JobCardSmall } from './job-card-small';
 import { useChatbot } from './chatbot-provider';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
+
 
 interface Message {
   id: string;
@@ -22,12 +27,20 @@ interface Message {
   sender: 'user' | 'bot';
 }
 
+const suggestionPrompts = [
+    "Find me a job in marketing",
+    "How do I post a job?",
+    "Show me part-time roles",
+    "How to update my profile?",
+]
+
 export function Chatbot() {
   const { isOpen, setOpen } = useChatbot();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -52,9 +65,9 @@ export function Chatbot() {
                    <JobCardSmall 
                         key={job.id} 
                         job={job}
-                        isFavourite={false} // Chatbot doesn't know about favourites
+                        isFavourite={false}
                         onToggleFavourite={async () => {}}
-                        hasApplied={false} // Chatbot doesn't know about applications
+                        hasApplied={false}
                         isRecruiter={false}
                    />
                 ))}
@@ -67,11 +80,12 @@ export function Chatbot() {
     return <p>Sorry, I'm not sure how to help with that.</p>;
   }
 
-  const handleSendMessage = async (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent, messageText?: string) => {
     e.preventDefault();
-    if (!input.trim() || !user) return;
+    const currentInput = messageText || input;
+    if (!currentInput.trim() || !user) return;
 
-    const userMessage: Message = { id: Date.now().toString(), node: <p>{input}</p>, sender: 'user' };
+    const userMessage: Message = { id: Date.now().toString(), node: <p>{currentInput}</p>, sender: 'user' };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
@@ -94,7 +108,7 @@ export function Chatbot() {
     }
 
     try {
-      const response = await chat({ query: input, userId: user.uid });
+      const response = await chat({ query: currentInput, userId: user.uid });
       const botMessageNode = renderContent(response.response);
       
       setMessages(prev => prev.map(msg => msg.id === botMessageId ? { ...msg, node: botMessageNode } : msg));
@@ -119,23 +133,39 @@ export function Chatbot() {
 
   const fallbackText = userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : user?.email ? user.email.charAt(0).toUpperCase() : 'U';
 
-  return (
-      <Sheet open={isOpen} onOpenChange={setOpen}>
-        <SheetContent className="flex flex-col p-0">
-          <SheetHeader className="p-4 border-b">
-            <SheetTitle>Cambodia Hub Helper</SheetTitle>
-            <SheetDescription>Ask me to find jobs or help you use the app.</SheetDescription>
-          </SheetHeader>
-          <ScrollArea className="flex-1" ref={scrollAreaRef}>
+  const ChatWindow = (
+     <div className="flex flex-col h-full">
+        <ScrollArea className="flex-1" ref={scrollAreaRef}>
             <div className="p-4 space-y-4">
+                {messages.length === 0 && (
+                    <div className="text-center py-8">
+                        <div className="inline-block p-3 bg-primary/10 rounded-full mb-4">
+                            <Sparkles className="h-8 w-8 text-primary" />
+                        </div>
+                        <h2 className="text-xl font-bold">Welcome!</h2>
+                        <p className="text-muted-foreground">How can I help you today?</p>
+                        <div className="flex flex-wrap gap-2 justify-center mt-6">
+                            {suggestionPrompts.map(prompt => (
+                                <Badge 
+                                    key={prompt}
+                                    variant="outline"
+                                    className="cursor-pointer hover:bg-muted"
+                                    onClick={(e) => handleSendMessage(e, prompt)}
+                                >
+                                    {prompt}
+                                </Badge>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 {messages.map((message) => (
-                    <div key={message.id} className={`flex items-start gap-3 ${message.sender === 'user' ? 'justify-end' : ''}`}>
+                    <div key={message.id} className={cn("flex items-end gap-3", message.sender === 'user' ? 'justify-end' : 'justify-start')}>
                         {message.sender === 'bot' && (
                             <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
                                 <AvatarFallback><Sparkles className="h-5 w-5" /></AvatarFallback>
                             </Avatar>
                         )}
-                        <div className={`rounded-lg px-3 py-2 max-w-sm text-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                        <div className={`rounded-2xl px-4 py-2.5 max-w-sm text-sm shadow-md ${message.sender === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
                             {message.node}
                         </div>
                          {message.sender === 'user' && (
@@ -147,22 +177,50 @@ export function Chatbot() {
                     </div>
                 ))}
             </div>
-          </ScrollArea>
-          <div className="p-4 border-t">
+        </ScrollArea>
+        <div className="p-4 border-t bg-background">
             <form onSubmit={handleSendMessage} className="relative">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="e.g., find me a job in marketing"
-                className="pr-12"
-                disabled={!user || isLoading}
-              />
-              <Button type="submit" size="icon" className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8" disabled={!user || isLoading}>
-                <Send className="h-4 w-4" />
-              </Button>
+                <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder={user ? "Ask me anything..." : "Please log in to use the chatbot"}
+                    className="pr-12 h-12 rounded-full shadow-inner"
+                    disabled={!user || isLoading}
+                />
+                <Button type="submit" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full" disabled={!user || isLoading}>
+                    <Send className="h-4 w-4" />
+                </Button>
             </form>
-          </div>
-        </SheetContent>
-      </Sheet>
+        </div>
+     </div>
+  );
+
+  if (isMobile) {
+      return (
+        <Sheet open={isOpen} onOpenChange={setOpen} modal={false}>
+            <SheetContent side="bottom" className="h-[80svh] flex flex-col p-0 rounded-t-3xl">
+                <div className="flex-1 min-h-0">
+                    {ChatWindow}
+                </div>
+            </SheetContent>
+        </Sheet>
+      )
+  }
+
+  return (
+      <Dialog open={isOpen} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl h-[70vh] flex flex-col p-0 gap-0 rounded-3xl shadow-2xl">
+           <DialogHeader className="p-4 border-b bg-primary text-primary-foreground rounded-t-3xl">
+                <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> Cambodia Hub Helper</DialogTitle>
+                <DialogDescription className="text-primary-foreground/80">Ask me to find jobs or help you use the app.</DialogDescription>
+                 <DialogClose asChild>
+                    <Button variant="ghost" size="icon" className="absolute top-3 right-3 text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 h-7 w-7 rounded-full">
+                        <X className="h-4 w-4" />
+                    </Button>
+                </DialogClose>
+            </DialogHeader>
+           {ChatWindow}
+        </DialogContent>
+      </Dialog>
   );
 }
