@@ -201,7 +201,7 @@ export function ApplicantCardMobile({ applicant, jobDetails }: { applicant: any,
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
             <Card className={cn("mb-2 bg-card hover:bg-muted/50 rounded-3xl", isDragging ? "cursor-grabbing" : "cursor-grab")}>
-                <div className="py-1 px-3" {...listeners}>
+                <div className="py-2 px-3" {...listeners}>
                     <div className="flex items-center justify-between">
                         <p className="font-semibold text-sm leading-tight select-none truncate">{applicant.applicantName}</p>
                         <div className="flex items-center">
