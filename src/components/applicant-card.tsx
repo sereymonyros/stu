@@ -203,14 +203,14 @@ export function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDe
             <Card className={cn("mb-2 bg-card hover:bg-muted/50 rounded-3xl", isDragging ? "cursor-grabbing" : "cursor-grab")}>
                 <div className="p-3 relative" {...listeners}>
                     <div className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8">
+                        <Avatar className="h-8 w-8 hidden sm:flex">
                             <AvatarImage src={applicant.applicantPhotoURL} />
                             <AvatarFallback>{applicant.applicantName?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
                             <p className="font-semibold text-sm leading-tight select-none">{applicant.applicantName}</p>
                             {appliedAtDate && (
-                                <p className="text-xs text-muted-foreground leading-tight">Applied {formatDistanceToNow(appliedAtDate, { addSuffix: true })}</p>
+                                <p className="text-xs text-muted-foreground leading-tight hidden sm:block">Applied {formatDistanceToNow(appliedAtDate, { addSuffix: true })}</p>
                             )}
                         </div>
                     </div>
@@ -255,4 +255,3 @@ export function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDe
         </div>
     );
 }
-

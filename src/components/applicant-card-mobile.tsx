@@ -5,7 +5,7 @@ import * as React from "react"
 import { useMemo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
@@ -203,31 +203,17 @@ export function ApplicantCardMobile({ applicant, jobDetails }: { applicant: any,
             <Card className={cn("mb-2 bg-card hover:bg-muted/50 rounded-3xl", isDragging ? "cursor-grabbing" : "cursor-grab")}>
                 <div className="p-3" {...listeners}>
                     <div className="flex items-start justify-between relative">
-                        <div className="flex items-center gap-2">
-                             <Avatar className="h-8 w-8 hidden sm:flex">
-                                <AvatarImage src={applicant.applicantPhotoURL} />
-                                <AvatarFallback>{applicant.applicantName?.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold text-sm leading-tight select-none">{applicant.applicantName}</p>
-                                {appliedAtDate && (
-                                    <p className="text-xs text-muted-foreground leading-tight hidden sm:block">Applied {formatDistanceToNow(appliedAtDate, { addSuffix: true })}</p>
-                                )}
-                            </div>
-                        </div>
-                         {applicant.resumeUrl && (
-                             <Button variant="ghost" size="icon" className="h-8 w-8 absolute top-1 right-1" asChild>
-                                <a href={applicant.resumeUrl} target="_blank" rel="noopener noreferrer">
-                                    <FileText className="h-4 w-4" />
-                                </a>
-                            </Button>
-                         )}
+                        <p className="font-semibold text-sm leading-tight select-none">{applicant.applicantName}</p>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 absolute top-1 right-1" asChild>
+                            <a href={applicant.resumeUrl} target="_blank" rel="noopener noreferrer">
+                                <FileText className="h-2 w-2" />
+                            </a>
+                        </Button>
                     </div>
                      <Dialog onOpenChange={(open) => { if (open) handleGetAIAnalysis() }}>
                         <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="w-full mt-2 text-xs rounded-full">
+                            <Button variant="outline" size="sm">
                                 <Sparkles className="mr-2 h-3 w-3 text-yellow-500" />
-                                AI Review
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-2xl h-[70vh] flex flex-col rounded-3xl">
@@ -252,4 +238,3 @@ export function ApplicantCardMobile({ applicant, jobDetails }: { applicant: any,
         </div>
     );
 }
-
