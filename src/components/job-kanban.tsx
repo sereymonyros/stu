@@ -4,8 +4,8 @@
 import * as React from "react"
 import { useMemo } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@d-kit/utilities';
-import { useDroppable } from '@d-kit/core';
+import { CSS } from '@dnd-kit/utilities';
+import { useDroppable } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
