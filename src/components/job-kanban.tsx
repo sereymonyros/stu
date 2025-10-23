@@ -12,7 +12,8 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { JobCardSmall } from './job-card-small';
 import { ApplicantCard } from "./applicant-card";
-import { JobCardSmallMobile } from "./job-card-small-mobile";
+import { KanbanCardMobile } from "./ui/kanban-card-mobile";
+
 
 
 function Column({ id, title, children, items, isLoading, type }: { id: string, title: string, children: React.ReactNode, items: any[], isLoading: boolean, type: 'jobs' | 'applicants' }) {
@@ -101,12 +102,8 @@ const JobCard = ({
              <div {...(isDraggable ? listeners : {})} className={cn(isDragging ? "cursor-grabbing" : "cursor-grab")}>
                 {
                     isMobile
-                    ? <JobCardSmallMobile
+                    ? <KanbanCardMobile
                         job={job}
-                        isFavourite={false}
-                        onToggleFavourite={async () => {}}
-                        hasApplied={false}
-                        isRecruiter={true}
                     /> : <JobCardSmall
                         job={job}
                         isFavourite={false}
