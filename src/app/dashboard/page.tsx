@@ -122,7 +122,6 @@ export default function DashboardPage() {
             setIsLoadingMorePosted(true);
         } else {
             setIsLoadingPosted(true);
-            setPostedJobs([]); // Reset on initial fetch
         }
 
         let q = query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid), limit(JOBS_PER_PAGE));
@@ -136,19 +135,19 @@ export default function DashboardPage() {
         setLastPosted(snapshot.docs[snapshot.docs.length - 1] || null);
         setHasMorePosted(newJobs.length === JOBS_PER_PAGE);
 
-        const updatedJobs = loadMore ? [...postedJobs, ...newJobs] : newJobs;
-
-        // Sort the entire list client-side to avoid needing a composite index
-        const sortedJobs = updatedJobs.sort((a, b) => {
-            const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
-            const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
-            return dateB - dateA;
+        setPostedJobs(prevJobs => {
+            const combinedJobs = loadMore ? [...prevJobs, ...newJobs] : newJobs;
+            // Sort the entire list client-side to avoid needing a composite index
+            return combinedJobs.sort((a, b) => {
+                const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+                const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+                return dateB - dateA;
+            });
         });
 
-        setPostedJobs(sortedJobs);
         setIsLoadingPosted(false);
         setIsLoadingMorePosted(false);
-    }, [user, isRecruiter, firestore, lastPosted, hasMorePosted, postedJobs]);
+    }, [user, isRecruiter, firestore, lastPosted, hasMorePosted]);
 
     const fetchAppliedJobs = useCallback(async (loadMore = false) => {
         if (!user || !isStandardUser) {
@@ -237,14 +236,16 @@ export default function DashboardPage() {
 
     // Initial data fetch
     useEffect(() => {
-        if (user) {
-            if (isRecruiter) fetchPostedJobs();
+        if (user && userProfile) {
+            if (isRecruiter) {
+                fetchPostedJobs();
+            }
             if (isStandardUser) {
                 fetchAppliedJobs();
                 fetchFavouriteJobs();
             }
         }
-    }, [user, isRecruiter, isStandardUser, fetchPostedJobs, fetchAppliedJobs, fetchFavouriteJobs]);
+    }, [user, isRecruiter, isStandardUser, userProfile]);
 
     // --- Handlers ---
     const [isDeletingSearch, setIsDeletingSearch] = useState(false);
