@@ -15,7 +15,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LogOut, User as UserIcon, LayoutDashboard, Settings, MessageSquare, MessageSquareHeart } from 'lucide-react';
 import Link from 'next/link';
@@ -56,16 +55,11 @@ export function UserAuthButton() {
   }
 
   if (user) {
-    const fallbackText = userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : user.email ? user.email.charAt(0).toUpperCase() : 'U';
-
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={userProfile?.photoURL || undefined} alt={userProfile?.displayName ?? 'User'} />
-              <AvatarFallback>{fallbackText}</AvatarFallback>
-            </Avatar>
+            <UserIcon />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -77,12 +71,21 @@ export function UserAuthButton() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
+             <DropdownMenuItem asChild>
+                <Link href="/dashboard">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                </Link>
+            </DropdownMenuItem>
+             <DropdownMenuItem asChild>
+                <Link href="/profile">
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                </Link>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+           <DropdownMenuGroup>
                 <DropdownMenuItem onClick={handleAskAI}>
                   <MessageSquare className="mr-2 h-4 w-4" />
                   <span>Ask AI Helper</span>
@@ -93,8 +96,6 @@ export function UserAuthButton() {
                     <span>Give Feedback</span>
                   </Link>
                 </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
