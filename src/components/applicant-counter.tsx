@@ -8,8 +8,9 @@ import { collection, query } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { User, Users } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
+import { cn } from '@/lib/utils';
 
-export function ApplicantCounter({ jobId }: { jobId: string }) {
+export function ApplicantCounter({ jobId, layout = 'horizontal' }: { jobId: string, layout?: 'horizontal' | 'vertical' }) {
     const firestore = useFirestore();
     const router = useRouter();
 
@@ -27,6 +28,9 @@ export function ApplicantCounter({ jobId }: { jobId: string }) {
     };
 
     if (isLoading) {
+        if (layout === 'vertical') {
+            return <Skeleton className="h-full w-8 rounded-r-2xl" />;
+        }
         return <Skeleton className="h-6 w-6 rounded-full" />;
     }
 
@@ -34,6 +38,17 @@ export function ApplicantCounter({ jobId }: { jobId: string }) {
         return null;
     }
     
+    if (layout === 'vertical') {
+        return (
+            <div
+                onClick={handleBadgeClick}
+                className="flex items-center justify-center h-full w-8 bg-lime-500 text-black hover:bg-lime-600 cursor-pointer rounded-r-2xl"
+            >
+                <span className="font-bold text-xs">{applicants.length}</span>
+            </div>
+        )
+    }
+
     return (
         <Badge 
             onClick={handleBadgeClick}
