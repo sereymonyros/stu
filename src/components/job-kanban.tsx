@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react"
@@ -11,6 +12,8 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { JobCardSmall } from './job-card-small';
 import { ApplicantCard } from "./applicant-card";
+import { boolean } from "zod";
+import { JobCardSmallMobile } from "./job-card-small-mobile";
 
 
 function Column({ id, title, children, items, isLoading, type }: { id: string, title: string, children: React.ReactNode, items: any[], isLoading: boolean, type: 'jobs' | 'applicants' }) {
@@ -72,6 +75,7 @@ function Board({ children }: { children: React.ReactNode }) {
 const JobCard = ({
     job,
     isDraggable,
+    isMobile,
 }: {
     job: any;
     isDraggable: boolean;
@@ -79,6 +83,7 @@ const JobCard = ({
     onToggleFavourite: (jobId: string, isCurrentlyFavourite: boolean) => Promise<void>;
     hasApplied: boolean;
     isRecruiter: boolean;
+    isMobile: boolean;
 }) => {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: job.id,
@@ -95,13 +100,22 @@ const JobCard = ({
     return (
         <div ref={setNodeRef} style={style} {...attributes} className="mb-2">
              <div {...(isDraggable ? listeners : {})} className={cn(isDragging ? "cursor-grabbing" : "cursor-grab")}>
-                <JobCardSmall
-                    job={job}
-                    isFavourite={false}
-                    onToggleFavourite={async () => {}}
-                    hasApplied={false}
-                    isRecruiter={true}
-                />
+                {
+                    isMobile
+                    ? <JobCardSmallMobile
+                        job={job}
+                        isFavourite={false}
+                        onToggleFavourite={async () => {}}
+                        hasApplied={false}
+                        isRecruiter={true}
+                    /> : <JobCardSmall
+                        job={job}
+                        isFavourite={false}
+                        onToggleFavourite={async () => {}}
+                        hasApplied={false}
+                        isRecruiter={true}
+                    />
+                }
             </div>
         </div>
     );
