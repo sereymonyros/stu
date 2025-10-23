@@ -3,7 +3,7 @@
 'use client';
 
 import { useMemo, useState, useEffect, Suspense, useCallback } from 'react';
-import { useDoc, useFirestore, useUser } from '@/firebase';
+import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where, getDocs, getCountFromServer, limit, startAfter, QueryDocumentSnapshot, DocumentData, orderBy } from 'firebase/firestore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -715,3 +715,5 @@ export default function JobsPage() {
         </Suspense>
     )
 }
+
+    
