@@ -85,6 +85,9 @@ export default function DashboardPage() {
     const [isLoadingPosted, setIsLoadingPosted] = useState(true);
     const [isLoadingApplied, setIsLoadingApplied] = useState(true);
     const [isLoadingFavourites, setIsLoadingFavourites] = useState(true);
+    const [isLoadingMorePosted, setIsLoadingMorePosted] = useState(false);
+    const [isLoadingMoreApplied, setIsLoadingMoreApplied] = useState(false);
+    const [isLoadingMoreFavourites, setIsLoadingMoreFavourites] = useState(false);
 
     const [lastPosted, setLastPosted] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
     const [lastAppliedRef, setLastAppliedRef] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -114,7 +117,11 @@ export default function DashboardPage() {
             setIsLoadingPosted(false);
             return;
         }
-        if (!loadMore) setIsLoadingPosted(true);
+        if (loadMore) {
+          setIsLoadingMorePosted(true);
+        } else {
+          setIsLoadingPosted(true);
+        }
 
         let q = query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid), limit(JOBS_PER_PAGE));
         if (loadMore && lastPosted) {
@@ -125,7 +132,7 @@ export default function DashboardPage() {
         
         const newJobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // Sort client-side
+        // Sort client-side to avoid needing a composite index
         const sortedJobs = newJobs.sort((a, b) => {
             const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
             const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
@@ -136,6 +143,7 @@ export default function DashboardPage() {
         setHasMorePosted(newJobs.length === JOBS_PER_PAGE);
         setPostedJobs(prev => loadMore ? [...prev, ...sortedJobs] : sortedJobs);
         setIsLoadingPosted(false);
+        setIsLoadingMorePosted(false);
     }, [user, isRecruiter, firestore, lastPosted]);
 
     const fetchAppliedJobs = useCallback(async (loadMore = false) => {
@@ -143,7 +151,11 @@ export default function DashboardPage() {
             setIsLoadingApplied(false);
             return;
         }
-        if (!loadMore) setIsLoadingApplied(true);
+        if (loadMore) {
+          setIsLoadingMoreApplied(true);
+        } else {
+          setIsLoadingApplied(true);
+        }
 
         // 1. Fetch references from the user's subcollection
         let refQuery = query(collection(firestore, `users/${user.uid}/applications`), orderBy('appliedAt', 'desc'), limit(JOBS_PER_PAGE));
@@ -160,6 +172,7 @@ export default function DashboardPage() {
 
         if (jobIds.length === 0) {
             setIsLoadingApplied(false);
+            setIsLoadingMoreApplied(false);
             if (!loadMore) setAppliedJobs([]);
             return;
         }
@@ -174,6 +187,7 @@ export default function DashboardPage() {
 
         setAppliedJobs(prev => loadMore ? [...prev, ...newJobs] : newJobs);
         setIsLoadingApplied(false);
+        setIsLoadingMoreApplied(false);
     }, [user, isStandardUser, firestore, lastAppliedRef]);
     
     const fetchFavouriteJobs = useCallback(async (loadMore = false) => {
@@ -181,7 +195,11 @@ export default function DashboardPage() {
             setIsLoadingFavourites(false);
             return;
         }
-        if (!loadMore) setIsLoadingFavourites(true);
+        if (loadMore) {
+          setIsLoadingMoreFavourites(true);
+        } else {
+          setIsLoadingFavourites(true);
+        }
 
         let refQuery = query(collection(firestore, `users/${user.uid}/favouriteJobs`), orderBy('favouritedAt', 'desc'), limit(JOBS_PER_PAGE));
         if (loadMore && lastFavouriteRef) {
@@ -197,6 +215,7 @@ export default function DashboardPage() {
 
         if (jobIds.length === 0) {
             setIsLoadingFavourites(false);
+            setIsLoadingMoreFavourites(false);
             if (!loadMore) setFavouriteJobs([]);
             return;
         }
@@ -209,6 +228,7 @@ export default function DashboardPage() {
 
         setFavouriteJobs(prev => loadMore ? [...prev, ...newJobs] : newJobs);
         setIsLoadingFavourites(false);
+        setIsLoadingMoreFavourites(false);
     }, [user, isStandardUser, firestore, lastFavouriteRef]);
 
     // Initial data fetch
@@ -329,7 +349,7 @@ export default function DashboardPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {postedJobs.map(job => <JobCardBig key={job.id} job={job} isFavourite={false} onToggleFavourite={async () => {}} hasApplied={false} isRecruiter={true} />)}
                                 </div>
-                                {hasMorePosted && <div className="flex justify-center"><LoadMoreButton onClick={() => fetchPostedJobs(true)} isLoading={isLoadingPosted} /></div>}
+                                {hasMorePosted && <div className="flex justify-center"><LoadMoreButton onClick={() => fetchPostedJobs(true)} isLoading={isLoadingMorePosted} /></div>}
                             </div>
                         ) : (
                              <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
@@ -354,7 +374,7 @@ export default function DashboardPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {appliedJobs.map(job => <JobCardBig key={job.id} job={job} isFavourite={favouriteJobIdsSet.has(job.id)} onToggleFavourite={handleToggleFavourite} hasApplied={true} isRecruiter={false} />)}
                                 </div>
-                                {hasMoreApplied && <div className="flex justify-center"><LoadMoreButton onClick={() => fetchAppliedJobs(true)} isLoading={isLoadingApplied} /></div>}
+                                {hasMoreApplied && <div className="flex justify-center"><LoadMoreButton onClick={() => fetchAppliedJobs(true)} isLoading={isLoadingMoreApplied} /></div>}
                             </div>
                         ) : (
                              <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
@@ -380,7 +400,7 @@ export default function DashboardPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                         {favouriteJobs.map(job => <JobCardBig key={job.id} job={job} isFavourite={true} onToggleFavourite={handleToggleFavourite} hasApplied={false} isRecruiter={false} />)}
                                     </div>
-                                    {hasMoreFavourites && <div className="flex justify-center"><LoadMoreButton onClick={() => fetchFavouriteJobs(true)} isLoading={isLoadingFavourites} /></div>}
+                                    {hasMoreFavourites && <div className="flex justify-center"><LoadMoreButton onClick={() => fetchFavouriteJobs(true)} isLoading={isLoadingMoreFavourites} /></div>}
                                 </div>
                             ) : null}
                         </section>
