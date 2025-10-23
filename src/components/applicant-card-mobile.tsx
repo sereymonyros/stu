@@ -202,37 +202,41 @@ export function ApplicantCardMobile({ applicant, jobDetails }: { applicant: any,
         <div ref={setNodeRef} style={style} {...attributes}>
             <Card className={cn("mb-2 bg-card hover:bg-muted/50 rounded-3xl", isDragging ? "cursor-grabbing" : "cursor-grab")}>
                 <div className="p-3" {...listeners}>
-                    <div className="flex items-start justify-between relative">
-                        <p className="font-semibold text-sm leading-tight select-none">{applicant.applicantName}</p>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 absolute top-1 right-1" asChild>
-                            <a href={applicant.resumeUrl} target="_blank" rel="noopener noreferrer">
-                                <FileText className="h-2 w-2" />
-                            </a>
-                        </Button>
+                    <div className="flex items-center justify-between">
+                        <p className="font-semibold text-sm leading-tight select-none truncate">{applicant.applicantName}</p>
+                        <div className="flex items-center">
+                             {applicant.resumeUrl && (
+                                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                    <a href={applicant.resumeUrl} target="_blank" rel="noopener noreferrer">
+                                        <FileText className="h-4 w-4" />
+                                    </a>
+                                </Button>
+                             )}
+                            <Dialog onOpenChange={(open) => { if (open) handleGetAIAnalysis() }}>
+                                <DialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        <Sparkles className="h-4 w-4 text-yellow-500" />
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl h-[70vh] flex flex-col rounded-3xl">
+                                    <DialogHeader>
+                                        <DialogTitle>AI Applicant Analysis</DialogTitle>
+                                        <DialogDescription>
+                                            This is an AI-generated analysis of the applicant's resume against the job description.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="py-4 overflow-y-auto flex-1">
+                                        <AIAnalysisDisplay 
+                                        analysis={analysis} 
+                                        error={analysisError} 
+                                        isLoading={isLoadingAnalysis}
+                                        onRetry={handleGetAIAnalysis}
+                                        />
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
                     </div>
-                     <Dialog onOpenChange={(open) => { if (open) handleGetAIAnalysis() }}>
-                        <DialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                                <Sparkles className="mr-2 h-3 w-3 text-yellow-500" />
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl h-[70vh] flex flex-col rounded-3xl">
-                            <DialogHeader>
-                                <DialogTitle>AI Applicant Analysis</DialogTitle>
-                                <DialogDescription>
-                                    This is an AI-generated analysis of the applicant's resume against the job description.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="py-4 overflow-y-auto flex-1">
-                                <AIAnalysisDisplay 
-                                  analysis={analysis} 
-                                  error={analysisError} 
-                                  isLoading={isLoadingAnalysis}
-                                  onRetry={handleGetAIAnalysis}
-                                />
-                            </div>
-                        </DialogContent>
-                    </Dialog>
                 </div>
             </Card>
         </div>
