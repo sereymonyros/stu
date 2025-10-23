@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import { ApplicantCounter } from './applicant-counter';
 
-export function JobCardSmall({
+export function JobCardSmallMobile({
     job,
     isFavourite,
     onToggleFavourite,
