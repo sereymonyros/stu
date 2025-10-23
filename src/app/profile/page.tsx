@@ -307,11 +307,7 @@ export default function ProfilePage() {
       <main className="flex-1 p-4 md:p-6 lg:p-8">
         <div className="max-w-2xl mx-auto relative">
           <Card className="rounded-3xl">
-             <CardHeader>
-                <CardTitle>My Profile</CardTitle>
-                <CardDescription>Update your public profile information.</CardDescription>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               {user && userProfile ? (
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -325,7 +321,7 @@ export default function ProfilePage() {
                                 <FormControl>
                                   <div className="w-full">
                                     <Label htmlFor="photo-upload" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
-                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <div className="flex flex-col items-center justify-center">
                                             <UploadCloud className="w-6 h-6 mb-1 text-muted-foreground" />
                                             <p className="mb-1 text-xs text-muted-foreground">
                                               <span className="font-semibold">Click to upload</span>
@@ -433,9 +429,6 @@ export default function ProfilePage() {
                     
                     {isSubmitting || uploadProgress !== null ? (
                       <div className="space-y-2 pt-2">
-                          <Button type="button" size="lg" disabled={true} className="w-[120px] rounded-3xl shadow-lg mx-auto flex">
-                              Saving...
-                          </Button>
                            {uploadProgress !== null && (
                               <div className="space-y-1">
                                   <Progress value={uploadProgress} />
