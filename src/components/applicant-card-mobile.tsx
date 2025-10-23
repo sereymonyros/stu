@@ -201,21 +201,21 @@ export function ApplicantCardMobile({ applicant, jobDetails }: { applicant: any,
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
             <Card className={cn("mb-2 bg-card hover:bg-muted/50 rounded-3xl", isDragging ? "cursor-grabbing" : "cursor-grab")}>
-                <div className="py-2 px-3" {...listeners}>
+                <div className="py-0 px-3" {...listeners}>
                     <div className="flex items-center justify-between">
-                        <p className="font-semibold text-sm leading-tight select-none truncate">{applicant.applicantName}</p>
+                        <p className="font-semibold text-base leading-tight select-none truncate">{applicant.applicantName}</p>
                         <div className="flex items-center">
                              {applicant.resumeUrl && (
-                                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
                                     <a href={applicant.resumeUrl} target="_blank" rel="noopener noreferrer">
-                                        <FileText className="h-4 w-4" />
+                                        <FileText className="h-3.5 w-3.5" />
                                     </a>
                                 </Button>
                              )}
                             <Dialog onOpenChange={(open) => { if (open) handleGetAIAnalysis() }}>
                                 <DialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <Sparkles className="h-4 w-4 text-yellow-500" />
+                                    <Button variant="ghost" size="icon" className="h-7 w-7">
+                                        <Sparkles className="h-3.5 w-3.5 text-yellow-500" />
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent className="max-w-2xl h-[70vh] flex flex-col rounded-3xl">
