@@ -177,10 +177,10 @@ export default function NewJobPage() {
 
                             <div className="grid grid-cols-2 gap-4">
                             <FormField control={form.control} name="salaryMin" render={({ field }) => (
-                                <FormItem><FormLabel>Minimum Salary (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50000" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Min Salary (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50000" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control} name="salaryMax" render={({ field }) => (
-                                <FormItem><FormLabel>Maximum Salary (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g., 70000" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Max Salary (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g., 70000" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                             </div>
 
