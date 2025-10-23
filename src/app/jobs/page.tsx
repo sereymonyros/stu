@@ -2,9 +2,9 @@
 
 'use client';
 
-import { useMemo, useState, useEffect, Suspense } from 'react';
+import { useMemo, useState, useEffect, Suspense, useCallback } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where, limit, startAfter, getDocs, orderBy, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -45,6 +45,9 @@ import { JobCardSmall } from '@/components/job-card-small';
 import { JobCardBigMobile } from '@/components/job-card-big-mobile';
 import { JobCardSmallMobile } from '@/components/job-card-small-mobile';
 import { ApplicantCounter } from '@/components/applicant-counter';
+import { LoadMoreButton } from '@/components/load-more-button';
+
+const JOBS_PER_PAGE = 8;
 
 
 function JobsPageContent() {
@@ -58,8 +61,12 @@ function JobsPageContent() {
     // --- View State ---
     const [viewMode, setViewMode] = useState<'list' | 'card' |'board'>('list');
     
-    // --- Data Fetching State ---
+    // --- Data Fetching and Pagination State ---
     const [jobs, setJobs] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+    const [hasMore, setHasMore] = useState(true);
 
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
@@ -69,8 +76,9 @@ function JobsPageContent() {
     const { data: userProfile } = useDoc(userProfileRef);
     const isRecruiter = userProfile?.userType === 'recruiter';
     
+    // This query is now just for filter options, not for displaying jobs
     const allJobsQuery = useMemo(() => query(collection(firestore, 'jobs')), [firestore]);
-    const { data: allJobsForFilters, isLoading: isLoadingJobs } = useCollection(allJobsQuery);
+    const { data: allJobsForFilters } = useCollection(allJobsQuery);
     
     const favouriteJobsQuery = useMemo(() => (firestore && user && !isRecruiter) ? collection(firestore, `users/${user.uid}/favouriteJobs`) : null, [firestore, user, isRecruiter]);
     const { data: favouriteJobs } = useCollection(favouriteJobsQuery);
@@ -78,7 +86,7 @@ function JobsPageContent() {
     const applicationsQuery = useMemo(() => (firestore && user && !isRecruiter) ? query(collection(firestore, `users/${user.uid}/applications`)) : null, [firestore, user, isRecruiter]);
     const { data: applications } = useCollection(applicationsQuery);
 
-    const favouriteJobIds = useMemo(() => new Set(favouriteJobs?.map(fav => fav.jobId)), [favouriteJobs]);
+    const favouriteJobIds = useMemo(() => new Set(favouriteJobs?.map(fav => fav.id)), [favouriteJobs]);
     const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
     
     // --- Derived State for Filters ---
@@ -133,31 +141,88 @@ function JobsPageContent() {
 
     // This effect SYNCS the slider's range with the data from the server.
     useEffect(() => {
-        setSalaryRange([0, maxSalary]);
+        setSalaryRange(prev => [prev[0], maxSalary]);
     }, [maxSalary]);
     
-    // --- Toggle Handlers ---
-    const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
-        setter(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
-    };
-    
-    const clearAllFilters = () => {
-        setSearchQuery('');
-        setSelectedCompanies([]);
-        setSelectedLocations([]);
-        setSelectedJobTypes([]);
-        setShowFavoritesOnly(false);
-        setSalaryRange([0, maxSalary]);
-    };
+    // --- Data Fetching ---
+    const fetchJobs = useCallback(async (loadMore = false) => {
+        if (!firestore) return;
 
-    const hasActiveFilters = 
-      searchQuery !== '' ||
-      selectedCompanies.length > 0 ||
-      selectedLocations.length > 0 ||
-      selectedJobTypes.length > 0 ||
-      showFavoritesOnly ||
-      (salaryRange[0] > 0 || salaryRange[1] < maxSalary);
+        if (loadMore) {
+            setIsLoadingMore(true);
+        } else {
+            setIsLoading(true);
+            setJobs([]); // Reset jobs on a new filter application
+        }
+        
+        let q = query(collection(firestore, 'jobs'), orderBy('createdAt', 'desc'), limit(JOBS_PER_PAGE));
 
+        if (selectedCompanies.length > 0) {
+            q = query(q, where('companyName', 'in', selectedCompanies));
+        }
+        if (selectedLocations.length > 0) {
+            q = query(q, where('location', 'in', selectedLocations));
+        }
+        if (selectedJobTypes.length > 0) {
+            q = query(q, where('jobType', 'in', selectedJobTypes));
+        }
+        if (showFavoritesOnly && user) {
+            q = query(q, where('__name__', 'in', Array.from(favouriteJobIds)));
+        }
+
+        const [minSal, maxSal] = salaryRange;
+        if (minSal > 0) {
+            q = query(q, where('salaryMax', '>=', minSal));
+        }
+        if (maxSal < maxSalary) {
+             q = query(q, where('salaryMin', '<=', maxSal));
+        }
+        
+        if (loadMore && lastVisible) {
+            q = query(q, startAfter(lastVisible));
+        }
+
+        try {
+            const snapshot = await getDocs(q);
+            const newJobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            setLastVisible(snapshot.docs[snapshot.docs.length - 1] || null);
+            setHasMore(newJobs.length === JOBS_PER_PAGE);
+
+            // Client-side search query filtering
+            let finalJobs = newJobs;
+            if (searchQuery) {
+                const lowercasedQuery = searchQuery.toLowerCase();
+                finalJobs = newJobs.filter(job =>
+                    job.title?.toLowerCase().includes(lowercasedQuery) ||
+                    job.description?.toLowerCase().includes(lowercasedQuery)
+                );
+            }
+
+            setJobs(prevJobs => loadMore ? [...prevJobs, ...finalJobs] : finalJobs);
+            
+        } catch (err) {
+            console.error("Error fetching jobs:", err);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch jobs.'});
+        } finally {
+            setIsLoading(false);
+            setIsLoadingMore(false);
+        }
+
+    }, [
+        firestore, searchQuery, selectedCompanies, selectedLocations, 
+        selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, 
+        lastVisible, user, favouriteJobIds, toast
+    ]);
+
+    useEffect(() => {
+        fetchJobs();
+    }, [
+        fetchJobs, searchQuery, selectedCompanies, selectedLocations,
+        selectedJobTypes, showFavoritesOnly, salaryRange
+    ]);
+
+    // --- Handlers ---
     const handleToggleFavourite = async (jobId: string, isCurrentlyFavourite: boolean) => {
         if (!user || !firestore) {
             router.push('/login');
@@ -225,61 +290,6 @@ function JobsPageContent() {
         });
     };
     
-    // --- Client-side filtering & sorting ---
-    const filteredAndSortedJobs = useMemo(() => {
-        if (!allJobsForFilters) return [];
-        
-        let filtered = allJobsForFilters;
-        
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            filtered = filtered.filter(job => 
-                (job.title?.toLowerCase().includes(q) || false) || 
-                (job.description?.toLowerCase().includes(q) || false)
-            );
-        }
-        
-        if (selectedCompanies.length > 0) {
-            filtered = filtered.filter(job => selectedCompanies.includes(job.companyName));
-        }
-        if (selectedLocations.length > 0) {
-            filtered = filtered.filter(job => selectedLocations.includes(job.location));
-        }
-        if (selectedJobTypes.length > 0) {
-            filtered = filtered.filter(job => selectedJobTypes.includes(job.jobType));
-        }
-        if (showFavoritesOnly) {
-            filtered = filtered.filter(job => favouriteJobIds.has(job.id));
-        }
-        
-        const [filterMin, filterMax] = salaryRange;
-        if (filterMin > 0 || filterMax < maxSalary) {
-             filtered = filtered.filter(job => {
-                const jobMin = job.salaryMin ?? 0;
-                const jobMax = job.salaryMax ?? Infinity;
-                // This logic ensures that if a job has a salary range, it must overlap with the filter range.
-                return Math.max(jobMin, filterMin) <= Math.min(jobMax, filterMax);
-            });
-        }
-        
-        if (!user) return filtered;
-
-        return filtered.sort((a, b) => {
-            const aHasApplied = appliedJobIds.has(a.id);
-            const bHasApplied = appliedJobIds.has(b.id);
-            
-            if (aHasApplied === bHasApplied) {
-                const aIsFav = favouriteJobIds.has(a.id);
-                const bIsFav = favouriteJobIds.has(b.id);
-                if (aIsFav === bIsFav) {
-                    return 0; // Or sort by date if needed
-                }
-                return aIsFav ? -1 : 1;
-            }
-            return aHasApplied ? 1 : -1;
-        });
-    }, [allJobsForFilters, user, appliedJobIds, favouriteJobIds, searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary]);
-
     // --- Kanban Board Logic ---
     useEffect(() => {
         if (allJobsForFilters && user && isRecruiter) {
@@ -367,11 +377,19 @@ function JobsPageContent() {
     
     const KANBAN_STAGES: ('Available' | 'Closed')[] = ["Available", "Closed"];
     
-    if (isLoadingJobs) {
+    if (isLoading && jobs.length === 0) {
         return <JobsLoading count={8} viewMode={viewMode} />;
     }
     
-    if (!allJobsForFilters && !isLoadingJobs) {
+    const hasActiveFilters = 
+      searchQuery !== '' ||
+      selectedCompanies.length > 0 ||
+      selectedLocations.length > 0 ||
+      selectedJobTypes.length > 0 ||
+      showFavoritesOnly ||
+      (salaryRange[0] > 0 || salaryRange[1] < maxSalary);
+    
+    if (jobs.length === 0 && !isLoading && !hasActiveFilters && !allJobsForFilters) {
         return (
             <main className="flex-1 p-4 md:p-6 lg:p-8">
                  <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
@@ -387,9 +405,7 @@ function JobsPageContent() {
     }
 
     const renderJobs = () => {
-        const jobsToRender = filteredAndSortedJobs;
-
-        if (jobsToRender.length === 0 && !isLoadingJobs) {
+        if (jobs.length === 0 && !isLoading) {
             return (
                  <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
                     <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -406,7 +422,7 @@ function JobsPageContent() {
         if (viewMode === 'list') {
             return (
                 <div className="grid grid-cols-1 gap-4">
-                    {jobsToRender.map((job) => (
+                    {jobs.map((job) => (
                         isMobile ? (
                             <JobCardSmallMobile
                                 key={job.id} 
@@ -432,7 +448,7 @@ function JobsPageContent() {
         }
         return (
              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
-                {jobsToRender.map((job) => (
+                {jobs.map((job) => (
                      isMobile ? (
                         <JobCardBigMobile
                             key={job.id} 
@@ -490,7 +506,7 @@ function JobsPageContent() {
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
                                     {hasActiveFilters && (
-                                        <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground" onClick={clearAllFilters}>
+                                        <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground" onClick={() => { setSearchQuery('')}}>
                                             <X className="h-4 w-4" />
                                         </Button>
                                     )}
@@ -512,25 +528,25 @@ function JobsPageContent() {
 
                             <CollapsibleContent>
                                 <Card className="p-4 rounded-3xl mt-2">
-                                    <div className="w-9/10 mx-auto">
+                                    <div className="w-full mx-auto">
                                         <div className="grid gap-4">
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                 <MultiSelect
                                                     options={companyOptions}
                                                     selectedValues={selectedCompanies}
-                                                    onValueChange={(val) => toggleFilter(setSelectedCompanies, val)}
+                                                    onValueChange={(val) => setSelectedCompanies(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val])}
                                                     placeholder="Filter companies..."
                                                 />
                                                 <MultiSelect
                                                     options={locationOptions}
                                                     selectedValues={selectedLocations}
-                                                    onValueChange={(val) => toggleFilter(setSelectedLocations, val)}
+                                                    onValueChange={(val) => setSelectedLocations(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val])}
                                                     placeholder="Filter locations..."
                                                 />
                                                 <MultiSelect
                                                     options={jobTypeOptions}
                                                     selectedValues={selectedJobTypes}
-                                                    onValueChange={(val) => toggleFilter(setSelectedJobTypes, val)}
+                                                    onValueChange={(val) => setSelectedJobTypes(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val])}
                                                     placeholder="Filter job types..."
                                                 />
                                             </div>
@@ -618,7 +634,17 @@ function JobsPageContent() {
                      )}
                 </div>
                 
-                {viewMode !== 'board' && renderJobs()}
+                {viewMode !== 'board' && (
+                    <div className="space-y-6">
+                        {renderJobs()}
+                        {hasMore && !isLoading && (
+                            <div className="flex justify-center">
+                                <LoadMoreButton onClick={() => fetchJobs(true)} isLoading={isLoadingMore} />
+                            </div>
+                        )}
+                        {isLoadingMore && <div className="text-center text-muted-foreground">Loading...</div>}
+                    </div>
+                )}
 
                 {viewMode === 'board' && isRecruiter && (
                     <DndContext sensors={sensors} onDragStart={handleJobDragStart} onDragEnd={handleJobDragEnd}>
@@ -665,7 +691,3 @@ export default function JobsPage() {
         </Suspense>
     )
 }
-
-    
-
-    
