@@ -307,13 +307,10 @@ export default function ProfilePage() {
       <main className="flex-1 p-4 md:p-6 lg:p-8">
         <div className="max-w-2xl mx-auto relative">
           <Card className="rounded-3xl">
-            <CardHeader>
-              <CardTitle>Profile</CardTitle>
-            </CardHeader>
             <CardContent>
               {user && userProfile ? (
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-16">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-16 pt-4">
                     <div className="flex flex-col sm:flex-row items-center gap-6">
                       <Avatar className="h-24 w-24">
                           <AvatarImage src={currentPhoto ?? ''} />
@@ -437,18 +434,18 @@ export default function ProfilePage() {
                           <p className="text-sm text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
                       </div>
                     )}
-                    <TooltipProvider>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button type="submit" size="icon" disabled={isSubmitting} className="absolute bottom-6 right-6 h-14 w-14 rounded-full shadow-lg">
-                                  <Save className="h-6 w-6" />
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                              <p>Save Changes</p>
-                          </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <div className="flex justify-center">
+                        <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button type="submit" size="bigIcon" disabled={isSubmitting} className="h-16 w-16 rounded-3xl shadow-lg">Save</Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Save Changes</p>
+                            </TooltipContent>
+                        </Tooltip>
+                        </TooltipProvider>
+                    </div>
 
                   </form>
                 </Form>
