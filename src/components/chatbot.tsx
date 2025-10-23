@@ -197,11 +197,21 @@ export function Chatbot() {
 
   if (isMobile) {
       return (
-        <Sheet open={isOpen} onOpenChange={setOpen} modal={false}>
+        <Sheet open={isOpen} onOpenChange={setOpen} modal={true}>
             <SheetContent side="bottom" className="h-[80svh] flex flex-col p-0 rounded-t-3xl">
+                 <SheetHeader className="sr-only">
+                    <SheetTitle>AI Helper</SheetTitle>
+                    <SheetDescription>
+                        A chatbot to help you find jobs or answer questions about the app.
+                    </SheetDescription>
+                </SheetHeader>
                 <div className="flex-1 min-h-0">
                     {ChatWindow}
                 </div>
+                 <button onClick={() => setOpen(false)} className="absolute top-2 right-2 rounded-full p-2 text-muted-foreground hover:bg-muted">
+                    <X className="h-5 w-5" />
+                    <span className="sr-only">Close</span>
+                </button>
             </SheetContent>
         </Sheet>
       )
@@ -224,3 +234,5 @@ export function Chatbot() {
       </Dialog>
   );
 }
+
+    
