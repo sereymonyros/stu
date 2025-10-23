@@ -212,7 +212,7 @@ export function ApplicantCardMobile({ applicant, jobDetails }: { applicant: any,
                     </div>
                      <Dialog onOpenChange={(open) => { if (open) handleGetAIAnalysis() }}>
                         <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">
+                            <Button variant="ghost" size="sm">
                                 <Sparkles className="mr-2 h-3 w-3 text-yellow-500" />
                             </Button>
                         </DialogTrigger>
