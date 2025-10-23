@@ -116,17 +116,25 @@ export default function DashboardPage() {
         }
         if (!loadMore) setIsLoadingPosted(true);
 
-        let q = query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid), orderBy('createdAt', 'desc'), limit(JOBS_PER_PAGE));
+        let q = query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid), limit(JOBS_PER_PAGE));
         if (loadMore && lastPosted) {
             q = query(q, startAfter(lastPosted));
         }
 
         const snapshot = await getDocs(q);
+        
         const newJobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Sort client-side
+        const sortedJobs = newJobs.sort((a, b) => {
+            const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+            const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+            return dateB - dateA;
+        });
 
         setLastPosted(snapshot.docs[snapshot.docs.length - 1] || null);
         setHasMorePosted(newJobs.length === JOBS_PER_PAGE);
-        setPostedJobs(prev => loadMore ? [...prev, ...newJobs] : newJobs);
+        setPostedJobs(prev => loadMore ? [...prev, ...sortedJobs] : sortedJobs);
         setIsLoadingPosted(false);
     }, [user, isRecruiter, firestore, lastPosted]);
 
