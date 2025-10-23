@@ -195,7 +195,6 @@ export default function FeedbackPage() {
                   name="comment"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Comments</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Tell us what you liked or what could be better..."
