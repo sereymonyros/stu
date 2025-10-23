@@ -2,9 +2,9 @@
 
 'use client';
 
-import { useMemo, useState, useEffect, Suspense, useCallback } from 'react';
+import { useMemo, useState, useEffect, Suspense } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where, getDocs, getCountFromServer, limit, startAfter, QueryDocumentSnapshot, DocumentData, orderBy } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -45,10 +45,7 @@ import { JobCardSmall } from '@/components/job-card-small';
 import { JobCardBigMobile } from '@/components/job-card-big-mobile';
 import { JobCardSmallMobile } from '@/components/job-card-small-mobile';
 import { ApplicantCounter } from '@/components/applicant-counter';
-import { LoadMoreButton } from '@/components/load-more-button';
 
-
-const JOBS_PER_PAGE = 12;
 
 function JobsPageContent() {
     const firestore = useFirestore();
@@ -63,11 +60,7 @@ function JobsPageContent() {
     
     // --- Data Fetching State ---
     const [jobs, setJobs] = useState<any[]>([]);
-    const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-    const [hasMore, setHasMore] = useState(true);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isLoadingMore, setIsLoadingMore] = useState(false);
-    
+
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
 
@@ -76,9 +69,8 @@ function JobsPageContent() {
     const { data: userProfile } = useDoc(userProfileRef);
     const isRecruiter = userProfile?.userType === 'recruiter';
     
-    // This query is now just for filter options, not for displaying jobs
     const allJobsQuery = useMemo(() => query(collection(firestore, 'jobs')), [firestore]);
-    const { data: allJobsForFilters } = useCollection(allJobsQuery);
+    const { data: allJobsForFilters, isLoading: isLoadingJobs } = useCollection(allJobsQuery);
     
     const favouriteJobsQuery = useMemo(() => (firestore && user && !isRecruiter) ? collection(firestore, `users/${user.uid}/favouriteJobs`) : null, [firestore, user, isRecruiter]);
     const { data: favouriteJobs } = useCollection(favouriteJobsQuery);
@@ -119,7 +111,7 @@ function JobsPageContent() {
     const [selectedLocations, setSelectedLocations] = useState<string[]>(searchParams.getAll('location'));
     const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>(searchParams.getAll('jobType'));
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(searchParams.get('favorites') === 'true');
-    const [salaryRange, setSalaryRange] = useState<[number, number]>([0, maxSalary]);
+    const [salaryRange, setSalaryRange] = useState<[number, number]>([0, 150000]);
     
      // --- Dialog State ---
     const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
@@ -138,69 +130,12 @@ function JobsPageContent() {
         selectedJobTypes.forEach(t => params.append('jobType', t));
         router.replace(`/jobs?${params.toString()}`, { scroll: false });
     }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, router]);
-    
-    // --- Data Fetching Logic ---
-    const fetchJobs = useCallback(async (loadMore = false) => {
-        if (!firestore) return;
 
-        if (loadMore) {
-            setIsLoadingMore(true);
-        } else {
-            setIsLoading(true);
-            setJobs([]); // Clear jobs on new filter/search
-        }
-
-        let q = query(collection(firestore, "jobs"), orderBy("createdAt", "desc"));
-
-        // Apply filters
-        if (selectedCompanies.length > 0) q = query(q, where("companyName", "in", selectedCompanies));
-        if (selectedLocations.length > 0) q = query(q, where("location", "in", selectedLocations));
-        if (selectedJobTypes.length > 0) q = query(q, where("jobType", "in", selectedJobTypes));
-        
-        // Firestore doesn't support inequality filters on different fields, so salary and search query are handled client-side for now
-        // This is a trade-off: for a larger app, you'd use a search service like Algolia.
-
-        if (loadMore && lastVisible) {
-            q = query(q, startAfter(lastVisible));
-        }
-        
-        q = query(q, limit(JOBS_PER_PAGE));
-
-        try {
-            const documentSnapshots = await getDocs(q);
-            const newJobs = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-            const lastDoc = documentSnapshots.docs[documentSnapshots.docs.length - 1];
-            setLastVisible(lastDoc || null);
-            setHasMore(newJobs.length === JOBS_PER_PAGE);
-            
-            setJobs(prevJobs => loadMore ? [...prevJobs, ...newJobs] : newJobs);
-
-        } catch (error) {
-            console.error("Error fetching jobs:", error);
-            toast({ variant: "destructive", title: "Error", description: "Could not fetch jobs." });
-        } finally {
-            setIsLoading(false);
-            setIsLoadingMore(false);
-        }
-    }, [firestore, selectedCompanies, selectedLocations, selectedJobTypes, lastVisible]);
-    
-    // Fetch jobs when filters change
+    // This effect SYNCS the slider's range with the data from the server.
     useEffect(() => {
-        setLastVisible(null); // Reset pagination on filter change
-        fetchJobs(false);
-    }, [selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly]);
-
-    // Debounced search query
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setLastVisible(null);
-            fetchJobs(false);
-        }, 500);
-        return () => clearTimeout(handler);
-    }, [searchQuery]);
-
-
+        setSalaryRange([0, maxSalary]);
+    }, [maxSalary]);
+    
     // --- Toggle Handlers ---
     const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
         setter(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
@@ -290,17 +225,29 @@ function JobsPageContent() {
         });
     };
     
-    // This client-side filtering is now only for search query, salary, and favorites
+    // --- Client-side filtering & sorting ---
     const filteredAndSortedJobs = useMemo(() => {
-        let filtered = jobs;
-
+        if (!allJobsForFilters) return [];
+        
+        let filtered = allJobsForFilters;
+        
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
             filtered = filtered.filter(job => 
-                (job.title?.toLowerCase() || '').includes(q)
+                (job.title?.toLowerCase().includes(q) || false) || 
+                (job.description?.toLowerCase().includes(q) || false)
             );
         }
         
+        if (selectedCompanies.length > 0) {
+            filtered = filtered.filter(job => selectedCompanies.includes(job.companyName));
+        }
+        if (selectedLocations.length > 0) {
+            filtered = filtered.filter(job => selectedLocations.includes(job.location));
+        }
+        if (selectedJobTypes.length > 0) {
+            filtered = filtered.filter(job => selectedJobTypes.includes(job.jobType));
+        }
         if (showFavoritesOnly) {
             filtered = filtered.filter(job => favouriteJobIds.has(job.id));
         }
@@ -310,6 +257,7 @@ function JobsPageContent() {
              filtered = filtered.filter(job => {
                 const jobMin = job.salaryMin ?? 0;
                 const jobMax = job.salaryMax ?? Infinity;
+                // This logic ensures that if a job has a salary range, it must overlap with the filter range.
                 return Math.max(jobMin, filterMin) <= Math.min(jobMax, filterMax);
             });
         }
@@ -321,14 +269,16 @@ function JobsPageContent() {
             const bHasApplied = appliedJobIds.has(b.id);
             
             if (aHasApplied === bHasApplied) {
-                 // Sort by date if application status is the same
-                const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
-                const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
-                return dateB - dateA;
+                const aIsFav = favouriteJobIds.has(a.id);
+                const bIsFav = favouriteJobIds.has(b.id);
+                if (aIsFav === bIsFav) {
+                    return 0; // Or sort by date if needed
+                }
+                return aIsFav ? -1 : 1;
             }
             return aHasApplied ? 1 : -1;
         });
-    }, [jobs, user, appliedJobIds, searchQuery, showFavoritesOnly, favouriteJobIds, salaryRange, maxSalary]);
+    }, [allJobsForFilters, user, appliedJobIds, favouriteJobIds, searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary]);
 
     // --- Kanban Board Logic ---
     useEffect(() => {
@@ -417,11 +367,11 @@ function JobsPageContent() {
     
     const KANBAN_STAGES: ('Available' | 'Closed')[] = ["Available", "Closed"];
     
-    if (isLoading && jobs.length === 0) {
-        return <JobsLoading count={JOBS_PER_PAGE} viewMode={viewMode} />;
+    if (isLoadingJobs) {
+        return <JobsLoading count={8} viewMode={viewMode} />;
     }
     
-    if (!allJobsForFilters && !isLoading) {
+    if (!allJobsForFilters && !isLoadingJobs) {
         return (
             <main className="flex-1 p-4 md:p-6 lg:p-8">
                  <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
@@ -430,6 +380,7 @@ function JobsPageContent() {
                         <h2 className="text-2xl font-semibold tracking-tight">No jobs posted yet</h2>
                         <p className="text-muted-foreground mt-2">Check back soon for new opportunities!</p>
                     </div>
+                     {isRecruiter && <Button asChild className="mt-4"><Link href="/jobs/new">Post a Job</Link></Button>}
                 </div>
             </main>
         )
@@ -438,7 +389,7 @@ function JobsPageContent() {
     const renderJobs = () => {
         const jobsToRender = filteredAndSortedJobs;
 
-        if (jobsToRender.length === 0 && !isLoading) {
+        if (jobsToRender.length === 0 && !isLoadingJobs) {
             return (
                  <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
                     <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -452,9 +403,8 @@ function JobsPageContent() {
             )
         }
         
-        let content;
         if (viewMode === 'list') {
-            content = (
+            return (
                 <div className="grid grid-cols-1 gap-4">
                     {jobsToRender.map((job) => (
                         isMobile ? (
@@ -479,42 +429,30 @@ function JobsPageContent() {
                     ))}
                 </div>
             )
-        } else {
-            content = (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
-                    {jobsToRender.map((job) => (
-                         isMobile ? (
-                            <JobCardBigMobile
-                                key={job.id} 
-                                job={job}
-                                isFavourite={favouriteJobIds.has(job.id)}
-                                onToggleFavourite={handleToggleFavourite}
-                                hasApplied={appliedJobIds.has(job.id)}
-                                isRecruiter={isRecruiter ?? false}
-                            />
-                         ) : (
-                            <JobCardBig 
-                                key={job.id} 
-                                job={job}
-                                isFavourite={favouriteJobIds.has(job.id)}
-                                onToggleFavourite={handleToggleFavourite}
-                                hasApplied={appliedJobIds.has(job.id)}
-                                isRecruiter={isRecruiter ?? false}
-                            />
-                         )
-                    ))}
-                </div>
-            )
         }
-        
         return (
-            <div className="space-y-6">
-                {content}
-                {hasMore && (
-                    <div className="flex justify-center pt-4">
-                        <LoadMoreButton onClick={() => fetchJobs(true)} isLoading={isLoadingMore} />
-                    </div>
-                )}
+             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
+                {jobsToRender.map((job) => (
+                     isMobile ? (
+                        <JobCardBigMobile
+                            key={job.id} 
+                            job={job}
+                            isFavourite={favouriteJobIds.has(job.id)}
+                            onToggleFavourite={handleToggleFavourite}
+                            hasApplied={appliedJobIds.has(job.id)}
+                            isRecruiter={isRecruiter ?? false}
+                        />
+                     ) : (
+                        <JobCardBig 
+                            key={job.id} 
+                            job={job}
+                            isFavourite={favouriteJobIds.has(job.id)}
+                            onToggleFavourite={handleToggleFavourite}
+                            hasApplied={appliedJobIds.has(job.id)}
+                            isRecruiter={isRecruiter ?? false}
+                        />
+                     )
+                ))}
             </div>
         )
     }
@@ -524,6 +462,18 @@ function JobsPageContent() {
             <main className="flex-1 p-4 lg:p-8">
                  <div className="flex items-center justify-between mb-6">
                     <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
+                     {isRecruiter && (
+                         <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button asChild variant="default" size="sm" className="flex items-center gap-2">
+                                        <Link href="/jobs/new"><Plus className="h-4 w-4" /> New Job</Link>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Post a New Job</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
                 </div>
 
                 <div className="mb-6 space-y-4">
@@ -534,7 +484,7 @@ function JobsPageContent() {
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
                                         type="search"
-                                        placeholder="Search by title..."
+                                        placeholder="Search by title, description..."
                                         className="pl-10 h-10 w-full"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -715,5 +665,7 @@ export default function JobsPage() {
         </Suspense>
     )
 }
+
+    
 
     
