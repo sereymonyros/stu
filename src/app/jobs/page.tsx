@@ -503,8 +503,8 @@ function JobsPageContent() {
                                 </CollapsibleTrigger>
                                 <div>
                                     <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}}>
-                                        <ToggleGroupItem value="list" aria-label="List view"><List /></ToggleGroupItem>
-                                        <ToggleGroupItem value="card" aria-label="Card view"><LayoutGrid /></ToggleGroupItem>
+                                        <ToggleGroupItem value="list" aria-label="List view" className="hidden md:inline-flex"><List /></ToggleGroupItem>
+                                        <ToggleGroupItem value="card" aria-label="Card view" className="hidden md:inline-flex"><LayoutGrid /></ToggleGroupItem>
                                         {isRecruiter && <ToggleGroupItem value="board" aria-label="Board view"><KanbanSquare /></ToggleGroupItem>}
                                     </ToggleGroup>
                                 </div>
