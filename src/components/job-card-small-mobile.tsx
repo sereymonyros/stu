@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -29,6 +28,20 @@ export function JobCardSmallMobile({
     const { user } = useUser();
     const router = useRouter();
     const isOwner = user && user.uid === job.recruiterId;
+
+    const salaryDisplay = useMemo(() => {
+        if (job.salaryMin && job.salaryMax) {
+            return `$${job.salaryMin.toLocaleString()} - $${job.salaryMax.toLocaleString()}`;
+        }
+        if (job.salaryMin) {
+            return `From $${job.salaryMin.toLocaleString()}`;
+        }
+        if (job.salaryMax) {
+            return `Up to $${job.salaryMax.toLocaleString()}`;
+        }
+        return null;
+    }, [job.salaryMin, job.salaryMax]);
+
 
     const handleFavouriteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -61,6 +74,8 @@ export function JobCardSmallMobile({
                             </span>
                         </p>
                         <div className="flex items-center flex-wrap text-xs text-muted-foreground gap-x-3 gap-y-1 min-w-0 mt-1">
+                            <div className="flex items-center gap-1.5 line-clamp-1 hover:text-primary"><MapPin className="h-3 w-3 flex-shrink-0" /> <span className="truncate">{job.location}</span></div>
+                            {salaryDisplay && <div className="flex items-center gap-1.5 hover:text-primary"><DollarSign className="h-3 w-3" /> {salaryDisplay}</div>}
                             <div className="flex items-center gap-1.5">
                                 <Badge variant="secondary" className="px-1.5 py-0.5 text-[10px]">{job.jobType}</Badge>
                                 <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize px-1.5 py-0.5 text-[10px]">{job.status}</Badge>

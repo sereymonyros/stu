@@ -610,7 +610,7 @@ function JobsPageContent() {
                      {isRecruiter && viewMode === 'board' && (
                         <div className="flex justify-end">
                              <ToggleGroup type="single" value={viewMode} onValueChange={(value) => { if(value) setViewMode(value as any)}}>
-                                <ToggleGroupItem value="list" aria-label="List view" className="hidden md:inline-flex"><List /></ToggleGroupItem>
+                                <ToggleGroupItem value="list" aria-label="List view" className="md:inline-flex"><List /></ToggleGroupItem>
                                 <ToggleGroupItem value="card" aria-label="Card view" className="hidden md:inline-flex"><LayoutGrid /></ToggleGroupItem>
                                 <ToggleGroupItem value="board" aria-label="Board view"><KanbanSquare /></ToggleGroupItem>
                             </ToggleGroup>
