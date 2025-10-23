@@ -86,7 +86,7 @@ export function BottomNavbar() {
     
     return (
         <div className={cn(
-            "fixed bottom-4 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 flex justify-center z-50 transition-opacity duration-1000",
+            "fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 flex justify-center z-50 transition-opacity duration-1000",
             isScrolling ? "opacity-30" : "opacity-100",
             "pointer-events-none"
         )}>

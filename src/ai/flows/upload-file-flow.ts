@@ -57,12 +57,11 @@ const uploadFileFlow = ai.defineFlow(
         metadata: {
           contentType: mimeType,
         },
+        public: true, // Make the file public upon upload
       });
 
-      // Make the file public to get a downloadable URL
-      await file.makePublic();
-
-      const downloadUrl = file.publicUrl();
+      // The publicUrl format is consistent and can be constructed directly.
+      const downloadUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
       
       return { downloadUrl };
     } catch (e: any) {

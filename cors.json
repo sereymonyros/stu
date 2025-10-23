@@ -8,7 +8,7 @@
         "https://*.cloudworkstations.dev"
       ],
       "method": ["GET", "HEAD", "PUT", "POST", "DELETE", "PATCH"],
-      "responseHeader": ["Content-Type", "Firebase-Storage-Resumable-Upload", "x-goog-resumable"],
+      "responseHeader": ["Content-Type"],
       "maxAgeSeconds": 3600
     }
 ]
