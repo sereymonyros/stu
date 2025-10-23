@@ -231,7 +231,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
     return (
         <div className="flex flex-col h-screen">
-             <div className="p-4 md:p-6 lg:p-8">
+             <div className="px-4 md:px-6 lg:px-8 pt-4">
                  <div className="mb-6">
                     <div className="mb-4">
                         <BackButton />
@@ -254,9 +254,9 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                     )}
                 </div>
             </div>
-             <div className="flex-1 px-4 md:px-6 lg:px-8 pb-4 flex flex-col min-h-0">
+             <div className="flex-1 flex flex-col min-h-0">
                 <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                    <ScrollArea className="w-full h-full" type="auto">
+                    <ScrollArea className="w-full h-full px-4 md:px-6 lg:px-8 pb-4" type="auto">
                         <Board>
                             {KANBAN_STAGES.map(stage => {
                                 const stageApplicants = applicantsByStatus[stage] || [];
