@@ -239,10 +239,9 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
                      {job ? (
                         <div>
                             <div className="flex items-center gap-4">
-                                <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2"><Briefcase className="h-6 w-6 md:h-7 md:w-7" /> {job.title}</h1>
+                                <h3 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">{job.title}</h3>
                                 {job.status && <Badge variant={job.status === 'Sold' ? 'destructive' : 'default'} className="capitalize text-sm md:text-base">{job.status}</Badge>}
                             </div>
-                            <p className="text-muted-foreground text-sm md:text-base">{job.companyName} - {job.location}</p>
                         </div>
                     ) : !applications ? (
                          <div className="space-y-2">

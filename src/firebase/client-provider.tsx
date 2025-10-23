@@ -14,6 +14,8 @@ import { BottomNavbar } from '@/components/bottom-navbar';
 import { Chatbot } from '@/components/chatbot';
 import { ChatbotProvider } from '@/components/chatbot-provider';
 import { SettingsSheetProvider } from '@/components/settings-sheet';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 
 interface FirebaseClientProviderProps {
@@ -29,6 +31,7 @@ interface FirebaseServices {
 
 export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
   const [firebaseServices, setFirebaseServices] = useState<FirebaseServices | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     // This check ensures that Firebase is only initialized on the client-side.
@@ -43,6 +46,8 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
   if (!firebaseServices) {
     return null;
   }
+  
+  const isHomePage = pathname === '/';
 
   return (
     <FirebaseProvider
@@ -55,7 +60,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
           <ChatbotProvider>
               <Header />
               <div className="container relative flex flex-col mx-auto  ">
-                <main id="main-content" className="flex-1 pb-24">
+                <main id="main-content" className={cn("flex-1", !isHomePage && "pb-24")}>
                   {children}
                 </main>
                 <BottomNavbar />
