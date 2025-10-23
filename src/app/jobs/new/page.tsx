@@ -187,7 +187,7 @@ export default function NewJobPage() {
                             </div>
 
                             <FormField control={form.control} name="description" render={({ field }) => (
-                            <FormItem><FormLabel>Job Description</FormLabel><FormControl><Textarea placeholder="Describe the role, responsibilities, and requirements..." className="min-h-[150px]" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Job Description</FormLabel><FormControl><Textarea placeholder="Describe the role, responsibilities, and requirements..." className="min-h-[100px]" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                         </div>
                     </fieldset>

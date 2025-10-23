@@ -4,8 +4,8 @@
 import * as React from "react"
 import { useMemo } from 'react';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { useDroppable } from '@dnd-kit/core';
+import { CSS } from '@d-kit/utilities';
+import { useDroppable } from '@d-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
@@ -287,7 +287,7 @@ function Column({ id, title, children, items, isLoading, type }: { id: string, t
                 </CardHeader>
                 <div 
                     className={cn(
-                        "p-2 flex-1 rounded-b-lg transition-colors min-h-[150px]"
+                        "p-2 flex-1 rounded-b-lg transition-colors min-h-[100px]"
                     )}
                 >
                      {isLoading ? (
@@ -308,7 +308,7 @@ function Column({ id, title, children, items, isLoading, type }: { id: string, t
 
 function Board({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex flex-wrap justify-center gap-4 pb-4 items-start">
+        <div className="flex flex-wrap justify-center gap-4 pb-4 items-stretch">
             {children}
         </div>
     );

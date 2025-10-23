@@ -231,7 +231,7 @@ export default function ApplicantsPage({ params }: { params: Promise<{ id: strin
 
     return (
         <div className="flex flex-col h-screen">
-             <div className="px-4 md:px-6 lg:px-8 pt-4">
+             <div className="px-4 md:px-6 lg:px-8 pt-0">
                  <div className="mb-6">
                     <div className="mb-4">
                         <BackButton />

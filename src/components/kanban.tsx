@@ -294,7 +294,7 @@ function Column({ id, title, children, applicants, isLoading }: { id: string, ti
                 </CardHeader>
                 <div 
                     className={cn(
-                        "p-2 flex-1 rounded-b-lg transition-colors min-h-[150px]"
+                        "p-2 flex-1 rounded-b-lg transition-colors min-h-[100px]"
                     )}
                 >
                      {isLoading ? (

@@ -196,7 +196,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                   <FormDescription>Enter salary as annual numbers (e.g., 60000 for $60,000/year).</FormDescription>
 
                   <FormField control={form.control} name="description" render={({ field }) => (
-                    <FormItem><FormLabel>Job Description</FormLabel><FormControl><Textarea placeholder="Describe the role, responsibilities, and requirements..." className="min-h-[150px]" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Job Description</FormLabel><FormControl><Textarea placeholder="Describe the role, responsibilities, and requirements..." className="min-h-[100px]" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <Button type="submit" disabled={isSubmitting} className="w-full">
                       {isSubmitting ? 'Saving Changes...' : 'Save Changes'}
