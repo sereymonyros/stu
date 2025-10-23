@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -13,14 +14,21 @@ export function KanbanCardMobile({
 }) {
     return  (
         <Link href={`/jobs/${job.id}/details`} className="block group/card">
-            <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-3xl")}>
-                <div className="flex items-start p-2">
-                    <div className="flex justify-between items-center gap-1">
-                        <p className="text-xs">{job.title}</p>
-                        <Badge variant={job.status === 'Closed' ? 'destructive' : 'default'} className="capitalize px-1.5 py-0.5 text-[8px]">{job.status}</Badge>
+            <Card className={cn("hover:shadow-md transition-shadow duration-200 w-full relative group/item rounded-2xl")}>
+                <div className="flex items-center justify-between p-2 space-x-2">
+                    <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium truncate">{job.title}</p>
                     </div>
-                    <div className="pointer-events-auto">
+                    <div className="flex-shrink-0 flex items-center space-x-2">
+                        <Badge 
+                            variant={job.status === 'Closed' ? 'destructive' : 'default'} 
+                            className="capitalize text-[10px] px-1.5 py-0.5"
+                        >
+                            {job.status}
+                        </Badge>
+                        <div className="pointer-events-auto">
                             <ApplicantCounter jobId={job.id} />
+                        </div>
                     </div>
                 </div>
             </Card>
