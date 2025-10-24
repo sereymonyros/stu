@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState, useEffect, Suspense, useCallback } from 'react';
@@ -147,7 +146,7 @@ function JobsPageContent() {
         
         // Use replace to avoid adding to browser history on every filter change
         router.replace(`/jobs?${params.toString()}`, { scroll: false });
-    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary]);
+    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, router]);
 
     useEffect(() => {
         setSalaryRange(prev => [prev[0], maxSalary]);
@@ -250,11 +249,11 @@ function JobsPageContent() {
         }
     }, [
         firestore, user, searchQuery, selectedCompaniesStr, selectedLocationsStr, 
-        selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString
+        selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString, toast
     ]);
 
     const fetchMoreJobs = useCallback(async () => {
-        if (!hasMore || isLoadingMore || !lastVisible) return;
+        if (!hasMore || isLoadingMore) return;
 
         setIsLoadingMore(true);
         const q = buildQuery(lastVisible);
@@ -278,7 +277,7 @@ function JobsPageContent() {
         } finally {
             setIsLoadingMore(false);
         }
-    }, [lastVisible, hasMore, isLoadingMore, firestore, user, searchQuery, selectedCompaniesStr, selectedLocationsStr, selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString]);
+    }, [lastVisible, hasMore, isLoadingMore, firestore, user, searchQuery, selectedCompaniesStr, selectedLocationsStr, selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString, toast]);
 
 
     useEffect(() => {
@@ -413,6 +412,8 @@ function JobsPageContent() {
             return;
         }
 
+        const originalJobsByStatus = jobsByStatus;
+
         setJobsByStatus((prev) => {
             const newBoardState = { ...prev };
             newBoardState[oldStatus!] = newBoardState[oldStatus!].filter(j => j.id !== jobId);
@@ -422,17 +423,13 @@ function JobsPageContent() {
         
         try {
             await updateJobStatus({ jobId, newStatus: newStatus as any });
+            // After a successful server update, also update the IndexedDB cache.
+            const jobForCache = { ...movedJob, status: newStatus };
+            await putJobs([jobForCache]);
         } catch (error: any) {
             console.error("Failed to update job status:", error);
-            
-             setJobsByStatus((prev) => {
-                 const revertedState = { ...prev };
-                 revertedState[newStatus] = revertedState[newStatus]?.filter(j => j.id !== jobId);
-                 if (movedJob && !revertedState[oldStatus!]?.find(j => j.id === jobId)) {
-                     revertedState[oldStatus!].push(movedJob);
-                 }
-                 return revertedState;
-             });
+            setJobsByStatus(originalJobsByStatus); // Revert UI on failure
+            toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update job status.'});
         }
     };
     

@@ -36,6 +36,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { ArrowLeft } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BackButton } from '@/components/back-button';
+import { putJobs } from '@/lib/db';
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -119,9 +120,9 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   }, [user, job, router, toast]);
 
 
-  const onSubmit = (values: z.infer<typeof jobSchema>) => {
+  const onSubmit = async (values: z.infer<typeof jobSchema>) => {
     setIsSubmitting(true);
-    if (!jobRef) {
+    if (!jobRef || !job) {
         setIsSubmitting(false);
         return;
     }
@@ -133,9 +134,27 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
       updatedAt: serverTimestamp(),
     };
 
-    updateDoc(jobRef, dataToUpdate)
-      .catch(serverError => {
-        errorEmitter.emit(
+    try {
+        await updateDoc(jobRef, dataToUpdate);
+
+        // After successful Firestore update, update IndexedDB
+        const jobForCache = {
+            ...job, // Original job data
+            ...dataToUpdate, // Apply the updates
+            id: finalJobId,
+            updatedAt: new Date(), // Use current date for cache
+        };
+        await putJobs([jobForCache]);
+
+        toast({
+            title: "Job updated!",
+            description: "Your job posting has been successfully updated.",
+        });
+
+        router.push(`/jobs`);
+
+    } catch (serverError) {
+         errorEmitter.emit(
           'permission-error',
           new FirestorePermissionError({
             path: jobRef.path,
@@ -143,14 +162,9 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
             requestResourceData: dataToUpdate,
           })
         );
-      });
-
-    toast({
-      title: "Job updated!",
-      description: "Your job posting has been successfully updated.",
-    });
-
-    router.push(`/jobs`);
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
