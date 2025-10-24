@@ -88,6 +88,7 @@ function JobsPageContent() {
     const { data: applications } = useCollection(applicationsQuery);
 
     const favouriteJobIds = useMemo(() => new Set(favouriteJobs?.map(fav => fav.id)), [favouriteJobs]);
+    const favouriteJobIdsString = useMemo(() => JSON.stringify(Array.from(favouriteJobIds)), [favouriteJobIds]);
     const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
     
     // --- Derived State for Filters ---
@@ -234,7 +235,7 @@ function JobsPageContent() {
     }, [
         firestore, searchQuery, selectedCompanies, selectedLocations, 
         selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, 
-        user, favouriteJobIds, toast, lastVisible
+        user, favouriteJobIdsString, lastVisible, toast
     ]);
 
     useEffect(() => {
