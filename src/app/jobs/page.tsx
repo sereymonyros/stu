@@ -178,11 +178,6 @@ function JobsPageContent() {
                 return 'empty'; // Special case to return no results
             }
         }
-
-        const [minSal] = JSON.parse(salaryRangeStr);
-        if (minSal > 0) {
-            q = query(q, where('salaryMax', '>=', minSal));
-        }
         
         if (startAfterDoc) {
             q = query(q, startAfter(startAfterDoc));
@@ -192,16 +187,14 @@ function JobsPageContent() {
     }
 
     const processAndSetJobs = (newJobs: any[], loadMore: boolean) => {
-        const [, maxSal] = JSON.parse(salaryRangeStr);
+        const [minSal, maxSal] = JSON.parse(salaryRangeStr);
         const finalJobs = newJobs.filter(job => {
             const textMatch = searchQuery 
                 ? job.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
                   job.description?.toLowerCase().includes(searchQuery.toLowerCase())
                 : true;
             
-            const salaryMatch = maxSal < maxSalary 
-                ? (job.salaryMin || 0) <= maxSal
-                : true;
+            const salaryMatch = (job.salaryMin || 0) >= minSal && (job.salaryMax || Infinity) <= maxSal;
             
             return textMatch && salaryMatch;
         });
@@ -748,3 +741,5 @@ export default function JobsPage() {
         </Suspense>
     )
 }
+
+    
