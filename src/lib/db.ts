@@ -43,15 +43,21 @@ export async function putJobs(jobs: any[]): Promise<void> {
 }
 
 /**
- * Retrieves all jobs from IndexedDB, sorted by creation date.
+ * Retrieves all jobs from IndexedDB, sorted by creation date descending.
  * @returns A promise that resolves to an array of job objects.
  */
 export async function getAllJobs(): Promise<any[]> {
   if (!dbPromise) return [];
   try {
     const db = await dbPromise;
-    // Using the 'createdAt' index to get jobs in descending order of creation
-    return await db.getAllFromIndex(JOB_STORE, 'createdAt');
+    const allJobs = await db.getAll(JOB_STORE);
+    // Sort in memory as getAllFromIndex doesn't support reverse order easily.
+    // Ensure createdAt is a comparable value (Date object or timestamp number).
+    return allJobs.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+        return dateB.getTime() - dateA.getTime();
+    });
   } catch (error) {
     console.error("Failed to get all jobs from IndexedDB", error);
     return [];

@@ -249,7 +249,7 @@ function JobsPageContent() {
         }
     }, [
         firestore, user, searchQuery, selectedCompaniesStr, selectedLocationsStr, 
-        selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString, toast
+        selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString
     ]);
 
     const fetchMoreJobs = useCallback(async () => {
@@ -273,11 +273,10 @@ function JobsPageContent() {
             processAndSetJobs(newJobs, true);
         } catch (err) {
             console.error("Error fetching more jobs:", err);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch more jobs.'});
         } finally {
             setIsLoadingMore(false);
         }
-    }, [lastVisible, hasMore, isLoadingMore, firestore, user, searchQuery, selectedCompaniesStr, selectedLocationsStr, selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString, toast]);
+    }, [lastVisible, hasMore, isLoadingMore, firestore, user, searchQuery, selectedCompaniesStr, selectedLocationsStr, selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString]);
 
 
     useEffect(() => {

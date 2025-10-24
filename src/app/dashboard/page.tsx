@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useEffect, useState, useCallback } from 'react';
@@ -125,7 +124,7 @@ export default function DashboardPage() {
             setPostedJobs([]); // Reset on initial fetch
         }
 
-        let q = query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid), limit(JOBS_PER_PAGE));
+        let q = query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid), orderBy('createdAt', 'desc'), limit(JOBS_PER_PAGE));
         if (loadMore && lastPosted) {
             q = query(q, startAfter(lastPosted));
         }
@@ -137,7 +136,6 @@ export default function DashboardPage() {
         setHasMorePosted(newJobs.length === JOBS_PER_PAGE);
         
         const combined = loadMore ? [...postedJobs, ...newJobs] : newJobs;
-        combined.sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
 
         setPostedJobs(combined);
 
@@ -241,7 +239,7 @@ export default function DashboardPage() {
                 fetchFavouriteJobs();
             }
         }
-    }, [user, userProfile, isRecruiter, isStandardUser]); // Removed fetch functions from here
+    }, [user, userProfile, isRecruiter, isStandardUser, fetchAppliedJobs, fetchFavouriteJobs, fetchPostedJobs]);
 
     // --- Handlers ---
     const [isDeletingSearch, setIsDeletingSearch] = useState(false);
