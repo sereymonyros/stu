@@ -35,7 +35,12 @@ export async function putJobs(jobs: any[]): Promise<void> {
   try {
     const db = await dbPromise;
     const tx = db.transaction(JOB_STORE, 'readwrite');
-    await Promise.all(jobs.map(job => tx.store.put(job)));
+    // Ensure createdAt is a valid Date object for indexing
+    const jobsToStore = jobs.map(job => ({
+        ...job,
+        createdAt: job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now())
+    }));
+    await Promise.all(jobsToStore.map(job => tx.store.put(job)));
     await tx.done;
   } catch (error) {
     console.error("Failed to put jobs in IndexedDB", error);
@@ -50,14 +55,10 @@ export async function getAllJobs(): Promise<any[]> {
   if (!dbPromise) return [];
   try {
     const db = await dbPromise;
-    const allJobs = await db.getAll(JOB_STORE);
-    // Sort in memory as getAllFromIndex doesn't support reverse order easily.
-    // Ensure createdAt is a comparable value (Date object or timestamp number).
-    return allJobs.sort((a, b) => {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
-        return dateB.getTime() - dateA.getTime();
-    });
+    // Use the 'createdAt' index to get jobs sorted in ascending order
+    const sortedJobs = await db.getAllFromIndex(JOB_STORE, 'createdAt');
+    // Reverse the array to get descending order (newest first)
+    return sortedJobs.reverse();
   } catch (error) {
     console.error("Failed to get all jobs from IndexedDB", error);
     return [];
