@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState, useEffect, Suspense, useCallback } from 'react';
@@ -46,6 +45,7 @@ import { JobCardBigMobile } from '@/components/job-card-big-mobile';
 import { JobCardSmallMobile } from '@/components/job-card-small-mobile';
 import { ApplicantCounter } from '@/components/applicant-counter';
 import { LoadMoreButton } from '@/components/load-more-button';
+import { putJobs, getAllJobs } from '@/lib/db';
 
 const JOBS_PER_PAGE = 8;
 
@@ -153,6 +153,14 @@ function JobsPageContent() {
         } else {
             setIsLoading(true);
             setJobs([]); // Reset jobs on a new filter application
+             // On initial load, try to populate from IndexedDB first
+            if (!loadMore) {
+                const cachedJobs = await getAllJobs();
+                if (cachedJobs.length > 0) {
+                    setJobs(cachedJobs);
+                    setIsLoading(false);
+                }
+            }
         }
         
         let q = query(collection(firestore, 'jobs'), orderBy('createdAt', 'desc'), limit(JOBS_PER_PAGE));
@@ -167,7 +175,16 @@ function JobsPageContent() {
             q = query(q, where('jobType', 'in', selectedJobTypes));
         }
         if (showFavoritesOnly && user) {
-            q = query(q, where('__name__', 'in', Array.from(favouriteJobIds)));
+            const favIds = Array.from(favouriteJobIds.keys());
+            if (favIds.length > 0) {
+              q = query(q, where('__name__', 'in', favIds));
+            } else {
+              // If favorites are requested but none exist, fetch no documents.
+              setJobs([]);
+              setIsLoading(false);
+              setHasMore(false);
+              return;
+            }
         }
 
         const [minSal] = salaryRange;
@@ -185,6 +202,8 @@ function JobsPageContent() {
 
             setLastVisible(snapshot.docs[snapshot.docs.length - 1] || null);
             setHasMore(newJobs.length === JOBS_PER_PAGE);
+            
+            await putJobs(newJobs);
 
             // Client-side search query and max salary filtering
             const [, maxSal] = salaryRange;
@@ -219,11 +238,7 @@ function JobsPageContent() {
 
     useEffect(() => {
         fetchJobs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-        searchQuery, selectedCompanies, selectedLocations, 
-        selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary
-    ]);
+    }, [fetchJobs]);
 
     // --- Handlers ---
     const handleToggleFavourite = async (jobId: string, isCurrentlyFavourite: boolean) => {
@@ -694,3 +709,5 @@ export default function JobsPage() {
         </Suspense>
     )
 }
+
+    
