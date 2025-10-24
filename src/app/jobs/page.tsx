@@ -37,7 +37,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { MultiSelect, type MultiSelectOption } from '@/components/ui/multi-select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { JobCardBig } from '@/components/job-card-big';
 import { JobCardSmall } from '@/components/job-card-small';
@@ -156,19 +156,6 @@ function JobsPageContent() {
         if (!firestore) return null;
 
         let q = query(collection(firestore, 'jobs'), orderBy('createdAt', 'desc'), limit(JOBS_PER_PAGE));
-
-        const currentSelectedCompanies = JSON.parse(selectedCompaniesStr);
-        if (currentSelectedCompanies.length > 0) {
-            q = query(q, where('companyName', 'in', currentSelectedCompanies));
-        }
-        const currentSelectedLocations = JSON.parse(selectedLocationsStr);
-        if (currentSelectedLocations.length > 0) {
-            q = query(q, where('location', 'in', currentSelectedLocations));
-        }
-        const currentSelectedJobTypes = JSON.parse(selectedJobTypesStr);
-        if (currentSelectedJobTypes.length > 0) {
-            q = query(q, where('jobType', 'in', currentSelectedJobTypes));
-        }
         
         if (showFavoritesOnly && user) {
             const favIds = JSON.parse(favouriteJobIdsString);
@@ -188,6 +175,10 @@ function JobsPageContent() {
 
     const processAndSetJobs = (newJobs: any[], loadMore: boolean) => {
         const [minSal, maxSal] = JSON.parse(salaryRangeStr);
+        const currentSelectedCompanies = JSON.parse(selectedCompaniesStr);
+        const currentSelectedLocations = JSON.parse(selectedLocationsStr);
+        const currentSelectedJobTypes = JSON.parse(selectedJobTypesStr);
+
         const finalJobs = newJobs.filter(job => {
             const textMatch = searchQuery 
                 ? job.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -195,8 +186,12 @@ function JobsPageContent() {
                 : true;
             
             const salaryMatch = (job.salaryMin || 0) >= minSal && (job.salaryMax || Infinity) <= maxSal;
+
+            const companyMatch = currentSelectedCompanies.length > 0 ? currentSelectedCompanies.includes(job.companyName) : true;
+            const locationMatch = currentSelectedLocations.length > 0 ? currentSelectedLocations.includes(job.location) : true;
+            const jobTypeMatch = currentSelectedJobTypes.length > 0 ? currentSelectedJobTypes.includes(job.jobType) : true;
             
-            return textMatch && salaryMatch;
+            return textMatch && salaryMatch && companyMatch && locationMatch && jobTypeMatch;
         });
 
         if (loadMore) {
