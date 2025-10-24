@@ -147,29 +147,15 @@ function JobsPageContent() {
         
         // Use replace to avoid adding to browser history on every filter change
         router.replace(`/jobs?${params.toString()}`, { scroll: false });
-    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, router]);
+    }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary]);
 
     useEffect(() => {
         setSalaryRange(prev => [prev[0], maxSalary]);
     }, [maxSalary]);
     
-    const fetchJobs = useCallback(async (loadMore = false) => {
-        if (!firestore) return;
+    const buildQuery = (startAfterDoc: QueryDocumentSnapshot<DocumentData> | null = null) => {
+        if (!firestore) return null;
 
-        if (loadMore) {
-            setIsLoadingMore(true);
-        } else {
-            setIsLoading(true);
-            setJobs([]); 
-            if (!loadMore) {
-                const cachedJobs = await getAllJobs();
-                if (cachedJobs.length > 0) {
-                    setJobs(cachedJobs);
-                    setIsLoading(false);
-                }
-            }
-        }
-        
         let q = query(collection(firestore, 'jobs'), orderBy('createdAt', 'desc'), limit(JOBS_PER_PAGE));
 
         const currentSelectedCompanies = JSON.parse(selectedCompaniesStr);
@@ -188,12 +174,9 @@ function JobsPageContent() {
         if (showFavoritesOnly && user) {
             const favIds = JSON.parse(favouriteJobIdsString);
             if (favIds.length > 0) {
-              q = query(q, where('__name__', 'in', favIds));
+                q = query(q, where('__name__', 'in', favIds));
             } else {
-              setJobs([]);
-              setIsLoading(false);
-              setHasMore(false);
-              return;
+                return 'empty'; // Special case to return no results
             }
         }
 
@@ -202,8 +185,52 @@ function JobsPageContent() {
             q = query(q, where('salaryMax', '>=', minSal));
         }
         
-        if (loadMore && lastVisible) {
-            q = query(q, startAfter(lastVisible));
+        if (startAfterDoc) {
+            q = query(q, startAfter(startAfterDoc));
+        }
+        
+        return q;
+    }
+
+    const processAndSetJobs = (newJobs: any[], loadMore: boolean) => {
+        const [, maxSal] = JSON.parse(salaryRangeStr);
+        const finalJobs = newJobs.filter(job => {
+            const textMatch = searchQuery 
+                ? job.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                  job.description?.toLowerCase().includes(searchQuery.toLowerCase())
+                : true;
+            
+            const salaryMatch = maxSal < maxSalary 
+                ? (job.salaryMin || 0) <= maxSal
+                : true;
+            
+            return textMatch && salaryMatch;
+        });
+
+        if (loadMore) {
+            setJobs(prevJobs => [...prevJobs, ...finalJobs]);
+        } else {
+            setJobs(finalJobs);
+        }
+    }
+
+    const fetchJobs = useCallback(async () => {
+        setIsLoading(true);
+        setJobs([]);
+        
+        const cachedJobs = await getAllJobs();
+        if (cachedJobs.length > 0) {
+            processAndSetJobs(cachedJobs, false);
+            setIsLoading(false); 
+        }
+
+        const q = buildQuery();
+        if (!q) return;
+        if (q === 'empty') {
+            setJobs([]);
+            setHasMore(false);
+            setIsLoading(false);
+            return;
         }
 
         try {
@@ -214,36 +241,45 @@ function JobsPageContent() {
             setHasMore(newJobs.length === JOBS_PER_PAGE);
             
             await putJobs(newJobs);
-
-            const [, maxSal] = JSON.parse(salaryRangeStr);
-            const finalJobs = newJobs.filter(job => {
-                const textMatch = searchQuery 
-                    ? job.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                      job.description?.toLowerCase().includes(searchQuery.toLowerCase())
-                    : true;
-                
-                const salaryMatch = maxSal < maxSalary 
-                    ? (job.salaryMin || 0) <= maxSal
-                    : true;
-                
-                return textMatch && salaryMatch;
-            });
-
-            setJobs(prevJobs => loadMore ? [...prevJobs, ...finalJobs] : finalJobs);
-            
+            processAndSetJobs(newJobs, false);
         } catch (err) {
             console.error("Error fetching jobs:", err);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch jobs.'});
         } finally {
             setIsLoading(false);
+        }
+    }, [
+        firestore, user, searchQuery, selectedCompaniesStr, selectedLocationsStr, 
+        selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString
+    ]);
+
+    const fetchMoreJobs = useCallback(async () => {
+        if (!hasMore || isLoadingMore || !lastVisible) return;
+
+        setIsLoadingMore(true);
+        const q = buildQuery(lastVisible);
+        if (!q || q === 'empty') {
             setIsLoadingMore(false);
+            return;
         }
 
-    }, [
-        firestore, searchQuery, selectedCompaniesStr, selectedLocationsStr, 
-        selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, 
-        user, favouriteJobIdsString, lastVisible
-    ]);
+        try {
+            const snapshot = await getDocs(q);
+            const newJobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            setLastVisible(snapshot.docs[snapshot.docs.length - 1] || null);
+            setHasMore(newJobs.length === JOBS_PER_PAGE);
+
+            await putJobs(newJobs);
+            processAndSetJobs(newJobs, true);
+        } catch (err) {
+            console.error("Error fetching more jobs:", err);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch more jobs.'});
+        } finally {
+            setIsLoadingMore(false);
+        }
+    }, [lastVisible, hasMore, isLoadingMore, firestore, user, searchQuery, selectedCompaniesStr, selectedLocationsStr, selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString]);
+
 
     useEffect(() => {
         fetchJobs();
@@ -664,7 +700,7 @@ function JobsPageContent() {
                         {renderJobs()}
                         {hasMore && !isLoading && (
                             <div className="flex justify-center">
-                                <LoadMoreButton onClick={() => fetchJobs(true)} isLoading={isLoadingMore} />
+                                <LoadMoreButton onClick={fetchMoreJobs} isLoading={isLoadingMore} />
                             </div>
                         )}
                         {isLoadingMore && <div className="text-center text-muted-foreground">Loading...</div>}
