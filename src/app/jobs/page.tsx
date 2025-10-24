@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/collapsible"
 import { MultiSelect, type MultiSelectOption } from '@/components/ui/multi-select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useIsMobile } from '@/hooks/use-is-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { JobCardBig } from '@/components/job-card-big';
 import { JobCardSmall } from '@/components/job-card-small';
 import { JobCardBigMobile } from '@/components/job-card-big-mobile';
@@ -234,7 +234,7 @@ function JobsPageContent() {
     }, [
         firestore, searchQuery, selectedCompanies, selectedLocations, 
         selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, 
-        user, favouriteJobIds, toast
+        user, favouriteJobIds, toast, lastVisible
     ]);
 
     useEffect(() => {
