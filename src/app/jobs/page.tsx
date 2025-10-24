@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useState, useEffect, Suspense, useCallback } from 'react';
@@ -38,7 +39,7 @@ import {
 } from "@/components/ui/collapsible"
 import { MultiSelect, type MultiSelectOption } from '@/components/ui/multi-select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { JobCardBig } from '@/components/job-card-big';
 import { JobCardSmall } from '@/components/job-card-small';
 import { JobCardBigMobile } from '@/components/job-card-big-mobile';
@@ -233,7 +234,7 @@ function JobsPageContent() {
     }, [
         firestore, searchQuery, selectedCompanies, selectedLocations, 
         selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, 
-        lastVisible, user, favouriteJobIds, toast
+        user, favouriteJobIds, toast
     ]);
 
     useEffect(() => {
@@ -709,5 +710,3 @@ export default function JobsPage() {
         </Suspense>
     )
 }
-
-    
