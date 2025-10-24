@@ -77,7 +77,6 @@ function JobsPageContent() {
     const { data: userProfile } = useDoc(userProfileRef);
     const isRecruiter = userProfile?.userType === 'recruiter';
     
-    // This query is now just for filter options, not for displaying jobs
     const allJobsQuery = useMemo(() => query(collection(firestore, 'jobs')), [firestore]);
     const { data: allJobsForFilters } = useCollection(allJobsQuery);
     
@@ -91,7 +90,6 @@ function JobsPageContent() {
     const favouriteJobIdsString = useMemo(() => JSON.stringify(Array.from(favouriteJobIds)), [favouriteJobIds]);
     const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
     
-    // --- Derived State for Filters ---
     const { companyOptions, locationOptions, jobTypeOptions, maxSalary } = useMemo(() => {
         if (!allJobsForFilters) return { companyOptions: [], locationOptions: [], jobTypeOptions: [], maxSalary: 150000 };
         const companies = new Set<string>();
@@ -121,14 +119,22 @@ function JobsPageContent() {
     const [selectedLocations, setSelectedLocations] = useState<string[]>(searchParams.getAll('location'));
     const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>(searchParams.getAll('jobType'));
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(searchParams.get('favorites') === 'true');
-    const [salaryRange, setSalaryRange] = useState<[number, number]>([0, 150000]);
+    const [salaryRange, setSalaryRange] = useState<[number, number]>([
+      parseInt(searchParams.get('salaryMin') || '0', 10),
+      parseInt(searchParams.get('salaryMax') || '150000', 10)
+    ]);
+    
+    // --- Stabilized Dependencies for useCallback ---
+    const selectedCompaniesStr = JSON.stringify(selectedCompanies);
+    const selectedLocationsStr = JSON.stringify(selectedLocations);
+    const selectedJobTypesStr = JSON.stringify(selectedJobTypes);
+    const salaryRangeStr = JSON.stringify(salaryRange);
     
      // --- Dialog State ---
     const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
     const [savedSearchName, setSavedSearchName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
-    // This effect SYNCS the URL with the state.
     useEffect(() => {
         const params = new URLSearchParams();
         if (searchQuery) params.set('q', searchQuery);
@@ -138,15 +144,15 @@ function JobsPageContent() {
         selectedCompanies.forEach(c => params.append('company', c));
         selectedLocations.forEach(l => params.append('location', l));
         selectedJobTypes.forEach(t => params.append('jobType', t));
+        
+        // Use replace to avoid adding to browser history on every filter change
         router.replace(`/jobs?${params.toString()}`, { scroll: false });
     }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, router]);
 
-    // This effect SYNCS the slider's range with the data from the server.
     useEffect(() => {
         setSalaryRange(prev => [prev[0], maxSalary]);
     }, [maxSalary]);
     
-    // --- Data Fetching ---
     const fetchJobs = useCallback(async (loadMore = false) => {
         if (!firestore) return;
 
@@ -154,8 +160,7 @@ function JobsPageContent() {
             setIsLoadingMore(true);
         } else {
             setIsLoading(true);
-            setJobs([]); // Reset jobs on a new filter application
-             // On initial load, try to populate from IndexedDB first
+            setJobs([]); 
             if (!loadMore) {
                 const cachedJobs = await getAllJobs();
                 if (cachedJobs.length > 0) {
@@ -167,21 +172,24 @@ function JobsPageContent() {
         
         let q = query(collection(firestore, 'jobs'), orderBy('createdAt', 'desc'), limit(JOBS_PER_PAGE));
 
-        if (selectedCompanies.length > 0) {
-            q = query(q, where('companyName', 'in', selectedCompanies));
+        const currentSelectedCompanies = JSON.parse(selectedCompaniesStr);
+        if (currentSelectedCompanies.length > 0) {
+            q = query(q, where('companyName', 'in', currentSelectedCompanies));
         }
-        if (selectedLocations.length > 0) {
-            q = query(q, where('location', 'in', selectedLocations));
+        const currentSelectedLocations = JSON.parse(selectedLocationsStr);
+        if (currentSelectedLocations.length > 0) {
+            q = query(q, where('location', 'in', currentSelectedLocations));
         }
-        if (selectedJobTypes.length > 0) {
-            q = query(q, where('jobType', 'in', selectedJobTypes));
+        const currentSelectedJobTypes = JSON.parse(selectedJobTypesStr);
+        if (currentSelectedJobTypes.length > 0) {
+            q = query(q, where('jobType', 'in', currentSelectedJobTypes));
         }
+        
         if (showFavoritesOnly && user) {
-            const favIds = Array.from(favouriteJobIds.keys());
+            const favIds = JSON.parse(favouriteJobIdsString);
             if (favIds.length > 0) {
               q = query(q, where('__name__', 'in', favIds));
             } else {
-              // If favorites are requested but none exist, fetch no documents.
               setJobs([]);
               setIsLoading(false);
               setHasMore(false);
@@ -189,7 +197,7 @@ function JobsPageContent() {
             }
         }
 
-        const [minSal] = salaryRange;
+        const [minSal] = JSON.parse(salaryRangeStr);
         if (minSal > 0) {
             q = query(q, where('salaryMax', '>=', minSal));
         }
@@ -207,8 +215,7 @@ function JobsPageContent() {
             
             await putJobs(newJobs);
 
-            // Client-side search query and max salary filtering
-            const [, maxSal] = salaryRange;
+            const [, maxSal] = JSON.parse(salaryRangeStr);
             const finalJobs = newJobs.filter(job => {
                 const textMatch = searchQuery 
                     ? job.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -233,16 +240,15 @@ function JobsPageContent() {
         }
 
     }, [
-        firestore, searchQuery, selectedCompanies, selectedLocations, 
-        selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, 
-        user, favouriteJobIdsString, lastVisible, toast
+        firestore, searchQuery, selectedCompaniesStr, selectedLocationsStr, 
+        selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, 
+        user, favouriteJobIdsString, lastVisible
     ]);
 
     useEffect(() => {
         fetchJobs();
     }, [fetchJobs]);
 
-    // --- Handlers ---
     const handleToggleFavourite = async (jobId: string, isCurrentlyFavourite: boolean) => {
         if (!user || !firestore) {
             router.push('/login');
@@ -310,7 +316,6 @@ function JobsPageContent() {
         });
     };
     
-    // --- Kanban Board Logic ---
     useEffect(() => {
         if (allJobsForFilters && user && isRecruiter) {
             const recruiterJobs = allJobsForFilters.filter(job => job.recruiterId === user.uid);
