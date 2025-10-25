@@ -1,7 +1,7 @@
 {
   "apphosting": [
     {
-      "backendId": "khmerhub",
+      "backendId": "khmerhubs",
       "rootDir": "/",
       "ignore": [
         "node_modules",

@@ -234,11 +234,6 @@ export function ApplicantCard({ applicant, jobDetails }: { applicant: any, jobDe
                                 <DialogDescription>
                                     This is an AI-generated analysis of the applicant's resume against the job description.
                                 </DialogDescription>
-                                 <DialogClose asChild>
-                                    <Button variant="ghost" size="icon" className="absolute top-3 right-3 text-muted-foreground hover:text-foreground h-7 w-7 rounded-full">
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                </DialogClose>
                             </DialogHeader>
                             <div className="py-4 overflow-y-auto flex-1">
                                 <AIAnalysisDisplay 
