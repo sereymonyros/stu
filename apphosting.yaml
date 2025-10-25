@@ -1,4 +1,3 @@
-
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
@@ -8,8 +7,8 @@
 # Grant the service account the "AI Platform User" role to allow access to Gemini.
 serviceAccount: !gcp/serviceAccount
   roles:
-  - roles/aiplatform.user
-  - roles/firebase.admin
+    - roles/aiplatform.user
+    - roles/firebase.admin
 
 runConfig:
   # Increase this value if you'd like to automatically spin up
@@ -27,3 +26,18 @@ runConfig:
     - secret: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
     - secret: NEXT_PUBLIC_FIREBASE_APP_ID
     - secret: FIREBASE_SERVICE_ACCOUNT
+env:
+  - variable: GEMINI_API_KEY
+    secret: GEMINI_API_KEY
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    secret: NEXT_PUBLIC_FIREBASE_API_KEY
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    secret: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    secret: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    secret: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    secret: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    secret: NEXT_PUBLIC_FIREBASE_APP_ID
