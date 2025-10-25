@@ -9,6 +9,9 @@ import { z } from 'zod';
 import { initializeFirebaseAdmin } from '@/firebase/server-init';
 import { marked } from 'marked';
 
+// Initialize Firebase Admin at the module level for reuse.
+const { firestore } = initializeFirebaseAdmin();
+
 // Schema for the 'Job' entity, used for the tool output.
 const JobSchema = z.object({
   id: z.string(),
@@ -38,7 +41,7 @@ const findJobs = ai.defineTool(
   },
   async (input) => {
     console.log("findJobs tool called with input:", input);
-    const { firestore } = initializeFirebaseAdmin();
+    // Use the pre-initialized firestore instance
     let query: FirebaseFirestore.Query = firestore.collection('jobs');
 
     // We only want available jobs
@@ -137,7 +140,6 @@ const chatFlow = ai.defineFlow(
   },
   async ({ query, userId }) => {
 
-    const { firestore } = initializeFirebaseAdmin();
     const userDoc = await firestore.collection('users').doc(userId).get();
     const user = userDoc.data();
     const userName = user?.displayName || 'there';
