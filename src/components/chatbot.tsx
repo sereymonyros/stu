@@ -220,7 +220,7 @@ export function Chatbot() {
   return (
       <Dialog open={isOpen} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl h-[70vh] flex flex-col p-0 gap-0 rounded-3xl shadow-2xl">
-           <DialogHeader className="p-4 border-b bg-primary text-primary-foreground rounded-t-3xl">
+           <DialogHeader className="p-4 border-b bg-primary text-primary-foreground rounded-t-3xl relative">
                 <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> Cambodia Hub Helper</DialogTitle>
                 <DialogDescription className="text-primary-foreground/80">Ask me to find jobs or help you use the app.</DialogDescription>
                  <DialogClose asChild>
