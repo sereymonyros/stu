@@ -12,10 +12,8 @@ import { getStorage } from 'firebase/storage';
  * This function is idempotent, meaning it can be called multiple times without re-initializing.
  */
 export function initializeFirebase() {
-  // If no Firebase app has been initialized yet, initialize one.
+  // If no Firebase app has been initialized yet, initialize one with the config.
   if (!getApps().length) {
-    // Always initialize with the explicit config to ensure it works
-    // in both local development and production.
     const firebaseApp = initializeApp(firebaseConfig);
     return getSdks(firebaseApp);
   }
