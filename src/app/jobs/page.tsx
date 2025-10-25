@@ -21,7 +21,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -44,7 +43,8 @@ import { JobCardSmall } from '@/components/job-card-small';
 import { JobCardBigMobile } from '@/components/job-card-big-mobile';
 import { JobCardSmallMobile } from '@/components/job-card-small-mobile';
 import { ApplicantCounter } from '@/components/applicant-counter';
-import { getAllJobs, putJobs } from '@/lib/db';
+import { getAllJobs, putJob, putJobs } from '@/lib/db';
+import { DialogTrigger } from '@radix-ui/react-dialog';
 
 function JobsPageContent() {
     const firestore = useFirestore();
@@ -60,6 +60,10 @@ function JobsPageContent() {
     // --- Data Fetching and Pagination State ---
     const [jobs, setJobs] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    
+    const { data: jobsFromFirestore, isLoading: areJobsLoading } = useCollection(
+        useMemo(() => query(collection(firestore, 'jobs')), [firestore])
+    );
 
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
@@ -68,8 +72,6 @@ function JobsPageContent() {
     const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
     const { data: userProfile } = useDoc(userProfileRef);
     const isRecruiter = userProfile?.userType === 'recruiter';
-    
-    const { data: allJobsForFilters, isLoading: areJobsLoading } = useCollection(useMemo(() => query(collection(firestore, 'jobs')), [firestore]));
     
     const favouriteJobsQuery = useMemo(() => (firestore && user && !isRecruiter) ? collection(firestore, `users/${user.uid}/favouriteJobs`) : null, [firestore, user, isRecruiter]);
     const { data: favouriteJobs } = useCollection(favouriteJobsQuery);
@@ -81,12 +83,12 @@ function JobsPageContent() {
     const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
     
     const { companyOptions, locationOptions, jobTypeOptions, maxSalary } = useMemo(() => {
-        if (!allJobsForFilters) return { companyOptions: [], locationOptions: [], jobTypeOptions: [], maxSalary: 150000 };
+        if (!jobs) return { companyOptions: [], locationOptions: [], jobTypeOptions: [], maxSalary: 150000 };
         const companies = new Set<string>();
         const locs = new Set<string>();
         const types = new Set<string>();
         let maxSal = 0;
-        allJobsForFilters.forEach(job => {
+        jobs.forEach(job => {
             if (job.companyName) companies.add(job.companyName);
             if (job.location) locs.add(job.location);
             if (job.jobType) types.add(job.jobType);
@@ -99,7 +101,7 @@ function JobsPageContent() {
             jobTypeOptions: Array.from(types).sort().map(t => ({ value: t, label: t })),
             maxSalary: finalMaxSalary,
         };
-    }, [allJobsForFilters]);
+    }, [jobs]);
 
 
     // --- Search & Filter State ---
@@ -134,11 +136,11 @@ function JobsPageContent() {
 
     useEffect(() => {
         // Step 2: When Firestore data arrives, update the state and cache
-        if (allJobsForFilters) {
-            setJobs(allJobsForFilters);
-            putJobs(allJobsForFilters); // Update IndexedDB cache
+        if (jobsFromFirestore) {
+            setJobs(jobsFromFirestore);
+            putJobs(jobsFromFirestore); // Update IndexedDB cache
         }
-    }, [allJobsForFilters]);
+    }, [jobsFromFirestore]);
 
 
     useEffect(() => {
@@ -291,8 +293,8 @@ function JobsPageContent() {
 
     // --- Kanban Board Logic ---
     useEffect(() => {
-        if (allJobsForFilters && user && isRecruiter) {
-            const recruiterJobs = allJobsForFilters.filter(job => job.recruiterId === user.uid);
+        if (jobs && user && isRecruiter) {
+            const recruiterJobs = jobs.filter(job => job.recruiterId === user.uid);
             const grouped = recruiterJobs.reduce((acc, job) => {
                 const status = job.status || 'Available';
                 if (!acc[status]) {
@@ -303,7 +305,7 @@ function JobsPageContent() {
             }, {} as Record<string, any[]>);
             setJobsByStatus(grouped);
         }
-    }, [allJobsForFilters, user, isRecruiter]);
+    }, [jobs, user, isRecruiter]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -364,7 +366,7 @@ function JobsPageContent() {
             await updateJobStatus({ jobId, newStatus: newStatus as any });
             // After a successful server update, also update the IndexedDB cache.
             const jobForCache = { ...movedJob, status: newStatus };
-            await putJobs([jobForCache]);
+            await putJob(jobForCache);
         } catch (error: any) {
             console.error("Failed to update job status:", error);
             setJobsByStatus(originalJobsByStatus); // Revert UI on failure
@@ -386,7 +388,7 @@ function JobsPageContent() {
       showFavoritesOnly ||
       (salaryRange[0] > 0 || salaryRange[1] < maxSalary);
     
-    if (jobs.length === 0 && !isLoading && !hasActiveFilters && !allJobsForFilters) {
+    if (jobs.length === 0 && !isLoading && !hasActiveFilters && !jobsFromFirestore) {
         return (
             <main className="flex-1 p-4 md:p-6 lg:p-8">
                  <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
@@ -475,18 +477,6 @@ function JobsPageContent() {
             <main className="flex-1 p-4 lg:p-8">
                  <div className="flex items-center justify-between mb-6">
                     <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
-                     {isRecruiter && (
-                         <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button asChild variant="default" size="sm" className="flex items-center gap-2">
-                                        <Link href="/jobs/new"><Plus className="h-4 w-4" /> New Job</Link>
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Post a New Job</TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    )}
                 </div>
 
                 <div className="mb-6 space-y-4">
@@ -647,7 +637,7 @@ function JobsPageContent() {
                                         title={stage}
                                         items={stageJobs}
                                         type="jobs"
-                                        isLoading={!allJobsForFilters}
+                                        isLoading={!jobsFromFirestore}
                                     >
                                         {stageJobs.map((job: any) => (
                                             <Board.JobCard
