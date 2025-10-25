@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState, useEffect, Suspense, useRef } from 'react';
@@ -45,6 +44,7 @@ import { JobCardSmall } from '@/components/job-card-small';
 import { JobCardBigMobile } from '@/components/job-card-big-mobile';
 import { JobCardSmallMobile } from '@/components/job-card-small-mobile';
 import { ApplicantCounter } from '@/components/applicant-counter';
+import { getAllJobs, putJobs } from '@/lib/db';
 
 
 function JobsPageContent() {
@@ -70,7 +70,26 @@ function JobsPageContent() {
     const isRecruiter = userProfile?.userType === 'recruiter';
     
     const jobsQuery = useMemo(() => query(collection(firestore, 'jobs'), where('title', '!=', '')), [firestore]);
-    const { data: jobs, isLoading: areJobsLoading } = useCollection(jobsQuery);
+    const { data: jobsFromFirestore, isLoading: areJobsLoading } = useCollection(jobsQuery);
+
+    const [jobs, setJobs] = useState<any[]>([]);
+    
+    // Effect to handle data synchronization between Firestore and IndexedDB
+    useEffect(() => {
+        // Load initial data from IndexedDB
+        getAllJobs().then(cachedJobs => {
+            if (cachedJobs.length > 0) {
+                setJobs(cachedJobs);
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        if (jobsFromFirestore) {
+            setJobs(jobsFromFirestore);
+            putJobs(jobsFromFirestore); // Update IndexedDB cache
+        }
+    }, [jobsFromFirestore]);
     
     const [jobCount, setJobCount] = useState<number | null>(null);
 
@@ -157,7 +176,7 @@ function JobsPageContent() {
         setter(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
     };
     
-    const clearAllFilters = () => {
+    const handleClearFilters = () => {
         setSearchQuery('');
         setSelectedCompanies([]);
         setSelectedLocations([]);
@@ -248,13 +267,13 @@ function JobsPageContent() {
         
         let filtered = jobs;
 
+        // Apply client-side filters
         if (searchQuery) {
-            const query = searchQuery.toLowerCase();
+            const lowercasedQuery = searchQuery.toLowerCase();
             filtered = filtered.filter(job => 
-                (job.title?.toLowerCase() || '').includes(query)
+                (job.title?.toLowerCase().includes(lowercasedQuery))
             );
         }
-
         if (selectedCompanies.length > 0) {
             filtered = filtered.filter(job => selectedCompanies.includes(job.companyName));
         }
@@ -276,19 +295,25 @@ function JobsPageContent() {
             });
         }
 
+
         if (!user) return filtered;
 
+        // Sort the final filtered list
         return filtered.sort((a, b) => {
             const aHasApplied = appliedJobIds.has(a.id);
             const bHasApplied = appliedJobIds.has(b.id);
             
-            if (aHasApplied === bHasApplied) {
-                const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (new Date(a.createdAt)).getTime();
-                const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (new Date(b.createdAt)).getTime();
-                return dateB - dateA;
+            // Applied jobs go to the bottom
+            if (aHasApplied !== bHasApplied) {
+                return aHasApplied ? 1 : -1;
             }
-            return aHasApplied ? 1 : -1;
+
+            // Otherwise, sort by creation date descending (newest first)
+            const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+            const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+            return dateB - dateA;
         });
+
     }, [jobs, user, appliedJobIds, searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, favouriteJobIds, salaryRange, maxSalary]);
 
     // --- Kanban Board Logic ---
@@ -380,7 +405,7 @@ function JobsPageContent() {
     
     const isLoading = areJobsLoading || jobCount === null;
 
-    if (isLoading) {
+    if (isLoading && jobs.length === 0) { // Only show full loading state if no cached jobs are available
         return <JobsLoading count={jobCount ?? 8} viewMode={viewMode} />;
     }
     
@@ -490,7 +515,7 @@ function JobsPageContent() {
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
                                     {hasActiveFilters && (
-                                        <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground" onClick={clearAllFilters}>
+                                        <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground" onClick={handleClearFilters}>
                                             <X className="h-4 w-4" />
                                         </Button>
                                     )}
