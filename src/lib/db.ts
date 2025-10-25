@@ -1,6 +1,7 @@
 
-<<<<<<< HEAD
-import { openDB, DBSchema } from 'idb';
+'use client';
+
+import { openDB, type DBSchema } from 'idb';
 
 const DB_NAME = 'khmer-hub';
 const DB_VERSION = 1;
@@ -14,8 +15,8 @@ interface KhmerHubDB extends DBSchema {
   };
 }
 
-async function getDb() {
-  return openDB<KhmerHubDB>(DB_NAME, DB_VERSION, {
+const dbPromise = typeof window !== 'undefined'
+  ? openDB<KhmerHubDB>(DB_NAME, DB_VERSION, {
     upgrade(db) {
       if (!db.objectStoreNames.contains(JOBS_STORE)) {
         const store = db.createObjectStore(JOBS_STORE, { keyPath: 'id' });
@@ -23,17 +24,20 @@ async function getDb() {
         store.createIndex('createdAt', 'createdAt');
       }
     },
-  });
-}
+  })
+  : null;
+
 
 export async function putJobs(jobs: any[]) {
-    if (typeof window === 'undefined') return;
+    if (!dbPromise) return;
     try {
-        const db = await getDb();
+        const db = await dbPromise;
         const tx = db.transaction(JOBS_STORE, 'readwrite');
-        const store = tx.objectStore(JOBS_STORE);
-        // Use Promise.all to add all jobs in a single transaction
-        await Promise.all(jobs.map(job => store.put(job)));
+        const jobsToStore = jobs.map(job => ({
+            ...job,
+            createdAt: job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now())
+        }));
+        await Promise.all(jobsToStore.map(job => tx.store.put(job)));
         await tx.done;
     } catch (error) {
         console.error("Failed to put jobs in IndexedDB", error);
@@ -41,19 +45,23 @@ export async function putJobs(jobs: any[]) {
 }
 
 export async function putJob(job: any) {
-    if (typeof window === 'undefined') return;
+    if (!dbPromise) return;
     try {
-        const db = await getDb();
-        await db.put(JOBS_STORE, job);
+        const db = await dbPromise;
+        const jobToStore = {
+            ...job,
+            createdAt: job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now())
+        };
+        await db.put(JOBS_STORE, jobToStore);
     } catch (error) {
         console.error(`Failed to put job ${job.id} in IndexedDB`, error);
     }
 }
 
 export async function deleteJob(jobId: string) {
-    if (typeof window === 'undefined') return;
+    if (!dbPromise) return;
     try {
-        const db = await getDb();
+        const db = await dbPromise;
         await db.delete(JOBS_STORE, jobId);
     } catch (error) {
         console.error(`Failed to delete job ${jobId} from IndexedDB`, error);
@@ -62,9 +70,9 @@ export async function deleteJob(jobId: string) {
 
 
 export async function getAllJobs() {
-    if (typeof window === 'undefined') return [];
+    if (!dbPromise) return [];
     try {
-        const db = await getDb();
+        const db = await dbPromise;
         // Use the 'createdAt' index to get jobs sorted by creation date
         const sortedJobs = await db.getAllFromIndex(JOBS_STORE, 'createdAt');
         // Reverse the array to get descending order (newest first)
@@ -73,70 +81,4 @@ export async function getAllJobs() {
         console.error("Failed to get all jobs from IndexedDB", error);
         return [];
     }
-=======
-'use client';
-
-import { openDB, type DBSchema } from 'idb';
-
-const DB_NAME = 'cambodia-hub-db';
-const DB_VERSION = 1;
-const JOB_STORE = 'jobs';
-
-interface MyDB extends DBSchema {
-  [JOB_STORE]: {
-    key: string;
-    value: any; // Using `any` for flexibility with job document structure
-    indexes: { 'createdAt': Date };
-  };
-}
-
-const dbPromise = typeof window !== 'undefined' 
-  ? openDB<MyDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains(JOB_STORE)) {
-          const store = db.createObjectStore(JOB_STORE, { keyPath: 'id' });
-          store.createIndex('createdAt', 'createdAt');
-        }
-      },
-    })
-  : null;
-
-/**
- * Adds or updates multiple jobs in the IndexedDB.
- * @param jobs An array of job objects to be stored.
- */
-export async function putJobs(jobs: any[]): Promise<void> {
-  if (!dbPromise) return;
-  try {
-    const db = await dbPromise;
-    const tx = db.transaction(JOB_STORE, 'readwrite');
-    // Ensure createdAt is a valid Date object for indexing
-    const jobsToStore = jobs.map(job => ({
-        ...job,
-        createdAt: job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now())
-    }));
-    await Promise.all(jobsToStore.map(job => tx.store.put(job)));
-    await tx.done;
-  } catch (error) {
-    console.error("Failed to put jobs in IndexedDB", error);
-  }
-}
-
-/**
- * Retrieves all jobs from IndexedDB, sorted by creation date descending.
- * @returns A promise that resolves to an array of job objects.
- */
-export async function getAllJobs(): Promise<any[]> {
-  if (!dbPromise) return [];
-  try {
-    const db = await dbPromise;
-    // Use the 'createdAt' index to get jobs sorted in ascending order
-    const sortedJobs = await db.getAllFromIndex(JOB_STORE, 'createdAt');
-    // Reverse the array to get descending order (newest first)
-    return sortedJobs.reverse();
-  } catch (error) {
-    console.error("Failed to get all jobs from IndexedDB", error);
-    return [];
-  }
->>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
 }

@@ -44,15 +44,8 @@ import { JobCardSmall } from '@/components/job-card-small';
 import { JobCardBigMobile } from '@/components/job-card-big-mobile';
 import { JobCardSmallMobile } from '@/components/job-card-small-mobile';
 import { ApplicantCounter } from '@/components/applicant-counter';
-<<<<<<< HEAD
 import { getAllJobs, putJobs } from '@/lib/db';
-=======
 import { LoadMoreButton } from '@/components/load-more-button';
-import { putJobs, getAllJobs } from '@/lib/db';
-
-const JOBS_PER_PAGE = 8;
->>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
-
 
 function JobsPageContent() {
     const firestore = useFirestore();
@@ -68,9 +61,6 @@ function JobsPageContent() {
     // --- Data Fetching and Pagination State ---
     const [jobs, setJobs] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isLoadingMore, setIsLoadingMore] = useState(false);
-    const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-    const [hasMore, setHasMore] = useState(true);
 
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
@@ -80,43 +70,7 @@ function JobsPageContent() {
     const { data: userProfile } = useDoc(userProfileRef);
     const isRecruiter = userProfile?.userType === 'recruiter';
     
-<<<<<<< HEAD
-    const jobsQuery = useMemo(() => query(collection(firestore, 'jobs'), where('title', '!=', '')), [firestore]);
-    const { data: jobsFromFirestore, isLoading: areJobsLoading } = useCollection(jobsQuery);
-
-    const [jobs, setJobs] = useState<any[]>([]);
-    
-    // Effect to handle data synchronization between Firestore and IndexedDB
-    useEffect(() => {
-        // Load initial data from IndexedDB
-        getAllJobs().then(cachedJobs => {
-            if (cachedJobs.length > 0) {
-                setJobs(cachedJobs);
-            }
-        });
-    }, []);
-
-    useEffect(() => {
-        if (jobsFromFirestore) {
-            setJobs(jobsFromFirestore);
-            putJobs(jobsFromFirestore); // Update IndexedDB cache
-        }
-    }, [jobsFromFirestore]);
-    
-    const [jobCount, setJobCount] = useState<number | null>(null);
-
-    useEffect(() => {
-        if (firestore) {
-            const jobsCollection = collection(firestore, 'jobs');
-            getCountFromServer(jobsCollection).then(snapshot => {
-                setJobCount(snapshot.data().count);
-            });
-        }
-    }, [firestore]);
-=======
-    const allJobsQuery = useMemo(() => query(collection(firestore, 'jobs')), [firestore]);
-    const { data: allJobsForFilters } = useCollection(allJobsQuery);
->>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
+    const { data: allJobsForFilters, isLoading: areJobsLoading } = useCollection(useMemo(() => query(collection(firestore, 'jobs')), [firestore]));
     
     const favouriteJobsQuery = useMemo(() => (firestore && user && !isRecruiter) ? collection(firestore, `users/${user.uid}/favouriteJobs`) : null, [firestore, user, isRecruiter]);
     const { data: favouriteJobs } = useCollection(favouriteJobsQuery);
@@ -125,7 +79,6 @@ function JobsPageContent() {
     const { data: applications } = useCollection(applicationsQuery);
 
     const favouriteJobIds = useMemo(() => new Set(favouriteJobs?.map(fav => fav.id)), [favouriteJobs]);
-    const favouriteJobIdsString = useMemo(() => JSON.stringify(Array.from(favouriteJobIds)), [favouriteJobIds]);
     const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
     
     const { companyOptions, locationOptions, jobTypeOptions, maxSalary } = useMemo(() => {
@@ -162,16 +115,31 @@ function JobsPageContent() {
       parseInt(searchParams.get('salaryMax') || '150000', 10)
     ]);
     
-    // --- Stabilized Dependencies for useCallback ---
-    const selectedCompaniesStr = JSON.stringify(selectedCompanies);
-    const selectedLocationsStr = JSON.stringify(selectedLocations);
-    const selectedJobTypesStr = JSON.stringify(selectedJobTypes);
-    const salaryRangeStr = JSON.stringify(salaryRange);
-    
      // --- Dialog State ---
     const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
     const [savedSearchName, setSavedSearchName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+
+    // Effect to handle data synchronization between Firestore and IndexedDB
+    useEffect(() => {
+        setIsLoading(true);
+        // Load initial data from IndexedDB
+        getAllJobs().then(cachedJobs => {
+            if (cachedJobs.length > 0) {
+                setJobs(cachedJobs);
+            }
+            // Even if cache is empty, we are now "not loading" until Firestore check
+            setIsLoading(false);
+        });
+    }, []);
+
+    useEffect(() => {
+        if (allJobsForFilters) {
+            setJobs(allJobsForFilters);
+            putJobs(allJobsForFilters); // Update IndexedDB cache
+        }
+    }, [allJobsForFilters]);
+
 
     useEffect(() => {
         const params = new URLSearchParams();
@@ -191,7 +159,6 @@ function JobsPageContent() {
         setSalaryRange(prev => [prev[0], maxSalary]);
     }, [maxSalary]);
     
-<<<<<<< HEAD
     const handleClearFilters = () => {
         setSearchQuery('');
         setSelectedCompanies([]);
@@ -200,126 +167,6 @@ function JobsPageContent() {
         setShowFavoritesOnly(false);
         setSalaryRange([0, maxSalary]);
     };
-=======
-    const buildQuery = (startAfterDoc: QueryDocumentSnapshot<DocumentData> | null = null) => {
-        if (!firestore) return null;
->>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
-
-        let q = query(collection(firestore, 'jobs'), orderBy('createdAt', 'desc'), limit(JOBS_PER_PAGE));
-        
-        if (showFavoritesOnly && user) {
-            const favIds = JSON.parse(favouriteJobIdsString);
-            if (favIds.length > 0) {
-                q = query(q, where('__name__', 'in', favIds));
-            } else {
-                return 'empty'; // Special case to return no results
-            }
-        }
-        
-        if (startAfterDoc) {
-            q = query(q, startAfter(startAfterDoc));
-        }
-        
-        return q;
-    }
-
-    const processAndSetJobs = (newJobs: any[], loadMore: boolean) => {
-        const [minSal, maxSal] = JSON.parse(salaryRangeStr);
-        const currentSelectedCompanies = JSON.parse(selectedCompaniesStr);
-        const currentSelectedLocations = JSON.parse(selectedLocationsStr);
-        const currentSelectedJobTypes = JSON.parse(selectedJobTypesStr);
-
-        const finalJobs = newJobs.filter(job => {
-            const textMatch = searchQuery 
-                ? job.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                  job.description?.toLowerCase().includes(searchQuery.toLowerCase())
-                : true;
-            
-            const salaryMatch = (job.salaryMin || 0) >= minSal && (job.salaryMax || Infinity) <= maxSal;
-
-            const companyMatch = currentSelectedCompanies.length > 0 ? currentSelectedCompanies.includes(job.companyName) : true;
-            const locationMatch = currentSelectedLocations.length > 0 ? currentSelectedLocations.includes(job.location) : true;
-            const jobTypeMatch = currentSelectedJobTypes.length > 0 ? currentSelectedJobTypes.includes(job.jobType) : true;
-            
-            return textMatch && salaryMatch && companyMatch && locationMatch && jobTypeMatch;
-        });
-
-        if (loadMore) {
-            setJobs(prevJobs => [...prevJobs, ...finalJobs]);
-        } else {
-            setJobs(finalJobs);
-        }
-    }
-
-    const fetchJobs = useCallback(async () => {
-        setIsLoading(true);
-        setJobs([]);
-        
-        const cachedJobs = await getAllJobs();
-        if (cachedJobs.length > 0) {
-            processAndSetJobs(cachedJobs, false);
-            setIsLoading(false); 
-        }
-
-        const q = buildQuery();
-        if (!q) return;
-        if (q === 'empty') {
-            setJobs([]);
-            setHasMore(false);
-            setIsLoading(false);
-            return;
-        }
-
-        try {
-            const snapshot = await getDocs(q);
-            const newJobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-            setLastVisible(snapshot.docs[snapshot.docs.length - 1] || null);
-            setHasMore(newJobs.length === JOBS_PER_PAGE);
-            
-            await putJobs(newJobs);
-            processAndSetJobs(newJobs, false);
-        } catch (err) {
-            console.error("Error fetching jobs:", err);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch jobs.'});
-        } finally {
-            setIsLoading(false);
-        }
-    }, [
-        firestore, user, searchQuery, selectedCompaniesStr, selectedLocationsStr, 
-        selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString
-    ]);
-
-    const fetchMoreJobs = useCallback(async () => {
-        if (!hasMore || isLoadingMore) return;
-
-        setIsLoadingMore(true);
-        const q = buildQuery(lastVisible);
-        if (!q || q === 'empty') {
-            setIsLoadingMore(false);
-            return;
-        }
-
-        try {
-            const snapshot = await getDocs(q);
-            const newJobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-            setLastVisible(snapshot.docs[snapshot.docs.length - 1] || null);
-            setHasMore(newJobs.length === JOBS_PER_PAGE);
-
-            await putJobs(newJobs);
-            processAndSetJobs(newJobs, true);
-        } catch (err) {
-            console.error("Error fetching more jobs:", err);
-        } finally {
-            setIsLoadingMore(false);
-        }
-    }, [lastVisible, hasMore, isLoadingMore, firestore, user, searchQuery, selectedCompaniesStr, selectedLocationsStr, selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString]);
-
-
-    useEffect(() => {
-        fetchJobs();
-    }, [fetchJobs]);
 
     const handleToggleFavourite = async (jobId: string, isCurrentlyFavourite: boolean) => {
         if (!user || !firestore) {
@@ -388,7 +235,6 @@ function JobsPageContent() {
         });
     };
     
-<<<<<<< HEAD
     const filteredAndSortedJobs = useMemo(() => {
         if (!jobs) return [];
         
@@ -444,8 +290,6 @@ function JobsPageContent() {
     }, [jobs, user, appliedJobIds, searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, favouriteJobIds, salaryRange, maxSalary]);
 
     // --- Kanban Board Logic ---
-=======
->>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
     useEffect(() => {
         if (allJobsForFilters && user && isRecruiter) {
             const recruiterJobs = allJobsForFilters.filter(job => job.recruiterId === user.uid);
@@ -530,15 +374,8 @@ function JobsPageContent() {
     
     const KANBAN_STAGES: ('Available' | 'Closed')[] = ["Available", "Closed"];
     
-<<<<<<< HEAD
-    const isLoading = areJobsLoading || jobCount === null;
-
     if (isLoading && jobs.length === 0) { // Only show full loading state if no cached jobs are available
-        return <JobsLoading count={jobCount ?? 8} viewMode={viewMode} />;
-=======
-    if (isLoading && jobs.length === 0) {
         return <JobsLoading count={8} viewMode={viewMode} />;
->>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
     }
     
     const hasActiveFilters = 
@@ -565,7 +402,7 @@ function JobsPageContent() {
     }
 
     const renderJobs = () => {
-        if (jobs.length === 0 && !isLoading) {
+        if (filteredAndSortedJobs.length === 0 && !isLoading) {
             return (
                  <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
                     <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -582,7 +419,7 @@ function JobsPageContent() {
         if (viewMode === 'list') {
             return (
                 <div className="grid grid-cols-1 gap-4">
-                    {jobs.map((job) => (
+                    {filteredAndSortedJobs.map((job) => (
                         isMobile ? (
                             <JobCardSmallMobile
                                 key={job.id} 
@@ -608,7 +445,7 @@ function JobsPageContent() {
         }
         return (
              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
-                {jobs.map((job) => (
+                {filteredAndSortedJobs.map((job) => (
                      isMobile ? (
                         <JobCardBigMobile
                             key={job.id} 
@@ -666,11 +503,7 @@ function JobsPageContent() {
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
                                     {hasActiveFilters && (
-<<<<<<< HEAD
                                         <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground" onClick={handleClearFilters}>
-=======
-                                        <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground" onClick={() => { setSearchQuery('')}}>
->>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
                                             <X className="h-4 w-4" />
                                         </Button>
                                     )}
@@ -798,17 +631,9 @@ function JobsPageContent() {
                      )}
                 </div>
                 
-                {viewMode !== 'board' && (
-                    <div className="space-y-6">
-                        {renderJobs()}
-                        {hasMore && !isLoading && (
-                            <div className="flex justify-center">
-                                <LoadMoreButton onClick={fetchMoreJobs} isLoading={isLoadingMore} />
-                            </div>
-                        )}
-                        {isLoadingMore && <div className="text-center text-muted-foreground">Loading...</div>}
-                    </div>
-                )}
+                <div className="space-y-6">
+                    {renderJobs()}
+                </div>
 
                 {viewMode === 'board' && isRecruiter && (
                     <DndContext sensors={sensors} onDragStart={handleJobDragStart} onDragEnd={handleJobDragEnd}>
@@ -855,5 +680,3 @@ export default function JobsPage() {
         </Suspense>
     )
 }
-
-    
