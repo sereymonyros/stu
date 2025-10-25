@@ -34,7 +34,11 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { BackButton } from '@/components/back-button';
+<<<<<<< HEAD
 import { putJob } from '@/lib/db';
+=======
+import { putJobs } from '@/lib/db';
+>>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -117,6 +121,7 @@ export default function NewJobPage() {
     };
 
     const jobsCol = collection(firestore, 'jobs');
+<<<<<<< HEAD
     
     try {
         const docRef = await addDoc(jobsCol, jobData);
@@ -140,6 +145,30 @@ export default function NewJobPage() {
             })
         );
         setIsSubmitting(false);
+=======
+    try {
+        const docRef = await addDoc(jobsCol, jobData);
+        
+        // After successful Firestore write, update IndexedDB
+        // We use a client-side version of the object for the cache.
+        const jobForCache = {
+            ...jobData,
+            id: docRef.id,
+            createdAt: new Date(), // Use current date for cache
+        };
+        await putJobs([jobForCache]);
+
+        router.push('/jobs');
+    } catch (serverError) {
+        errorEmitter.emit(
+            'permission-error',
+            new FirestorePermissionError({
+                path: jobsCol.path,
+                operation: 'create',
+                requestResourceData: jobData,
+            })
+        );
+>>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
     }
   };
 

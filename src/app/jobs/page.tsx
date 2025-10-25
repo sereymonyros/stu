@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useMemo, useState, useEffect, Suspense, useRef } from 'react';
+import { useMemo, useState, useEffect, Suspense, useCallback } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where, getCountFromServer } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where, limit, startAfter, getDocs, orderBy, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -37,14 +37,21 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { MultiSelect, type MultiSelectOption } from '@/components/ui/multi-select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { JobCardBig } from '@/components/job-card-big';
 import { JobCardSmall } from '@/components/job-card-small';
 import { JobCardBigMobile } from '@/components/job-card-big-mobile';
 import { JobCardSmallMobile } from '@/components/job-card-small-mobile';
 import { ApplicantCounter } from '@/components/applicant-counter';
+<<<<<<< HEAD
 import { getAllJobs, putJobs } from '@/lib/db';
+=======
+import { LoadMoreButton } from '@/components/load-more-button';
+import { putJobs, getAllJobs } from '@/lib/db';
+
+const JOBS_PER_PAGE = 8;
+>>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
 
 
 function JobsPageContent() {
@@ -55,20 +62,25 @@ function JobsPageContent() {
     const { toast } = useToast();
     const isMobile = useIsMobile();
     
-    // --- Filter Panel State & Ref ---
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
-    
     // --- View State ---
     const [viewMode, setViewMode] = useState<'list' | 'card' |'board'>('list');
     
+    // --- Data Fetching and Pagination State ---
+    const [jobs, setJobs] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+    const [hasMore, setHasMore] = useState(true);
+
     // --- Data for Kanban Board state ---
     const [jobsByStatus, setJobsByStatus] = useState<Record<string, any[]>>({});
 
-    // --- Data Fetching ---
+    // --- User & Filter Data ---
     const userProfileRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
     const { data: userProfile } = useDoc(userProfileRef);
     const isRecruiter = userProfile?.userType === 'recruiter';
     
+<<<<<<< HEAD
     const jobsQuery = useMemo(() => query(collection(firestore, 'jobs'), where('title', '!=', '')), [firestore]);
     const { data: jobsFromFirestore, isLoading: areJobsLoading } = useCollection(jobsQuery);
 
@@ -101,6 +113,10 @@ function JobsPageContent() {
             });
         }
     }, [firestore]);
+=======
+    const allJobsQuery = useMemo(() => query(collection(firestore, 'jobs')), [firestore]);
+    const { data: allJobsForFilters } = useCollection(allJobsQuery);
+>>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
     
     const favouriteJobsQuery = useMemo(() => (firestore && user && !isRecruiter) ? collection(firestore, `users/${user.uid}/favouriteJobs`) : null, [firestore, user, isRecruiter]);
     const { data: favouriteJobs } = useCollection(favouriteJobsQuery);
@@ -108,14 +124,17 @@ function JobsPageContent() {
     const applicationsQuery = useMemo(() => (firestore && user && !isRecruiter) ? query(collection(firestore, `users/${user.uid}/applications`)) : null, [firestore, user, isRecruiter]);
     const { data: applications } = useCollection(applicationsQuery);
 
-    // --- Derived State ---
+    const favouriteJobIds = useMemo(() => new Set(favouriteJobs?.map(fav => fav.id)), [favouriteJobs]);
+    const favouriteJobIdsString = useMemo(() => JSON.stringify(Array.from(favouriteJobIds)), [favouriteJobIds]);
+    const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
+    
     const { companyOptions, locationOptions, jobTypeOptions, maxSalary } = useMemo(() => {
-        if (!jobs) return { companyOptions: [], locationOptions: [], jobTypeOptions: [], maxSalary: 150000 };
+        if (!allJobsForFilters) return { companyOptions: [], locationOptions: [], jobTypeOptions: [], maxSalary: 150000 };
         const companies = new Set<string>();
         const locs = new Set<string>();
         const types = new Set<string>();
         let maxSal = 0;
-        jobs.forEach(job => {
+        allJobsForFilters.forEach(job => {
             if (job.companyName) companies.add(job.companyName);
             if (job.location) locs.add(job.location);
             if (job.jobType) types.add(job.jobType);
@@ -128,54 +147,51 @@ function JobsPageContent() {
             jobTypeOptions: Array.from(types).sort().map(t => ({ value: t, label: t })),
             maxSalary: finalMaxSalary,
         };
-    }, [jobs]);
+    }, [allJobsForFilters]);
 
-    const favouriteJobIds = useMemo(() => new Set(favouriteJobs?.map(fav => fav.jobId)), [favouriteJobs]);
-    const appliedJobIds = useMemo(() => new Set(applications?.map(app => app.jobId)), [applications]);
-    
+
     // --- Search & Filter State ---
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
     const [selectedCompanies, setSelectedCompanies] = useState<string[]>(searchParams.getAll('company'));
     const [selectedLocations, setSelectedLocations] = useState<string[]>(searchParams.getAll('location'));
     const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>(searchParams.getAll('jobType'));
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(searchParams.get('favorites') === 'true');
-    const [salaryRange, setSalaryRange] = useState<[number, number]>([0, maxSalary]);
-
-    // --- Dialog State ---
+    const [salaryRange, setSalaryRange] = useState<[number, number]>([
+      parseInt(searchParams.get('salaryMin') || '0', 10),
+      parseInt(searchParams.get('salaryMax') || '150000', 10)
+    ]);
+    
+    // --- Stabilized Dependencies for useCallback ---
+    const selectedCompaniesStr = JSON.stringify(selectedCompanies);
+    const selectedLocationsStr = JSON.stringify(selectedLocations);
+    const selectedJobTypesStr = JSON.stringify(selectedJobTypes);
+    const salaryRangeStr = JSON.stringify(salaryRange);
+    
+     // --- Dialog State ---
     const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
     const [savedSearchName, setSavedSearchName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-    
-    useEffect(() => {
-        const min = searchParams.get('salaryMin');
-        const max = searchParams.get('salaryMax');
-        const initialMin = min ? parseInt(min, 10) : 0;
-        const initialMax = max ? parseInt(max, 10) : maxSalary;
-        setSalaryRange([initialMin, initialMax]);
-    }, [maxSalary, searchParams]);
 
-    // This effect SYNCS the URL with the state.
     useEffect(() => {
         const params = new URLSearchParams();
-        
         if (searchQuery) params.set('q', searchQuery);
         if (showFavoritesOnly) params.set('favorites', 'true');
         if (salaryRange[0] > 0) params.set('salaryMin', salaryRange[0].toString());
         if (salaryRange[1] < maxSalary) params.set('salaryMax', salaryRange[1].toString());
-        
         selectedCompanies.forEach(c => params.append('company', c));
         selectedLocations.forEach(l => params.append('location', l));
         selectedJobTypes.forEach(t => params.append('jobType', t));
         
-        // Using router.replace to update the URL without adding to history
+        // Use replace to avoid adding to browser history on every filter change
         router.replace(`/jobs?${params.toString()}`, { scroll: false });
     }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, salaryRange, maxSalary, router]);
 
-    // --- Toggle Handlers ---
-    const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
-        setter(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
-    };
+    useEffect(() => {
+        setSalaryRange(prev => [prev[0], maxSalary]);
+    }, [maxSalary]);
     
+<<<<<<< HEAD
     const handleClearFilters = () => {
         setSearchQuery('');
         setSelectedCompanies([]);
@@ -184,16 +200,127 @@ function JobsPageContent() {
         setShowFavoritesOnly(false);
         setSalaryRange([0, maxSalary]);
     };
+=======
+    const buildQuery = (startAfterDoc: QueryDocumentSnapshot<DocumentData> | null = null) => {
+        if (!firestore) return null;
+>>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
 
-    const hasActiveFilters = 
-      searchQuery !== '' ||
-      selectedCompanies.length > 0 ||
-      selectedLocations.length > 0 ||
-      selectedJobTypes.length > 0 ||
-      showFavoritesOnly ||
-      (salaryRange[0] > 0 || salaryRange[1] < maxSalary);
+        let q = query(collection(firestore, 'jobs'), orderBy('createdAt', 'desc'), limit(JOBS_PER_PAGE));
+        
+        if (showFavoritesOnly && user) {
+            const favIds = JSON.parse(favouriteJobIdsString);
+            if (favIds.length > 0) {
+                q = query(q, where('__name__', 'in', favIds));
+            } else {
+                return 'empty'; // Special case to return no results
+            }
+        }
+        
+        if (startAfterDoc) {
+            q = query(q, startAfter(startAfterDoc));
+        }
+        
+        return q;
+    }
 
-    // --- Toggle Favourite ---
+    const processAndSetJobs = (newJobs: any[], loadMore: boolean) => {
+        const [minSal, maxSal] = JSON.parse(salaryRangeStr);
+        const currentSelectedCompanies = JSON.parse(selectedCompaniesStr);
+        const currentSelectedLocations = JSON.parse(selectedLocationsStr);
+        const currentSelectedJobTypes = JSON.parse(selectedJobTypesStr);
+
+        const finalJobs = newJobs.filter(job => {
+            const textMatch = searchQuery 
+                ? job.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                  job.description?.toLowerCase().includes(searchQuery.toLowerCase())
+                : true;
+            
+            const salaryMatch = (job.salaryMin || 0) >= minSal && (job.salaryMax || Infinity) <= maxSal;
+
+            const companyMatch = currentSelectedCompanies.length > 0 ? currentSelectedCompanies.includes(job.companyName) : true;
+            const locationMatch = currentSelectedLocations.length > 0 ? currentSelectedLocations.includes(job.location) : true;
+            const jobTypeMatch = currentSelectedJobTypes.length > 0 ? currentSelectedJobTypes.includes(job.jobType) : true;
+            
+            return textMatch && salaryMatch && companyMatch && locationMatch && jobTypeMatch;
+        });
+
+        if (loadMore) {
+            setJobs(prevJobs => [...prevJobs, ...finalJobs]);
+        } else {
+            setJobs(finalJobs);
+        }
+    }
+
+    const fetchJobs = useCallback(async () => {
+        setIsLoading(true);
+        setJobs([]);
+        
+        const cachedJobs = await getAllJobs();
+        if (cachedJobs.length > 0) {
+            processAndSetJobs(cachedJobs, false);
+            setIsLoading(false); 
+        }
+
+        const q = buildQuery();
+        if (!q) return;
+        if (q === 'empty') {
+            setJobs([]);
+            setHasMore(false);
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const snapshot = await getDocs(q);
+            const newJobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            setLastVisible(snapshot.docs[snapshot.docs.length - 1] || null);
+            setHasMore(newJobs.length === JOBS_PER_PAGE);
+            
+            await putJobs(newJobs);
+            processAndSetJobs(newJobs, false);
+        } catch (err) {
+            console.error("Error fetching jobs:", err);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch jobs.'});
+        } finally {
+            setIsLoading(false);
+        }
+    }, [
+        firestore, user, searchQuery, selectedCompaniesStr, selectedLocationsStr, 
+        selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString
+    ]);
+
+    const fetchMoreJobs = useCallback(async () => {
+        if (!hasMore || isLoadingMore) return;
+
+        setIsLoadingMore(true);
+        const q = buildQuery(lastVisible);
+        if (!q || q === 'empty') {
+            setIsLoadingMore(false);
+            return;
+        }
+
+        try {
+            const snapshot = await getDocs(q);
+            const newJobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            setLastVisible(snapshot.docs[snapshot.docs.length - 1] || null);
+            setHasMore(newJobs.length === JOBS_PER_PAGE);
+
+            await putJobs(newJobs);
+            processAndSetJobs(newJobs, true);
+        } catch (err) {
+            console.error("Error fetching more jobs:", err);
+        } finally {
+            setIsLoadingMore(false);
+        }
+    }, [lastVisible, hasMore, isLoadingMore, firestore, user, searchQuery, selectedCompaniesStr, selectedLocationsStr, selectedJobTypesStr, showFavoritesOnly, salaryRangeStr, maxSalary, favouriteJobIdsString]);
+
+
+    useEffect(() => {
+        fetchJobs();
+    }, [fetchJobs]);
+
     const handleToggleFavourite = async (jobId: string, isCurrentlyFavourite: boolean) => {
         if (!user || !firestore) {
             router.push('/login');
@@ -222,7 +349,6 @@ function JobsPageContent() {
         }
     };
 
-    // --- Save Search Handler ---
     const handleSaveSearch = async () => {
         if (!user || !firestore || !savedSearchName.trim()) {
             toast({ variant: 'destructive', title: "Cannot save", description: "Please provide a name for your search."});
@@ -262,6 +388,7 @@ function JobsPageContent() {
         });
     };
     
+<<<<<<< HEAD
     const filteredAndSortedJobs = useMemo(() => {
         if (!jobs) return [];
         
@@ -317,9 +444,11 @@ function JobsPageContent() {
     }, [jobs, user, appliedJobIds, searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, showFavoritesOnly, favouriteJobIds, salaryRange, maxSalary]);
 
     // --- Kanban Board Logic ---
+=======
+>>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
     useEffect(() => {
-        if (jobs && user && isRecruiter) {
-            const recruiterJobs = jobs.filter(job => job.recruiterId === user.uid);
+        if (allJobsForFilters && user && isRecruiter) {
+            const recruiterJobs = allJobsForFilters.filter(job => job.recruiterId === user.uid);
             const grouped = recruiterJobs.reduce((acc, job) => {
                 const status = job.status || 'Available';
                 if (!acc[status]) {
@@ -330,7 +459,7 @@ function JobsPageContent() {
             }, {} as Record<string, any[]>);
             setJobsByStatus(grouped);
         }
-    }, [jobs, user, isRecruiter]);
+    }, [allJobsForFilters, user, isRecruiter]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -378,6 +507,8 @@ function JobsPageContent() {
             return;
         }
 
+        const originalJobsByStatus = jobsByStatus;
+
         setJobsByStatus((prev) => {
             const newBoardState = { ...prev };
             newBoardState[oldStatus!] = newBoardState[oldStatus!].filter(j => j.id !== jobId);
@@ -387,29 +518,38 @@ function JobsPageContent() {
         
         try {
             await updateJobStatus({ jobId, newStatus: newStatus as any });
+            // After a successful server update, also update the IndexedDB cache.
+            const jobForCache = { ...movedJob, status: newStatus };
+            await putJobs([jobForCache]);
         } catch (error: any) {
             console.error("Failed to update job status:", error);
-            
-             setJobsByStatus((prev) => {
-                 const revertedState = { ...prev };
-                 revertedState[newStatus] = revertedState[newStatus]?.filter(j => j.id !== jobId);
-                 if (movedJob && !revertedState[oldStatus!]?.find(j => j.id === jobId)) {
-                     revertedState[oldStatus!].push(movedJob);
-                 }
-                 return revertedState;
-             });
+            setJobsByStatus(originalJobsByStatus); // Revert UI on failure
+            toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update job status.'});
         }
     };
     
     const KANBAN_STAGES: ('Available' | 'Closed')[] = ["Available", "Closed"];
     
+<<<<<<< HEAD
     const isLoading = areJobsLoading || jobCount === null;
 
     if (isLoading && jobs.length === 0) { // Only show full loading state if no cached jobs are available
         return <JobsLoading count={jobCount ?? 8} viewMode={viewMode} />;
+=======
+    if (isLoading && jobs.length === 0) {
+        return <JobsLoading count={8} viewMode={viewMode} />;
+>>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
     }
     
-    if (!jobs) {
+    const hasActiveFilters = 
+      searchQuery !== '' ||
+      selectedCompanies.length > 0 ||
+      selectedLocations.length > 0 ||
+      selectedJobTypes.length > 0 ||
+      showFavoritesOnly ||
+      (salaryRange[0] > 0 || salaryRange[1] < maxSalary);
+    
+    if (jobs.length === 0 && !isLoading && !hasActiveFilters && !allJobsForFilters) {
         return (
             <main className="flex-1 p-4 md:p-6 lg:p-8">
                  <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
@@ -418,15 +558,14 @@ function JobsPageContent() {
                         <h2 className="text-2xl font-semibold tracking-tight">No jobs posted yet</h2>
                         <p className="text-muted-foreground mt-2">Check back soon for new opportunities!</p>
                     </div>
+                     {isRecruiter && <Button asChild className="mt-4"><Link href="/jobs/new">Post a Job</Link></Button>}
                 </div>
             </main>
         )
     }
 
     const renderJobs = () => {
-        const jobsToRender = filteredAndSortedJobs;
-
-        if (jobsToRender.length === 0) {
+        if (jobs.length === 0 && !isLoading) {
             return (
                  <div className="text-center py-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-4">
                     <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -439,11 +578,11 @@ function JobsPageContent() {
                 </div>
             )
         }
-
+        
         if (viewMode === 'list') {
             return (
                 <div className="grid grid-cols-1 gap-4">
-                    {jobsToRender.map((job) => (
+                    {jobs.map((job) => (
                         isMobile ? (
                             <JobCardSmallMobile
                                 key={job.id} 
@@ -468,8 +607,8 @@ function JobsPageContent() {
             )
         }
         return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
-                {jobsToRender.map((job) => (
+             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
+                {jobs.map((job) => (
                      isMobile ? (
                         <JobCardBigMobile
                             key={job.id} 
@@ -499,6 +638,18 @@ function JobsPageContent() {
             <main className="flex-1 p-4 lg:p-8">
                  <div className="flex items-center justify-between mb-6">
                     <h1 className="text-3xl font-bold tracking-tight">Job Board</h1>
+                     {isRecruiter && (
+                         <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button asChild variant="default" size="sm" className="flex items-center gap-2">
+                                        <Link href="/jobs/new"><Plus className="h-4 w-4" /> New Job</Link>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Post a New Job</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
                 </div>
 
                 <div className="mb-6 space-y-4">
@@ -509,13 +660,17 @@ function JobsPageContent() {
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
                                         type="search"
-                                        placeholder="Search by title..."
+                                        placeholder="Search by title, description..."
                                         className="pl-10 h-10 w-full"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
                                     {hasActiveFilters && (
+<<<<<<< HEAD
                                         <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground" onClick={handleClearFilters}>
+=======
+                                        <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground" onClick={() => { setSearchQuery('')}}>
+>>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
                                             <X className="h-4 w-4" />
                                         </Button>
                                     )}
@@ -537,25 +692,25 @@ function JobsPageContent() {
 
                             <CollapsibleContent>
                                 <Card className="p-4 rounded-3xl mt-2">
-                                    <div className="w-9/10 mx-auto">
+                                    <div className="w-full mx-auto">
                                         <div className="grid gap-4">
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                 <MultiSelect
                                                     options={companyOptions}
                                                     selectedValues={selectedCompanies}
-                                                    onValueChange={(val) => toggleFilter(setSelectedCompanies, val)}
+                                                    onValueChange={(val) => setSelectedCompanies(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val])}
                                                     placeholder="Filter companies..."
                                                 />
                                                 <MultiSelect
                                                     options={locationOptions}
                                                     selectedValues={selectedLocations}
-                                                    onValueChange={(val) => toggleFilter(setSelectedLocations, val)}
+                                                    onValueChange={(val) => setSelectedLocations(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val])}
                                                     placeholder="Filter locations..."
                                                 />
                                                 <MultiSelect
                                                     options={jobTypeOptions}
                                                     selectedValues={selectedJobTypes}
-                                                    onValueChange={(val) => toggleFilter(setSelectedJobTypes, val)}
+                                                    onValueChange={(val) => setSelectedJobTypes(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val])}
                                                     placeholder="Filter job types..."
                                                 />
                                             </div>
@@ -646,6 +801,12 @@ function JobsPageContent() {
                 {viewMode !== 'board' && (
                     <div className="space-y-6">
                         {renderJobs()}
+                        {hasMore && !isLoading && (
+                            <div className="flex justify-center">
+                                <LoadMoreButton onClick={fetchMoreJobs} isLoading={isLoadingMore} />
+                            </div>
+                        )}
+                        {isLoadingMore && <div className="text-center text-muted-foreground">Loading...</div>}
                     </div>
                 )}
 
@@ -661,7 +822,7 @@ function JobsPageContent() {
                                         title={stage}
                                         items={stageJobs}
                                         type="jobs"
-                                        isLoading={!jobs} // Kanban uses its own loading prop
+                                        isLoading={!allJobsForFilters}
                                     >
                                         {stageJobs.map((job: any) => (
                                             <Board.JobCard
@@ -688,21 +849,11 @@ function JobsPageContent() {
 
 
 export default function JobsPage() {
-    const firestore = useFirestore();
-    const [jobCount, setJobCount] = useState<number | null>(null);
-
-    useEffect(() => {
-        if (firestore) {
-            const jobsCollection = collection(firestore, 'jobs');
-            getCountFromServer(jobsCollection).then(snapshot => {
-                setJobCount(snapshot.data().count);
-            });
-        }
-    }, [firestore]);
-    
     return (
-        <Suspense fallback={<JobsLoading count={jobCount ?? 8} />}>
+        <Suspense fallback={<JobsLoading />}>
             <JobsPageContent />
         </Suspense>
     )
 }
+
+    
