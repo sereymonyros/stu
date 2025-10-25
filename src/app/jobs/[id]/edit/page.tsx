@@ -36,11 +36,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { ArrowLeft } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BackButton } from '@/components/back-button';
-<<<<<<< HEAD
 import { putJob } from '@/lib/db';
-=======
-import { putJobs } from '@/lib/db';
->>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -142,7 +138,6 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         await updateDoc(jobRef, dataToUpdate);
 
         // After successful Firestore update, update IndexedDB
-<<<<<<< HEAD
         const updatedJobForCache = {
             ...job, // Original job data
             ...dataToUpdate, // Overwrite with new values
@@ -150,33 +145,17 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
             updatedAt: new Date(), // Use current date for sorting
         };
         await putJob(updatedJobForCache);
-=======
-        const jobForCache = {
-            ...job, // Original job data
-            ...dataToUpdate, // Apply the updates
-            id: finalJobId,
-            updatedAt: new Date(), // Use current date for cache
-        };
-        await putJobs([jobForCache]);
->>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
 
         toast({
             title: "Job updated!",
             description: "Your job posting has been successfully updated.",
         });
 
-<<<<<<< HEAD
         refetchJob(); // Refetch to get server timestamp
         router.push(`/jobs`);
 
     } catch (serverError: any) {
         errorEmitter.emit(
-=======
-        router.push(`/jobs`);
-
-    } catch (serverError) {
-         errorEmitter.emit(
->>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
           'permission-error',
           new FirestorePermissionError({
             path: jobRef.path,
@@ -184,10 +163,6 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
             requestResourceData: dataToUpdate,
           })
         );
-<<<<<<< HEAD
-=======
-    } finally {
->>>>>>> 1d14c9b6fcb72b301a533835edc3d43a6266207c
         setIsSubmitting(false);
     }
   };

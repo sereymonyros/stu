@@ -35,6 +35,7 @@ export async function putJobs(jobs: any[]) {
         const tx = db.transaction(JOBS_STORE, 'readwrite');
         const jobsToStore = jobs.map(job => ({
             ...job,
+            // Convert Firestore Timestamps to JS Date objects for IndexedDB
             createdAt: job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now())
         }));
         await Promise.all(jobsToStore.map(job => tx.store.put(job)));
@@ -50,6 +51,7 @@ export async function putJob(job: any) {
         const db = await dbPromise;
         const jobToStore = {
             ...job,
+            // Convert Firestore Timestamps to JS Date objects for IndexedDB
             createdAt: job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now())
         };
         await db.put(JOBS_STORE, jobToStore);

@@ -3,7 +3,7 @@
 
 import { useMemo, useState, useEffect, Suspense, useCallback } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where, limit, startAfter, getDocs, orderBy, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -45,7 +45,6 @@ import { JobCardBigMobile } from '@/components/job-card-big-mobile';
 import { JobCardSmallMobile } from '@/components/job-card-small-mobile';
 import { ApplicantCounter } from '@/components/applicant-counter';
 import { getAllJobs, putJobs } from '@/lib/db';
-import { LoadMoreButton } from '@/components/load-more-button';
 
 function JobsPageContent() {
     const firestore = useFirestore();
@@ -123,7 +122,7 @@ function JobsPageContent() {
     // Effect to handle data synchronization between Firestore and IndexedDB
     useEffect(() => {
         setIsLoading(true);
-        // Load initial data from IndexedDB
+        // Step 1: Load initial data from IndexedDB
         getAllJobs().then(cachedJobs => {
             if (cachedJobs.length > 0) {
                 setJobs(cachedJobs);
@@ -134,6 +133,7 @@ function JobsPageContent() {
     }, []);
 
     useEffect(() => {
+        // Step 2: When Firestore data arrives, update the state and cache
         if (allJobsForFilters) {
             setJobs(allJobsForFilters);
             putJobs(allJobsForFilters); // Update IndexedDB cache
