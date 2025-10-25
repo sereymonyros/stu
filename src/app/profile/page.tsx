@@ -21,7 +21,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useAuth, useFirestore, useUser, useDoc } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
-import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useMemo, useState, useRef } from 'react';
@@ -37,6 +36,7 @@ import { verifyHumanFace } from '@/ai/flows/verify-human-face-flow';
 import { uploadResume } from '@/ai/flows/upload-resume-flow';
 import { updateResumeOnApplications } from '@/ai/flows/update-resume-on-applications-flow';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { uploadFile } from '@/ai/flows/upload-file-flow';
 
 // Helper function to convert a File to a Base64 data URI
 const toBase64 = (file: File): Promise<string> =>
@@ -163,30 +163,6 @@ export default function ProfilePage() {
     }
   };
 
-  const uploadFileWithProgress = (file: File, path: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const storage = getStorage();
-        const fileRef = storageRef(storage, path);
-        const uploadTask = uploadBytesResumable(fileRef, file);
-
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploadProgress(progress);
-            },
-            (error) => {
-                setUploadProgress(null);
-                reject(error);
-            },
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                setUploadProgress(null);
-                resolve(downloadURL);
-            }
-        );
-    });
-};
-
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     setIsSubmitting(true);
     setVerificationMessage(null); // Clear verification message on submit
@@ -212,7 +188,14 @@ export default function ProfilePage() {
           return;
         }
         setVerificationMessage('Uploading...');
-        photoURL = await uploadFileWithProgress(imageFile, `profiles/${auth.currentUser.uid}/${imageFile.name}`);
+        setUploadProgress(0); // Show progress bar
+        const uploadResult = await uploadFile({
+          fileDataUri: dataUri,
+          fileName: imageFile.name,
+          path: `profiles/${auth.currentUser.uid}`
+        });
+        photoURL = uploadResult.downloadUrl;
+        setUploadProgress(100);
       }
       
       let resumeUrl = userProfile?.resumeUrl;
