@@ -135,8 +135,8 @@ export function Chatbot() {
 
   const ChatWindow = (
      <div className="flex flex-col h-full">
-        <ScrollArea className="flex-1" ref={scrollAreaRef}>
-            <div className="p-4 space-y-4">
+        <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+            <div className="space-y-4">
                 {messages.length === 0 && (
                     <div className="text-center py-8">
                         <div className="inline-block p-3 bg-primary/10 rounded-full mb-4">
@@ -216,7 +216,7 @@ export function Chatbot() {
 
   return (
       <Dialog open={isOpen} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl h-[70vh] flex flex-col p-0 gap-0 rounded-3xl shadow-2xl">
+        <DialogContent className="max-w-2xl h-[70vh] flex flex-col gap-0 rounded-3xl shadow-2xl p-0">
            <DialogHeader className="p-4 border-b">
                 <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> Cambodia Hub Helper</DialogTitle>
             </DialogHeader>
