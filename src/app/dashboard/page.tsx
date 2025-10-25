@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useMemo, useEffect, useState, useCallback } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import { collection, query, where, doc, deleteDoc, getDocs, limit, startAfter, orderBy, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { collection, query, where, doc, deleteDoc, getDocs, orderBy, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -18,10 +18,7 @@ import { findJobMatches } from '@/ai/flows/find-job-matches-flow';
 import { JobCardBig } from '@/components/job-card-big';
 import { setDoc, serverTimestamp } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
-import { LoadMoreButton } from '@/components/load-more-button';
-
-const JOBS_PER_PAGE = 8;
-
+import DashboardLoading from './loading';
 
 function SavedSearchCard({ savedSearch, onExecute, onDelete, isDeleting, onNotify, isNotifying }: { savedSearch: any, onExecute: (search: any) => void, onDelete: (searchId: string) => void, isDeleting: boolean, onNotify: (searchId: string) => void, isNotifying: boolean }) {
     const { name, searchQuery, filters = {} } = savedSearch;
@@ -71,164 +68,70 @@ export default function DashboardPage() {
         if (!firestore || !user) return null;
         return doc(firestore, 'users', user.uid);
     }, [firestore, user]);
-    const { data: userProfile } = useDoc(userProfileRef);
+    const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
     const isRecruiter = userProfile?.userType === 'recruiter';
     const isStandardUser = userProfile?.userType === 'standard';
 
-    // --- State for Data, Loading, and Pagination ---
-    const [postedJobs, setPostedJobs] = useState<any[]>([]);
+    // --- Data Fetching for Recruiter ---
+    const postedJobsQuery = useMemo(() => (firestore && user && isRecruiter) ? query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid)) : null, [firestore, user, isRecruiter]);
+    const { data: postedJobs, isLoading: isLoadingPosted } = useCollection(postedJobsQuery);
+    
+    // --- Data Fetching for Standard User ---
+    const applicationsQuery = useMemo(() => (firestore && user && isStandardUser) ? collection(firestore, `users/${user.uid}/applications`) : null, [firestore, user, isStandardUser]);
+    const { data: appliedJobRefs } = useCollection(applicationsQuery);
+    const appliedJobIds = useMemo(() => appliedJobRefs?.map(ref => ref.jobId) || [], [appliedJobRefs]);
+    
+    const favouriteJobsQuery = useMemo(() => (firestore && user && isStandardUser) ? collection(firestore, `users/${user.uid}/favouriteJobs`) : null, [firestore, user, isStandardUser]);
+    const { data: favouriteJobRefs } = useCollection(favouriteJobsQuery);
+    const favouriteJobIds = useMemo(() => favouriteJobRefs?.map(ref => ref.jobId) || [], [favouriteJobRefs]);
+    
     const [appliedJobs, setAppliedJobs] = useState<any[]>([]);
     const [favouriteJobs, setFavouriteJobs] = useState<any[]>([]);
-    const [savedSearches, setSavedSearches] = useState<any[]>([]);
-
-    const [isLoadingPosted, setIsLoadingPosted] = useState(true);
     const [isLoadingApplied, setIsLoadingApplied] = useState(true);
     const [isLoadingFavourites, setIsLoadingFavourites] = useState(true);
-    const [isLoadingMorePosted, setIsLoadingMorePosted] = useState(false);
-    const [isLoadingMoreApplied, setIsLoadingMoreApplied] = useState(false);
-    const [isLoadingMoreFavourites, setIsLoadingMoreFavourites] = useState(false);
 
-    const [lastPosted, setLastPosted] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-    const [lastAppliedRef, setLastAppliedRef] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-    const [lastFavouriteRef, setLastFavouriteRef] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-
-    const [hasMorePosted, setHasMorePosted] = useState(true);
-    const [hasMoreApplied, setHasMoreApplied] = useState(true);
-    const [hasMoreFavourites, setHasMoreFavourites] = useState(true);
-    
-    // Simple collection fetches that don't need pagination
     const { data: savedSearchesData } = useCollection(useMemo(() => (firestore && user && isStandardUser) ? collection(firestore, `users/${user.uid}/savedSearches`) : null, [firestore, user, isStandardUser]));
-    const { data: favouriteJobRefs } = useCollection(useMemo(() => (firestore && user && isStandardUser) ? collection(firestore, `users/${user.uid}/favouriteJobs`) : null, [firestore, user, isStandardUser]));
-    const favouriteJobIdsSet = useMemo(() => new Set(favouriteJobRefs?.map(fav => fav.jobId) || []), [favouriteJobRefs]);
 
 
     useEffect(() => {
         if (!user) router.replace('/login');
     }, [user, router]);
     
+
+    // Fetch full job objects for applied jobs
     useEffect(() => {
-        if (savedSearchesData) setSavedSearches(savedSearchesData);
-    }, [savedSearchesData]);
-
-    // --- Data Fetching Callbacks ---
-    const fetchPostedJobs = useCallback(async (loadMore = false) => {
-        if (!user || !isRecruiter) return;
-        if (loadMore && !hasMorePosted) return;
-
-        if (loadMore) setIsLoadingMorePosted(true);
-        else setIsLoadingPosted(true);
-        
-        let q = query(
-            collection(firestore, 'jobs'), 
-            where('recruiterId', '==', user.uid), 
-            limit(JOBS_PER_PAGE)
-        );
-
-        if (loadMore && lastPosted) {
-            q = query(q, startAfter(lastPosted));
-        }
-
-        const snapshot = await getDocs(q);
-        const newJobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        setLastPosted(snapshot.docs[snapshot.docs.length - 1] || null);
-        setHasMorePosted(newJobs.length === JOBS_PER_PAGE);
-        
-        setPostedJobs(prev => loadMore ? [...prev, ...newJobs] : newJobs);
-
-        setIsLoadingPosted(false);
-        setIsLoadingMorePosted(false);
-    }, [user, isRecruiter, firestore, hasMorePosted, lastPosted]);
-
-    const fetchAppliedJobs = useCallback(async (loadMore = false) => {
-        if (!user || !isStandardUser) return;
-        if (loadMore && !hasMoreApplied) return;
-
-        if (loadMore) setIsLoadingMoreApplied(true);
-        else setIsLoadingApplied(true);
-
-        // 1. Fetch references from the user's subcollection
-        let refQuery = query(collection(firestore, `users/${user.uid}/applications`), orderBy('appliedAt', 'desc'), limit(JOBS_PER_PAGE));
-        if (loadMore && lastAppliedRef) {
-            refQuery = query(refQuery, startAfter(lastAppliedRef));
-        }
-
-        const refSnapshot = await getDocs(refQuery);
-        const newRefs = refSnapshot.docs;
-        const jobIds = newRefs.map(refDoc => refDoc.id);
-
-        setLastAppliedRef(newRefs[newRefs.length - 1] || null);
-        setHasMoreApplied(newRefs.length === JOBS_PER_PAGE);
-
-        if (jobIds.length === 0) {
+        if (appliedJobIds.length === 0 && isStandardUser) {
+            setAppliedJobs([]);
             setIsLoadingApplied(false);
-            setIsLoadingMoreApplied(false);
-            if (!loadMore) setAppliedJobs([]);
             return;
         }
-
-        // 2. Fetch the actual job documents
-        const jobsQuery = query(collection(firestore, 'jobs'), where('__name__', 'in', jobIds));
-        const jobsSnapshot = await getDocs(jobsQuery);
-        const jobsById = new Map(jobsSnapshot.docs.map(doc => [doc.id, { id: doc.id, ...doc.data() }]));
-        
-        // Preserve the order from the reference query
-        const newJobs = jobIds.map(id => jobsById.get(id)).filter(Boolean);
-
-        setAppliedJobs(prev => loadMore ? [...prev, ...newJobs] : newJobs);
-        setIsLoadingApplied(false);
-        setIsLoadingMoreApplied(false);
-    }, [user, isStandardUser, firestore, hasMoreApplied, lastAppliedRef]);
-    
-    const fetchFavouriteJobs = useCallback(async (loadMore = false) => {
-        if (!user || !isStandardUser) return;
-        if (loadMore && !hasMoreFavourites) return;
-
-        if (loadMore) setIsLoadingMoreFavourites(true);
-        else setIsLoadingFavourites(true);
-
-        let refQuery = query(collection(firestore, `users/${user.uid}/favouriteJobs`), orderBy('favouritedAt', 'desc'), limit(JOBS_PER_PAGE));
-        if (loadMore && lastFavouriteRef) {
-            refQuery = query(refQuery, startAfter(lastFavouriteRef));
+        if (appliedJobIds.length > 0) {
+            setIsLoadingApplied(true);
+            const jobsQuery = query(collection(firestore, 'jobs'), where('__name__', 'in', appliedJobIds));
+            getDocs(jobsQuery).then(snapshot => {
+                const jobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setAppliedJobs(jobs);
+            }).finally(() => setIsLoadingApplied(false));
         }
+    }, [appliedJobIds, firestore, isStandardUser]);
 
-        const refSnapshot = await getDocs(refQuery);
-        const newRefs = refSnapshot.docs;
-        const jobIds = newRefs.map(refDoc => refDoc.id);
-
-        setLastFavouriteRef(newRefs[newRefs.length - 1] || null);
-        setHasMoreFavourites(newRefs.length === JOBS_PER_PAGE);
-
-        if (jobIds.length === 0) {
-            setIsLoadingFavourites(false);
-            setIsLoadingMoreFavourites(false);
-            if (!loadMore) setFavouriteJobs([]);
-            return;
-        }
-
-        const jobsQuery = query(collection(firestore, 'jobs'), where('__name__', 'in', jobIds));
-        const jobsSnapshot = await getDocs(jobsQuery);
-        const jobsById = new Map(jobsSnapshot.docs.map(doc => [doc.id, { id: doc.id, ...doc.data() }]));
-        
-        const newJobs = jobIds.map(id => jobsById.get(id)).filter(Boolean);
-
-        setFavouriteJobs(prev => loadMore ? [...prev, ...newJobs] : newJobs);
-        setIsLoadingFavourites(false);
-        setIsLoadingMoreFavourites(false);
-    }, [user, isStandardUser, firestore, hasMoreFavourites, lastFavouriteRef]);
-
-    // Initial data fetch
+    // Fetch full job objects for favourite jobs
     useEffect(() => {
-        if (user && userProfile) {
-            if (isRecruiter) {
-                fetchPostedJobs();
-            }
-            if (isStandardUser) {
-                fetchAppliedJobs();
-                fetchFavouriteJobs();
-            }
+        if (favouriteJobIds.length === 0 && isStandardUser) {
+            setFavouriteJobs([]);
+            setIsLoadingFavourites(false);
+            return;
         }
-    }, [user, userProfile, isRecruiter, isStandardUser, fetchAppliedJobs, fetchFavouriteJobs, fetchPostedJobs]);
+        if (favouriteJobIds.length > 0) {
+            setIsLoadingFavourites(true);
+            const jobsQuery = query(collection(firestore, 'jobs'), where('__name__', 'in', favouriteJobIds));
+            getDocs(jobsQuery).then(snapshot => {
+                const jobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setFavouriteJobs(jobs);
+            }).finally(() => setIsLoadingFavourites(false));
+        }
+    }, [favouriteJobIds, firestore, isStandardUser]);
+
 
     // --- Handlers ---
     const [isDeletingSearch, setIsDeletingSearch] = useState(false);
@@ -312,6 +215,10 @@ export default function DashboardPage() {
         }
     }
 
+    if (isProfileLoading) {
+        return <DashboardLoading />;
+    }
+
     if (!user) return null;
 
     return (
@@ -328,16 +235,15 @@ export default function DashboardPage() {
                                 </Button>
                             )}
                         </div>
-                        {isLoadingPosted && postedJobs.length === 0 ? (
+                        {isLoadingPosted ? (
                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {Array.from({ length: 4 }).map((_, i) => <Card key={i} className="rounded-3xl h-56"><CardContent className="p-4 h-full"><div className="bg-muted animate-pulse h-full w-full rounded-2xl"></div></CardContent></Card>)}
                            </div>
-                        ) : postedJobs.length > 0 ? (
+                        ) : postedJobs && postedJobs.length > 0 ? (
                             <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {postedJobs.map(job => <JobCardBig key={job.id} job={job} isFavourite={false} onToggleFavourite={async () => {}} hasApplied={false} isRecruiter={true} />)}
                                 </div>
-                                {hasMorePosted && <div className="flex justify-center"><LoadMoreButton onClick={() => fetchPostedJobs(true)} isLoading={isLoadingMorePosted} /></div>}
                             </div>
                         ) : (
                              <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
@@ -353,16 +259,15 @@ export default function DashboardPage() {
                 {isStandardUser && (
                     <>
                      <section>
-                         {isLoadingApplied && appliedJobs.length === 0 ? (
+                         {isLoadingApplied ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                  {Array.from({ length: 4 }).map((_, i) => <Card key={i} className="rounded-3xl h-56"><CardContent className="p-4 h-full"><div className="bg-muted animate-pulse h-full w-full rounded-2xl"></div></CardContent></Card>)}
                             </div>
                          ) : appliedJobs.length > 0 ? (
                             <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {appliedJobs.map(job => <JobCardBig key={job.id} job={job} isFavourite={favouriteJobIdsSet.has(job.id)} onToggleFavourite={handleToggleFavourite} hasApplied={true} isRecruiter={false} />)}
+                                    {appliedJobs.map(job => <JobCardBig key={job.id} job={job} isFavourite={favouriteJobIds.includes(job.id)} onToggleFavourite={handleToggleFavourite} hasApplied={true} isRecruiter={false} />)}
                                 </div>
-                                {hasMoreApplied && <div className="flex justify-center"><LoadMoreButton onClick={() => fetchAppliedJobs(true)} isLoading={isLoadingMoreApplied} /></div>}
                             </div>
                         ) : (
                              <div className="text-center py-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center space-y-3">
@@ -379,30 +284,29 @@ export default function DashboardPage() {
                         <Separator />
                         <section>
                             <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Heart />Favorite Jobs</h2>
-                             {isLoadingFavourites && favouriteJobs.length === 0 ? (
+                             {isLoadingFavourites ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {Array.from({ length: 2 }).map((_, i) => <Card key={i} className="rounded-3xl h-56"><CardContent className="p-4 h-full"><div className="bg-muted animate-pulse h-full w-full rounded-2xl"></div></CardContent></Card>)}
                                 </div>
                              ) : favouriteJobs.length > 0 ? (
                                 <div className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                        {favouriteJobs.map(job => <JobCardBig key={job.id} job={job} isFavourite={true} onToggleFavourite={handleToggleFavourite} hasApplied={false} isRecruiter={false} />)}
+                                        {favouriteJobs.map(job => <JobCardBig key={job.id} job={job} isFavourite={true} onToggleFavourite={handleToggleFavourite} hasApplied={appliedJobIds.includes(job.id)} isRecruiter={false} />)}
                                     </div>
-                                    {hasMoreFavourites && <div className="flex justify-center"><LoadMoreButton onClick={() => fetchFavouriteJobs(true)} isLoading={isLoadingMoreFavourites} /></div>}
                                 </div>
                             ) : null}
                         </section>
                         </>
                     )}
 
-                    {savedSearches && savedSearches.length > 0 && (
+                    {savedSearchesData && savedSearchesData.length > 0 && (
                        <>
                         <Separator />
                         <section>
                             <h2 className="text-2xl font-semibold tracking-tight mb-4 flex items-center gap-2"><Search /> My Saved Searches</h2>
                              <CardDescription className="mb-4">Get instant email notifications for your saved searches.</CardDescription>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {savedSearches.map(search => (
+                                {savedSearchesData.map(search => (
                                     <SavedSearchCard key={search.id} savedSearch={search} onExecute={handleExecuteSearch} onDelete={handleDeleteSearch} isDeleting={isDeletingSearch} onNotify={handleNotifyUser} isNotifying={isSendingSingleAlert === search.id} />
                                 ))}
                             </div>
@@ -415,3 +319,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    
