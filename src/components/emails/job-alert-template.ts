@@ -16,7 +16,7 @@ export const jobAlertTemplate = ({
 
   // We need the base URL of the app to construct absolute links
   // This should be set as an environment variable in production
-  const appBaseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || 'http://localhost:9002';
+  const appBaseUrl = process.env.APP_BASE_URL || 'http://localhost:9002';
 
 
   const formatCurrency = (value: number) => {
