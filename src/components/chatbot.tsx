@@ -199,19 +199,16 @@ export function Chatbot() {
       return (
         <Sheet open={isOpen} onOpenChange={setOpen} modal={true}>
             <SheetContent side="bottom" className="h-[80svh] flex flex-col p-0 rounded-t-3xl">
-                 <SheetHeader className="sr-only">
-                    <SheetTitle>AI Helper</SheetTitle>
-                    <SheetDescription>
-                        A chatbot to help you find jobs or answer questions about the app.
-                    </SheetDescription>
+                 <SheetHeader className="p-4 pb-2 relative">
+                    <SheetTitle className="text-center">AI Helper</SheetTitle>
+                     <button onClick={() => setOpen(false)} className="absolute top-3 right-3 rounded-full p-2 text-muted-foreground hover:bg-muted">
+                        <X className="h-5 w-5" />
+                        <span className="sr-only">Close</span>
+                    </button>
                 </SheetHeader>
                 <div className="flex-1 min-h-0">
                     {ChatWindow}
                 </div>
-                 <button onClick={() => setOpen(false)} className="absolute top-2 right-2 rounded-full p-2 text-muted-foreground hover:bg-muted">
-                    <X className="h-5 w-5" />
-                    <span className="sr-only">Close</span>
-                </button>
             </SheetContent>
         </Sheet>
       )
@@ -220,9 +217,8 @@ export function Chatbot() {
   return (
       <Dialog open={isOpen} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl h-[70vh] flex flex-col p-0 gap-0 rounded-3xl shadow-2xl">
-           <DialogHeader className="p-4 border-b bg-primary text-primary-foreground rounded-t-3xl">
+           <DialogHeader className="p-4 border-b">
                 <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> Cambodia Hub Helper</DialogTitle>
-                <DialogDescription className="text-primary-foreground/80">Ask me to find jobs or help you use the app.</DialogDescription>
             </DialogHeader>
            {ChatWindow}
         </DialogContent>
