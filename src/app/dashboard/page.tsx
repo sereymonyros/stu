@@ -124,7 +124,7 @@ export default function DashboardPage() {
             setPostedJobs([]); // Reset on initial fetch
         }
 
-        let q = query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid), orderBy('createdAt', 'desc'), limit(JOBS_PER_PAGE));
+        let q = query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid), limit(JOBS_PER_PAGE));
         if (loadMore && lastPosted) {
             q = query(q, startAfter(lastPosted));
         }
@@ -426,3 +426,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    
