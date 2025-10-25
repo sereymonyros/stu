@@ -5,13 +5,25 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage';
-import { firebaseConfig } from './config';
 
 /**
  * Initializes and returns the Firebase SDKs.
  * This function is idempotent, meaning it can be called multiple times without re-initializing.
  */
 export function initializeFirebase() {
+  const firebaseConfig = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  };
+
+  if (!firebaseConfig.apiKey) {
+    throw new Error('Missing Firebase API Key. Please set NEXT_PUBLIC_FIREBASE_API_KEY in your .env file.');
+  }
+
   // If no Firebase app has been initialized yet, initialize one with the config.
   if (!getApps().length) {
     const firebaseApp = initializeApp(firebaseConfig);
@@ -44,3 +56,4 @@ export * from './firestore/use-doc';
 export * from './auth/use-user';
 export * from './errors';
 export * from './error-emitter';
+
