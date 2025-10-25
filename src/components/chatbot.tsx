@@ -15,7 +15,7 @@ import { doc } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { JobCardSmall } from './job-card-small';
 import { useChatbot } from './chatbot-provider';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
@@ -134,7 +134,10 @@ export function Chatbot() {
   const fallbackText = userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : user?.email ? user.email.charAt(0).toUpperCase() : 'U';
 
   const ChatWindow = (
-     <div className="flex flex-col h-full">
+     <div className="flex flex-col h-full bg-background rounded-3xl">
+        <DialogHeader className="p-4 border-b">
+            <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> Cambodia Hub Helper</DialogTitle>
+        </DialogHeader>
         <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
             <div className="space-y-4">
                 {messages.length === 0 && (
@@ -178,8 +181,8 @@ export function Chatbot() {
                 ))}
             </div>
         </ScrollArea>
-        <div className="p-4 border-t bg-background">
-            <form onSubmit={handleSendMessage} className="relative">
+        <DialogFooter className="p-4 border-t">
+            <form onSubmit={handleSendMessage} className="relative w-full">
                 <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
@@ -191,7 +194,7 @@ export function Chatbot() {
                     <Send className="h-4 w-4" />
                 </Button>
             </form>
-        </div>
+        </DialogFooter>
      </div>
   );
 
@@ -216,11 +219,10 @@ export function Chatbot() {
 
   return (
       <Dialog open={isOpen} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl h-[70vh] flex flex-col gap-0 rounded-3xl shadow-2xl p-0">
-           <DialogHeader className="p-4 border-b">
-                <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> Cambodia Hub Helper</DialogTitle>
-            </DialogHeader>
-           {ChatWindow}
+        <DialogContent className="max-w-2xl h-[70vh] flex flex-col p-0 gap-0 rounded-3xl shadow-2xl border">
+           <div className="h-full">
+                {ChatWindow}
+           </div>
         </DialogContent>
       </Dialog>
   );
