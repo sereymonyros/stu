@@ -1,16 +1,22 @@
+
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
 
 // In production, server-side environment variables should be used.
-// The NEXT_PUBLIC_ prefix is primarily for browser-side variables.
 // This logic prioritizes the server-only variable if it exists.
-const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+const apiKey = process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
+  const errorMessage = 
+    'The GEMINI_API_KEY environment variable is not set. ' +
+    'This is required for all AI features. ' +
+    'If you are in production, add it as a secret in your hosting environment. ' +
+    'If you are in local development, add it to your .env file.';
+
   if (process.env.NODE_ENV === 'production') {
-    console.error('CRITICAL: GEMINI_API_KEY is not set in the production environment.');
+    console.error(`CRITICAL: ${errorMessage}`);
   } else {
-    console.warn('Could not find GEMINI_API_KEY or NEXT_PUBLIC_GEMINI_API_KEY. AI features will not work.');
+    console.warn(`WARNING: ${errorMessage}`);
   }
 }
 

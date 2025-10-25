@@ -24,17 +24,18 @@ const sendEmailFlow = ai.defineFlow(
     outputSchema: SendEmailOutputSchema,
   },
   async (input) => {
-    // IMPORTANT: You must configure these environment variables.
+    // IMPORTANT: You must configure these environment variables for production.
     // For local development, add them to your .env file.
     // For production, set them as secrets in your hosting environment.
-    const smtpHost = process.env.NEXT_PUBLIC_SMTP_HOST;
-    const smtpPort = process.env.NEXT_PUBLIC_SMTP_PORT;
-    const smtpUser = process.env.NEXT_PUBLIC_SMTP_USER;
-    const smtpPass = process.env.NEXT_PUBLIC_SMTP_PASS;
-    const senderEmail = process.env.NEXT_PUBLIC_SENDER_EMAIL; // The verified "From" email address
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const senderEmail = process.env.SENDER_EMAIL; // The verified "From" email address
 
     if (!smtpHost || !smtpPort || !smtpUser || !smtpPass || !senderEmail) {
-        console.error("SMTP environment variables not set. Cannot send email. Check SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SENDER_EMAIL.");
+        const errorMsg = "SMTP environment variables not set. Cannot send email. Check SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SENDER_EMAIL.";
+        console.error(errorMsg);
         throw new Error('Email service is not configured on the server.');
     }
 
