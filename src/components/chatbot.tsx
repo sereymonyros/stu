@@ -15,7 +15,7 @@ import { doc } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { JobCardSmall } from './job-card-small';
 import { useChatbot } from './chatbot-provider';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
@@ -220,19 +220,12 @@ export function Chatbot() {
   return (
       <Dialog open={isOpen} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl h-[70vh] flex flex-col p-0 gap-0 rounded-3xl shadow-2xl">
-           <DialogHeader className="p-4 border-b bg-primary text-primary-foreground rounded-t-3xl relative">
+           <DialogHeader className="p-4 border-b bg-primary text-primary-foreground rounded-t-3xl">
                 <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> Cambodia Hub Helper</DialogTitle>
                 <DialogDescription className="text-primary-foreground/80">Ask me to find jobs or help you use the app.</DialogDescription>
-                 <DialogClose asChild>
-                    <Button variant="ghost" size="icon" className="absolute top-3 right-3 text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 h-7 w-7 rounded-full">
-                        <X className="h-4 w-4" />
-                    </Button>
-                </DialogClose>
             </DialogHeader>
            {ChatWindow}
         </DialogContent>
       </Dialog>
   );
 }
-
-    
