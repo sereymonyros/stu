@@ -36,6 +36,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { ArrowLeft } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BackButton } from '@/components/back-button';
+import { putJob } from '@/lib/db';
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -71,7 +72,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     return doc(firestore, 'jobs', finalJobId);
   }, [firestore, finalJobId]);
 
-  const { data: job } = useDoc(jobRef);
+  const { data: job, refetch: refetchJob } = useDoc(jobRef);
 
   const form = useForm<z.infer<typeof jobSchema>>({
     resolver: zodResolver(jobSchema),
@@ -119,7 +120,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   }, [user, job, router, toast]);
 
 
-  const onSubmit = (values: z.infer<typeof jobSchema>) => {
+  const onSubmit = async (values: z.infer<typeof jobSchema>) => {
     setIsSubmitting(true);
     if (!jobRef) {
         setIsSubmitting(false);
@@ -133,8 +134,27 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
       updatedAt: serverTimestamp(),
     };
 
-    updateDoc(jobRef, dataToUpdate)
-      .catch(serverError => {
+    try {
+        await updateDoc(jobRef, dataToUpdate);
+
+        // After successful Firestore update, update IndexedDB
+        const updatedJobForCache = {
+            ...job, // Original job data
+            ...dataToUpdate, // Overwrite with new values
+            id: jobRef.id,
+            updatedAt: new Date(), // Use current date for sorting
+        };
+        await putJob(updatedJobForCache);
+
+        toast({
+            title: "Job updated!",
+            description: "Your job posting has been successfully updated.",
+        });
+
+        refetchJob(); // Refetch to get server timestamp
+        router.push(`/jobs`);
+
+    } catch (serverError: any) {
         errorEmitter.emit(
           'permission-error',
           new FirestorePermissionError({
@@ -143,14 +163,8 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
             requestResourceData: dataToUpdate,
           })
         );
-      });
-
-    toast({
-      title: "Job updated!",
-      description: "Your job posting has been successfully updated.",
-    });
-
-    router.push(`/jobs`);
+        setIsSubmitting(false);
+    }
   };
 
   return (

@@ -34,6 +34,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { BackButton } from '@/components/back-button';
+import { putJob } from '@/lib/db';
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -92,7 +93,7 @@ export default function NewJobPage() {
     }
   }, [user, userProfile, router, toast]);
 
-  const onSubmit = (values: z.infer<typeof jobSchema>) => {
+  const onSubmit = async (values: z.infer<typeof jobSchema>) => {
     setIsSubmitting(true);
     if (!user || !userProfile) {
       toast({ variant: 'destructive', title: 'Not authenticated' });
@@ -116,18 +117,30 @@ export default function NewJobPage() {
     };
 
     const jobsCol = collection(firestore, 'jobs');
-    addDoc(jobsCol, jobData).catch(serverError => {
-      errorEmitter.emit(
-        'permission-error',
-        new FirestorePermissionError({
-          path: jobsCol.path,
-          operation: 'create',
-          requestResourceData: jobData,
-        })
-      );
-    });
+    
+    try {
+        const docRef = await addDoc(jobsCol, jobData);
+        // After successfully adding to Firestore, add to IndexedDB
+        // We create a client-side version of the job object with the new ID
+        const newJobForCache = {
+            ...jobData,
+            id: docRef.id,
+            createdAt: new Date(), // Use current date for immediate sorting
+        };
+        await putJob(newJobForCache);
 
-    router.push('/jobs');
+        router.push('/jobs');
+    } catch (serverError: any) {
+        errorEmitter.emit(
+            'permission-error',
+            new FirestorePermissionError({
+            path: jobsCol.path,
+            operation: 'create',
+            requestResourceData: jobData,
+            })
+        );
+        setIsSubmitting(false);
+    }
   };
 
   const isAuthorized = userProfile?.userType === 'recruiter';

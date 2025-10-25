@@ -39,14 +39,35 @@ export async function putJobs(jobs: any[]) {
     }
 }
 
+export async function putJob(job: any) {
+    if (typeof window === 'undefined') return;
+    try {
+        const db = await getDb();
+        await db.put(JOBS_STORE, job);
+    } catch (error) {
+        console.error(`Failed to put job ${job.id} in IndexedDB`, error);
+    }
+}
+
+export async function deleteJob(jobId: string) {
+    if (typeof window === 'undefined') return;
+    try {
+        const db = await getDb();
+        await db.delete(JOBS_STORE, jobId);
+    } catch (error) {
+        console.error(`Failed to delete job ${jobId} from IndexedDB`, error);
+    }
+}
+
 
 export async function getAllJobs() {
     if (typeof window === 'undefined') return [];
     try {
         const db = await getDb();
-        const jobs = await db.getAll(JOBS_STORE);
-        // Sort by createdAt descending (newest first)
-        return jobs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        // Use the 'createdAt' index to get jobs sorted by creation date
+        const sortedJobs = await db.getAllFromIndex(JOBS_STORE, 'createdAt');
+        // Reverse the array to get descending order (newest first)
+        return sortedJobs.reverse();
     } catch (error) {
         console.error("Failed to get all jobs from IndexedDB", error);
         return [];
