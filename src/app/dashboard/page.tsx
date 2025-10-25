@@ -112,19 +112,18 @@ export default function DashboardPage() {
 
     // --- Data Fetching Callbacks ---
     const fetchPostedJobs = useCallback(async (loadMore = false) => {
-        if (!user || !isRecruiter || (loadMore && !hasMorePosted)) {
-            if (!loadMore) setIsLoadingPosted(false);
-            return;
-        }
+        if (!user || !isRecruiter) return;
+        if (loadMore && !hasMorePosted) return;
 
-        if (loadMore) {
-            setIsLoadingMorePosted(true);
-        } else {
-            setIsLoadingPosted(true);
-            setPostedJobs([]); // Reset on initial fetch
-        }
+        if (loadMore) setIsLoadingMorePosted(true);
+        else setIsLoadingPosted(true);
+        
+        let q = query(
+            collection(firestore, 'jobs'), 
+            where('recruiterId', '==', user.uid), 
+            limit(JOBS_PER_PAGE)
+        );
 
-        let q = query(collection(firestore, 'jobs'), where('recruiterId', '==', user.uid), limit(JOBS_PER_PAGE));
         if (loadMore && lastPosted) {
             q = query(q, startAfter(lastPosted));
         }
@@ -135,25 +134,18 @@ export default function DashboardPage() {
         setLastPosted(snapshot.docs[snapshot.docs.length - 1] || null);
         setHasMorePosted(newJobs.length === JOBS_PER_PAGE);
         
-        const combined = loadMore ? [...postedJobs, ...newJobs] : newJobs;
-
-        setPostedJobs(combined);
+        setPostedJobs(prev => loadMore ? [...prev, ...newJobs] : newJobs);
 
         setIsLoadingPosted(false);
         setIsLoadingMorePosted(false);
-    }, [user, isRecruiter, firestore, lastPosted, hasMorePosted, postedJobs]);
+    }, [user, isRecruiter, firestore, hasMorePosted, lastPosted]);
 
     const fetchAppliedJobs = useCallback(async (loadMore = false) => {
-        if (!user || !isStandardUser || (loadMore && !hasMoreApplied)) {
-            if (!loadMore) setIsLoadingApplied(false);
-            return;
-        }
-        if (loadMore) {
-          setIsLoadingMoreApplied(true);
-        } else {
-          setIsLoadingApplied(true);
-          setAppliedJobs([]); // Reset on initial fetch
-        }
+        if (!user || !isStandardUser) return;
+        if (loadMore && !hasMoreApplied) return;
+
+        if (loadMore) setIsLoadingMoreApplied(true);
+        else setIsLoadingApplied(true);
 
         // 1. Fetch references from the user's subcollection
         let refQuery = query(collection(firestore, `users/${user.uid}/applications`), orderBy('appliedAt', 'desc'), limit(JOBS_PER_PAGE));
@@ -171,6 +163,7 @@ export default function DashboardPage() {
         if (jobIds.length === 0) {
             setIsLoadingApplied(false);
             setIsLoadingMoreApplied(false);
+            if (!loadMore) setAppliedJobs([]);
             return;
         }
 
@@ -185,19 +178,14 @@ export default function DashboardPage() {
         setAppliedJobs(prev => loadMore ? [...prev, ...newJobs] : newJobs);
         setIsLoadingApplied(false);
         setIsLoadingMoreApplied(false);
-    }, [user, isStandardUser, firestore, lastAppliedRef, hasMoreApplied]);
+    }, [user, isStandardUser, firestore, hasMoreApplied, lastAppliedRef]);
     
     const fetchFavouriteJobs = useCallback(async (loadMore = false) => {
-        if (!user || !isStandardUser || (loadMore && !hasMoreFavourites)) {
-            if (!loadMore) setIsLoadingFavourites(false);
-            return;
-        }
-        if (loadMore) {
-          setIsLoadingMoreFavourites(true);
-        } else {
-          setIsLoadingFavourites(true);
-          setFavouriteJobs([]); // Reset on initial fetch
-        }
+        if (!user || !isStandardUser) return;
+        if (loadMore && !hasMoreFavourites) return;
+
+        if (loadMore) setIsLoadingMoreFavourites(true);
+        else setIsLoadingFavourites(true);
 
         let refQuery = query(collection(firestore, `users/${user.uid}/favouriteJobs`), orderBy('favouritedAt', 'desc'), limit(JOBS_PER_PAGE));
         if (loadMore && lastFavouriteRef) {
@@ -214,6 +202,7 @@ export default function DashboardPage() {
         if (jobIds.length === 0) {
             setIsLoadingFavourites(false);
             setIsLoadingMoreFavourites(false);
+            if (!loadMore) setFavouriteJobs([]);
             return;
         }
 
@@ -226,7 +215,7 @@ export default function DashboardPage() {
         setFavouriteJobs(prev => loadMore ? [...prev, ...newJobs] : newJobs);
         setIsLoadingFavourites(false);
         setIsLoadingMoreFavourites(false);
-    }, [user, isStandardUser, firestore, lastFavouriteRef, hasMoreFavourites]);
+    }, [user, isStandardUser, firestore, hasMoreFavourites, lastFavouriteRef]);
 
     // Initial data fetch
     useEffect(() => {
@@ -426,5 +415,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-
-    
