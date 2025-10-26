@@ -13,7 +13,7 @@ export function initializeFirebaseAdmin() {
   if (getApps().length > 0) {
     app = getApp();
   } else {
-    const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
+    const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
 
     // Use Application Default Credentials in production environments (like App Hosting)
     if (isProduction) {
