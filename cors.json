@@ -4,7 +4,8 @@
       "https://*.firebaseapp.com",
       "https://*.web.app",
       "https://*.run.app",
-      "https://*.cloudworkstations.dev"
+      "https://*.cloudworkstations.dev",
+      "https://*.hosted.app" 
     ],
     "method": ["GET", "HEAD", "PUT", "POST", "DELETE", "PATCH"],
     "responseHeader": [
