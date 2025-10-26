@@ -43,3 +43,4 @@ env:
     secret: NEXT_PUBLIC_FIREBASE_APP_ID
   - variable: FIREBASE_STORAGE_BUCKET
     secret: FIREBASE_STORAGE_BUCKET
+    
