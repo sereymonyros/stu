@@ -25,11 +25,11 @@ const sendEmailFlow = ai.defineFlow(
   },
   async (input) => {
     // This flow is now configured for SendGrid.
-    const sendgridApiKey = process.env.SMTP_USER;
+    const sendgridApiKey = process.env.SENDGRID_API_KEY;
     const sendgridFromEmail = process.env.SENDER_EMAIL;
 
     if (!sendgridApiKey || !sendgridFromEmail) {
-        const errorMsg = "SendGrid environment variables not set. Cannot send email. Check SENDGRID_API_KEY and SENDGRID_FROM_EMAIL.";
+        const errorMsg = "SendGrid environment variables not set. Cannot send email. Check SENDGRID_API_KEY and SENDER_EMAIL.";
         console.error(errorMsg);
         throw new Error('Email service is not configured on the server.');
     }
