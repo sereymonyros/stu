@@ -24,38 +24,34 @@ const sendEmailFlow = ai.defineFlow(
     outputSchema: SendEmailOutputSchema,
   },
   async (input) => {
-    // IMPORTANT: You must configure these environment variables for production.
-    // For local development, add them to your .env file.
-    // For production, set them as secrets in your hosting environment.
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = process.env.SMTP_PORT;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-    const senderEmail = process.env.SENDER_EMAIL; // The verified "From" email address
+    // This flow is now configured for SendGrid.
+    const sendgridApiKey = process.env.SENDGRID_API_KEY;
+    const sendgridFromEmail = process.env.SENDGRID_FROM_EMAIL;
 
-    if (!smtpHost || !smtpPort || !smtpUser || !smtpPass || !senderEmail) {
-        const errorMsg = "SMTP environment variables not set. Cannot send email. Check SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SENDER_EMAIL.";
+    if (!sendgridApiKey || !sendgridFromEmail) {
+        const errorMsg = "SendGrid environment variables not set. Cannot send email. Check SENDGRID_API_KEY and SENDGRID_FROM_EMAIL.";
         console.error(errorMsg);
         throw new Error('Email service is not configured on the server.');
     }
 
     try {
+      // Configure Nodemailer for SendGrid
       const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: parseInt(smtpPort, 10),
-        secure: parseInt(smtpPort, 10) === 465, // true for 465, false for other ports
+        host: "smtp.sendgrid.net",
+        port: 587,
+        secure: false, // true for 465, false for other ports
         auth: {
-          user: smtpUser,
-          pass: smtpPass,
+          user: "apikey", // This is always "apikey" for SendGrid API keys
+          pass: sendgridApiKey,
         },
       });
 
       const mailOptions = {
-        from: `Cambodia Hub <${senderEmail}>`, // Use the verified sender email
+        from: `Cambodia Hub <${sendgridFromEmail}>`, // Use the verified sender email
         to: input.to,
         subject: input.subject,
         html: input.htmlBody,
-        replyTo: input.replyTo || senderEmail, // Add a reply-to for user convenience
+        replyTo: input.replyTo || sendgridFromEmail, // Add a reply-to for user convenience
       };
 
       const info = await transporter.sendMail(mailOptions);
