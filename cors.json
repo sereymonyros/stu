@@ -1,14 +1,21 @@
-
 [
-    {
-      "origin": [
-        "https://*.firebaseapp.com",
-        "https://*.web.app",
-        "https://*.run.app",
-        "https://*.cloudworkstations.dev"
-      ],
-      "method": ["GET", "HEAD", "PUT", "POST", "DELETE", "PATCH"],
-      "responseHeader": ["Content-Type"],
-      "maxAgeSeconds": 3600
-    }
+  {
+    "origin": [
+      "https://*.firebaseapp.com",
+      "https://*.web.app",
+      "https://*.run.app",
+      "https://*.cloudworkstations.dev"
+    ],
+    "method": ["GET", "HEAD", "PUT", "POST", "DELETE", "PATCH"],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "X-Custom-Header-If-Used",
+      "Access-Control-Allow-Origin",
+      "Access-Control-Allow-Methods",
+      "Access-Control-Allow-Headers",
+      "Access-Control-Allow-Credentials"
+    ],
+    "maxAgeSeconds": 3600
+  }
 ]
