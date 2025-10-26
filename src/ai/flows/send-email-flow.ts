@@ -64,7 +64,7 @@ const sendEmailFlow = ai.defineFlow(
       };
     } catch (e: any) {
       console.error('Flow Error: Failed to send email.', e);
-      // Re-throw or handle the error as needed for the flow's output
+      // Re-throw or handle the error as needed for the flow's outputs
       throw new Error(`Failed to send email: ${e.message}`);
     }
   }
