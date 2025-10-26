@@ -26,9 +26,9 @@ const sendEmailFlow = ai.defineFlow(
   async (input) => {
     // This flow is now configured for SendGrid.
     const sendgridApiKey = process.env.SENDGRID_API_KEY;
-    const sendgridFromEmail = process.env.SENDER_EMAIL;
+    const senderEmail = process.env.SENDER_EMAIL;
 
-    if (!sendgridApiKey || !sendgridFromEmail) {
+    if (!sendgridApiKey || !senderEmail) {
         const errorMsg = "SendGrid environment variables not set. Cannot send email. Check SENDGRID_API_KEY and SENDER_EMAIL.";
         console.error(errorMsg);
         throw new Error('Email service is not configured on the server.');
@@ -47,11 +47,11 @@ const sendEmailFlow = ai.defineFlow(
       });
 
       const mailOptions = {
-        from: `Cambodia Hub <${sendgridFromEmail}>`, // Use the verified sender email
+        from: `Cambodia Hub <${senderEmail}>`, // Use the verified sender email
         to: input.to,
         subject: input.subject,
         html: input.htmlBody,
-        replyTo: input.replyTo || sendgridFromEmail, // Add a reply-to for user convenience
+        replyTo: input.replyTo || senderEmail, // Add a reply-to for user convenience
       };
 
       const info = await transporter.sendMail(mailOptions);
