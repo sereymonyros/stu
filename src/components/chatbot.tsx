@@ -83,7 +83,7 @@ export function Chatbot() {
   const handleSendMessage = async (e: React.FormEvent, messageText?: string) => {
     e.preventDefault();
     const currentInput = messageText || input;
-    if (!currentInput.trim() || !user) return;
+    if (!currentInput.trim()) return;
 
     const userMessage: Message = { id: Date.now().toString(), node: <p>{currentInput}</p>, sender: 'user' };
     setMessages(prev => [...prev, userMessage]);
@@ -108,7 +108,7 @@ export function Chatbot() {
     }
 
     try {
-      const response = await chat({ query: currentInput, userId: user.uid });
+      const response = await chat({ query: currentInput, userId: user?.uid });
       const botMessageNode = renderContent(response.response);
       
       setMessages(prev => prev.map(msg => msg.id === botMessageId ? { ...msg, node: botMessageNode } : msg));
@@ -173,8 +173,14 @@ export function Chatbot() {
                         </div>
                          {message.sender === 'user' && (
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={userProfile?.photoURL || undefined} alt={userProfile?.displayName ?? 'User'} />
-                                <AvatarFallback>{fallbackText}</AvatarFallback>
+                                {user ? (
+                                    <>
+                                        <AvatarImage src={userProfile?.photoURL || undefined} alt={userProfile?.displayName ?? 'User'} />
+                                        <AvatarFallback>{fallbackText}</AvatarFallback>
+                                    </>
+                                ) : (
+                                    <AvatarFallback><User className="h-5 w-5" /></AvatarFallback>
+                                )}
                             </Avatar>
                         )}
                     </div>
@@ -186,11 +192,11 @@ export function Chatbot() {
                 <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder={user ? "Ask me anything..." : "Please log in to use the chatbot"}
+                    placeholder="Ask me anything..."
                     className="pr-12 h-12 rounded-full shadow-inner"
-                    disabled={!user || isLoading}
+                    disabled={isLoading}
                 />
-                <Button type="submit" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full" disabled={!user || isLoading}>
+                <Button type="submit" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full" disabled={isLoading}>
                     <Send className="h-4 w-4" />
                 </Button>
             </form>

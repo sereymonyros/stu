@@ -117,7 +117,7 @@ const getFeatureInformation = ai.defineTool(
 
 const ChatInputSchema = z.object({
   query: z.string().describe("The user's question or command."),
-  userId: z.string().describe("The user's ID."),
+  userId: z.string().optional().describe("The user's ID, if they are authenticated."),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -140,9 +140,12 @@ const chatFlow = ai.defineFlow(
   },
   async ({ query, userId }) => {
 
-    const userDoc = await firestore.collection('users').doc(userId).get();
-    const user = userDoc.data();
-    const userName = user?.displayName || 'there';
+    let userName = 'there';
+    if (userId) {
+        const userDoc = await firestore.collection('users').doc(userId).get();
+        const user = userDoc.data();
+        userName = user?.displayName || 'there';
+    }
 
     const llmResponse = await ai.generate({
       prompt: `You are the "Cambodia Hub Helper", an expert and friendly guide for the Cambodia Hub application.
